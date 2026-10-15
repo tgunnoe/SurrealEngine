@@ -29,6 +29,14 @@ exit code is 1.
 One event per line: `KIND` or `KIND <text>`. The harness is POSIX-only; the
 signal capture is not built on Windows.
 
+Extension rules: consumers ignore any unknown KIND, parse `SUMMARY` by its
+`key=value` keys rather than by position, and take the game version in `GAME`
+as the last token of the line (the game name may contain spaces).
+
+`WARNING` lines from signal-handler setup can precede `GAME`, because the
+handlers install before the engine starts; apart from that, the first line
+is `GAME`.
+
 Order: the first three lines are `GAME`, `MAP`, `LOGIN`, except that
 `SCRIPT_ERROR`, `STUB` and `WARNING` lines may appear before `MAP` and between
 `MAP` and `LOGIN`, because script runs while the map loads. Every later map
@@ -41,7 +49,7 @@ each. The entry-map preload is not logged.
 | `GAME <name> <version>` | First line. |
 | `MAP <name>` | A map was entered. |
 | `LOGIN` | The player logged in to that map. |
-| `WARNING <text>` | The harness could not install a signal handler. |
+| `WARNING <text>` | The harness could not install a signal handler, or a requested save was skipped under `--autostart`. |
 | `SCRIPT_ERROR <text>` | A native raised an error that the VM logged. |
 | `STUB <text>` | A distinct unimplemented-function message. |
 | `MISSING_NATIVE <text>` | An unknown native function. Either it aborted the run (followed by `FATAL`), or the VM caught it inside another native's callback and logged it as a script error, in which case the run continues and it is counted here, not as `SCRIPT_ERROR`. |
@@ -86,7 +94,8 @@ appears in them, and an occluded engine window renders slowly.
 
 `maps_loaded` lists the `MAP` values in order. The report is rewritten after
 every map, so an interrupted sweep keeps the rows finished so far. The
-per-map log and screenshot are deleted before each child starts. `fps_avg` and
+per-map log and screenshot are deleted before each child starts. `exit_code` is Python's return code, which is a negative signal number
+(for example -11) when the child died from a signal, not the shell's 139. `fps_avg` and
 `screenshot` are `null` when there are no samples or no
 screenshot. `verdict` is one of:
 
