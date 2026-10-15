@@ -43,6 +43,21 @@ def classify(owner):
     return "non-gameplay", "%s descends only from %s" % (owner, " > ".join(chain))
 
 
+# A native backtrace frame: "at <binary>(+0xOFF) [0xADDR]". Frames carry
+# build paths and per-run addresses, so the message is cut at the first one.
+NATIVE_FRAME = re.compile(r"\s+at \S*\(\S*\+0x[0-9a-fA-F]+\) \[0x[0-9a-fA-F]+\]")
+
+
+def strip_native_stack(text):
+    m = NATIVE_FRAME.search(text)
+    if not m:
+        return text
+    text = text[:m.start()].rstrip()
+    if text.endswith("Native call stack:"):
+        text = text[:-len("Native call stack:")].rstrip()
+    return text
+
+
 def parse(path):
     stubs, errors, section = [], [], None
     seen_summary = False
@@ -51,6 +66,8 @@ def parse(path):
         for raw in f:
             line = raw.rstrip("\n")
             kind, _, text = line.partition(" ")
+            if kind in ERROR_KINDS:
+                text = strip_native_stack(text)
             if kind == "MAP":
                 section = text
             elif kind == "SUMMARY":

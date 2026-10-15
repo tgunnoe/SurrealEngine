@@ -98,8 +98,10 @@ def main(repro_path):
                 "(three sweeps shared one display).\n\n" % (len(nonclean), len(rows)))
         f.write("Evidence for a stub-only row is its stub list (stubs.json) and its\n"
                 "exit code and SUMMARY-bearing pass verdict (sweep.json).\n\n")
-        for m, e, gp, reasons in nonclean:
+        for i, (m, e, gp, reasons) in enumerate(nonclean):
             name = m["map"]
+            if i:
+                f.write("\n")
             f.write("## %s\n\n" % name)
             f.write("- verdict: %s, exit code %s\n" % (m["verdict"], m["exit_code"]))
             f.write("- maps_loaded: %s\n" % json.dumps(m["maps_loaded"]))
@@ -133,7 +135,6 @@ def main(repro_path):
                            HEX.sub("0x?", str(r["first_line_run2"]))[:200]))
             else:
                 f.write("- reproduced: not-run\n")
-            f.write("\n")
 
     # stubs.md
     count = Counter()

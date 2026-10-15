@@ -156,12 +156,12 @@
    {
     "kind": "EXCEPTION",
     "map_section": "06_HongKong_TongBase",
-    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x60c316aa0482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x60c316aa1524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x60c316a7c389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x60c316a868c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x60c316a670e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x60c316a6666e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7c99fb42b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7c99fb42b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x60c316a70f15] "
+    "text": "GameInfo login failed: Failed to spawn player actor"
    },
    {
     "kind": "FATAL",
     "map_section": "06_HongKong_TongBase",
-    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x60c316aa0482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x60c316aa1524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x60c316a7c389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x60c316a868c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x60c316a670e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x60c316a6666e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7c99fb42b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7c99fb42b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x60c316a70f15] "
+    "text": "GameInfo login failed: Failed to spawn player actor"
    }
   ],
   "fatal_after_summary": false
@@ -175,12 +175,12 @@
    {
     "kind": "EXCEPTION",
     "map_section": "06_HongKong_WanChai_Canal",
-    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x56a50e1e4482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x56a50e1e5524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x56a50e1c0389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x56a50e1ca8c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x56a50e1ab0e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x56a50e1aa66e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7b894262b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7b894262b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x56a50e1b4f15] "
+    "text": "GameInfo login failed: Failed to spawn player actor"
    },
    {
     "kind": "FATAL",
     "map_section": "06_HongKong_WanChai_Canal",
-    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x56a50e1e4482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x56a50e1e5524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x56a50e1c0389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x56a50e1ca8c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x56a50e1ab0e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x56a50e1aa66e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7b894262b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7b894262b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x56a50e1b4f15] "
+    "text": "GameInfo login failed: Failed to spawn player actor"
    }
   ],
   "fatal_after_summary": false
@@ -222,12 +222,12 @@
    {
     "kind": "EXCEPTION",
     "map_section": "08_NYC_Street",
-    "text": "Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Native call stack:  at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x5ac7b49a1482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d5f8) [0x5ac7b49a25f8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1ce0a4) [0x5ac7b49d30a4] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1d8a52) [0x5ac7b49dda52] "
+    "text": "Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)"
    },
    {
     "kind": "FATAL",
     "map_section": "08_NYC_Street",
-    "text": "Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Native call stack:  at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x5ac7b49a1482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d5f8) [0x5ac7b49a25f8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1ce0a4) [0x5ac7b49d30a4] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1d8a52) [0x5ac7b49dda52] "
+    "text": "Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)"
    }
   ],
   "fatal_after_summary": false
@@ -263,12 +263,12 @@
    {
     "kind": "EXCEPTION",
     "map_section": "09_NYC_ShipFan",
-    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x5b66b0e65482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x5b66b0e66524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x5b66b0e41389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x5b66b0e4b8c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x5b66b0e2c0e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x5b66b0e2b66e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7a64b8c2b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7a64b8c2b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x5b66b0e35f15] "
+    "text": "GameInfo login failed: Failed to spawn player actor"
    },
    {
     "kind": "FATAL",
     "map_section": "09_NYC_ShipFan",
-    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x5b66b0e65482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x5b66b0e66524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x5b66b0e41389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x5b66b0e4b8c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x5b66b0e2c0e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x5b66b0e2b66e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7a64b8c2b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7a64b8c2b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x5b66b0e35f15] "
+    "text": "GameInfo login failed: Failed to spawn player actor"
    }
   ],
   "fatal_after_summary": false
