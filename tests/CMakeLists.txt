@@ -3,6 +3,10 @@
 file(GLOB_RECURSE SURREALTESTS_SOURCES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 file(GLOB_RECURSE SURREALTESTS_XFAIL_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/xfail.txt)
 
+# GLOB's CONFIGURE_DEPENDS only notices added or removed files; listing the files as
+# configure dependencies also re-runs CMake when a TEST( line is added to an existing one.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${SURREALTESTS_SOURCES} ${SURREALTESTS_XFAIL_FILES})
+
 add_executable(SurrealTests ${SURREALTESTS_SOURCES})
 target_include_directories(SurrealTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(SurrealTests SurrealCommon ${SURREALCOMMON_LIBS})

@@ -24,7 +24,7 @@ or list them all with `--list`.
 4. Keep each declaration on a line that starts with `TEST(`; CMake finds tests
    by scanning for that form.
 
-CMake re-runs configure by itself when a test file is added or edited, so no
+CMake re-runs configure by itself when a test or xfail file is added, removed or edited, so no
 manual `cmake` step is needed.
 
 The `RegistryMatchesSources` entry fails when the number of `TEST(` lines
