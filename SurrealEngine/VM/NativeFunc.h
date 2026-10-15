@@ -21,6 +21,9 @@ public:
 
 	static void RegisterHandler(const NameString& className, const NameString& funcName, int nativeIndex, NativeFuncHandler handler);
 	static void RegisterNativeFunc(UFunction* func);
+
+	// The registry is process-global; each PackageManager repopulates it from scratch.
+	static void Reset();
 };
 
 void RegisterLatentAction(int nativeIndex, LatentRunState latentAction);
