@@ -1,0 +1,8 @@
+# Tests that currently fail by a check, one name per line.
+# The runner reports them as XFAIL and the suite stays green. A listed test that
+# passes is reported as XPASS and fails the suite: remove it from this file when
+# you fix the behavior. A test that crashes is always a failure, listed or not.
+DynArrayReadOutOfRangeDoesNotResize
+StaticArrayOutOfRangeIndexThrows
+ArrayRemoveOutOfBoundsReturnsFalse
+ArrayInsertOutOfBoundsReturnsFalse

@@ -1158,6 +1158,9 @@ add_executable(SurrealDebugger ${SURREALDEBUGGER_SOURCES})
 target_link_libraries(SurrealDebugger SurrealCommon ${SURREALCOMMON_LIBS})
 set_target_properties(SurrealDebugger PROPERTIES CXX_STANDARD 20)
 
+enable_testing()
+add_subdirectory(tests)
+
 function( create_zip_source_groups FOLDER_NAME ZIP_DIR )
 	file(GLOB ZIP_SRCS ${ZIP_DIR}/*)
 	foreach(ZIP_SRC ${ZIP_SRCS})
