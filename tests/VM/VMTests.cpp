@@ -39,6 +39,9 @@ namespace
 			Func->Code = std::make_shared<Bytecode>(Array<uint8_t>(), nullptr);
 
 			// Returns with no value expression, which makes the VM yield the return-flagged local.
+			// Bytecode allocates its expressions from a private arena, so tests cannot create
+			// them through it; keep our own alive for the process lifetime in a function-local
+			// static, since Statements holds raw pointers.
 			static std::vector<std::unique_ptr<ReturnExpression>> returns;
 			returns.push_back(std::make_unique<ReturnExpression>());
 			returns.back()->StatementIndex = 0;

@@ -24,6 +24,9 @@ or list them all with `--list`.
 4. Keep each declaration on a line that starts with `TEST(`; CMake finds tests
    by scanning for that form.
 
+CMake re-runs configure by itself when a test file is added or edited, so no
+manual `cmake` step is needed.
+
 The `RegistryMatchesSources` entry fails when the number of `TEST(` lines
 found in the sources differs from the number of tests the executable
 registered.
@@ -43,3 +46,9 @@ are known to fail. For a listed test:
 
 A name that matches no registered test fails the run. A listed test appears in `ctest` output as `XFAIL.<name>`. An expected failure
 must fail through a check, never through a crash.
+
+`ArrayInsertOutOfBoundsReturnsFalse` is a placeholder: probing it for real is
+unsafe because `ScriptArray::Insert` writes past its new allocation when the
+offset is beyond the end, so the test fails by an explicit message instead of
+making the call. Replace it with a real check once the native bounds-checks
+the offset.
