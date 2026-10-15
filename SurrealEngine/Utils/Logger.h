@@ -29,6 +29,7 @@ public:
 	// Classifies engine log messages (script errors, unimplemented stubs) into events.
 	void OnLogMessage(const std::string& message);
 	void ScriptError(const std::string& text);
+	void ScriptWarning(const std::string& text);
 	void Stub(const std::string& text);
 	void MissingNative(const std::string& text);
 	void Exception(const std::string& text);
@@ -59,6 +60,7 @@ private:
 	int stubHits = 0;
 	int missingNatives = 0;
 	int exceptions = 0;
+	int scriptWarnings = 0;
 	double fpsSum = 0.0;
 	int fpsSamples = 0;
 	double fpsWindowStart = -1.0;

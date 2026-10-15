@@ -223,6 +223,12 @@ void SmokeLog::ScriptError(const std::string& text)
 	Event("SCRIPT_ERROR", text);
 }
 
+void SmokeLog::ScriptWarning(const std::string& text)
+{
+	scriptWarnings++;
+	Event("SCRIPT_WARNING", text);
+}
+
 void SmokeLog::Stub(const std::string& text)
 {
 	stubHits++;
@@ -245,6 +251,7 @@ void SmokeLog::OnLogMessage(const std::string& message)
 {
 	constexpr std::string_view scriptError = "Script error: ";
 	constexpr std::string_view unimplemented = "Unimplemented: ";
+	constexpr std::string_view accessedNone = "Accessed None";
 	constexpr std::string_view missingNative = "Unknown native function";
 
 	std::string_view view = message;
@@ -257,6 +264,10 @@ void SmokeLog::OnLogMessage(const std::string& message)
 			MissingNative(std::string(view));
 		else
 			ScriptError(std::string(view));
+	}
+	else if (view.substr(0, accessedNone.size()) == accessedNone)
+	{
+		ScriptWarning(std::string(view));
 	}
 	else if (view.substr(0, unimplemented.size()) == unimplemented)
 	{
@@ -300,9 +311,9 @@ void SmokeLog::Fatal(const std::string& text)
 
 void SmokeLog::Summary()
 {
-	char buf[160];
-	std::snprintf(buf, sizeof(buf), "script_errors=%d stub_hits=%d missing_natives=%d exceptions=%d fps_avg=%.1f",
-		scriptErrors, stubHits, missingNatives, exceptions, fpsSamples > 0 ? fpsSum / fpsSamples : 0.0);
+	char buf[192];
+	std::snprintf(buf, sizeof(buf), "script_errors=%d stub_hits=%d missing_natives=%d exceptions=%d script_warnings=%d fps_avg=%.1f",
+		scriptErrors, stubHits, missingNatives, exceptions, scriptWarnings, fpsSamples > 0 ? fpsSum / fpsSamples : 0.0);
 	Event("SUMMARY", buf);
 	finished = true;
 }

@@ -285,6 +285,15 @@ ExpressionValue Frame::CallNative(UFunction* func, UObject* instance, const Arra
 	int argindex = 0;
 	for (UProperty* prop : func->Properties)
 	{
+		// A None context or a nested call that yielded nothing was already reported by the
+		// statement that made the call. Like the original engine, skip the native instead of
+		// handing it a value it cannot marshal.
+		if (argindex < funcArgs.size() && funcArgs[argindex].GetType() == ExpressionValueType::Nothing &&
+			AllFlags(prop->PropFlags, PropertyFlags::Parm) && !AllFlags(prop->PropFlags, PropertyFlags::OptionalParm | PropertyFlags::ReturnParm))
+		{
+			return ExpressionValue::NothingValue();
+		}
+
 		if (argindex == args.size() && AllFlags(prop->PropFlags, PropertyFlags::Parm | PropertyFlags::OptionalParm))
 		{
 			// Trailing optional args may be missing. Add nothing values so the args list matches the function signature.
@@ -589,7 +598,7 @@ ExpressionEvalResult Frame::Run()
 			Iterators.pop_back();
 			break;
 		case StatementResult::AccessedNone:
-			LogMessage("Accessed None");
+			LogMessage("Accessed None in " + Object->Class->Name.ToString() + "." + Func->Name.ToString());
 			LogMessage(Frame::GetCallstack());
 			break;
 		}
