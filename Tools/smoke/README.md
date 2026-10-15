@@ -9,9 +9,9 @@ All flags are opt-in; without them the engine behaves as before.
 
 | Flag | Effect |
 | :--- | :--- |
-| `--autostart` | Skip the launcher and the crash-reporter check and use the first game folder given on the command line. A fatal exception exits with code 1 and shows no error window. Config and ini files are not saved, so the game folder is left untouched. |
+| `--autostart` | Skip the launcher and the crash-reporter check and run exactly the first game folder given on the command line; if that folder is not a UE1 game, or none is given, the run fails with a `FATAL` line and exit code 1 (the launcher's saved list and the current directory are never consulted). A fatal exception exits with code 1 and shows no error window. Ini files and save games are not written, so the game folder is left untouched. |
 | `--exit-after=<seconds>` | Leave the main loop after this many seconds since process start. |
-| `--smoke-log=<path>` | Write the structured event log described below. Each line is written and flushed immediately. Fatal signals (SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL) append `FATAL signal <n>` and exit with `128+n`. |
+| `--smoke-log=<path>` | Write the structured event log described below. Each line is written and flushed immediately. With `--autostart`, fatal signals (SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL) append `FATAL signal <n>`, then re-raise with the default action so the process dies from that signal (exit status `128+n` in a shell) and still dumps core. Without `--autostart` the crash reporter owns the signal handlers and no `FATAL signal` line is written. |
 | `--url=<mapname>` | Existing flag; selects the map to load. |
 
 Example:
@@ -26,20 +26,32 @@ exit code is 1.
 
 ## Log grammar
 
-One event per line: `KIND` or `KIND <text>`.
+One event per line: `KIND` or `KIND <text>`. The harness is POSIX-only; the
+signal capture is not built on Windows.
+
+Order: the first three lines are `GAME`, `MAP`, `LOGIN`, except that
+`SCRIPT_ERROR`, `STUB` and `WARNING` lines may appear before `MAP` and between
+`MAP` and `LOGIN`, because script runs while the map loads. Every later map
+transition (restart, next URL, save load, client travel, travel to the entry
+level) writes a new `MAP`/`LOGIN` pair. A single-map run has exactly one of
+each. The entry-map preload is not logged.
 
 | Line | Meaning |
 | :--- | :--- |
 | `GAME <name> <version>` | First line. |
-| `MAP <name>` | Map loaded at startup. |
-| `LOGIN` | Player logged in. |
+| `MAP <name>` | A map was entered. |
+| `LOGIN` | The player logged in to that map. |
+| `WARNING <text>` | The harness could not install a signal handler. |
 | `SCRIPT_ERROR <text>` | A native raised an error that the VM logged. |
 | `STUB <text>` | A distinct unimplemented-function message. |
-| `MISSING_NATIVE <text>` | An unknown native function aborted the run. |
-| `EXCEPTION <text>` | An exception reached the top level. |
+| `MISSING_NATIVE <text>` | An unknown native function. Either it aborted the run (followed by `FATAL`), or the VM caught it inside another native's callback and logged it as a script error, in which case the run continues and it is counted here, not as `SCRIPT_ERROR`. |
+| `EXCEPTION <text>` | An exception reached the top level; always followed by `FATAL`. |
 | `FPS <value>` | Frames per second, sampled about once per second. |
 | `SUMMARY script_errors=N stub_hits=N missing_natives=N exceptions=N fps_avg=X` | Last line of a clean `--exit-after` run. |
-| `FATAL <text>` / `FATAL signal <n>` | Last line of a fatal run; `SUMMARY` is then absent. |
+| `FATAL <text>` / `FATAL signal <n>` | Last line of a fatal run; `SUMMARY` is then absent. A crash during teardown, after the main loop ended, can still append `FATAL signal <n>` after `SUMMARY`. |
+
+`exceptions` in `SUMMARY` is always 0 today, because every exception ends the
+run with `FATAL` instead of `SUMMARY`; it is kept so the line shape is stable.
 
 ## Sweep runner
 
@@ -68,14 +80,17 @@ appears in them, and an occluded engine window renders slowly.
 ```
 { "game": "<folder>", "seconds": 15,
   "maps": [ { "map", "exit_code", "script_errors", "stub_hits",
-              "missing_natives", "exceptions", "fps_avg", "log",
-              "screenshot", "verdict" } ] }
+              "missing_natives", "exceptions", "fps_avg", "maps_loaded",
+              "log", "screenshot", "verdict" } ] }
 ```
 
-`fps_avg` and `screenshot` are `null` when there are no samples or no
+`maps_loaded` lists the `MAP` values in order. The report is rewritten after
+every map, so an interrupted sweep keeps the rows finished so far. The
+per-map log and screenshot are deleted before each child starts. `fps_avg` and
+`screenshot` are `null` when there are no samples or no
 screenshot. `verdict` is one of:
 
 - `timeout`: killed by the sweep.
 - `crash`: the log contains a `FATAL signal` line.
-- `pass`: exit code 0 and zero script errors, missing natives and exceptions.
+- `pass`: exit code 0, a `SUMMARY` line, and zero script errors, missing natives and exceptions.
 - `fail`: anything else.
