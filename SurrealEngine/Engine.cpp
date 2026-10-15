@@ -898,6 +898,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 	if (LaunchInfo.autostart)
 	{
 		LogMessage("Save game skipped: --autostart does not write to the game folder");
+		SmokeLog::Get()->Event("WARNING", "save to slot " + std::to_string(slotNum) + " skipped under --autostart");
 		return;
 	}
 
