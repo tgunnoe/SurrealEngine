@@ -105,3 +105,29 @@ screenshot. `verdict` is one of:
 - `idle`: exit code 0 and a `SUMMARY` line, but the requested map (the map file's stem) is not in `maps_loaded`, or `fps_avg` is `null`: the run exited cleanly without reaching the map or rendering.
 - `pass`: exit code 0, a `SUMMARY` line, the requested map loaded, a sampled `fps_avg`, and zero script errors, missing natives and exceptions. `script_warnings` does not affect the verdict.
 - `fail`: anything else.
+
+## Triage module
+
+`Tools/smoke/triage/` is the shared code that turns sweep logs into triage
+documents: `extract` (logs to `stubs.json` and `errors.json`), `build`
+(sidecars to `TRIAGE.md`, `stubs.md`, `SUMMARY.md`), `check` (documents
+against sidecars) and `repro` (re-run maps and compare). Everything that
+differs between games lives in a `triage.scenario.Scenario` value: class
+hierarchy, bare-owner table, error attribution, prose, document formats,
+re-run options and the checker options. Functions take the scenario and
+explicit directories, never a literal or the working directory.
+
+A scenario wraps the module in a few lines: put `Tools/smoke` on
+`sys.path`, import the scenario value, and call the module function.
+`scenarios/deusex/` is the reference: `scenario.py` holds its literals and
+the four scripts keep their original command lines.
+
+Tests, from the repository root (the second is the sweep unittest):
+
+```
+python3 -I -B -m unittest discover -s Tools/smoke/triage -p 'test_*.py'
+python3 -I -B -m unittest discover -s Tools/smoke -p test_sweep.py
+```
+
+The first includes a byte-identity test that regenerates the committed
+Deus Ex documents from the committed sidecars.
