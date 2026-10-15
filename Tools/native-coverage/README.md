@@ -9,8 +9,12 @@ C++ handler, per game, and fails when that set grows.
 SurrealDebugger --command "native coverage" [--out <file>] <game folder>
 ```
 
-The run needs no stdin: it selects the game from the folder argument, runs the
-one command, and exits (status 1 if the command fails or no game is found). The
+`--command=<cmd>` and `--out=<file>` work too. The run needs no stdin: it
+requires exactly one folder argument that holds a known game (never the current
+directory or the launcher's saved list), runs the one command, and exits. The
+status is 1 if the folder is missing or unrecognised, the command fails, or the
+command is unknown (including an unknown `native` subcommand). `--out` applies
+to `native coverage` only. The
 interactive form `native coverage` inside the debugger prints the same lines.
 The debugger still initializes widget resources, so run it with a display
 backend available (for example `SURREALWIDGETS_DISPLAY_BACKEND=X11`).
@@ -29,9 +33,9 @@ MISSING <total>                            last line
 
 Lines are unique and sorted bytewise (`LC_ALL=C`) by package, class, function.
 `index=0` marks a name-bound native (matched by function and class name).
-With `--out`, the file holds only these lines; stdout then carries just
-`GAME <executable>-<version>` (for example `GAME Unreal-226b`) and any
-`SKIPPED` lines. Without `--out`, the lines also go to stdout.
+With `--out`, the file holds only these lines. Stdout always carries the
+debugger banner and log lines, plus `GAME <executable>-<version>` (for example
+`GAME Unreal-226b`) and any `SKIPPED` lines. Without `--out`, the lines also go to stdout.
 
 ## Check and goldens
 
@@ -43,7 +47,12 @@ For each folder the script regenerates the output, picks the golden by the
 `GAME` name the debugger prints (`golden/<GAME>.txt`, never by argument order),
 and compares sorted sets with `comm`. It exits 1 when a native is missing now
 but absent from the golden; unchanged or shrunk sets pass. It also exits 1 if a
-run fails or a golden is absent. `SKIPPED` packages are echoed as warnings.
+run fails (its stdout and exit code are printed) or a golden is absent.
+
+A package that fails to load hides its natives, so `golden/<GAME>.skipped`
+lists the package names known to skip for that game (absent means none). A
+`SKIPPED` package missing from that list makes the script exit 1 and name it.
+`--update` rewrites the list along with the golden.
 
 After closing gaps (or deliberately accepting new ones), refresh with the
 explicit flag, then review the diff before committing:
