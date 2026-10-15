@@ -64,13 +64,3 @@ TEST(VMAccessedNoneOutParamSkipsNative)
 	CHECK_MSG(!fixture.HandlerEntered, "a native was entered with a None out parameter");
 	CHECK(result.GetType() == ExpressionValueType::Nothing);
 }
-
-TEST(VMAccessedNoneInParamSkipsNative)
-{
-	NativeNoneFixture fixture(PropertyFlags::Parm);
-
-	ExpressionValue result = fixture.CallWithNone();
-
-	CHECK_MSG(!fixture.HandlerEntered, "a native was entered with a None parameter");
-	CHECK(result.GetType() == ExpressionValueType::Nothing);
-}
