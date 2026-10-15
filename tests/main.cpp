@@ -10,13 +10,12 @@ std::vector<TestCase>& TestRegistry()
 	return registry;
 }
 
-static std::set<std::string> LoadExpectedFailures(const std::string& path)
+static void LoadExpectedFailures(const std::string& path, std::set<std::string>& names)
 {
 	std::ifstream file(path);
 	if (!file)
 		throw std::runtime_error("Cannot open expected-failure list: " + path);
 
-	std::set<std::string> names;
 	std::string line;
 	while (std::getline(file, line))
 	{
@@ -29,13 +28,25 @@ static std::set<std::string> LoadExpectedFailures(const std::string& path)
 		size_t end = line.find_last_not_of(" \t\r");
 		names.insert(line.substr(begin, end - begin + 1));
 	}
-	return names;
+}
+
+static void RejectUnknownExpectedFailures(const std::set<std::string>& names)
+{
+	for (const std::string& name : names)
+	{
+		bool found = false;
+		for (const TestCase& test : TestRegistry())
+			found = found || name == test.Name;
+		if (!found)
+			throw std::runtime_error("Expected-failure list names a test that is not registered: " + name);
+	}
 }
 
 int main(int argc, char** argv)
 {
 	std::string testName;
-	std::string xfailPath;
+	std::vector<std::string> xfailPaths;
+	long expectCount = -1;
 	bool list = false;
 	for (int i = 1; i < argc; i++)
 	{
@@ -44,10 +55,12 @@ int main(int argc, char** argv)
 		else if (!strcmp(argv[i], "--test") && i + 1 < argc)
 			testName = argv[++i];
 		else if (!strcmp(argv[i], "--xfail-file") && i + 1 < argc)
-			xfailPath = argv[++i];
+			xfailPaths.push_back(argv[++i]);
+		else if (!strcmp(argv[i], "--expect-count") && i + 1 < argc)
+			expectCount = atol(argv[++i]);
 		else
 		{
-			fprintf(stderr, "usage: %s [--list] --test <name> [--xfail-file <path>]\n", argv[0]);
+			fprintf(stderr, "usage: %s [--list] [--expect-count <n>] --test <name> [--xfail-file <path>]...\n", argv[0]);
 			return 2;
 		}
 	}
@@ -56,6 +69,30 @@ int main(int argc, char** argv)
 	{
 		for (const TestCase& test : TestRegistry())
 			printf("%s\n", test.Name);
+		return 0;
+	}
+
+	std::set<std::string> expectedFailures;
+	try
+	{
+		for (const std::string& path : xfailPaths)
+			LoadExpectedFailures(path, expectedFailures);
+		RejectUnknownExpectedFailures(expectedFailures);
+	}
+	catch (const std::exception& e)
+	{
+		printf("FAIL %s\n", e.what());
+		return 1;
+	}
+
+	if (expectCount >= 0)
+	{
+		if ((size_t)expectCount != TestRegistry().size())
+		{
+			printf("FAIL registry holds %zu tests but the sources declare %ld; a test did not register\n", TestRegistry().size(), expectCount);
+			return 1;
+		}
+		printf("PASS %zu tests registered\n", TestRegistry().size());
 		return 0;
 	}
 
@@ -77,17 +114,7 @@ int main(int argc, char** argv)
 		return 2;
 	}
 
-	bool expectedFailure = false;
-	try
-	{
-		if (!xfailPath.empty())
-			expectedFailure = LoadExpectedFailures(xfailPath).count(testName) != 0;
-	}
-	catch (const std::exception& e)
-	{
-		fprintf(stderr, "%s\n", e.what());
-		return 2;
-	}
+	bool expectedFailure = expectedFailures.count(testName) != 0;
 
 	std::string failure;
 	bool failedByCheck = false;
