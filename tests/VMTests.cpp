@@ -101,6 +101,22 @@ TEST(CallOmittedOptionalArrayParm)
 	CHECK_EQ(result.ToArray().GetSize(), (size_t)0);
 }
 
+// Positive control: proves the fixture's return channel carries real argument data, so the
+// default-value checks above cannot pass vacuously.
+TEST(CallPassesStructArg)
+{
+	UStructProperty* parm = MakeIntPairStructProperty();
+	OptionalParmFixture fixture(parm, 2 * sizeof(int32_t), alignof(int32_t));
+	int32_t source[2] = { 7, 9 };
+	Array<ExpressionValue> args = { ExpressionValue::Variable(source, parm) };
+
+	ExpressionValue result = fixture.CallWithArgs(args);
+
+	CHECK(result.GetType() == ExpressionValueType::ValueStruct);
+	CHECK_EQ(result.Member(parm->Struct->Properties[0]).ToInt(), 7);
+	CHECK_EQ(result.Member(parm->Struct->Properties[1]).ToInt(), 9);
+}
+
 // A Nothing value can reach the argument list itself (a skipped middle argument, a None
 // context, a nested call that returned early), so omission by position is not the only case.
 TEST(CallExplicitNothingStructParm)
