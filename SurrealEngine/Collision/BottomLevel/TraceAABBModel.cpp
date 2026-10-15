@@ -5,6 +5,9 @@
 
 CollisionHitList TraceAABBModel::Trace(UModel* model, const dvec3& origin, double tmin, const dvec3& dirNormalized, double tmax, const dvec3& extents, bool visibilityOnly)
 {
+	if (model == nullptr || model->Nodes.empty())
+		return {};
+
 	Model = model;
 	CollisionHitList hits;
 	Trace(origin, tmin, dirNormalized, tmax, extents, visibilityOnly, &Model->Nodes.front(), hits);
