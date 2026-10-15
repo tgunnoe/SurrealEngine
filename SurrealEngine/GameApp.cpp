@@ -31,7 +31,9 @@ int GameApp::main(Array<std::string> args)
 			std::cerr << "Unable to open smoke log " << path << "\n";
 			return 1;
 		}
-		SmokeLog::Get()->InstallSignalHandlers();
+		// Without --autostart the crash reporter installs its own handlers, so ours would be replaced.
+		if (autostart)
+			SmokeLog::Get()->InstallSignalHandlers();
 	}
 
 	try
@@ -41,7 +43,10 @@ int GameApp::main(Array<std::string> args)
 
 		if (commandline->HasArg("-h", "--help"))
 		{
-			std::cout << "SurrealEngine [--url=<mapname>] [--engineversion=X] [Path to game folder]\n";
+			std::cout << "SurrealEngine [--url=<mapname>] [--engineversion=X] [Path to game folder]\n"
+				"  --autostart          Skip the launcher and run the given game folder; write nothing to it\n"
+				"  --exit-after=<secs>  Quit the main loop this many seconds after process start\n"
+				"  --smoke-log=<path>   Write a structured, flushed event log for unattended runs\n";
 			return 0;
 		}
 

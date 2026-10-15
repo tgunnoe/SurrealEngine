@@ -47,9 +47,17 @@ void GameFolderSelection::UpdateList()
 
 int GameFolderSelection::AutoSelect()
 {
-	UpdateList();
-	if (Games.empty())
-		throw std::runtime_error("--autostart found no game folder; pass the path to a UE1 game folder");
+	// Unattended runs must run exactly the folder they were given, never a saved or guessed one.
+	const Array<std::string>& items = commandline->GetItems();
+	if (items.empty())
+		throw std::runtime_error("--autostart needs the path to a UE1 game folder as an argument");
+
+	GameLaunchInfo game = ExamineFolder(items.front());
+	if (game.gameName.empty())
+		throw std::runtime_error("--autostart: no UE1 game found in '" + items.front() + "'");
+
+	Games.clear();
+	Games.push_back(game);
 	return 0;
 }
 
@@ -63,6 +71,9 @@ GameLaunchInfo GameFolderSelection::GetLaunchInfo(int selectedGame)
 	info.gameName = commandline->GetArg("-g", "--game", info.gameName);
 	info.noEntryMap = commandline->HasArg("-n", "--noentrymap") || info.noEntryMap;
 	info.url = commandline->GetArg("-u", "--url", info.url);
+	info.autostart = commandline->HasArg("", "--autostart");
+	if (commandline->HasArg("", "--exit-after"))
+		info.exitAfterSeconds = commandline->GetArgDouble("", "--exit-after");
 	return info;
 }
 

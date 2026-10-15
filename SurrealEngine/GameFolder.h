@@ -6,6 +6,8 @@ struct GameLaunchInfo
 	int gameVersion = 0;					// Engine version as named by the game (e.g. 226, 227, 436...)
 	int gameSubVersion = 0;				// Engine sub version displayed as a letter (Note: Isn't always consistent)
 	bool noEntryMap = false;
+	bool autostart = false;					// Unattended run: no launcher, nothing written to the game folder
+	double exitAfterSeconds = -1.0;			// Seconds since process start after which the main loop ends; negative means never
 	std::string gameName = "";				// Name of the game (e.g. "Unreal Tournament")
 	std::string gameRootFolder = "";		// Path to the folder that contains all the subfolders and files
 	std::string gameExecutableName = "";	// Name of the game executable (e.g. "UnrealTournament")
