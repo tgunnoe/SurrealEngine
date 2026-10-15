@@ -33,6 +33,28 @@
 
 int DebuggerApp::Main(Array<std::string> args)
 {
+	// CommandLine only understands --name=value, so the space-separated
+	// "--command <cmd>" and "--out <file>" forms are consumed here first.
+	Array<std::string> remaining;
+	for (size_t i = 0; i < args.size(); i++)
+	{
+		std::string* target = args[i] == "--command" ? &BatchCommand : args[i] == "--out" ? &OutFile : nullptr;
+		if (!target)
+		{
+			remaining.push_back(args[i]);
+		}
+		else if (i + 1 < args.size())
+		{
+			*target = args[++i];
+		}
+		else
+		{
+			std::cerr << "Missing value for " << args[i] << std::endl;
+			return 1;
+		}
+	}
+	args = std::move(remaining);
+
 	InitWidgetResources("dark");
 
 	Logger::Get()->SetCallback([&](const LogMessageLine& line) { PrintLog(line); });
@@ -55,16 +77,28 @@ int DebuggerApp::Main(Array<std::string> args)
 	}
 	WriteOutput(ColorEscape(92) + std::to_string(index++) + ResetEscape() + " - Show launcher" + NewLine());
 	WriteOutput(NewLine());
-	int result = std::atoi(GetInput().c_str()) - 1;
-	if (result < 0)
-		return 0;
-	if (result >= (int)GameFolderSelection::Games.size())
-		result = LauncherWindow::ExecModal();
+	int result = 0;
+	if (BatchCommand.empty())
+	{
+		result = std::atoi(GetInput().c_str()) - 1;
+		if (result < 0)
+			return 0;
+		if (result >= (int)GameFolderSelection::Games.size())
+			result = LauncherWindow::ExecModal();
+	}
+	else if (GameFolderSelection::Games.empty())
+	{
+		std::cerr << "No game found in the given folder" << std::endl;
+		DeinitWidgetResources();
+		return 1;
+	}
 
+	int exitCode = 0;
 	launchinfo = GameFolderSelection::GetLaunchInfo(result);
 	if (launchinfo.gameRootFolder.empty())
 	{
 		WriteOutput(ColorEscape(91) + "No game found!" + ResetEscape() + NewLine() + NewLine());
+		exitCode = 1;
 	}
 	else
 	{
@@ -78,17 +112,28 @@ int DebuggerApp::Main(Array<std::string> args)
 		Engine engine(launchinfo);
 		engine.tickDebugger = [&]() { Tick(); };
 
-		WritePrompt();
-		while (!ExitRequested)
+		if (!BatchCommand.empty())
 		{
-			WaitForInput();
-			Tick();
+			// Non-interactive: run one command and never touch stdin.
+			cmdline = BatchCommand;
+			OnCommandEntered();
+			if (CommandFailed)
+				exitCode = 1;
 		}
-		EndPrompt();
+		else
+		{
+			WritePrompt();
+			while (!ExitRequested)
+			{
+				WaitForInput();
+				Tick();
+			}
+			EndPrompt();
+		}
 	}
 
 	DeinitWidgetResources();
-	return 0;
+	return exitCode;
 }
 
 void DebuggerApp::CreateCommandlets()
@@ -276,6 +321,7 @@ void DebuggerApp::OnCommandEntered()
 	}
 	catch (const std::exception& e)
 	{
+		CommandFailed = true;
 		InCommandlet = false;
 		EndPrompt();
 		if (!ExitRequested)

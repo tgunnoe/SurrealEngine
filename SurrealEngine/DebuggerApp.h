@@ -35,6 +35,10 @@ public:
 
 	bool ResumeProgram = false;
 
+	// Set by --command / --out: run one command without reading stdin.
+	std::string BatchCommand;
+	std::string OutFile;
+
 private:
 	void CreateCommandlets();
 	void Tick();
@@ -60,6 +64,7 @@ private:
 	bool PromptLineActive = false;
 	bool GameRunning = false;
 	bool InCommandlet = false;
+	bool CommandFailed = false;
 
 	std::string WriteBuffer;
 

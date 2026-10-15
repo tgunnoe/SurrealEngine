@@ -21,6 +21,8 @@
 #include "VM/Bytecode.h"
 #include "Utils/JsonValue.h"
 #include "Utils/File.h"
+#include "VM/NativeFunc.h"
+#include "Utils/Logger.h"
 #include <set>
 
 std::string NativeFuncExtractor::Run(PackageManager* packages)
@@ -33,9 +35,7 @@ std::string NativeFuncExtractor::Run(PackageManager* packages)
 		if (pkgname == "Editor")
 			continue;
 
-		Package* package = packages->GetPackage(pkgname.ToString());
-
-		JsonValue jsonPackage = CreatePackageJson(package);
+		JsonValue jsonPackage = CreatePackageJson(TryLoadClasses(packages, pkgname.ToString(), nullptr));
 		if (jsonPackage.properties().size() > 0)
 		{
 			jsonRoot.add(pkgname.ToString(), jsonPackage);
@@ -45,11 +45,74 @@ std::string NativeFuncExtractor::Run(PackageManager* packages)
 	return jsonRoot.to_json(true);
 }
 
-JsonValue NativeFuncExtractor::CreatePackageJson(Package* package)
+Array<UClass*> NativeFuncExtractor::TryLoadClasses(PackageManager* packages, const std::string& name, Array<std::string>* skipped)
+{
+	// Map packages can fail to load and hold no natives; one bad file must not abort the whole walk.
+	try
+	{
+		return packages->GetPackage(name)->GetAllObjects<UClass>();
+	}
+	catch (const std::exception& e)
+	{
+		// Exception text carries a native stack trace after the first line.
+		std::string what = e.what();
+		std::string reason = name + ": " + what.substr(0, what.find('\n'));
+		LogMessage("Skipping package " + reason);
+		if (skipped)
+			skipped->push_back(reason);
+		return {};
+	}
+}
+
+Array<std::string> NativeFuncExtractor::FindMissing(PackageManager* packages, Array<std::string>& skipped)
+{
+	std::set<std::string> missing;
+
+	for (NameString pkgname : packages->GetPackageNames())
+	{
+		if (pkgname == "Editor")
+			continue;
+
+		for (UClass* cls : TryLoadClasses(packages, pkgname.ToString(), &skipped))
+		{
+			for (UField* child = cls->Children; child != nullptr; child = child->Next)
+			{
+				UFunction* func = UClass::TryCast<UFunction>(child);
+				if (!func || !AllFlags(func->FuncFlags, FunctionFlags::Native))
+					continue;
+
+				// Mirrors the handler lookup in Frame::CallNative (VM/Frame.cpp:306-357), which is
+				// the source of truth. A handler counts as present exactly when CallNative would
+				// find one; keep this in sync by hand.
+				bool found = false;
+				if (func->NativeFuncIndex != 0)
+				{
+					// RegisterHandler drops GetSoundLength at 2054 (index shared with another native), so it
+					// never has a handler of its own and CallNative would dispatch to the wrong one.
+					bool dropped = func->NativeFuncIndex == 2054 && func->Name == "GetSoundLength";
+					size_t index = (size_t)func->NativeFuncIndex;
+					found = !dropped && index < NativeFunctions::NativeByIndex.size() && NativeFunctions::NativeByIndex[index];
+				}
+				else
+				{
+					UStruct* owner = func->NativeStruct ? func->NativeStruct : cls;
+					auto it = NativeFunctions::NativeByName.find({ func->Name, owner->Name });
+					found = it != NativeFunctions::NativeByName.end() && it->second;
+				}
+
+				if (!found)
+					missing.insert(pkgname.ToString() + "." + cls->Name.ToString() + "." + func->Name.ToString() + " index=" + std::to_string(func->NativeFuncIndex));
+			}
+		}
+	}
+
+	return Array<std::string>(missing.begin(), missing.end());
+}
+
+JsonValue NativeFuncExtractor::CreatePackageJson(const Array<UClass*>& classes)
 {
 	JsonValue jsonPackage = JsonValue::object();
 
-	Array<UClass*> classes = package->GetAllObjects<UClass>();
 	for (UClass* cls : classes)
 	{
 		JsonValue jsonClass = CreateClassJson(cls);
