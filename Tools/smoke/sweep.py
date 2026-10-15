@@ -37,7 +37,7 @@ def list_maps(game):
 
 def parse_log(path):
     info = {"script_errors": 0, "stub_hits": 0, "missing_natives": 0,
-            "exceptions": 0, "fps_avg": None, "fatal_signal": False,
+            "exceptions": 0, "script_warnings": 0, "fps_avg": None, "fatal_signal": False,
             "summary": False, "maps_loaded": []}
     fps = []
     try:
@@ -48,6 +48,8 @@ def parse_log(path):
         kind, _, rest = line.partition(" ")
         if kind == "SCRIPT_ERROR":
             info["script_errors"] += 1
+        elif kind == "SCRIPT_WARNING":
+            info["script_warnings"] += 1
         elif kind == "STUB":
             info["stub_hits"] += 1
         elif kind == "MISSING_NATIVE":
@@ -68,6 +70,23 @@ def parse_log(path):
     if fps:
         info["fps_avg"] = sum(fps) / len(fps)
     return info, fps
+
+
+def classify(info, exit_code, timed_out, requested_map):
+    """Verdict for one map run; `info` is the dict parse_log returns.
+
+    Warnings are deliberately absent: whether they count against a clean run is a policy
+    for the reader of the report.
+    """
+    if timed_out:
+        return "timeout"
+    if info["fatal_signal"]:
+        return "crash"
+    if exit_code == 0 and info["summary"] and (requested_map not in info["maps_loaded"] or info["fps_avg"] is None):
+        return "idle"
+    if exit_code == 0 and info["summary"] and not (info["script_errors"] or info["missing_natives"] or info["exceptions"]):
+        return "pass"
+    return "fail"
 
 
 def run_map(exe, game, map_path, seconds, logdir):
@@ -106,14 +125,7 @@ def run_map(exe, game, map_path, seconds, logdir):
     exit_code = proc.wait()
 
     info, _ = parse_log(log)
-    if timed_out:
-        verdict = "timeout"
-    elif info["fatal_signal"]:
-        verdict = "crash"
-    elif exit_code == 0 and info["summary"] and not (info["script_errors"] or info["missing_natives"] or info["exceptions"]):
-        verdict = "pass"
-    else:
-        verdict = "fail"
+    verdict = classify(info, exit_code, timed_out, name)
     return {
         "map": name,
         "exit_code": exit_code,
@@ -121,6 +133,7 @@ def run_map(exe, game, map_path, seconds, logdir):
         "stub_hits": info["stub_hits"],
         "missing_natives": info["missing_natives"],
         "exceptions": info["exceptions"],
+        "script_warnings": info["script_warnings"],
         "fps_avg": info["fps_avg"],
         "maps_loaded": info["maps_loaded"],
         "log": str(log),
