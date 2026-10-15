@@ -2,8 +2,6 @@
 #include "Precomp.h"
 #include "Engine.h"
 #include "Utils/File.h"
-#include "Utils/Logger.h"
-#include "Utils/CommandLine.h"
 #include "Utils/StrTools.h"
 #include "Utils/SHA1Sum.h"
 #include "Render/RenderSubsystem.h"
@@ -119,8 +117,7 @@ Engine::~Engine()
 
 void Engine::Run()
 {
-	if (SmokeLog::Get()->IsOpen())
-		SmokeLog::Get()->Event("GAME", LaunchInfo.gameName + " " + LaunchInfo.gameVersionString);
+	SmokeLog::Get()->Event("GAME", LaunchInfo.gameName + " " + LaunchInfo.gameVersionString);
 
 	LogMessage("Game: " + LaunchInfo.gameName + " (Version: " + LaunchInfo.gameVersionString + ")");
 	LoadEngineSettings();
@@ -152,19 +149,7 @@ void Engine::Run()
 	else
 		LoadMap(UnrealURL(GetDefaultURL(packages->GetIniValue("system", "URL", "LocalMap")), LaunchInfo.url));
 
-	SmokeLog* smoke = SmokeLog::Get();
-	if (smoke->IsOpen())
-		smoke->Event("MAP", LevelInfo->URL.Map);
-
 	LoginPlayer();
-
-	if (smoke->IsOpen())
-		smoke->Event("LOGIN");
-
-	const bool hasExitAfter = commandline->HasArg("", "--exit-after");
-	const double exitAfterSeconds = commandline->GetArgDouble("", "--exit-after");
-	double fpsWindowStart = smoke->SecondsSinceStart();
-	int fpsWindowFrames = 0;
 
 	auto objprop = GC::Alloc<UObjectProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
 	auto vecprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
@@ -255,19 +240,7 @@ void Engine::Run()
 		viewport->SetViewportRect(0, 0, engine->window->GetPixelWidth(), engine->window->GetPixelHeight());
 		render->DrawGame(levelElapsed);
 
-		if (smoke->IsOpen())
-		{
-			fpsWindowFrames++;
-			double now = smoke->SecondsSinceStart();
-			if (now - fpsWindowStart >= 1.0)
-			{
-				smoke->Fps(fpsWindowFrames / (now - fpsWindowStart));
-				fpsWindowStart = now;
-				fpsWindowFrames = 0;
-			}
-		}
-
-		if (hasExitAfter && smoke->SecondsSinceStart() >= exitAfterSeconds)
+		if (SmokeLog::Get()->OnFrame(LaunchInfo.exitAfterSeconds))
 			quit = true;
 
 		// Save the game if there is a request for it
@@ -357,21 +330,18 @@ void Engine::Run()
 	LogMessage("Shutting down...");
 	window->UnlockCursor();
 
-	// Unattended runs must leave the game folder untouched.
-	if (!commandline->HasArg("", "--autostart"))
+	LogMessage("Saving configurations...");
+	if (packages->MissingSESystemIni())
 	{
-		LogMessage("Saving configurations...");
-		if (packages->MissingSESystemIni())
-		{
-			// Add the missing Subsystem entries
-			client->SaveConfig();
-			audiodev->SaveConfig();
-			renderdev->SaveConfig();
-		}
-		packages->SetIniValue("System", "Engine.SurrealWindowSystem", "WindowSystem", windowingSystemName);
-		packages->SaveAllIniFiles();
-
+		// Add the missing Subsystem entries
+		client->SaveConfig();
+		audiodev->SaveConfig();
+		renderdev->SaveConfig();
 	}
+	packages->SetIniValue("System", "Engine.SurrealWindowSystem", "WindowSystem", windowingSystemName);
+	// Unattended runs must leave the game folder untouched.
+	if (!LaunchInfo.autostart)
+		packages->SaveAllIniFiles();
 
 	LogMessage("Closing window...");
 	CloseWindow();
@@ -918,10 +888,19 @@ void Engine::PossessSavedPlayer()
 	CallEvent(viewport->Actor(), EventName::Possess);
 
 	render->OnMapLoaded();
+	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+	SmokeLog::Get()->Event("LOGIN");
 }
 
 void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const
 {
+	// Saves are written under the game folder, which unattended runs must leave untouched.
+	if (LaunchInfo.autostart)
+	{
+		LogMessage("Save game skipped: --autostart does not write to the game folder");
+		return;
+	}
+
 	if (slotNum < -1 || (!packages->IsDeusEx() && slotNum < 0))
 		Exception::Throw("Invalid save slot: " + std::to_string(slotNum));
 
@@ -987,6 +966,8 @@ std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems)
 
 void Engine::LoginPlayer()
 {
+	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+
 	UnrealURL url = LevelInfo->URL;
 	std::map<std::string, std::string> travelInfo = Level->TravelInfo;
 
@@ -1078,6 +1059,7 @@ void Engine::LoginPlayer()
 	CallEvent(LevelInfo->Game(), EventName::PostLogin, { ExpressionValue::ObjectValue(pawn) });
 
 	render->OnMapLoaded();
+	SmokeLog::Get()->Event("LOGIN");
 }
 
 UZoneInfo* Engine::GetZoneActor(int zoneIndex)

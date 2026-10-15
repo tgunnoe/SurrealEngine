@@ -8,7 +8,12 @@
 #include <cstdio>
 #include <cstring>
 #include <csignal>
-#ifndef WIN32
+#include <cerrno>
+#include <string_view>
+#ifdef WIN32
+#include <io.h>
+#include <fcntl.h>
+#else
 #include <fcntl.h>
 #include <unistd.h>
 #endif
@@ -26,12 +31,7 @@ void LogUnimplemented(const std::string& message)
 void Logger::LogMessage(const std::string& message)
 {
 	if (SmokeLog::Get()->IsOpen())
-	{
-		if (message.rfind("Script error: ", 0) == 0)
-			SmokeLog::Get()->ScriptError(message.substr(14));
-		else if (message.rfind("Unimplemented: ", 0) == 0)
-			SmokeLog::Get()->Stub(message.substr(15));
-	}
+		SmokeLog::Get()->OnLogMessage(message);
 
 	if (!Frame::Callstack.empty() && Frame::Callstack.back()->Func)
 	{
@@ -164,11 +164,6 @@ std::list<LogMessageLine> Logger::LoadLog(const std::string& filename)
 }
 
 
-#ifdef WIN32
-#include <io.h>
-#include <fcntl.h>
-#endif
-
 SmokeLog* SmokeLog::Get()
 {
 	static SmokeLog log;
@@ -246,6 +241,48 @@ void SmokeLog::Exception(const std::string& text)
 	Event("EXCEPTION", text);
 }
 
+void SmokeLog::OnLogMessage(const std::string& message)
+{
+	constexpr std::string_view scriptError = "Script error: ";
+	constexpr std::string_view unimplemented = "Unimplemented: ";
+	constexpr std::string_view missingNative = "Unknown native function";
+
+	std::string_view view = message;
+	if (view.substr(0, scriptError.size()) == scriptError)
+	{
+		view.remove_prefix(scriptError.size());
+		// The VM catches a missing native reached from inside another native's callback
+		// and logs it as a script error; it is still a missing native.
+		if (view.substr(0, missingNative.size()) == missingNative)
+			MissingNative(std::string(view));
+		else
+			ScriptError(std::string(view));
+	}
+	else if (view.substr(0, unimplemented.size()) == unimplemented)
+	{
+		view.remove_prefix(unimplemented.size());
+		Stub(std::string(view));
+	}
+}
+
+bool SmokeLog::OnFrame(double exitAfterSeconds)
+{
+	const double now = SecondsSinceStart();
+	if (fd >= 0)
+	{
+		if (fpsWindowStart < 0.0)
+			fpsWindowStart = now;
+		fpsWindowFrames++;
+		if (now - fpsWindowStart >= 1.0)
+		{
+			Fps(fpsWindowFrames / (now - fpsWindowStart));
+			fpsWindowStart = now;
+			fpsWindowFrames = 0;
+		}
+	}
+	return exitAfterSeconds >= 0.0 && now >= exitAfterSeconds;
+}
+
 void SmokeLog::Fps(double fps)
 {
 	fpsSum += fps;
@@ -289,6 +326,9 @@ namespace
 		buf[len++] = '\n';
 		ssize_t r = write(fatalFd, buf, len);
 		(void)r;
+		// Re-raise with the default action so the kernel still produces a core dump.
+		signal(sig, SIG_DFL);
+		raise(sig);
 		_exit(128 + sig);
 	}
 }
@@ -304,13 +344,17 @@ void SmokeLog::InstallSignalHandlers()
 	stack_t ss = {};
 	ss.ss_sp = altstack;
 	ss.ss_size = sizeof(altstack);
-	sigaltstack(&ss, nullptr);
+	if (sigaltstack(&ss, nullptr) != 0)
+		Event("WARNING", std::string("sigaltstack failed: ") + std::strerror(errno));
 
 	struct sigaction sa = {};
 	sa.sa_handler = SmokeFatalSignal;
 	sa.sa_flags = SA_ONSTACK | SA_NODEFER;
 	sigemptyset(&sa.sa_mask);
 	for (int sig : { SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL })
-		sigaction(sig, &sa, nullptr);
+	{
+		if (sigaction(sig, &sa, nullptr) != 0)
+			Event("WARNING", "sigaction failed for signal " + std::to_string(sig) + ": " + std::strerror(errno));
+	}
 #endif
 }
