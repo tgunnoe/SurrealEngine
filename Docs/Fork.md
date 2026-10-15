@@ -74,6 +74,16 @@ are only read. A full run takes several minutes and opens game windows.
 
 The script never pushes and never merges into `master` or `--base`. A RED result
 (a failed gate, or a merge conflict, whose files are listed with the markers left
-in the worktree) keeps the worktree for inspection. To land a GREEN result,
-inspect the scratch branch and merge it into the fork's branch yourself. Remove
-leftovers with `--cleanup` on the next run, or `git worktree remove`.
+in the worktree) keeps the worktree for inspection.
+
+A verdict covers exactly one tree: the base as it was at the time of the run plus
+the merge commit. Land a GREEN result only with
+`git merge --ff-only merge-gate/<stamp>` on the base branch. If that refuses
+because the base has moved, re-run the gate rather than merging.
+
+`--cleanup` removes only the current run's worktree and `merge-gate/<stamp>`
+branch, at the end of that run; it never touches earlier runs. To remove an
+earlier run completely, run `git worktree remove --force <tree>` and
+`git branch -D merge-gate/<stamp>`, then delete that run's `logs/` directory
+(`git worktree remove` alone leaves the branch and the logs behind). Each kept
+run holds a full Release build, hundreds of MB.
