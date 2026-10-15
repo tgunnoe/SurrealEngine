@@ -26,17 +26,11 @@ public:
 	bool IsOpen() const { return fd >= 0; }
 
 	void Event(const std::string& kind, const std::string& text = {});
-	// Classifies engine log messages (script errors, unimplemented stubs) into events.
-	void OnLogMessage(const std::string& message);
 	void ScriptError(const std::string& text);
 	void Stub(const std::string& text);
 	void MissingNative(const std::string& text);
 	void Exception(const std::string& text);
 	void Fps(double fps);
-
-	// Called once per rendered frame: samples fps about once a second and
-	// returns true once exitAfterSeconds (negative = never) has elapsed.
-	bool OnFrame(double exitAfterSeconds);
 	void Fatal(const std::string& text);
 	void Summary();
 
@@ -61,8 +55,6 @@ private:
 	int exceptions = 0;
 	double fpsSum = 0.0;
 	int fpsSamples = 0;
-	double fpsWindowStart = -1.0;
-	int fpsWindowFrames = 0;
 };
 
 class Logger
