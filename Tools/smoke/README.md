@@ -38,7 +38,7 @@ handlers install before the engine starts; apart from that, the first line
 is `GAME`.
 
 Order: the first three lines are `GAME`, `MAP`, `LOGIN`, except that
-`SCRIPT_ERROR`, `STUB` and `WARNING` lines may appear before `MAP` and between
+`SCRIPT_ERROR`, `SCRIPT_WARNING`, `STUB` and `WARNING` lines may appear before `MAP` and between
 `MAP` and `LOGIN`, because script runs while the map loads. Every later map
 transition (restart, next URL, save load, client travel, travel to the entry
 level) writes a new `MAP`/`LOGIN` pair. A single-map run has exactly one of
@@ -51,11 +51,12 @@ each. The entry-map preload is not logged.
 | `LOGIN` | The player logged in to that map. |
 | `WARNING <text>` | The harness could not install a signal handler, or a requested save was skipped under `--autostart`. |
 | `SCRIPT_ERROR <text>` | A native raised an error that the VM logged. |
+| `SCRIPT_WARNING <text>` | A script accessed None; the original games log this as a warning and continue. A native that would receive a None argument is skipped, and the access is reported once, by the statement. |
 | `STUB <text>` | A distinct unimplemented-function message. |
 | `MISSING_NATIVE <text>` | An unknown native function. Either it aborted the run (followed by `FATAL`), or the VM caught it inside another native's callback and logged it as a script error, in which case the run continues and it is counted here, not as `SCRIPT_ERROR`. |
 | `EXCEPTION <text>` | An exception reached the top level; always followed by `FATAL`. |
 | `FPS <value>` | Frames per second, sampled about once per second. |
-| `SUMMARY script_errors=N stub_hits=N missing_natives=N exceptions=N fps_avg=X` | Last line of a clean `--exit-after` run. |
+| `SUMMARY script_errors=N stub_hits=N missing_natives=N exceptions=N script_warnings=N fps_avg=X` | Last line of a clean `--exit-after` run. |
 | `FATAL <text>` / `FATAL signal <n>` | Last line of a fatal run; `SUMMARY` is then absent. A crash during teardown, after the main loop ended, can still append `FATAL signal <n>` after `SUMMARY`. |
 
 `exceptions` in `SUMMARY` is always 0 today, because every exception ends the
@@ -88,7 +89,7 @@ appears in them, and an occluded engine window renders slowly.
 ```
 { "game": "<folder>", "seconds": 15,
   "maps": [ { "map", "exit_code", "script_errors", "stub_hits",
-              "missing_natives", "exceptions", "fps_avg", "maps_loaded",
+              "missing_natives", "exceptions", "script_warnings", "fps_avg", "maps_loaded",
               "log", "screenshot", "verdict" } ] }
 ```
 
@@ -101,5 +102,6 @@ screenshot. `verdict` is one of:
 
 - `timeout`: killed by the sweep.
 - `crash`: the log contains a `FATAL signal` line.
-- `pass`: exit code 0, a `SUMMARY` line, and zero script errors, missing natives and exceptions.
+- `idle`: exit code 0 and a `SUMMARY` line, but the requested map (the map file's stem) is not in `maps_loaded`, or `fps_avg` is `null`: the run exited cleanly without reaching the map or rendering.
+- `pass`: exit code 0, a `SUMMARY` line, the requested map loaded, a sampled `fps_avg`, and zero script errors, missing natives and exceptions. `script_warnings` does not affect the verdict.
 - `fail`: anything else.
