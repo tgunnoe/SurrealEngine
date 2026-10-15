@@ -90,6 +90,7 @@ int main(int argc, char** argv)
 	}
 
 	std::string failure;
+	bool failedByCheck = false;
 	try
 	{
 		selected->Body();
@@ -97,6 +98,7 @@ int main(int argc, char** argv)
 	catch (const TestFailure& f)
 	{
 		failure = f.Message;
+		failedByCheck = true;
 	}
 	catch (const std::exception& e)
 	{
@@ -114,7 +116,8 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	if (expectedFailure)
+	// Only a failed check may be an expected failure; an exception means the test is broken.
+	if (expectedFailure && failedByCheck)
 	{
 		printf("XFAIL %s: %s\n", testName.c_str(), failure.c_str());
 		return 0;
