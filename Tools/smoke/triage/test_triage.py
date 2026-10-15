@@ -72,9 +72,9 @@ def stub(text="Actor.Foo", owner="Actor", cls="gameplay"):
 
 def write_fixture(root):
     names = ["M1", "M2", "M3", "M4", "M5", "M6"]
-    sweep = [row(n) for n in names] + [row("C1"), row("Cased", ["cased"])]
+    sweep = [row(n) for n in names] + [row("Cove"), row("Cased", ["cased"])]
     stubs = {n: [stub()] for n in names}
-    stubs["C1"] = []
+    stubs["Cove"] = []
     stubs["Cased"] = []
     errors = {n: {"errors": [], "fatal_after_summary": False} for n in stubs}
     errors["M1"]["errors"] = [{"kind": "SCRIPT_ERROR", "text": "boom here", "map_section": "M1"}]
