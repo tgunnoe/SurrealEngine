@@ -3,6 +3,7 @@
 #include "GameFolder.h"
 #include "Commandlet/Commandlet.h"
 
+class CommandLine;
 class Frame;
 class UObject;
 struct LogMessageLine;
@@ -40,6 +41,7 @@ public:
 	std::string OutFile;
 
 private:
+	int RunBatch(const CommandLine& cmd);
 	void CreateCommandlets();
 	void Tick();
 

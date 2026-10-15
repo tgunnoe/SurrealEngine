@@ -33,13 +33,21 @@
 
 int DebuggerApp::Main(Array<std::string> args)
 {
-	// CommandLine only understands --name=value, so the space-separated
-	// "--command <cmd>" and "--out <file>" forms are consumed here first.
+	// "--command <cmd>" and "--out <file>" take a space-separated value, which
+	// CommandLine does not understand, so both forms are consumed here first.
 	Array<std::string> remaining;
 	for (size_t i = 0; i < args.size(); i++)
 	{
 		std::string* target = args[i] == "--command" ? &BatchCommand : args[i] == "--out" ? &OutFile : nullptr;
-		if (!target)
+		if (args[i].rfind("--command=", 0) == 0)
+		{
+			BatchCommand = args[i].substr(10);
+		}
+		else if (args[i].rfind("--out=", 0) == 0)
+		{
+			OutFile = args[i].substr(6);
+		}
+		else if (!target)
 		{
 			remaining.push_back(args[i]);
 		}
@@ -67,6 +75,13 @@ int DebuggerApp::Main(Array<std::string> args)
 	CommandLine cmd(args);
 	commandline = &cmd;
 
+	if (!BatchCommand.empty())
+	{
+		int code = RunBatch(cmd);
+		DeinitWidgetResources();
+		return code;
+	}
+
 	WriteOutput("Please select a game:" + NewLine() + NewLine());
 	GameFolderSelection::UpdateList();
 	int index = 1;
@@ -77,28 +92,16 @@ int DebuggerApp::Main(Array<std::string> args)
 	}
 	WriteOutput(ColorEscape(92) + std::to_string(index++) + ResetEscape() + " - Show launcher" + NewLine());
 	WriteOutput(NewLine());
-	int result = 0;
-	if (BatchCommand.empty())
-	{
-		result = std::atoi(GetInput().c_str()) - 1;
-		if (result < 0)
-			return 0;
-		if (result >= (int)GameFolderSelection::Games.size())
-			result = LauncherWindow::ExecModal();
-	}
-	else if (GameFolderSelection::Games.empty())
-	{
-		std::cerr << "No game found in the given folder" << std::endl;
-		DeinitWidgetResources();
-		return 1;
-	}
+	int result = std::atoi(GetInput().c_str()) - 1;
+	if (result < 0)
+		return 0;
+	if (result >= (int)GameFolderSelection::Games.size())
+		result = LauncherWindow::ExecModal();
 
-	int exitCode = 0;
 	launchinfo = GameFolderSelection::GetLaunchInfo(result);
 	if (launchinfo.gameRootFolder.empty())
 	{
 		WriteOutput(ColorEscape(91) + "No game found!" + ResetEscape() + NewLine() + NewLine());
-		exitCode = 1;
 	}
 	else
 	{
@@ -112,28 +115,52 @@ int DebuggerApp::Main(Array<std::string> args)
 		Engine engine(launchinfo);
 		engine.tickDebugger = [&]() { Tick(); };
 
-		if (!BatchCommand.empty())
+		WritePrompt();
+		while (!ExitRequested)
 		{
-			// Non-interactive: run one command and never touch stdin.
-			cmdline = BatchCommand;
-			OnCommandEntered();
-			if (CommandFailed)
-				exitCode = 1;
+			WaitForInput();
+			Tick();
 		}
-		else
-		{
-			WritePrompt();
-			while (!ExitRequested)
-			{
-				WaitForInput();
-				Tick();
-			}
-			EndPrompt();
-		}
+		EndPrompt();
 	}
 
 	DeinitWidgetResources();
-	return exitCode;
+	return 0;
+}
+
+int DebuggerApp::RunBatch(const CommandLine& cmd)
+{
+	// The folder must be named explicitly: falling back to the current directory
+	// or the launcher's saved list would run the command against the wrong game.
+	GameFolderSelection::UpdateList();
+	const Array<std::string>& folders = cmd.GetItems();
+	int selected = -1;
+	if (folders.size() == 1)
+	{
+		for (size_t i = 0; i < GameFolderSelection::Games.size(); i++)
+		{
+			if (GameFolderSelection::Games[i].gameRootFolder == folders[0])
+				selected = (int)i;
+		}
+	}
+	if (selected < 0)
+	{
+		std::string given;
+		for (const std::string& folder : folders)
+			given += " " + folder;
+		std::cerr << "Batch mode needs exactly one game folder that holds a known game; got:" << (given.empty() ? " (none)" : given) << std::endl;
+		return 1;
+	}
+
+	launchinfo = GameFolderSelection::GetLaunchInfo(selected);
+	Frame::RunDebugger = [this]() { FrameDebugBreak(); };
+
+	Engine engine(launchinfo);
+	engine.tickDebugger = [&]() { Tick(); };
+
+	cmdline = BatchCommand;
+	OnCommandEntered();
+	return CommandFailed ? 1 : 0;
 }
 
 void DebuggerApp::CreateCommandlets()
@@ -316,7 +343,10 @@ void DebuggerApp::OnCommandEntered()
 			}
 
 			if (!found)
+			{
+				CommandFailed = true;
 				WriteOutput("Unknown command" + NewLine());
+			}
 		}
 	}
 	catch (const std::exception& e)
