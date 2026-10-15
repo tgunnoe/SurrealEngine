@@ -82,8 +82,9 @@ Array<std::string> NativeFuncExtractor::FindMissing(PackageManager* packages, Ar
 					continue;
 
 				// Mirrors the handler lookup in Frame::CallNative (VM/Frame.cpp:306-357), which is
-				// the source of truth. A handler counts as present exactly when CallNative would
-				// find one; keep this in sync by hand.
+				// the source of truth. Keep this in sync by hand. The one deliberate difference is
+				// GetSoundLength at 2054 below, which is reported missing although CallNative would
+				// find another native's handler at that index.
 				bool found = false;
 				if (func->NativeFuncIndex != 0)
 				{

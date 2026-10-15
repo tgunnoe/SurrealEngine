@@ -2,7 +2,6 @@
 
 #include "Utils/JsonValue.h"
 
-class Package;
 class PackageManager;
 class UClass;
 class UFunction;
