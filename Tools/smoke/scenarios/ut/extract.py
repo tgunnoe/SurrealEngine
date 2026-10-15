@@ -16,11 +16,11 @@ GAMEPLAY = {
     "Actor", "Pawn", "PlayerPawn", "Inventory", "Weapon", "Projectile",
     "Decoration", "Mover", "Trigger", "NavigationPoint", "GameInfo",
     "LevelInfo", "ZoneInfo", "Canvas", "HUD", "Brush", "Light", "Pickup",
-    "Ammo", "Pawn", "Bot", "Scout", "Spawnpoint", "PlayerStart",
+    "Ammo", "Bot", "Scout", "Spawnpoint", "PlayerStart",
     "Triggers", "Effects", "Carcass", "Teleporter", "Keypoint", "Info",
     "Decal", "Console", "PlayerReplicationInfo", "ReplicationInfo",
     "GameReplicationInfo", "Spectator", "Mutator", "Projector",
-    "ScriptedPawn", "Weapons", "ParticleIterator", "Inventory",
+    "ScriptedPawn", "Weapons", "ParticleIterator",
 }
 # Owners that are not gameplay: logging, admin, demo, editor, debug tools.
 NON_GAMEPLAY = {
@@ -75,7 +75,7 @@ def main():
         for s in stubs:
             o = owner_of(s, bare_owners)
             rows.append({"text": s, "owner": o,
-                         "gameplay": (o in GAMEPLAY) if o else None})
+                         "gameplay": (True if o in GAMEPLAY else False if o in NON_GAMEPLAY else None)})
         stubs_out[m] = rows
         errors_out[m] = {"first": errors, "fatal_after_summary": fatal_after}
     json.dump(stubs_out, open(os.path.join(outdir, "stubs.json"), "w"), indent=1, sort_keys=True)
