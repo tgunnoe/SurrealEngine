@@ -1,0 +1,1251 @@
+{
+ "game": "/home/tgunnoe/Games/gog/unreal-tournament-goty/drive_c/GOG Games/Unreal Tournament GOTY",
+ "seconds": 60,
+ "maps": [
+  {
+   "map": "AS-Frigate",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "AS-Frigate"
+   ],
+   "log": "/tmp/sweep-ut.d/AS-Frigate.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "AS-Guardia",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95762711864407,
+   "maps_loaded": [
+    "AS-Guardia"
+   ],
+   "log": "/tmp/sweep-ut.d/AS-Guardia.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "AS-HiSpeed",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 45.89545454545455,
+   "maps_loaded": [
+    "AS-HiSpeed"
+   ],
+   "log": "/tmp/sweep-ut.d/AS-HiSpeed.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "AS-Mazon",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 84.906,
+   "maps_loaded": [
+    "AS-Mazon"
+   ],
+   "log": "/tmp/sweep-ut.d/AS-Mazon.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "AS-OceanFloor",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97796610169493,
+   "maps_loaded": [
+    "AS-OceanFloor"
+   ],
+   "log": "/tmp/sweep-ut.d/AS-OceanFloor.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "AS-Overlord",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95423728813557,
+   "maps_loaded": [
+    "AS-Overlord"
+   ],
+   "log": "/tmp/sweep-ut.d/AS-Overlord.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "AS-Rook",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95084745762713,
+   "maps_loaded": [
+    "AS-Rook"
+   ],
+   "log": "/tmp/sweep-ut.d/AS-Rook.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "AS-Tutorial",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98983050847457,
+   "maps_loaded": [
+    "AS-Tutorial"
+   ],
+   "log": "/tmp/sweep-ut.d/AS-Tutorial.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Command",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.96271186440677,
+   "maps_loaded": [
+    "CTF-Command"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Command.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Coret",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0084745762712,
+   "maps_loaded": [
+    "CTF-Coret"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Coret.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Cybrosis][",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9949152542373,
+   "maps_loaded": [
+    "CTF-Cybrosis]["
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Cybrosis][.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Darji16",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9762711864407,
+   "maps_loaded": [
+    "CTF-Darji16"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Darji16.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Dreary",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "CTF-Dreary"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Dreary.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-EternalCave",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "CTF-EternalCave"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-EternalCave.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Face",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98813559322033,
+   "maps_loaded": [
+    "CTF-Face"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Face.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Face][",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97796610169493,
+   "maps_loaded": [
+    "CTF-Face]["
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Face][.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Gauntlet",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.01016949152543,
+   "maps_loaded": [
+    "CTF-Gauntlet"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Gauntlet.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-HallOfGiants",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9593220338983,
+   "maps_loaded": [
+    "CTF-HallOfGiants"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-HallOfGiants.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-High",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98305084745763,
+   "maps_loaded": [
+    "CTF-High"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-High.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Hydro16",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98135593220337,
+   "maps_loaded": [
+    "CTF-Hydro16"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Hydro16.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Kosov",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95593220338984,
+   "maps_loaded": [
+    "CTF-Kosov"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Kosov.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-LavaGiant",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95762711864407,
+   "maps_loaded": [
+    "CTF-LavaGiant"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-LavaGiant.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Niven",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9457627118644,
+   "maps_loaded": [
+    "CTF-Niven"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Niven.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-November",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 104.44615384615385,
+   "maps_loaded": [
+    "CTF-November"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-November.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Noxion16",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 109.86923076923077,
+   "maps_loaded": [
+    "CTF-Noxion16"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Noxion16.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Nucleus",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.96101694915257,
+   "maps_loaded": [
+    "CTF-Nucleus"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Nucleus.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Orbital",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98474576271187,
+   "maps_loaded": [
+    "CTF-Orbital"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Orbital.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CTF-Tutorial",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "CTF-Tutorial"
+   ],
+   "log": "/tmp/sweep-ut.d/CTF-Tutorial.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "CityIntro",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 54.7,
+   "maps_loaded": [
+    "CityIntro"
+   ],
+   "log": "/tmp/sweep-ut.d/CityIntro.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Agony",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 142.59830508474576,
+   "maps_loaded": [
+    "DM-Agony"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Agony.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-ArcaneTemple",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 139.78305084745764,
+   "maps_loaded": [
+    "DM-ArcaneTemple"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-ArcaneTemple.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Barricade",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 139.92241379310346,
+   "maps_loaded": [
+    "DM-Barricade"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Barricade.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Codex",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 137.21724137931034,
+   "maps_loaded": [
+    "DM-Codex"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Codex.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Conveyor",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 137.10701754385966,
+   "maps_loaded": [
+    "DM-Conveyor"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Conveyor.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Crane",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "DM-Crane"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Crane.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Curse][",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9593220338983,
+   "maps_loaded": [
+    "DM-Curse]["
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Curse][.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Cybrosis][",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97457627118644,
+   "maps_loaded": [
+    "DM-Cybrosis]["
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Cybrosis][.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Deck16][",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0033898305085,
+   "maps_loaded": [
+    "DM-Deck16]["
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Deck16][.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Fetid",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9762711864407,
+   "maps_loaded": [
+    "DM-Fetid"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Fetid.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Fractal",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97966101694914,
+   "maps_loaded": [
+    "DM-Fractal"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Fractal.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Gothic",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.01694915254237,
+   "maps_loaded": [
+    "DM-Gothic"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Gothic.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Grinder",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95593220338984,
+   "maps_loaded": [
+    "DM-Grinder"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Grinder.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-HealPod][",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9864406779661,
+   "maps_loaded": [
+    "DM-HealPod]["
+   ],
+   "log": "/tmp/sweep-ut.d/DM-HealPod][.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-HyperBlast",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95423728813557,
+   "maps_loaded": [
+    "DM-HyperBlast"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-HyperBlast.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-KGalleon",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9677966101695,
+   "maps_loaded": [
+    "DM-KGalleon"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-KGalleon.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Liandri",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9915254237288,
+   "maps_loaded": [
+    "DM-Liandri"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Liandri.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Malevolence",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95593220338984,
+   "maps_loaded": [
+    "DM-Malevolence"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Malevolence.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Mojo][",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.01525423728813,
+   "maps_loaded": [
+    "DM-Mojo]["
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Mojo][.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Morbias][",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "DM-Morbias]["
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Morbias][.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Morpheus",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.01694915254237,
+   "maps_loaded": [
+    "DM-Morpheus"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Morpheus.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Oblivion",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.02033898305086,
+   "maps_loaded": [
+    "DM-Oblivion"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Oblivion.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Peak",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.99322033898306,
+   "maps_loaded": [
+    "DM-Peak"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Peak.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Phobos",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98983050847457,
+   "maps_loaded": [
+    "DM-Phobos"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Phobos.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Pressure",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97796610169493,
+   "maps_loaded": [
+    "DM-Pressure"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Pressure.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Pyramid",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9966101694915,
+   "maps_loaded": [
+    "DM-Pyramid"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Pyramid.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Shrapnel][",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9949152542373,
+   "maps_loaded": [
+    "DM-Shrapnel]["
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Shrapnel][.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-SpaceNoxx",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.01694915254237,
+   "maps_loaded": [
+    "DM-SpaceNoxx"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-SpaceNoxx.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Stalwart",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97118644067794,
+   "maps_loaded": [
+    "DM-Stalwart"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Stalwart.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-StalwartXL",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0,
+   "maps_loaded": [
+    "DM-StalwartXL"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-StalwartXL.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Tempest",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.00677966101694,
+   "maps_loaded": [
+    "DM-Tempest"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Tempest.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Turbine",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.99830508474577,
+   "maps_loaded": [
+    "DM-Turbine"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Turbine.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Tutorial",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0050847457627,
+   "maps_loaded": [
+    "DM-Tutorial"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Tutorial.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DM-Zeto",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.00677966101694,
+   "maps_loaded": [
+    "DM-Zeto"
+   ],
+   "log": "/tmp/sweep-ut.d/DM-Zeto.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Cinder",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "DOM-Cinder"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Cinder.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Condemned",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.00677966101694,
+   "maps_loaded": [
+    "DOM-Condemned"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Condemned.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Cryptic",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9915254237288,
+   "maps_loaded": [
+    "DOM-Cryptic"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Cryptic.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Gearbolt",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.99830508474577,
+   "maps_loaded": [
+    "DOM-Gearbolt"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Gearbolt.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Ghardhen",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0033898305085,
+   "maps_loaded": [
+    "DOM-Ghardhen"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Ghardhen.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Lament",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0084745762712,
+   "maps_loaded": [
+    "DOM-Lament"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Lament.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Leadworks",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0050847457627,
+   "maps_loaded": [
+    "DOM-Leadworks"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Leadworks.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-MetalDream",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97457627118644,
+   "maps_loaded": [
+    "DOM-MetalDream"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-MetalDream.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Olden",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9966101694915,
+   "maps_loaded": [
+    "DOM-Olden"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Olden.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Sesmar",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0033898305085,
+   "maps_loaded": [
+    "DOM-Sesmar"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Sesmar.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DOM-Tutorial",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 1,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0,
+   "maps_loaded": [
+    "DOM-Tutorial"
+   ],
+   "log": "/tmp/sweep-ut.d/DOM-Tutorial.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "EOL_Assault",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.99322033898306,
+   "maps_loaded": [
+    "EOL_Assault"
+   ],
+   "log": "/tmp/sweep-ut.d/EOL_Assault.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "EOL_CTF",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.01186440677967,
+   "maps_loaded": [
+    "EOL_CTF"
+   ],
+   "log": "/tmp/sweep-ut.d/EOL_CTF.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "EOL_Challenge",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.01016949152543,
+   "maps_loaded": [
+    "EOL_Challenge"
+   ],
+   "log": "/tmp/sweep-ut.d/EOL_Challenge.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "EOL_Deathmatch",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0084745762712,
+   "maps_loaded": [
+    "EOL_Deathmatch"
+   ],
+   "log": "/tmp/sweep-ut.d/EOL_Deathmatch.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "EOL_Domination",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98813559322033,
+   "maps_loaded": [
+    "EOL_Domination"
+   ],
+   "log": "/tmp/sweep-ut.d/EOL_Domination.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "EOL_Statues",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98474576271187,
+   "maps_loaded": [
+    "EOL_Statues"
+   ],
+   "log": "/tmp/sweep-ut.d/EOL_Statues.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "Entry",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98305084745763,
+   "maps_loaded": [
+    "Entry"
+   ],
+   "log": "/tmp/sweep-ut.d/Entry.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "UT-Logo-Map",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.00169491525423,
+   "maps_loaded": [
+    "UT-Logo-Map"
+   ],
+   "log": "/tmp/sweep-ut.d/UT-Logo-Map.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "UTCredits",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 0,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9677966101695,
+   "maps_loaded": [
+    "UTCredits"
+   ],
+   "log": "/tmp/sweep-ut.d/UTCredits.log",
+   "screenshot": null,
+   "verdict": "pass"
+  }
+ ]
+}

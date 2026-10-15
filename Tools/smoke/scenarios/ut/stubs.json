@@ -1,0 +1,517 @@
+{
+ "AS-Frigate": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "AS-Guardia": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "AS-HiSpeed": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "AS-Mazon": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "AS-OceanFloor": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "AS-Overlord": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "AS-Rook": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "AS-Tutorial": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Command": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Coret": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Cybrosis][": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Darji16": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Dreary": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-EternalCave": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Face": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Face][": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Gauntlet": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-HallOfGiants": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-High": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Hydro16": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Kosov": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-LavaGiant": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Niven": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-November": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Noxion16": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Nucleus": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Orbital": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "CTF-Tutorial": [],
+ "CityIntro": [],
+ "DM-Agony": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-ArcaneTemple": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Barricade": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Codex": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Conveyor": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Crane": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Curse][": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Cybrosis][": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Deck16][": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Fetid": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Fractal": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Gothic": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Grinder": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-HealPod][": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-HyperBlast": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-KGalleon": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Liandri": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Malevolence": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Mojo][": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Morbias][": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Morpheus": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Oblivion": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Peak": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Phobos": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Pressure": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Pyramid": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Shrapnel][": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-SpaceNoxx": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Stalwart": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-StalwartXL": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Tempest": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Turbine": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Tutorial": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DM-Zeto": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Cinder": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Condemned": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Cryptic": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Gearbolt": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Ghardhen": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Lament": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Leadworks": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-MetalDream": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Olden": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Sesmar": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "DOM-Tutorial": [
+  {
+   "gameplay": true,
+   "owner": "GameInfo",
+   "text": "GetNetworkNumber"
+  }
+ ],
+ "EOL_Assault": [],
+ "EOL_CTF": [],
+ "EOL_Challenge": [],
+ "EOL_Deathmatch": [],
+ "EOL_Domination": [],
+ "EOL_Statues": [],
+ "Entry": [],
+ "UT-Logo-Map": [],
+ "UTCredits": []
+}

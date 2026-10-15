@@ -1,0 +1,334 @@
+{
+ "AS-Frigate": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "AS-Guardia": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "AS-HiSpeed": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "AS-Mazon": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "AS-OceanFloor": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "AS-Overlord": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "AS-Rook": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "AS-Tutorial": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Command": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Coret": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Cybrosis][": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Darji16": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Dreary": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-EternalCave": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Face": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Face][": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Gauntlet": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-HallOfGiants": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-High": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Hydro16": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Kosov": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-LavaGiant": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Niven": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-November": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Noxion16": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Nucleus": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Orbital": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CTF-Tutorial": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "CityIntro": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Agony": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-ArcaneTemple": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Barricade": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Codex": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Conveyor": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Crane": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Curse][": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Cybrosis][": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Deck16][": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Fetid": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Fractal": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Gothic": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Grinder": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-HealPod][": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-HyperBlast": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-KGalleon": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Liandri": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Malevolence": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Mojo][": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Morbias][": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Morpheus": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Oblivion": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Peak": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Phobos": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Pressure": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Pyramid": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Shrapnel][": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-SpaceNoxx": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Stalwart": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-StalwartXL": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Tempest": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Turbine": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Tutorial": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DM-Zeto": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Cinder": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Condemned": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Cryptic": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Gearbolt": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Ghardhen": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Lament": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Leadworks": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-MetalDream": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Olden": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Sesmar": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "DOM-Tutorial": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "EOL_Assault": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "EOL_CTF": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "EOL_Challenge": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "EOL_Deathmatch": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "EOL_Domination": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "EOL_Statues": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "Entry": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "UT-Logo-Map": {
+  "fatal_after_summary": false,
+  "first": []
+ },
+ "UTCredits": {
+  "fatal_after_summary": false,
+  "first": []
+ }
+}
