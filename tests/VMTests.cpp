@@ -49,6 +49,11 @@ namespace
 		{
 			return Frame::Call(Func, Instance, ArrayView<ExpressionValue>());
 		}
+
+		ExpressionValue CallWithArgs(Array<ExpressionValue>& args)
+		{
+			return Frame::Call(Func, Instance, ArrayView<ExpressionValue>(args.data(), args.size()));
+		}
 	};
 
 	UIntProperty* MakeIntProperty(const char* name, size_t offset)
@@ -91,6 +96,34 @@ TEST(CallOmittedOptionalArrayParm)
 	OptionalParmFixture fixture(parm, sizeof(ScriptArray), alignof(ScriptArray));
 
 	ExpressionValue result = fixture.CallWithNoArgs();
+
+	CHECK(result.GetType() == ExpressionValueType::ValueArray);
+	CHECK_EQ(result.ToArray().GetSize(), (size_t)0);
+}
+
+// A Nothing value can reach the argument list itself (a skipped middle argument, a None
+// context, a nested call that returned early), so omission by position is not the only case.
+TEST(CallExplicitNothingStructParm)
+{
+	UStructProperty* parm = MakeIntPairStructProperty();
+	OptionalParmFixture fixture(parm, 2 * sizeof(int32_t), alignof(int32_t));
+	Array<ExpressionValue> args = { ExpressionValue::NothingValue() };
+
+	ExpressionValue result = fixture.CallWithArgs(args);
+
+	CHECK(result.GetType() == ExpressionValueType::ValueStruct);
+	CHECK_EQ(result.Member(parm->Struct->Properties[0]).ToInt(), 0);
+	CHECK_EQ(result.Member(parm->Struct->Properties[1]).ToInt(), 0);
+}
+
+TEST(CallExplicitNothingArrayParm)
+{
+	UArrayProperty* parm = GC::Alloc<UArrayProperty>("Opt", nullptr, ObjectFlags::NoFlags);
+	parm->Inner = MakeIntProperty("Inner", 0);
+	OptionalParmFixture fixture(parm, sizeof(ScriptArray), alignof(ScriptArray));
+	Array<ExpressionValue> args = { ExpressionValue::NothingValue() };
+
+	ExpressionValue result = fixture.CallWithArgs(args);
 
 	CHECK(result.GetType() == ExpressionValueType::ValueArray);
 	CHECK_EQ(result.ToArray().GetSize(), (size_t)0);
