@@ -64,6 +64,7 @@ public:
 
 	bool PlaySound(UActor* Actor, int Id, USound* Sound, vec3 Location, float Volume, float Radius, float Pitch, bool isTalk);
 	void StopSound(UActor* Actor, int Id);
+	void SetSpeechVolume(uint8_t volume);
 	void ActorDestroyed(UActor* Actor);
 	void StopSounds();
 
@@ -90,5 +91,6 @@ private:
 	Array<PlayingSound> PlayingSounds;
 	UMusic* CurrentSong = nullptr;
 	int CurrentSection = 255;
+	uint8_t SpeechVolume = 255; // talk-slot multiplier (x/255) set by Actor.SetInstantSpeechVolume
 	int FreeSlot = 0x07ffffff;
 };

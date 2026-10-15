@@ -63,3 +63,19 @@ TEST(AudioSpeechVolumeScales)
 	CHECK_EQ(SpeechScaledVolume(SoundVolumeCap, 255), SoundVolumeCap);
 	CHECK(SpeechScaledVolume(100.0f, 255) <= SoundVolumeCap);
 }
+
+TEST(AudioSpeechVolumeComposesWithTalkBoost)
+{
+	// The device applies the speech multiplier to the stored, already-boosted talk volume.
+	for (int i = 0; i <= SweepSteps; i++)
+	{
+		float stored = BoostedSoundVolume(SweepValue(i), DeusExTalkBoost);
+		for (int speech : { 0, 64, 128, 255 })
+		{
+			float scaled = SpeechScaledVolume(stored, (uint8_t)speech);
+			CHECK(scaled <= SoundVolumeCap);
+			CHECK(scaled <= stored + 1e-6f);
+			CHECK(std::fabs(scaled - stored * (speech / 255.0f)) < 1e-5f);
+		}
+	}
+}

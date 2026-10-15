@@ -1,6 +1,7 @@
 
 #include "Precomp.h"
 #include "USurrealAudioDevice.h"
+#include "Audio/SoundVolume.h"
 #include "Engine.h"
 #include "Package/PackageManager.h"
 #include "Package/IniProperty.h"
@@ -241,7 +242,7 @@ void USurrealAudioDevice::UpdateAmbience()
 			else
 			{
 				// Update basic sound properties
-				Playing.Volume = 2.0f * (AmbientFactor * Playing.Actor->SoundVolume() / 255.0f);
+				Playing.Volume = BoostedSoundVolume(AmbientFactor * Playing.Actor->SoundVolume() / 255.0f, AmbientBoost);
 				Playing.Radius = Playing.Actor->WorldSoundRadius();
 				Playing.Pitch = Playing.Actor->SoundPitch() / 64.0f;
 			}
@@ -319,12 +320,17 @@ void USurrealAudioDevice::UpdateSounds(const mat4& listener)
 
 			UpdateLipSync(Playing);
 
+			// Actor.SetInstantSpeechVolume scales talk sounds without touching the stored volume
+			float volume = Playing.Volume;
+			if ((Playing.Id & 14) == SLOT_Talk * 2)
+				volume = SpeechScaledVolume(volume, SpeechVolume);
+
 			// Update the sound.
 			if (Playing.IsActive)
 			{
 				if (m_Device->IsPlaying((int)i))
 				{
-					m_Device->UpdateSound((int)i, Playing.Sound, Playing.Location, Playing.Volume, Playing.Radius, Playing.Pitch);
+					m_Device->UpdateSound((int)i, Playing.Sound, Playing.Location, volume, Playing.Radius, Playing.Pitch);
 				}
 				else
 				{
@@ -334,7 +340,7 @@ void USurrealAudioDevice::UpdateSounds(const mat4& listener)
 			}
 			else
 			{
-				m_Device->PlaySound((int)i, Playing.Sound, Playing.Location, Playing.Volume, Playing.Radius, Playing.Pitch);
+				m_Device->PlaySound((int)i, Playing.Sound, Playing.Location, volume, Playing.Radius, Playing.Pitch);
 				Playing.IsActive = true;
 			}
 		}
@@ -383,19 +389,14 @@ bool USurrealAudioDevice::PlaySound(UActor* Actor, int Id, USound* Sound, vec3 L
 	if (Radius <= 0.0) // Seems we have zero radius values. Lovely.
 		Radius = 1500.0f;
 
+	// Talk in Deus Ex and ambient sounds are boosted relative to the rest; every path shares
+	// one curve and one cap (see SoundVolume.h).
+	float boost = 1.0f;
 	if (isTalk && engine->LaunchInfo.IsDeusEx())
-	{
-		// Should this still be directional?
-		Volume *= 2.0f;
-	}
-	else
-	{
-		// Attempt to normalize volume around 1.0 as the values used by the original games are just really broken in general.
-		if (Volume >= 8.0f)
-			Volume = 0.8f; // Special check for announcer garbage
-		else
-			Volume = (Volume - 1.0f) * 0.25f + 1.0f;
-	}
+		boost = DeusExTalkBoost;
+	else if ((Id & 14) == 2 * SLOT_Ambient)
+		boost = AmbientBoost;
+	Volume = BoostedSoundVolume(Volume, boost);
 
 	if (!m_Viewport || !Sound)
 		return false;
@@ -441,6 +442,11 @@ bool USurrealAudioDevice::PlaySound(UActor* Actor, int Id, USound* Sound, vec3 L
 	PlayingSounds[Index].StartTime = engine->LevelInfo->TimeSeconds();
 
 	return true;
+}
+
+void USurrealAudioDevice::SetSpeechVolume(uint8_t volume)
+{
+	SpeechVolume = volume;
 }
 
 void USurrealAudioDevice::ActorDestroyed(UActor* Actor)
