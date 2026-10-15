@@ -230,15 +230,11 @@ ExpressionValue Frame::Call(UFunction* func, UObject* instance, const ArrayView<
 			ExpressionValue lvalue = ExpressionValue::Variable(frame.Variables->Data, prop);
 			if (AllFlags(prop->PropFlags, PropertyFlags::Parm))
 			{
+				// Trailing optional args may be missing. Their storage was already default
+				// constructed above, and storing a Nothing value into a struct or array
+				// parameter would copy from a null pointer.
 				if (argindex < args.size())
-				{
 					lvalue.Store(args[argindex]);
-				}
-				else
-				{
-					// Trailing optional args may be missing.
-					lvalue.Store(ExpressionValue::NothingValue());
-				}
 
 				argindex++;
 			}
