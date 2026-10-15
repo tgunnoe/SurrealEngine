@@ -26,6 +26,7 @@ endforeach()
 # Names listed in an xfail.txt are registered as XFAIL.<name>; the runner itself reports
 # XFAIL/XPASS from the same files.
 set(TEST_COUNT 0)
+set(ALL_CTEST_NAMES)
 foreach(src IN LISTS SURREALTESTS_SOURCES)
 	file(STRINGS ${src} TEST_LINES REGEX "^TEST\\(")
 	foreach(line IN LISTS TEST_LINES)
@@ -36,6 +37,7 @@ foreach(src IN LISTS SURREALTESTS_SOURCES)
 		endif()
 		add_test(NAME ${ctest_name}
 			COMMAND SurrealTests --test ${test_name} ${XFAIL_ARGS})
+		list(APPEND ALL_CTEST_NAMES ${ctest_name})
 		math(EXPR TEST_COUNT "${TEST_COUNT} + 1")
 	endforeach()
 endforeach()
@@ -43,3 +45,7 @@ endforeach()
 # A test that compiles but never registers (or an xfail entry naming no test) goes red here.
 add_test(NAME RegistryMatchesSources
 	COMMAND SurrealTests --expect-count ${TEST_COUNT} ${XFAIL_ARGS})
+list(APPEND ALL_CTEST_NAMES RegistryMatchesSources)
+
+# A hung test must not stall CI until the job-level limit.
+set_tests_properties(${ALL_CTEST_NAMES} PROPERTIES TIMEOUT 60)
