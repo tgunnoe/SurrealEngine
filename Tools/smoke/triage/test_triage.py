@@ -105,21 +105,27 @@ class Fixture(unittest.TestCase):
 
     def edit_doc(self, name, old, new):
         p = os.path.join(self.docs, name)
-        text = open(p).read()
+        with open(p) as f:
+            text = f.read()
         self.assertIn(old, text)
-        open(p, "w").write(text.replace(old, new, 1))
+        with open(p, "w") as f:
+            f.write(text.replace(old, new, 1))
 
     def edit_data(self, name, fn):
         p = os.path.join(self.data, name)
-        obj = json.load(open(p))
+        with open(p) as f:
+            obj = json.load(f)
         fn(obj)
-        json.dump(obj, open(p, "w"))
+        with open(p, "w") as f:
+            json.dump(obj, f)
 
     def problems(self, scn):
         return check.check(scn, self.data, self.docs)[2]
 
     def only(self, **opts):
-        return dataclasses.replace(TOY, **opts)
+        # Case-insensitive matching stays on so the "Cased" row is clean
+        # in every fixture except the one testing that option.
+        return dataclasses.replace(TOY, map_match_case_insensitive=True, **opts)
 
     def assert_option(self, option, value, mutate, marker):
         """The mutation is flagged with the option on, for the marker's reason,
@@ -130,7 +136,8 @@ class Fixture(unittest.TestCase):
         mutate()
         flagged = self.problems(on)
         self.assertTrue(any(marker in p for p in flagged), (option, flagged))
-        self.assertEqual(self.problems(TOY), [], "mutation must pass with %s off" % option)
+        off = self.only(**{option: None if option == "row_count" else False})
+        self.assertEqual(self.problems(off), [], "mutation must pass with %s off" % option)
 
 
 class TestClassify(unittest.TestCase):
@@ -158,8 +165,10 @@ class TestExtract(unittest.TestCase):
             with open(os.path.join(logs, "notes.txt"), "w") as f:
                 f.write("ignored")
             extract.extract(TOY, logs, out)
-            stubs = json.load(open(os.path.join(out, "stubs.json")))
-            errs = json.load(open(os.path.join(out, "errors.json")))
+            with open(os.path.join(out, "stubs.json")) as f:
+                stubs = json.load(f)
+            with open(os.path.join(out, "errors.json")) as f:
+                errs = json.load(f)
         self.assertEqual([s["text"] for s in stubs["maps"]["M1"]], ["Actor.Foo", "Bare(2)"])
         self.assertEqual([s["class"] for s in stubs["maps"]["M1"]], ["gameplay", "non-gameplay"])
         self.assertEqual(stubs["owners"]["Util"]["class"], "non-gameplay")
@@ -178,7 +187,8 @@ class TestReproCompare(unittest.TestCase):
         paths = []
         for i, body in enumerate((old, new)):
             p = os.path.join(d.name, "%d.log" % i)
-            open(p, "w").write(body)
+            with open(p, "w") as f:
+                f.write(body)
             paths.append(p)
         return paths
 
@@ -250,17 +260,19 @@ class TestCheckOptions(Fixture):
             "TRIAGE.md", "verdict: pass, exit code 0", "verdict: fail, exit code 1"), "verdict line")
 
     def test_map_match_case_insensitive(self):
-        on = self.only(map_match_case_insensitive=True)
+        on = self.only()
         self.generate(on)
         self.assertEqual(self.problems(on), [])
-        self.assertNotIn("## Cased", open(os.path.join(self.docs, "TRIAGE.md")).read())
+        with open(os.path.join(self.docs, "TRIAGE.md")) as f:
+            self.assertNotIn("## Cased", f.read())
         # Exact matching treats the same data as non-clean, so the on-docs miss a section.
         self.assertTrue(any("section set differs" in p for p in self.problems(TOY)))
 
     def test_section_removed_is_flagged_by_default(self):
-        self.generate(TOY)
+        base = self.only()
+        self.generate(base)
         self.edit_doc("TRIAGE.md", "## M2", "## Renamed")
-        self.assertTrue(any("section set differs" in p for p in self.problems(TOY)))
+        self.assertTrue(any("section set differs" in p for p in self.problems(base)))
 
 
 class TestDeusExByteIdentity(unittest.TestCase):
