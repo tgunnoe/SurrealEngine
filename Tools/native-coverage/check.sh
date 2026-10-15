@@ -27,8 +27,11 @@ trap 'rm -rf "$tmp"' EXIT
 status=0
 for folder in "$@"; do
 	out="$tmp/out.txt"
-	if ! "$debugger" --command "native coverage" --out "$out" "$folder" </dev/null >"$tmp/stdout.txt" 2>"$tmp/stderr.txt"; then
-		echo "FAIL: debugger failed for $folder" >&2
+	"$debugger" --command "native coverage" --out "$out" "$folder" </dev/null >"$tmp/stdout.txt" 2>"$tmp/stderr.txt"
+	rc=$?
+	if [ "$rc" -ne 0 ]; then
+		echo "FAIL: debugger exited $rc for $folder" >&2
+		tr -d '\r' <"$tmp/stdout.txt" >&2
 		cat "$tmp/stderr.txt" >&2
 		status=1
 		continue
@@ -37,22 +40,40 @@ for folder in "$@"; do
 	# Match goldens by the game the debugger reports, not by argument order.
 	game="$(tr -d '\r' <"$tmp/stdout.txt" | sed -n 's/^GAME //p' | head -n 1)"
 	if [ -z "$game" ] || ! tail -n 1 "$out" | grep -q '^MISSING [0-9][0-9]*$'; then
-		echo "FAIL: no GAME name or MISSING line for $folder" >&2
+		echo "FAIL: no GAME name or MISSING line for $folder; debugger stdout:" >&2
+		tr -d '\r' <"$tmp/stdout.txt" >&2
 		status=1
 		continue
 	fi
 	golden="$golden_dir/$game.txt"
-	tr -d '\r' <"$tmp/stdout.txt" | grep '^SKIPPED ' | sed "s/^/warning: $game: /" >&2
+	tr -d '\r' <"$tmp/stdout.txt" | sed -n 's/^SKIPPED \([^:]*\):.*/\1/p' | LC_ALL=C sort -u >"$tmp/skipped.txt"
+	skipped_golden="$golden_dir/$game.skipped"
 
 	if [ "$update" = 1 ]; then
 		mkdir -p "$golden_dir"
 		cp "$out" "$golden"
+		if [ -s "$tmp/skipped.txt" ]; then
+			cp "$tmp/skipped.txt" "$skipped_golden"
+		else
+			rm -f "$skipped_golden"
+		fi
 		echo "updated $golden ($(tail -n 1 "$out"))"
 		continue
 	fi
 
 	if [ ! -f "$golden" ]; then
 		echo "FAIL: no golden for $game (run with --update to create it)" >&2
+		status=1
+		continue
+	fi
+
+	# A package that fails to load hides its natives, so an unknown skip fails
+	# the check instead of passing as a smaller set.
+	if [ -f "$skipped_golden" ]; then LC_ALL=C sort -u "$skipped_golden" >"$tmp/skipped_old.txt"; else : >"$tmp/skipped_old.txt"; fi
+	new_skips="$(LC_ALL=C comm -13 "$tmp/skipped_old.txt" "$tmp/skipped.txt")"
+	if [ -n "$new_skips" ]; then
+		echo "FAIL: $game skipped packages that failed to load and are not in $game.skipped:" >&2
+		echo "$new_skips" >&2
 		status=1
 		continue
 	fi
