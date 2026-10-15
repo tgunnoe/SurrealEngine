@@ -117,6 +117,8 @@ Engine::~Engine()
 
 void Engine::Run()
 {
+	SmokeLog::Get()->Event("GAME", LaunchInfo.gameName + " " + LaunchInfo.gameVersionString);
+
 	LogMessage("Game: " + LaunchInfo.gameName + " (Version: " + LaunchInfo.gameVersionString + ")");
 	LoadEngineSettings();
 	LogMessage("Loaded Engine settings");
@@ -238,6 +240,9 @@ void Engine::Run()
 		viewport->SetViewportRect(0, 0, engine->window->GetPixelWidth(), engine->window->GetPixelHeight());
 		render->DrawGame(levelElapsed);
 
+		if (SmokeLog::Get()->OnFrame(LaunchInfo.exitAfterSeconds))
+			quit = true;
+
 		// Save the game if there is a request for it
 		if (SaveGameInfo.SaveGameSlot != DONT_SAVE_GAME)
 		{
@@ -334,7 +339,9 @@ void Engine::Run()
 		renderdev->SaveConfig();
 	}
 	packages->SetIniValue("System", "Engine.SurrealWindowSystem", "WindowSystem", windowingSystemName);
-	packages->SaveAllIniFiles();
+	// Unattended runs must leave the game folder untouched.
+	if (!LaunchInfo.autostart)
+		packages->SaveAllIniFiles();
 
 	LogMessage("Closing window...");
 	CloseWindow();
@@ -881,10 +888,20 @@ void Engine::PossessSavedPlayer()
 	CallEvent(viewport->Actor(), EventName::Possess);
 
 	render->OnMapLoaded();
+	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+	SmokeLog::Get()->Event("LOGIN");
 }
 
 void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const
 {
+	// Saves are written under the game folder, which unattended runs must leave untouched.
+	if (LaunchInfo.autostart)
+	{
+		LogMessage("Save game skipped: --autostart does not write to the game folder");
+		SmokeLog::Get()->Event("WARNING", "save to slot " + std::to_string(slotNum) + " skipped under --autostart");
+		return;
+	}
+
 	if (slotNum < -1 || (!packages->IsDeusEx() && slotNum < 0))
 		Exception::Throw("Invalid save slot: " + std::to_string(slotNum));
 
@@ -950,6 +967,8 @@ std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems)
 
 void Engine::LoginPlayer()
 {
+	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+
 	UnrealURL url = LevelInfo->URL;
 	std::map<std::string, std::string> travelInfo = Level->TravelInfo;
 
@@ -1041,6 +1060,7 @@ void Engine::LoginPlayer()
 	CallEvent(LevelInfo->Game(), EventName::PostLogin, { ExpressionValue::ObjectValue(pawn) });
 
 	render->OnMapLoaded();
+	SmokeLog::Get()->Event("LOGIN");
 }
 
 UZoneInfo* Engine::GetZoneActor(int zoneIndex)

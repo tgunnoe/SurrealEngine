@@ -1,0 +1,326 @@
+{
+ "Bluff": {
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Bluff",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at GameInfo.ScoreKill line 1001: SubtractEqual_FloatFloat(Other.PlayerReplicationInfo.Score, intToFloat(1)) at GameInfo.Killed line 923: ScoreKill(Killer, Other) at SinglePlayer.Killed line 20: Killed(Killer, Other, DamageType) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.FellOutOfWorld line 353: Died(null, fell, Location)"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Bluff",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at ScriptedPawn.MeleeDamageTarget line 1333: Target.TakeDamage(hitdamage, this, HitLocation, pushdir, hacked) at Krall.ThrowDamageTarget line 888: AttackSuccess = MeleeDamageTarget(byteToInt(ThrowDamage), { 0.000000, 0.000000, 0.000000 })"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Bluff",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at KraalBolt.Flying.ProcessTouch line 49: Other.TakeDamage(floatToInt(Damage), Instigator, HitLocation, Momentum, zapped) at Projectile.Touch line 49: ProcessTouch(Other, HitLocation)"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Bluff",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at SkaarjProjectile.Flying.ProcessTouch line 23: Other.TakeDamage(floatToInt(Damage), Instigator, HitLocation, Momentum, zapped) at Projectile.Touch line 49: ProcessTouch(Other, HitLocation)"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Bluff",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at GameInfo.ScoreKill line 1001: SubtractEqual_FloatFloat(Other.PlayerReplicationInfo.Score, intToFloat(1)) at GameInfo.Killed line 923: ScoreKill(Killer, Other) at SinglePlayer.Killed line 20: Killed(Killer, Other, DamageType) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at Pawn.PainTimer line 1512: TakeDamage(5, null, Location, { 0.000000, 0.000000, 0.000000 }, drowned)"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "Ceremony": {
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Ceremony",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at ScriptedPawn.MeleeDamageTarget line 1333: Target.TakeDamage(hitdamage, this, HitLocation, pushdir, hacked) at Skaarj.ClawDamageTarget line 697: if (MeleeDamageTarget(byteToInt(ClawDamage), Multiply_FloatVector(intToFloat(Multiply_IntInt(byteToInt(ClawDamage), 900)), Normal(Subtract_VectorVector(Target.Location, Location)))))"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Ceremony",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at Actor.HurtRadius line 852: Victims.TakeDamage(floatToInt(Multiply_FloatFloat(damageScale, DamageAmount)), Instigator, Subtract_VectorVector(Victims.Location, Multiply_FloatVector(Multiply_FloatFloat(0.500000, Add_FloatFloat(Victims.CollisionHeight, Victims.CollisionRadius)), Dir)), Multiply_FloatVector(Multiply_FloatFloat(damageScale, Momentum), Dir), DamageName) at SlithProjectile.Explode line 49: HurtRadius(Multiply_FloatFloat(Damage, DrawScale), Multiply_FloatFloat(DrawScale, intToFloat(200)), Corroded, intToFloat(MomentumTransfer), HitLocation) at SlithProjectile.Flying.ProcessTouch line 57: Explode(HitLocation, { 0.000000, 0.000000, 0.000000 }) at Projectile.Touch line 49: ProcessTouch(Other, Add_VectorVector(Other.Location, Multiply_FloatVector(Other.CollisionRadius, Normal(Subtract_VectorVector(Location, Other.Location)))))"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Ceremony",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at GameInfo.ScoreKill line 1001: SubtractEqual_FloatFloat(Other.PlayerReplicationInfo.Score, intToFloat(1)) at GameInfo.Killed line 923: ScoreKill(Killer, Other) at SinglePlayer.Killed line 20: Killed(Killer, Other, DamageType) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.TacticalMove.TakeDamage line 3680: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at SpecialEvent.DamageInstigator.Trigger line 48: Other.TakeDamage(Damage, EventInstigator, EventInstigator.Location, { 0.000000, 0.000000, 0.000000 }, DamageType) at Trigger.Touch line 213: A.Trigger(Other, Other.Instigator)"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Ceremony",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at SkaarjProjectile.Flying.ProcessTouch line 23: Other.TakeDamage(floatToInt(Damage), Instigator, HitLocation, Momentum, zapped) at Projectile.Touch line 49: ProcessTouch(Other, HitLocation)"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Ceremony",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at GameInfo.ScoreKill line 1001: SubtractEqual_FloatFloat(Other.PlayerReplicationInfo.Score, intToFloat(1)) at GameInfo.Killed line 923: ScoreKill(Killer, Other) at SinglePlayer.Killed line 20: Killed(Killer, Other, DamageType) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at Pawn.PainTimer line 1512: TakeDamage(5, null, Location, { 0.000000, 0.000000, 0.000000 }, drowned)"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "Chizra": {
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Chizra",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at ScriptedPawn.MeleeDamageTarget line 1333: Target.TakeDamage(hitdamage, this, HitLocation, pushdir, hacked) at Slith.ClawDamageTarget line 351: MeleeDamageTarget(byteToInt(ClawDamage), Multiply_FloatVector(Multiply_FloatFloat(byteToFloat(ClawDamage), 1000.000000), Normal(Subtract_VectorVector(Target.Location, Location))))"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "DCrater": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DKNightOp": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Dark": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DasaCellars": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DasaPass": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Dig": {
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Dig",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at TentacleProjectile.Flying.ProcessTouch line 22: Other.TakeDamage(floatToInt(Damage), Instigator, HitLocation, Momentum, stung) at Projectile.Touch line 49: ProcessTouch(Other, HitLocation)"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "DmAriza": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DmCurse": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DmDeathFan": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DmDeck16": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DmElsinore": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DmFith": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DmHealPod": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DmMorbias": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DmRadikus": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DmTundra": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Dug": {
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "Dug",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at ScriptedPawn.MeleeDamageTarget line 1333: Target.TakeDamage(hitdamage, this, HitLocation, pushdir, hacked) at Skaarj.SpinDamageTarget line 691: if (MeleeDamageTarget(byteToInt(SpinDamage), Multiply_FloatVector(intToFloat(Multiply_IntInt(byteToInt(SpinDamage), 1000)), Normal(Subtract_VectorVector(Target.Location, Location)))))"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "Endgame": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Entry": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Entry_MP": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "ExtremeBeg": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "ExtremeCore": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "ExtremeDGen": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "ExtremeDark": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "ExtremeEnd": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "ExtremeGen": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "ExtremeLab": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Gateway": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Harobed": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "IsvDeck1": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "IsvKran32": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "IsvKran4": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "NaliBoat": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "NaliC": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "NaliLord": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Noork": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "NyLeve": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Passage": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "QueenEnd": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Ruins": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "SkyBase": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "SkyCaves": {
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "SkyCaves",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at ScriptedPawn.MeleeDamageTarget line 1333: Target.TakeDamage(hitdamage, this, HitLocation, pushdir, hacked) at Krall.PoundDamageTarget line 882: if (MeleeDamageTarget(byteToInt(PoundDamage), Multiply_FloatVector(intToFloat(Multiply_IntInt(byteToInt(PoundDamage), 500)), Normal(Subtract_VectorVector(Target.Location, Location)))))"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "SkyTown": {
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "SkyTown",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.MeleeAttack.TakeDamage line 4886: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at ScriptedPawn.MeleeDamageTarget line 1333: Target.TakeDamage(hitdamage, this, HitLocation, pushdir, hacked) at Krall.StrikeDamageTarget line 876: if (MeleeDamageTarget(byteToInt(StrikeDamage), Multiply_FloatVector(intToFloat(Multiply_IntInt(byteToInt(StrikeDamage), 700)), Normal(Subtract_VectorVector(Target.Location, Location)))))"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "SkyTown",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at KraalBolt.Flying.ProcessTouch line 49: Other.TakeDamage(floatToInt(Damage), Instigator, HitLocation, Momentum, zapped) at Projectile.Touch line 49: ProcessTouch(Other, HitLocation)"
+   },
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "SkyTown",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at ScriptedPawn.MeleeDamageTarget line 1333: Target.TakeDamage(hitdamage, this, HitLocation, pushdir, hacked) at Krall.ThrowDamageTarget line 888: AttackSuccess = MeleeDamageTarget(byteToInt(ThrowDamage), { 0.000000, 0.000000, 0.000000 })"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "SpireVillage": {
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "SpireVillage",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.Retreating.TakeDamage line 3055: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at ScriptedPawn.MeleeDamageTarget line 1333: Target.TakeDamage(hitdamage, this, HitLocation, pushdir, hacked) at Titan.SlapDamageTarget line 472: if (MeleeDamageTarget(byteToInt(SlapDamage), Multiply_FloatVector(70000.000000, Add_VectorVector(Y, { 0.000000, 0.000000, 1.000000 }))))"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "TerraLift": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Terraniux": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "TheSunspire": {
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "section": "TheSunspire",
+    "text": "Accessed None  Script call stack: at Object.SubtractEqual_FloatFloat line 175 at SinglePlayer.Killed line 20: SubtractEqual_FloatFloat(Killer.PlayerReplicationInfo.Score, intToFloat(2)) at Pawn.Died line 1318: Level.Game.Killed(Killer, this, DamageType) at Pawn.TakeDamage line 1246: Died(instigatedBy, DamageType, HitLocation) at ScriptedPawn.FallingState.TakeDamage line 4662: TakeDamage(Damage, instigatedBy, HitLocation, Momentum, DamageType) at ScriptedPawn.MeleeDamageTarget line 1333: Target.TakeDamage(hitdamage, this, HitLocation, pushdir, hacked) at Skaarj.SpinDamageTarget line 691: if (MeleeDamageTarget(byteToInt(SpinDamage), Multiply_FloatVector(intToFloat(Multiply_IntInt(byteToInt(SpinDamage), 1000)), Normal(Subtract_VectorVector(Target.Location, Location)))))"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "Trench": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "UGCredits": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Unreal": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "VeloraEnd": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Vortex2": {
+  "errors": [],
+  "fatal_after_summary": false
+ }
+}

@@ -193,6 +193,9 @@ void TraceTester::TraceActor(UActor* actor, const dvec3& origin, double tmin, co
 {
 	if (UMover* mover = UObject::TryCast<UMover>(actor))
 	{
+		if (!mover->Brush())
+			return;
+
 		if (!traceWorld)
 			return;
 

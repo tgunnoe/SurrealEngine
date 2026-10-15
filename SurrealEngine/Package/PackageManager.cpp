@@ -315,6 +315,7 @@ PackageManager::PackageManager(const GameLaunchInfo& launchInfo) : launchInfo(la
 	gameRootFolderPath = fs::path(launchInfo.gameRootFolder);
 	gameSystemFolderPath = gameRootFolderPath / "System";
 
+	NativeFunctions::Reset();
 	RegisterNativeClasses();
 	CreateTransientPackage();
 	RegisterFunctions();

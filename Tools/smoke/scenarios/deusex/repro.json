@@ -1,0 +1,62 @@
+{
+ "00_Intro": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.AIStartEvent,Actor.PlayBlendAnim,LevelInfo.InitEventManager,Pawn.AIPickRandomDestination_Deus,PlayerPawn.ResetKeyboard",
+  "first_line_run2": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.AIStartEvent,Actor.PlayBlendAnim,LevelInfo.InitEventManager,Pawn.AIPickRandomDestination_Deus,PlayerPawn.ResetKeyboard",
+  "reproduced": "yes"
+ },
+ "00_Training": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.PlayBlendAnim,LevelInfo.InitEventManager,Pawn.AIPickRandomDestination_Deus,PlayerPawn.ResetKeyboard",
+  "first_line_run2": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.PlayBlendAnim,LevelInfo.InitEventManager,Pawn.AIPickRandomDestination_Deus,PlayerPawn.ResetKeyboard",
+  "reproduced": "yes"
+ },
+ "00_TrainingCombat": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.AIStartEvent,Actor.PlayBlendAnim,LevelInfo.InitEventManager,PlayerPawn.ResetKeyboard",
+  "first_line_run2": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.AIStartEvent,Actor.PlayBlendAnim,LevelInfo.InitEventManager,PlayerPawn.ResetKeyboard",
+  "reproduced": "yes"
+ },
+ "00_TrainingFinal": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.AIStartEvent,Actor.PlayBlendAnim,LevelInfo.InitEventManager,PlayerPawn.ResetKeyboard",
+  "first_line_run2": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.AIStartEvent,Actor.PlayBlendAnim,LevelInfo.InitEventManager,PlayerPawn.ResetKeyboard",
+  "reproduced": "yes"
+ },
+ "01_NYC_UNATCOHQ": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.AIStartEvent,Actor.PlayBlendAnim,LevelInfo.InitEventManager,Pawn.AIDirectionReachable,Pawn.AIPickRandomDestination_Deus,PlayerPawn.ResetKeyboard",
+  "first_line_run2": "stubs:Actor.AIClearEventCallback,Actor.AIEndEvent,Actor.AISendEvent,Actor.AISetEventCallback,Actor.AIStartEvent,Actor.PlayBlendAnim,LevelInfo.InitEventManager,Pawn.AIDirectionReachable,Pawn.AIPickRandomDestination_Deus,PlayerPawn.ResetKeyboard",
+  "reproduced": "yes"
+ },
+ "06_HongKong_TongBase": {
+  "exit_code": 1,
+  "first_line_run1": "EXCEPTION GameInfo login failed: Failed to spawn player actor",
+  "first_line_run2": "EXCEPTION GameInfo login failed: Failed to spawn player actor",
+  "reproduced": "yes"
+ },
+ "06_HongKong_WanChai_Canal": {
+  "exit_code": 1,
+  "first_line_run1": "EXCEPTION GameInfo login failed: Failed to spawn player actor",
+  "first_line_run2": "EXCEPTION GameInfo login failed: Failed to spawn player actor",
+  "reproduced": "yes"
+ },
+ "08_NYC_Street": {
+  "exit_code": 1,
+  "first_line_run1": "EXCEPTION Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)",
+  "first_line_run2": "EXCEPTION Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)",
+  "reproduced": "yes"
+ },
+ "09_NYC_ShipBelow": {
+  "exit_code": -11,
+  "first_line_run1": "FATAL signal 11",
+  "first_line_run2": "FATAL signal 11",
+  "reproduced": "yes"
+ },
+ "09_NYC_ShipFan": {
+  "exit_code": 1,
+  "first_line_run1": "EXCEPTION GameInfo login failed: Failed to spawn player actor",
+  "first_line_run2": "EXCEPTION GameInfo login failed: Failed to spawn player actor",
+  "reproduced": "yes"
+ }
+}

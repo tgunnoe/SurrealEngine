@@ -9,6 +9,15 @@ std::map<std::pair<NameString, NameString>, NativeFuncHandler> NativeFunctions::
 Array<LatentRunState> NativeFunctions::LatentActionByIndex;
 std::map<LatentRunState, int> NativeFunctions::IndexForLatentAction;
 
+void NativeFunctions::Reset()
+{
+	FuncByIndex.clear();
+	NativeByIndex.clear();
+	NativeByName.clear();
+	LatentActionByIndex.clear();
+	IndexForLatentAction.clear();
+}
+
 void NativeFunctions::RegisterHandler(const NameString& className, const NameString& funcName, int nativeIndex, NativeFuncHandler handler)
 {
 	if (nativeIndex != 0)
