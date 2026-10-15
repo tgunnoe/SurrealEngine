@@ -68,7 +68,7 @@ void NativeCommandlet::OnCommand(DebuggerApp* console, const std::string& args)
 	}
 	else
 	{
-		console->WriteOutput("Unknown command " + args + NewLine());
+		throw std::runtime_error("Unknown native subcommand: " + args);
 	}
 }
 
