@@ -7,6 +7,7 @@
 #include "LauncherSettings.h"
 #include "Utils/CommandLine.h"
 #include <filesystem>
+#include <stdexcept>
 
 Array<GameLaunchInfo> GameFolderSelection::Games;
 
@@ -42,6 +43,14 @@ void GameFolderSelection::UpdateList()
 				Games.push_back(game);
 		}
 	}
+}
+
+int GameFolderSelection::AutoSelect()
+{
+	UpdateList();
+	if (Games.empty())
+		throw std::runtime_error("--autostart found no game folder; pass the path to a UE1 game folder");
+	return 0;
 }
 
 GameLaunchInfo GameFolderSelection::GetLaunchInfo(int selectedGame)

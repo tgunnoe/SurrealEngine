@@ -31,6 +31,7 @@ class GameFolderSelection
 {
 public:
 	static void UpdateList();
+	static int AutoSelect(); // Selects the first folder given on the command line without the launcher
 	static GameLaunchInfo GetLaunchInfo(int selectedGame);
 
 	static Array<GameLaunchInfo> Games;

@@ -2,6 +2,8 @@
 #include "Precomp.h"
 #include "Engine.h"
 #include "Utils/File.h"
+#include "Utils/Logger.h"
+#include "Utils/CommandLine.h"
 #include "Utils/StrTools.h"
 #include "Utils/SHA1Sum.h"
 #include "Render/RenderSubsystem.h"
@@ -117,6 +119,9 @@ Engine::~Engine()
 
 void Engine::Run()
 {
+	if (SmokeLog::Get()->IsOpen())
+		SmokeLog::Get()->Event("GAME", LaunchInfo.gameName + " " + LaunchInfo.gameVersionString);
+
 	LogMessage("Game: " + LaunchInfo.gameName + " (Version: " + LaunchInfo.gameVersionString + ")");
 	LoadEngineSettings();
 	LogMessage("Loaded Engine settings");
@@ -147,7 +152,19 @@ void Engine::Run()
 	else
 		LoadMap(UnrealURL(GetDefaultURL(packages->GetIniValue("system", "URL", "LocalMap")), LaunchInfo.url));
 
+	SmokeLog* smoke = SmokeLog::Get();
+	if (smoke->IsOpen())
+		smoke->Event("MAP", LevelInfo->URL.Map);
+
 	LoginPlayer();
+
+	if (smoke->IsOpen())
+		smoke->Event("LOGIN");
+
+	const bool hasExitAfter = commandline->HasArg("", "--exit-after");
+	const double exitAfterSeconds = commandline->GetArgDouble("", "--exit-after");
+	double fpsWindowStart = smoke->SecondsSinceStart();
+	int fpsWindowFrames = 0;
 
 	auto objprop = GC::Alloc<UObjectProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
 	auto vecprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
@@ -238,6 +255,21 @@ void Engine::Run()
 		viewport->SetViewportRect(0, 0, engine->window->GetPixelWidth(), engine->window->GetPixelHeight());
 		render->DrawGame(levelElapsed);
 
+		if (smoke->IsOpen())
+		{
+			fpsWindowFrames++;
+			double now = smoke->SecondsSinceStart();
+			if (now - fpsWindowStart >= 1.0)
+			{
+				smoke->Fps(fpsWindowFrames / (now - fpsWindowStart));
+				fpsWindowStart = now;
+				fpsWindowFrames = 0;
+			}
+		}
+
+		if (hasExitAfter && smoke->SecondsSinceStart() >= exitAfterSeconds)
+			quit = true;
+
 		// Save the game if there is a request for it
 		if (SaveGameInfo.SaveGameSlot != DONT_SAVE_GAME)
 		{
@@ -325,16 +357,21 @@ void Engine::Run()
 	LogMessage("Shutting down...");
 	window->UnlockCursor();
 
-	LogMessage("Saving configurations...");
-	if (packages->MissingSESystemIni())
+	// Unattended runs must leave the game folder untouched.
+	if (!commandline->HasArg("", "--autostart"))
 	{
-		// Add the missing Subsystem entries
-		client->SaveConfig();
-		audiodev->SaveConfig();
-		renderdev->SaveConfig();
+		LogMessage("Saving configurations...");
+		if (packages->MissingSESystemIni())
+		{
+			// Add the missing Subsystem entries
+			client->SaveConfig();
+			audiodev->SaveConfig();
+			renderdev->SaveConfig();
+		}
+		packages->SetIniValue("System", "Engine.SurrealWindowSystem", "WindowSystem", windowingSystemName);
+		packages->SaveAllIniFiles();
+
 	}
-	packages->SetIniValue("System", "Engine.SurrealWindowSystem", "WindowSystem", windowingSystemName);
-	packages->SaveAllIniFiles();
 
 	LogMessage("Closing window...");
 	CloseWindow();
