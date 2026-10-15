@@ -24,12 +24,16 @@ No map logged a `STUB`, `MISSING_NATIVE`, `EXCEPTION` or `FATAL` line.
 
 ## Ranked candidate fix work
 
-1. Decide and fix the None `PlayerReplicationInfo` access in the
-   `Pawn.Died` -> `Level.Game.Killed` path (VM None-access handling in
-   `SurrealEngine/VM/Frame.cpp`, or whatever leaves the killing
-   pawn without replication info): unblocks all 9 maps. If the access is
-   correct UE1 behaviour, the alternative is to stop counting this
-   message as a script error for scripted-pawn kills; that is a policy
-   decision for the harness owner, not settled here.
+1. Make the engine report a None access uniformly, then let the project
+   owner rule whether a faithful `Accessed None` counts against clean.
+   Mechanism: `SubtractEqual_FloatFloat` receives a None out-parameter,
+   `ExpressionValue::CheckType` throws "Accessed None"
+   (`SurrealEngine/VM/ExpressionValue.h`), and the catch in
+   `Frame::CallNative` (`SurrealEngine/VM/Frame.cpp`) logs it as
+   "Script error: ", which the harness counts. The same condition in a
+   statement or call target logs an unprefixed line the harness never
+   sees. The None is reached by stock script (monsters and Nali have no
+   replication info), so it is not a map fault. Resolving either side
+   unblocks all 9 maps.
 
 No other work is needed for the other 46 maps by this sweep.
