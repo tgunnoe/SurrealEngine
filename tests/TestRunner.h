@@ -5,6 +5,16 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include "Utils/File.h"
+
+#ifdef WIN32
+#include <process.h>
+#define TEST_GETPID _getpid
+#else
+#include <unistd.h>
+#define TEST_GETPID getpid
+#endif
 
 // Thrown by the CHECK macros. Deliberately not derived from std::exception so
 // a test body's own catch (const std::exception&) cannot swallow a failure.
@@ -59,3 +69,21 @@ struct TestRegistrar
 		try { (void)(expr); } catch (const std::exception&) { threw_ = true; } \
 		if (!threw_) throw TestFailure{ TEST_LOCATION + ": CHECK_THROWS failed: " #expr " did not throw" }; \
 	} while (0)
+
+// A file in the system temp directory, deleted on scope exit so a failing check leaves no debris.
+// The process id keeps concurrent ctest runs (ctest -j) from colliding on a name.
+class TempFile
+{
+public:
+	explicit TempFile(const std::string& name)
+	{
+		Path = (std::filesystem::temp_directory_path() / ("SurrealTests-" + std::to_string(TEST_GETPID()) + "-" + name)).string();
+	}
+
+	~TempFile()
+	{
+		File::try_delete(Path);
+	}
+
+	std::string Path;
+};

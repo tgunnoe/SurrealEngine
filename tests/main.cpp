@@ -1,3 +1,4 @@
+#include "Precomp.h"
 #include "TestRunner.h"
 #include <cstdio>
 #include <cstring>

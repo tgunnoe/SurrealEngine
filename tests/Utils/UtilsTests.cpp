@@ -6,26 +6,6 @@
 #include "Package/IniFile.h"
 #include <filesystem>
 
-namespace
-{
-	// Removes the file on scope exit so a failing check does not leave debris in the temp directory.
-	class TempFile
-	{
-	public:
-		explicit TempFile(const std::string& name)
-		{
-			Path = (fs::temp_directory_path() / ("SurrealTests-" + name)).string();
-		}
-
-		~TempFile()
-		{
-			File::try_delete(Path);
-		}
-
-		std::string Path;
-	};
-}
-
 TEST(CommandLineShortAndLongForms)
 {
 	CommandLine cmd({ "-w=640", "--height=480", "-fullscreen", "--name=Unreal Gold", "map.unr", "extra" });
