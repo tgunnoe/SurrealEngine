@@ -64,3 +64,14 @@ TEST(VMAccessedNoneOutParamSkipsNative)
 	CHECK_MSG(!fixture.HandlerEntered, "a native was entered with a None out parameter");
 	CHECK(result.GetType() == ExpressionValueType::Nothing);
 }
+
+// Pins the narrow rule: only out parameters skip the native. Skipping in-parameters breaks
+// latent natives such as MoveTo, whose state code then loops without yielding.
+TEST(VMAccessedNoneInParamEntersNative)
+{
+	NativeNoneFixture fixture(PropertyFlags::Parm);
+
+	fixture.CallWithNone();
+
+	CHECK_MSG(fixture.HandlerEntered, "a native with a None in parameter was skipped");
+}

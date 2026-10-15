@@ -51,7 +51,7 @@ each. The entry-map preload is not logged.
 | `LOGIN` | The player logged in to that map. |
 | `WARNING <text>` | The harness could not install a signal handler, or a requested save was skipped under `--autostart`. |
 | `SCRIPT_ERROR <text>` | A native raised an error that the VM logged. |
-| `SCRIPT_WARNING <text>` | A script accessed None; the original games log this as a warning and continue. A native that would receive a None argument is skipped, and the access is reported once, by the statement. |
+| `SCRIPT_WARNING <text>` | A script accessed None; the original games log this as a warning and continue. A native whose non-optional out parameter receives a nothing-value is skipped, and the access is reported once, by the statement path. A None in-parameter still reaches the native; if that native type-checks the argument, the same access is also logged as `SCRIPT_ERROR`. |
 | `STUB <text>` | A distinct unimplemented-function message. |
 | `MISSING_NATIVE <text>` | An unknown native function. Either it aborted the run (followed by `FATAL`), or the VM caught it inside another native's callback and logged it as a script error, in which case the run continues and it is counted here, not as `SCRIPT_ERROR`. |
 | `EXCEPTION <text>` | An exception reached the top level; always followed by `FATAL`. |
