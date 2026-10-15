@@ -1,0 +1,4307 @@
+{
+ "maps": {
+  "00_Intro": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "00_Training": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "00_TrainingCombat": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "00_TrainingFinal": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "01_NYC_UNATCOHQ": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "01_NYC_UNATCOIsland": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "02_NYC_Bar": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "02_NYC_BatteryPark": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "02_NYC_FreeClinic": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "02_NYC_Hotel": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   }
+  ],
+  "02_NYC_Smug": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "02_NYC_Street": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "02_NYC_Underground": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "02_NYC_Warehouse": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "03_NYC_747": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "03_NYC_Airfield": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   }
+  ],
+  "03_NYC_AirfieldHeliBase": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "03_NYC_BatteryPark": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "03_NYC_BrooklynBridgeStation": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "03_NYC_Hangar": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "03_NYC_MolePeople": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "03_NYC_UNATCOHQ": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "03_NYC_UNATCOIsland": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   }
+  ],
+  "04_NYC_Bar": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "04_NYC_BatteryPark": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "04_NYC_Hotel": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "04_NYC_NSFHQ": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   }
+  ],
+  "04_NYC_Smug": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "04_NYC_Street": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "04_NYC_UNATCOHQ": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "04_NYC_UNATCOIsland": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "04_NYC_Underground": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   }
+  ],
+  "05_NYC_UNATCOHQ": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "05_NYC_UNATCOIsland": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   }
+  ],
+  "05_NYC_UNATCOMJ12lab": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "06_HongKong_Helibase": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "06_HongKong_MJ12lab": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "06_HongKong_Storage": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "06_HongKong_TongBase": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   }
+  ],
+  "06_HongKong_VersaLife": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "06_HongKong_WanChai_Canal": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   }
+  ],
+  "06_HongKong_WanChai_Garage": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "06_HongKong_WanChai_Market": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "06_HongKong_WanChai_Street": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "06_HongKong_WanChai_Underworld": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "08_NYC_Bar": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "08_NYC_FreeClinic": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "08_NYC_Hotel": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "08_NYC_Smug": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "08_NYC_Street": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.ReachablePathnodes"
+   }
+  ],
+  "08_NYC_Underground": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "09_NYC_Dockyard": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "09_NYC_Graveyard": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "09_NYC_Ship": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "09_NYC_ShipBelow": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   }
+  ],
+  "09_NYC_ShipFan": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   }
+  ],
+  "10_Paris_Catacombs": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   }
+  ],
+  "10_Paris_Catacombs_Tunnels": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "10_Paris_Chateau": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "10_Paris_Club": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "10_Paris_Metro": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "11_Paris_Cathedral": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "11_Paris_Everett": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "11_Paris_Underground": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "12_Vandenberg_Cmd": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "12_Vandenberg_Computer": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "12_Vandenberg_Gas": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "12_Vandenberg_Tunnels": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "14_OceanLab_Lab": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   }
+  ],
+  "14_OceanLab_UC": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "14_Oceanlab_Silo": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "14_Vandenberg_Sub": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   }
+  ],
+  "15_Area51_Bunker": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "15_Area51_Entrance": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   }
+  ],
+  "15_Area51_Final": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   }
+  ],
+  "15_Area51_Page": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AICanSee"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIDirectionReachable"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   }
+  ],
+  "99_Endgame1": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "99_Endgame2": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "99_Endgame3": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIStartEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "99_Endgame4": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.PlayBlendAnim"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   }
+  ],
+  "DX": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   }
+  ],
+  "DXMP_Area51Bunker": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Pawn",
+    "text": "Pawn.AIPickRandomDestination_Deus"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "DXMP_CMD": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "DXMP_Cathedral": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "DXMP_Silo": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "DXMP_Smuggler": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIClearEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISetEventCallback"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   }
+  ],
+  "DXOnly": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   }
+  ],
+  "Entry": [
+   {
+    "class": "gameplay",
+    "owner": "LevelInfo",
+    "text": "LevelInfo.InitEventManager"
+   },
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PlayerPawn",
+    "text": "PlayerPawn.ResetKeyboard"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AISendEvent"
+   },
+   {
+    "class": "gameplay",
+    "owner": "Actor",
+    "text": "Actor.AIEndEvent"
+   }
+  ]
+ },
+ "owners": {
+  "Actor": {
+   "class": "gameplay",
+   "reason": "Actor descends from Actor"
+  },
+  "DumpLocation": {
+   "class": "non-gameplay",
+   "reason": "DumpLocation descends only from DumpLocation > Object"
+  },
+  "LevelInfo": {
+   "class": "gameplay",
+   "reason": "LevelInfo descends from LevelInfo"
+  },
+  "Pawn": {
+   "class": "gameplay",
+   "reason": "Pawn descends from Pawn"
+  },
+  "PlayerPawn": {
+   "class": "gameplay",
+   "reason": "PlayerPawn descends from PlayerPawn"
+  }
+ }
+}
