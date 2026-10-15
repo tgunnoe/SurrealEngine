@@ -1,0 +1,404 @@
+{
+ "00_Intro": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "00_Training": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "00_TrainingCombat": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "00_TrainingFinal": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "01_NYC_UNATCOHQ": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "01_NYC_UNATCOIsland": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "02_NYC_Bar": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "02_NYC_BatteryPark": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "02_NYC_FreeClinic": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "02_NYC_Hotel": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "02_NYC_Smug": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "02_NYC_Street": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "02_NYC_Underground": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "02_NYC_Warehouse": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "03_NYC_747": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "03_NYC_Airfield": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "03_NYC_AirfieldHeliBase": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "03_NYC_BatteryPark": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "03_NYC_BrooklynBridgeStation": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "03_NYC_Hangar": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "03_NYC_MolePeople": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "03_NYC_UNATCOHQ": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "03_NYC_UNATCOIsland": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "04_NYC_Bar": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "04_NYC_BatteryPark": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "04_NYC_Hotel": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "04_NYC_NSFHQ": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "04_NYC_Smug": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "04_NYC_Street": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "04_NYC_UNATCOHQ": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "04_NYC_UNATCOIsland": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "04_NYC_Underground": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "05_NYC_UNATCOHQ": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "05_NYC_UNATCOIsland": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "05_NYC_UNATCOMJ12lab": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_Helibase": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_MJ12lab": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_Storage": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_TongBase": {
+  "errors": [
+   {
+    "kind": "EXCEPTION",
+    "map_section": "06_HongKong_TongBase",
+    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x60c316aa0482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x60c316aa1524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x60c316a7c389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x60c316a868c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x60c316a670e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x60c316a6666e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7c99fb42b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7c99fb42b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x60c316a70f15] "
+   },
+   {
+    "kind": "FATAL",
+    "map_section": "06_HongKong_TongBase",
+    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x60c316aa0482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x60c316aa1524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x60c316a7c389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x60c316a868c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x60c316a670e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x60c316a6666e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7c99fb42b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7c99fb42b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x60c316a70f15] "
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_VersaLife": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_WanChai_Canal": {
+  "errors": [
+   {
+    "kind": "EXCEPTION",
+    "map_section": "06_HongKong_WanChai_Canal",
+    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x56a50e1e4482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x56a50e1e5524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x56a50e1c0389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x56a50e1ca8c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x56a50e1ab0e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x56a50e1aa66e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7b894262b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7b894262b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x56a50e1b4f15] "
+   },
+   {
+    "kind": "FATAL",
+    "map_section": "06_HongKong_WanChai_Canal",
+    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x56a50e1e4482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x56a50e1e5524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x56a50e1c0389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x56a50e1ca8c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x56a50e1ab0e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x56a50e1aa66e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7b894262b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7b894262b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x56a50e1b4f15] "
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_WanChai_Garage": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_WanChai_Market": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_WanChai_Street": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "06_HongKong_WanChai_Underworld": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "08_NYC_Bar": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "08_NYC_FreeClinic": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "08_NYC_Hotel": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "08_NYC_Smug": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "08_NYC_Street": {
+  "errors": [
+   {
+    "kind": "EXCEPTION",
+    "map_section": "08_NYC_Street",
+    "text": "Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Native call stack:  at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x5ac7b49a1482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d5f8) [0x5ac7b49a25f8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1ce0a4) [0x5ac7b49d30a4] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1d8a52) [0x5ac7b49dda52] "
+   },
+   {
+    "kind": "FATAL",
+    "map_section": "08_NYC_Street",
+    "text": "Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Native call stack:  at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x5ac7b49a1482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d5f8) [0x5ac7b49a25f8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1ce0a4) [0x5ac7b49d30a4] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1d8a52) [0x5ac7b49dda52] "
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "08_NYC_Underground": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "09_NYC_Dockyard": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "09_NYC_Graveyard": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "09_NYC_Ship": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "09_NYC_ShipBelow": {
+  "errors": [
+   {
+    "kind": "FATAL",
+    "map_section": "09_NYC_ShipBelow",
+    "text": "signal 11"
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "09_NYC_ShipFan": {
+  "errors": [
+   {
+    "kind": "EXCEPTION",
+    "map_section": "09_NYC_ShipFan",
+    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x5b66b0e65482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x5b66b0e66524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x5b66b0e41389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x5b66b0e4b8c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x5b66b0e2c0e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x5b66b0e2b66e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7a64b8c2b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7a64b8c2b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x5b66b0e35f15] "
+   },
+   {
+    "kind": "FATAL",
+    "map_section": "09_NYC_ShipFan",
+    "text": "GameInfo login failed: Failed to spawn player actor at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19c482) [0x5b66b0e65482] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x19d524) [0x5b66b0e66524] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x178389) [0x5b66b0e41389] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1828c6) [0x5b66b0e4b8c6] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x1630e3) [0x5b66b0e2c0e3] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(main+0x23e) [0x5b66b0e2b66e] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(+0x2b391) [0x7a64b8c2b391] at /nix/store/h4wfwic161kxrr74jlzla5lsm28hgary-glibc-2.44-25/lib/libc.so.6(__libc_start_main+0x88) [0x7a64b8c2b4a8] at /home/tgunnoe/src/SurrealEngine/.scratch/worktrees/integration/build/SurrealEngine(+0x16cf15) [0x5b66b0e35f15] "
+   }
+  ],
+  "fatal_after_summary": false
+ },
+ "10_Paris_Catacombs": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "10_Paris_Catacombs_Tunnels": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "10_Paris_Chateau": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "10_Paris_Club": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "10_Paris_Metro": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "11_Paris_Cathedral": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "11_Paris_Everett": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "11_Paris_Underground": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "12_Vandenberg_Cmd": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "12_Vandenberg_Computer": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "12_Vandenberg_Gas": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "12_Vandenberg_Tunnels": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "14_OceanLab_Lab": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "14_OceanLab_UC": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "14_Oceanlab_Silo": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "14_Vandenberg_Sub": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "15_Area51_Bunker": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "15_Area51_Entrance": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "15_Area51_Final": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "15_Area51_Page": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "99_Endgame1": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "99_Endgame2": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "99_Endgame3": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "99_Endgame4": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DX": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DXMP_Area51Bunker": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DXMP_CMD": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DXMP_Cathedral": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DXMP_Silo": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DXMP_Smuggler": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "DXOnly": {
+  "errors": [],
+  "fatal_after_summary": false
+ },
+ "Entry": {
+  "errors": [],
+  "fatal_after_summary": false
+ }
+}

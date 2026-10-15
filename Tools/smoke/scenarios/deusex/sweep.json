@@ -1,0 +1,1326 @@
+{
+ "game": "/home/tgunnoe/Games/gog/gmdx/drive_c/GOG Games/GMDX",
+ "seconds": 60,
+ "maps": [
+  {
+   "map": "00_Intro",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95762711864407,
+   "maps_loaded": [
+    "00_Intro"
+   ],
+   "log": "/tmp/sweep-deusex.d/00_Intro.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "00_Training",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97966101694914,
+   "maps_loaded": [
+    "00_Training"
+   ],
+   "log": "/tmp/sweep-deusex.d/00_Training.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "00_TrainingCombat",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9762711864407,
+   "maps_loaded": [
+    "00_TrainingCombat"
+   ],
+   "log": "/tmp/sweep-deusex.d/00_TrainingCombat.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "00_TrainingFinal",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97966101694914,
+   "maps_loaded": [
+    "00_TrainingFinal"
+   ],
+   "log": "/tmp/sweep-deusex.d/00_TrainingFinal.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "01_NYC_UNATCOHQ",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9322033898305,
+   "maps_loaded": [
+    "01_NYC_UNATCOHQ"
+   ],
+   "log": "/tmp/sweep-deusex.d/01_NYC_UNATCOHQ.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "01_NYC_UNATCOIsland",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 70.62758620689655,
+   "maps_loaded": [
+    "01_NYC_UNATCOIsland"
+   ],
+   "log": "/tmp/sweep-deusex.d/01_NYC_UNATCOIsland.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "02_NYC_Bar",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.00677966101694,
+   "maps_loaded": [
+    "02_NYC_Bar"
+   ],
+   "log": "/tmp/sweep-deusex.d/02_NYC_Bar.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "02_NYC_BatteryPark",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 102.8864406779661,
+   "maps_loaded": [
+    "02_NYC_BatteryPark"
+   ],
+   "log": "/tmp/sweep-deusex.d/02_NYC_BatteryPark.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "02_NYC_FreeClinic",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98474576271187,
+   "maps_loaded": [
+    "02_NYC_FreeClinic"
+   ],
+   "log": "/tmp/sweep-deusex.d/02_NYC_FreeClinic.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "02_NYC_Hotel",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97457627118644,
+   "maps_loaded": [
+    "02_NYC_Hotel"
+   ],
+   "log": "/tmp/sweep-deusex.d/02_NYC_Hotel.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "02_NYC_Smug",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98474576271187,
+   "maps_loaded": [
+    "02_NYC_Smug"
+   ],
+   "log": "/tmp/sweep-deusex.d/02_NYC_Smug.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "02_NYC_Street",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.00677966101694,
+   "maps_loaded": [
+    "02_NYC_Street"
+   ],
+   "log": "/tmp/sweep-deusex.d/02_NYC_Street.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "02_NYC_Underground",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97457627118644,
+   "maps_loaded": [
+    "02_NYC_Underground"
+   ],
+   "log": "/tmp/sweep-deusex.d/02_NYC_Underground.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "02_NYC_Warehouse",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.00677966101694,
+   "maps_loaded": [
+    "02_NYC_Warehouse"
+   ],
+   "log": "/tmp/sweep-deusex.d/02_NYC_Warehouse.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "03_NYC_747",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97796610169493,
+   "maps_loaded": [
+    "03_NYC_747"
+   ],
+   "log": "/tmp/sweep-deusex.d/03_NYC_747.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "03_NYC_Airfield",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 89.964406779661,
+   "maps_loaded": [
+    "03_NYC_Airfield"
+   ],
+   "log": "/tmp/sweep-deusex.d/03_NYC_Airfield.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "03_NYC_AirfieldHeliBase",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9593220338983,
+   "maps_loaded": [
+    "03_NYC_AirfieldHeliBase"
+   ],
+   "log": "/tmp/sweep-deusex.d/03_NYC_AirfieldHeliBase.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "03_NYC_BatteryPark",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 104.37627118644068,
+   "maps_loaded": [
+    "03_NYC_BatteryPark"
+   ],
+   "log": "/tmp/sweep-deusex.d/03_NYC_BatteryPark.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "03_NYC_BrooklynBridgeStation",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9949152542373,
+   "maps_loaded": [
+    "03_NYC_BrooklynBridgeStation"
+   ],
+   "log": "/tmp/sweep-deusex.d/03_NYC_BrooklynBridgeStation.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "03_NYC_Hangar",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98135593220337,
+   "maps_loaded": [
+    "03_NYC_Hangar"
+   ],
+   "log": "/tmp/sweep-deusex.d/03_NYC_Hangar.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "03_NYC_MolePeople",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98813559322033,
+   "maps_loaded": [
+    "03_NYC_MolePeople"
+   ],
+   "log": "/tmp/sweep-deusex.d/03_NYC_MolePeople.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "03_NYC_UNATCOHQ",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.8677966101695,
+   "maps_loaded": [
+    "03_NYC_UNATCOHQ"
+   ],
+   "log": "/tmp/sweep-deusex.d/03_NYC_UNATCOHQ.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "03_NYC_UNATCOIsland",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.935593220339,
+   "maps_loaded": [
+    "03_NYC_UNATCOIsland"
+   ],
+   "log": "/tmp/sweep-deusex.d/03_NYC_UNATCOIsland.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "04_NYC_Bar",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9762711864407,
+   "maps_loaded": [
+    "04_NYC_Bar"
+   ],
+   "log": "/tmp/sweep-deusex.d/04_NYC_Bar.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "04_NYC_BatteryPark",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 104.2864406779661,
+   "maps_loaded": [
+    "04_NYC_BatteryPark"
+   ],
+   "log": "/tmp/sweep-deusex.d/04_NYC_BatteryPark.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "04_NYC_Hotel",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98813559322033,
+   "maps_loaded": [
+    "04_NYC_Hotel"
+   ],
+   "log": "/tmp/sweep-deusex.d/04_NYC_Hotel.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "04_NYC_NSFHQ",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 141.04576271186443,
+   "maps_loaded": [
+    "04_NYC_NSFHQ"
+   ],
+   "log": "/tmp/sweep-deusex.d/04_NYC_NSFHQ.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "04_NYC_Smug",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.01016949152543,
+   "maps_loaded": [
+    "04_NYC_Smug"
+   ],
+   "log": "/tmp/sweep-deusex.d/04_NYC_Smug.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "04_NYC_Street",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 8,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.00677966101694,
+   "maps_loaded": [
+    "04_NYC_Street"
+   ],
+   "log": "/tmp/sweep-deusex.d/04_NYC_Street.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "04_NYC_UNATCOHQ",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.964406779661,
+   "maps_loaded": [
+    "04_NYC_UNATCOHQ"
+   ],
+   "log": "/tmp/sweep-deusex.d/04_NYC_UNATCOHQ.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "04_NYC_UNATCOIsland",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9457627118644,
+   "maps_loaded": [
+    "04_NYC_UNATCOIsland"
+   ],
+   "log": "/tmp/sweep-deusex.d/04_NYC_UNATCOIsland.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "04_NYC_Underground",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.94915254237287,
+   "maps_loaded": [
+    "04_NYC_Underground"
+   ],
+   "log": "/tmp/sweep-deusex.d/04_NYC_Underground.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "05_NYC_UNATCOHQ",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.91186440677964,
+   "maps_loaded": [
+    "05_NYC_UNATCOHQ"
+   ],
+   "log": "/tmp/sweep-deusex.d/05_NYC_UNATCOHQ.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "05_NYC_UNATCOIsland",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0033898305085,
+   "maps_loaded": [
+    "05_NYC_UNATCOIsland"
+   ],
+   "log": "/tmp/sweep-deusex.d/05_NYC_UNATCOIsland.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "05_NYC_UNATCOMJ12lab",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.82711864406778,
+   "maps_loaded": [
+    "05_NYC_UNATCOMJ12lab"
+   ],
+   "log": "/tmp/sweep-deusex.d/05_NYC_UNATCOMJ12lab.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "06_HongKong_Helibase",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 128.6542372881356,
+   "maps_loaded": [
+    "06_HongKong_Helibase"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_Helibase.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "06_HongKong_MJ12lab",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 128.23220338983052,
+   "maps_loaded": [
+    "06_HongKong_MJ12lab"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_MJ12lab.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "06_HongKong_Storage",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97796610169493,
+   "maps_loaded": [
+    "06_HongKong_Storage"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_Storage.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "06_HongKong_TongBase",
+   "exit_code": 1,
+   "script_errors": 0,
+   "stub_hits": 3,
+   "missing_natives": 0,
+   "exceptions": 1,
+   "fps_avg": null,
+   "maps_loaded": [
+    "06_HongKong_TongBase"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_TongBase.log",
+   "screenshot": null,
+   "verdict": "fail"
+  },
+  {
+   "map": "06_HongKong_VersaLife",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.89491525423728,
+   "maps_loaded": [
+    "06_HongKong_VersaLife"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_VersaLife.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "06_HongKong_WanChai_Canal",
+   "exit_code": 1,
+   "script_errors": 0,
+   "stub_hits": 4,
+   "missing_natives": 0,
+   "exceptions": 1,
+   "fps_avg": null,
+   "maps_loaded": [
+    "06_HongKong_WanChai_Canal"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_WanChai_Canal.log",
+   "screenshot": null,
+   "verdict": "fail"
+  },
+  {
+   "map": "06_HongKong_WanChai_Garage",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.94237288135594,
+   "maps_loaded": [
+    "06_HongKong_WanChai_Garage"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_WanChai_Garage.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "06_HongKong_WanChai_Market",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.8135593220339,
+   "maps_loaded": [
+    "06_HongKong_WanChai_Market"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_WanChai_Market.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "06_HongKong_WanChai_Street",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 73.67627118644067,
+   "maps_loaded": [
+    "06_HongKong_WanChai_Street"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_WanChai_Street.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "06_HongKong_WanChai_Underworld",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.78983050847458,
+   "maps_loaded": [
+    "06_HongKong_WanChai_Underworld"
+   ],
+   "log": "/tmp/sweep-deusex.d/06_HongKong_WanChai_Underworld.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "08_NYC_Bar",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.0084745762712,
+   "maps_loaded": [
+    "08_NYC_Bar"
+   ],
+   "log": "/tmp/sweep-deusex.d/08_NYC_Bar.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "08_NYC_FreeClinic",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9677966101695,
+   "maps_loaded": [
+    "08_NYC_FreeClinic"
+   ],
+   "log": "/tmp/sweep-deusex.d/08_NYC_FreeClinic.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "08_NYC_Hotel",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9677966101695,
+   "maps_loaded": [
+    "08_NYC_Hotel"
+   ],
+   "log": "/tmp/sweep-deusex.d/08_NYC_Hotel.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "08_NYC_Smug",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.01186440677967,
+   "maps_loaded": [
+    "08_NYC_Smug"
+   ],
+   "log": "/tmp/sweep-deusex.d/08_NYC_Smug.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "08_NYC_Street",
+   "exit_code": 1,
+   "script_errors": 0,
+   "stub_hits": 12,
+   "missing_natives": 0,
+   "exceptions": 1,
+   "fps_avg": 144.48,
+   "maps_loaded": [
+    "08_NYC_Street"
+   ],
+   "log": "/tmp/sweep-deusex.d/08_NYC_Street.log",
+   "screenshot": null,
+   "verdict": "fail"
+  },
+  {
+   "map": "08_NYC_Underground",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98305084745763,
+   "maps_loaded": [
+    "08_NYC_Underground"
+   ],
+   "log": "/tmp/sweep-deusex.d/08_NYC_Underground.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "09_NYC_Dockyard",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.928813559322,
+   "maps_loaded": [
+    "09_NYC_Dockyard"
+   ],
+   "log": "/tmp/sweep-deusex.d/09_NYC_Dockyard.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "09_NYC_Graveyard",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "09_NYC_Graveyard"
+   ],
+   "log": "/tmp/sweep-deusex.d/09_NYC_Graveyard.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "09_NYC_Ship",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97966101694914,
+   "maps_loaded": [
+    "09_NYC_Ship"
+   ],
+   "log": "/tmp/sweep-deusex.d/09_NYC_Ship.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "09_NYC_ShipBelow",
+   "exit_code": -11,
+   "script_errors": 0,
+   "stub_hits": 7,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": null,
+   "maps_loaded": [
+    "09_NYC_ShipBelow"
+   ],
+   "log": "/tmp/sweep-deusex.d/09_NYC_ShipBelow.log",
+   "screenshot": null,
+   "verdict": "crash"
+  },
+  {
+   "map": "09_NYC_ShipFan",
+   "exit_code": 1,
+   "script_errors": 0,
+   "stub_hits": 3,
+   "missing_natives": 0,
+   "exceptions": 1,
+   "fps_avg": null,
+   "maps_loaded": [
+    "09_NYC_ShipFan"
+   ],
+   "log": "/tmp/sweep-deusex.d/09_NYC_ShipFan.log",
+   "screenshot": null,
+   "verdict": "fail"
+  },
+  {
+   "map": "10_Paris_Catacombs",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 12,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.8593220338983,
+   "maps_loaded": [
+    "10_Paris_Catacombs"
+   ],
+   "log": "/tmp/sweep-deusex.d/10_Paris_Catacombs.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "10_Paris_Catacombs_Tunnels",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.96101694915257,
+   "maps_loaded": [
+    "10_Paris_Catacombs_Tunnels"
+   ],
+   "log": "/tmp/sweep-deusex.d/10_Paris_Catacombs_Tunnels.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "10_Paris_Chateau",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95423728813557,
+   "maps_loaded": [
+    "10_Paris_Chateau"
+   ],
+   "log": "/tmp/sweep-deusex.d/10_Paris_Chateau.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "10_Paris_Club",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.99322033898306,
+   "maps_loaded": [
+    "10_Paris_Club"
+   ],
+   "log": "/tmp/sweep-deusex.d/10_Paris_Club.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "10_Paris_Metro",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9593220338983,
+   "maps_loaded": [
+    "10_Paris_Metro"
+   ],
+   "log": "/tmp/sweep-deusex.d/10_Paris_Metro.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "11_Paris_Cathedral",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97796610169493,
+   "maps_loaded": [
+    "11_Paris_Cathedral"
+   ],
+   "log": "/tmp/sweep-deusex.d/11_Paris_Cathedral.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "11_Paris_Everett",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.5728813559322,
+   "maps_loaded": [
+    "11_Paris_Everett"
+   ],
+   "log": "/tmp/sweep-deusex.d/11_Paris_Everett.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "11_Paris_Underground",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9915254237288,
+   "maps_loaded": [
+    "11_Paris_Underground"
+   ],
+   "log": "/tmp/sweep-deusex.d/11_Paris_Underground.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "12_Vandenberg_Cmd",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97966101694914,
+   "maps_loaded": [
+    "12_Vandenberg_Cmd"
+   ],
+   "log": "/tmp/sweep-deusex.d/12_Vandenberg_Cmd.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "12_Vandenberg_Computer",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "12_Vandenberg_Computer"
+   ],
+   "log": "/tmp/sweep-deusex.d/12_Vandenberg_Computer.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "12_Vandenberg_Gas",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9728813559322,
+   "maps_loaded": [
+    "12_Vandenberg_Gas"
+   ],
+   "log": "/tmp/sweep-deusex.d/12_Vandenberg_Gas.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "12_Vandenberg_Tunnels",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 9,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97966101694914,
+   "maps_loaded": [
+    "12_Vandenberg_Tunnels"
+   ],
+   "log": "/tmp/sweep-deusex.d/12_Vandenberg_Tunnels.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "14_OceanLab_Lab",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 12,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 37.95172413793103,
+   "maps_loaded": [
+    "14_OceanLab_Lab"
+   ],
+   "log": "/tmp/sweep-deusex.d/14_OceanLab_Lab.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "14_OceanLab_UC",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.928813559322,
+   "maps_loaded": [
+    "14_OceanLab_UC"
+   ],
+   "log": "/tmp/sweep-deusex.d/14_OceanLab_UC.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "14_Oceanlab_Silo",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95423728813557,
+   "maps_loaded": [
+    "14_Oceanlab_Silo"
+   ],
+   "log": "/tmp/sweep-deusex.d/14_Oceanlab_Silo.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "14_Vandenberg_Sub",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 11,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.59830508474576,
+   "maps_loaded": [
+    "14_Vandenberg_Sub"
+   ],
+   "log": "/tmp/sweep-deusex.d/14_Vandenberg_Sub.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "15_Area51_Bunker",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98305084745763,
+   "maps_loaded": [
+    "15_Area51_Bunker"
+   ],
+   "log": "/tmp/sweep-deusex.d/15_Area51_Bunker.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "15_Area51_Entrance",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.95254237288137,
+   "maps_loaded": [
+    "15_Area51_Entrance"
+   ],
+   "log": "/tmp/sweep-deusex.d/15_Area51_Entrance.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "15_Area51_Final",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 12,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.7084745762712,
+   "maps_loaded": [
+    "15_Area51_Final"
+   ],
+   "log": "/tmp/sweep-deusex.d/15_Area51_Final.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "15_Area51_Page",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 12,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.73389830508472,
+   "maps_loaded": [
+    "15_Area51_Page"
+   ],
+   "log": "/tmp/sweep-deusex.d/15_Area51_Page.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "99_Endgame1",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.97796610169493,
+   "maps_loaded": [
+    "99_Endgame1"
+   ],
+   "log": "/tmp/sweep-deusex.d/99_Endgame1.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "99_Endgame2",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98305084745763,
+   "maps_loaded": [
+    "99_Endgame2"
+   ],
+   "log": "/tmp/sweep-deusex.d/99_Endgame2.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "99_Endgame3",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 10,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98135593220337,
+   "maps_loaded": [
+    "99_Endgame3"
+   ],
+   "log": "/tmp/sweep-deusex.d/99_Endgame3.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "99_Endgame4",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 7,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98983050847457,
+   "maps_loaded": [
+    "99_Endgame4"
+   ],
+   "log": "/tmp/sweep-deusex.d/99_Endgame4.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DX",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 4,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9966101694915,
+   "maps_loaded": [
+    "DX"
+   ],
+   "log": "/tmp/sweep-deusex.d/DX.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DXMP_Area51Bunker",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 8,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.96610169491527,
+   "maps_loaded": [
+    "DXMP_Area51Bunker"
+   ],
+   "log": "/tmp/sweep-deusex.d/DXMP_Area51Bunker.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DXMP_CMD",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 7,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98135593220337,
+   "maps_loaded": [
+    "DXMP_CMD"
+   ],
+   "log": "/tmp/sweep-deusex.d/DXMP_CMD.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DXMP_Cathedral",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 7,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.99830508474577,
+   "maps_loaded": [
+    "DXMP_Cathedral"
+   ],
+   "log": "/tmp/sweep-deusex.d/DXMP_Cathedral.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DXMP_Silo",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 7,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98813559322033,
+   "maps_loaded": [
+    "DXMP_Silo"
+   ],
+   "log": "/tmp/sweep-deusex.d/DXMP_Silo.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DXMP_Smuggler",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 7,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.9949152542373,
+   "maps_loaded": [
+    "DXMP_Smuggler"
+   ],
+   "log": "/tmp/sweep-deusex.d/DXMP_Smuggler.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "DXOnly",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 4,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 143.98135593220337,
+   "maps_loaded": [
+    "DXOnly"
+   ],
+   "log": "/tmp/sweep-deusex.d/DXOnly.log",
+   "screenshot": null,
+   "verdict": "pass"
+  },
+  {
+   "map": "Entry",
+   "exit_code": 0,
+   "script_errors": 0,
+   "stub_hits": 5,
+   "missing_natives": 0,
+   "exceptions": 0,
+   "fps_avg": 144.00677966101694,
+   "maps_loaded": [
+    "Entry"
+   ],
+   "log": "/tmp/sweep-deusex.d/Entry.log",
+   "screenshot": null,
+   "verdict": "pass"
+  }
+ ]
+}
