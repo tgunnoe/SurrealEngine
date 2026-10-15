@@ -22,6 +22,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MAP_SUFFIXES = {".unr", ".dx"}
 KILL_GRACE_SECONDS = 45
+GRIM_TIMEOUT_SECONDS = 10
 
 
 def list_maps(game):
@@ -36,7 +37,8 @@ def list_maps(game):
 
 def parse_log(path):
     info = {"script_errors": 0, "stub_hits": 0, "missing_natives": 0,
-            "exceptions": 0, "fps_avg": None, "fatal_signal": False}
+            "exceptions": 0, "fps_avg": None, "fatal_signal": False,
+            "summary": False, "maps_loaded": []}
     fps = []
     try:
         lines = Path(path).read_text(errors="replace").splitlines()
@@ -52,6 +54,10 @@ def parse_log(path):
             info["missing_natives"] += 1
         elif kind == "EXCEPTION":
             info["exceptions"] += 1
+        elif kind == "MAP":
+            info["maps_loaded"].append(rest)
+        elif kind == "SUMMARY":
+            info["summary"] = True
         elif kind == "FPS":
             try:
                 fps.append(float(rest))
@@ -68,6 +74,9 @@ def run_map(exe, game, map_path, seconds, logdir):
     name = map_path.stem
     log = logdir / f"{name}.log"
     shot = logdir / f"{name}.png"
+    # A child that dies before opening its log must not inherit a previous sweep's files.
+    log.unlink(missing_ok=True)
+    shot.unlink(missing_ok=True)
     cmd = [str(exe), "--autostart", f"--exit-after={seconds}",
            f"--smoke-log={log}", f"--url={name}", str(game)]
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
@@ -80,8 +89,11 @@ def run_map(exe, game, map_path, seconds, logdir):
     while proc.poll() is None:
         now = time.monotonic()
         if screenshot is None and now >= shot_at and shutil.which("grim"):
-            r = subprocess.run(["grim", str(shot)], capture_output=True)
-            screenshot = str(shot) if r.returncode == 0 and shot.exists() else None
+            try:
+                r = subprocess.run(["grim", str(shot)], capture_output=True, timeout=GRIM_TIMEOUT_SECONDS)
+                screenshot = str(shot) if r.returncode == 0 and shot.exists() else None
+            except subprocess.TimeoutExpired:
+                screenshot = None
             shot_at = float("inf")
         if now >= deadline:
             timed_out = True
@@ -98,7 +110,7 @@ def run_map(exe, game, map_path, seconds, logdir):
         verdict = "timeout"
     elif info["fatal_signal"]:
         verdict = "crash"
-    elif exit_code == 0 and not (info["script_errors"] or info["missing_natives"] or info["exceptions"]):
+    elif exit_code == 0 and info["summary"] and not (info["script_errors"] or info["missing_natives"] or info["exceptions"]):
         verdict = "pass"
     else:
         verdict = "fail"
@@ -110,6 +122,7 @@ def run_map(exe, game, map_path, seconds, logdir):
         "missing_natives": info["missing_natives"],
         "exceptions": info["exceptions"],
         "fps_avg": info["fps_avg"],
+        "maps_loaded": info["maps_loaded"],
         "log": str(log),
         "screenshot": screenshot,
         "verdict": verdict,
@@ -135,13 +148,15 @@ def main():
         maps = maps[:args.limit]
 
     results = []
+    report = {"game": str(args.game), "seconds": args.seconds, "maps": results}
     for m in maps:
         entry = run_map(args.exe, args.game, m, args.seconds, logdir)
         print(f"{entry['verdict']:8} {entry['map']}", flush=True)
         results.append(entry)
-
-    report = {"game": str(args.game), "seconds": args.seconds, "maps": results}
-    out.write_text(json.dumps(report, indent=2) + "\n")
+        # Rewritten after every map so an interrupted sweep keeps its rows.
+        tmp = out.with_name(out.name + ".tmp")
+        tmp.write_text(json.dumps(report, indent=2) + "\n")
+        os.replace(tmp, out)
 
 
 if __name__ == "__main__":
