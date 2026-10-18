@@ -12,6 +12,7 @@ All flags are opt-in; without them the engine behaves as before.
 | `--autostart` | Skip the launcher and the crash-reporter check and run exactly the first game folder given on the command line; if that folder is not a UE1 game, or none is given, the run fails with a `FATAL` line and exit code 1 (the launcher's saved list and the current directory are never consulted). A fatal exception exits with code 1 and shows no error window. Ini files and save games are not written, so the game folder is left untouched. |
 | `--exit-after=<seconds>` | Leave the main loop after this many seconds since process start. |
 | `--smoke-log=<path>` | Write the structured event log described below. Each line is written and flushed immediately. With `--autostart`, fatal signals (SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL) append `FATAL signal <n>`, then re-raise with the default action so the process dies from that signal (exit status `128+n` in a shell) and still dumps core. Without `--autostart` the crash reporter owns the signal handlers and no `FATAL signal` line is written. |
+| `--exec=<seconds>:<command>[;<seconds>:<command>...]` | Run each console command this many seconds after the first `LOGIN`, through the engine's own console. The time is a non-negative decimal; the command is everything after the item's first colon, trimmed, and cannot contain `;`. Items run in time order (equal times keep their written order). The log records `EXEC`, `EXEC_FAILED` or `EXEC_SKIPPED` for each. A malformed item (no colon, empty command, bad time) stops the run before the game starts with a message on stderr and exit code 2. |
 | `--url=<mapname>` | Existing flag; selects the map to load. |
 
 Example:
@@ -19,6 +20,16 @@ Example:
 ```
 SurrealEngine --autostart --exit-after=20 --smoke-log=/tmp/ut.log "<game folder>"
 ```
+
+To start an Unreal Tournament botmatch, which otherwise waits for the
+player's ready signal, press fire five seconds after login:
+
+```
+SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/ut.log '--url=DM-Deck16][?NumBots=4' --exec=5:Fire "<game folder>"
+```
+
+Other commands work the same way, for example `--exec='10:open DM-Deck16]['`
+to travel to another map ten seconds after login.
 
 To make a deterministic fatal exception, request a map that does not exist
 (`--url=NoSuchMap`): the log ends with `EXCEPTION` and `FATAL` lines and the
@@ -55,9 +66,16 @@ each. The entry-map preload is not logged.
 | `STUB <text>` | A distinct unimplemented-function message. |
 | `MISSING_NATIVE <text>` | An unknown native function. Either it aborted the run (followed by `FATAL`), or the VM caught it inside another native's callback and logged it as a script error, in which case the run continues and it is counted here, not as `SCRIPT_ERROR`. |
 | `EXCEPTION <text>` | An exception reached the top level; always followed by `FATAL`. |
+| `EXEC <seconds> <command>` | An `--exec` command ran; `<seconds>` is the scheduled time, not the time the command ran. Written after `LOGIN`, once per command, in schedule order. |
+| `EXEC_FAILED <seconds> <command>` | An `--exec` command ran, but the console found neither a built-in command nor an `exec` function of that name. A script `exec` function that rejects its arguments still counts as `EXEC`. |
+| `EXEC_SKIPPED <seconds> <command>` | An `--exec` command never ran because the run ended first (or no login happened). Written just before `SUMMARY`; absent after a fatal run. |
 | `FPS <value>` | Frames per second, sampled about once per second. |
 | `SUMMARY script_errors=N stub_hits=N missing_natives=N exceptions=N script_warnings=N fps_avg=X` | Last line of a clean `--exit-after` run. |
 | `FATAL <text>` / `FATAL signal <n>` | Last line of a fatal run; `SUMMARY` is then absent. A crash during teardown, after the main loop ended, can still append `FATAL signal <n>` after `SUMMARY`. |
+
+`EXEC`, `EXEC_FAILED` and `EXEC_SKIPPED` lines are not counted in `SUMMARY`.
+`EXEC` and `EXEC_FAILED` lines follow the first `LOGIN`; a command never runs
+before it.
 
 `exceptions` in `SUMMARY` is always 0 today, because every exception ends the
 run with `FATAL` instead of `SUMMARY`; it is kept so the line shape is stable.
