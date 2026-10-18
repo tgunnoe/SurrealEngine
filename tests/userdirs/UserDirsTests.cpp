@@ -507,3 +507,56 @@ TEST(UserDirsCheckAgainstFollowsSymbolicLinks)
 }
 
 #endif
+
+TEST(UserDirsUserIniChainOrder)
+{
+	const std::filesystem::path config = "cfg";
+	const std::filesystem::path system = "sys";
+
+	const std::vector<std::filesystem::path> chain = UserDirs::userIniChain(config, system);
+	const std::vector<std::filesystem::path> expected = { config / "SE-User.ini", system / "SE-User.ini", system / "User.ini", system / "user.ini", system / "DefUser.ini" };
+
+	CHECK_EQ(chain.size(), expected.size());
+	for (size_t i = 0; i < expected.size(); i++)
+		CHECK_EQ(chain[i].string(), expected[i].string());
+}
+
+TEST(UserDirsFirstExistingFileTakesTheEarliestFile)
+{
+	Sandbox box("firstexisting");
+	const std::filesystem::path config = box.Out();
+	const std::filesystem::path system = box.Game() / "System";
+	const std::vector<std::filesystem::path> chain = UserDirs::userIniChain(config, system);
+
+	// Nothing exists: the last resort, named so that opening it fails with a useful path
+	CHECK_EQ(UserDirs::firstExistingFile(chain).string(), (system / "DefUser.ini").string());
+
+	File::write_all_text((system / "DefUser.ini").string(), "x");
+	CHECK_EQ(UserDirs::firstExistingFile(chain).string(), (system / "DefUser.ini").string());
+
+	File::write_all_text((system / "SE-User.ini").string(), "x");
+	CHECK_EQ(UserDirs::firstExistingFile(chain).string(), (system / "SE-User.ini").string());
+
+	// The per-user copy beats everything in the install
+	File::write_all_text((config / "SE-User.ini").string(), "x");
+	CHECK_EQ(UserDirs::firstExistingFile(chain).string(), (config / "SE-User.ini").string());
+}
+
+#if !defined(WIN32) && !defined(__APPLE__)
+
+TEST(UserDirsFirstExistingFileFindsALowercaseUserIniBeforeDefUserIni)
+{
+	// An old install on a case-sensitive file system: only user.ini and the stock DefUser.ini exist
+	Sandbox box("lowercase");
+	const std::filesystem::path system = box.Game() / "System";
+	File::write_all_text((system / "user.ini").string(), "x");
+	File::write_all_text((system / "DefUser.ini").string(), "x");
+
+	CHECK_EQ(UserDirs::firstExistingFile(UserDirs::userIniChain(box.Out(), system)).string(), (system / "user.ini").string());
+
+	// User.ini, when present, still comes first
+	File::write_all_text((system / "User.ini").string(), "x");
+	CHECK_EQ(UserDirs::firstExistingFile(UserDirs::userIniChain(box.Out(), system)).string(), (system / "User.ini").string());
+}
+
+#endif

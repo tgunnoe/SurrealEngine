@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <functional>
 #include <string>
+#include <vector>
 
 struct GameLaunchInfo;
 
@@ -44,6 +45,14 @@ namespace UserDirs
 
 	// Turns the value of --user-dir into an absolute path (relative to the current directory).
 	std::filesystem::path resolveUserDirArg(const std::string& arg);
+
+	// Where a game's user ini may be read from, most specific first: the per-user SE-User.ini, the install's
+	// SE-User.ini (written by earlier builds), User.ini, user.ini (for case-sensitive file systems) and DefUser.ini.
+	std::vector<std::filesystem::path> userIniChain(const std::filesystem::path& configDir, const std::filesystem::path& systemDir);
+
+	// The first candidate that is a regular file, else the last one, so that failing to open it names a file
+	// someone would look for.
+	std::filesystem::path firstExistingFile(const std::vector<std::filesystem::path>& candidates);
 }
 
 // Refuses writes inside the game's install folder. File::create_always, File::rename, File::try_delete,

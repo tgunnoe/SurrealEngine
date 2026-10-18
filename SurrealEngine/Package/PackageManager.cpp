@@ -847,14 +847,7 @@ void PackageManager::LoadPackageRemaps()
 
 fs::path PackageManager::ResolveUserIniPath() const
 {
-	// The per-user SE-User.ini, then the install's SE-User.ini (written by older builds), User.ini and DefUser.ini.
-	// DefUser.ini is the last resort even when missing, so the failure to open it names a file a user would look for.
-	for (const fs::path& candidate : { gameConfigFolderPath / "SE-User.ini", gameSystemFolderPath / "SE-User.ini", gameSystemFolderPath / "User.ini" })
-	{
-		if (fs::is_regular_file(candidate))
-			return candidate;
-	}
-	return gameSystemFolderPath / "DefUser.ini";
+	return UserDirs::firstExistingFile(UserDirs::userIniChain(gameConfigFolderPath, gameSystemFolderPath));
 }
 
 void PackageManager::LoadEngineIniFiles()

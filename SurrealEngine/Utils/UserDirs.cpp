@@ -221,6 +221,22 @@ fs::path UserDirs::resolveUserDirArg(const std::string& arg)
 	return Canonical(fs::path(arg));
 }
 
+std::vector<fs::path> UserDirs::userIniChain(const fs::path& configDir, const fs::path& systemDir)
+{
+	return { configDir / "SE-User.ini", systemDir / "SE-User.ini", systemDir / "User.ini", systemDir / "user.ini", systemDir / "DefUser.ini" };
+}
+
+fs::path UserDirs::firstExistingFile(const std::vector<fs::path>& candidates)
+{
+	for (const fs::path& candidate : candidates)
+	{
+		std::error_code ec;
+		if (fs::is_regular_file(candidate, ec))
+			return candidate;
+	}
+	return candidates.empty() ? fs::path() : candidates.back();
+}
+
 void WritePolicy::setForbiddenRoot(const fs::path& gameRootFolder)
 {
 	// An empty root would switch the guard off without anyone having asked for that
