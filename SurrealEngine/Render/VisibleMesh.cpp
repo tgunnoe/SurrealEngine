@@ -843,12 +843,12 @@ bool VisibleMesh::DrawLodMeshDX(VisibleFrame* frame, UActor* actor, UActor* ligh
 
 		float frame = animSource->BlendAnimFrame()[i] * seq->NumFrames;
 
-		static bool loggedBlend[4] = {};
+		/*static bool loggedBlend[4] = {};
 		if (!loggedBlend[i])
 		{
 			LogMessage("DrawLodMeshDX blend[" + std::to_string(i) + "]: seq='" + seq->Name.ToString() + "' frame=" + std::to_string(frame) + " StartFrame=" + std::to_string(seq->StartFrame) + " NumFrames=" + std::to_string(seq->NumFrames) + " FrameVerts=" + std::to_string(mesh->FrameVerts) + " weight=1.0");
 			loggedBlend[i] = true;
-		}
+		}*/
 
 		BlendInfo& b = blends[blendCount++];
 
@@ -1075,19 +1075,20 @@ void VisibleMesh::DrawDebugInfo(VisibleFrame* frame, UActor* actor)
 	// Draw debug line to where pawn is trying to go
 	{
 		vec3 end;
-		if (pawn->StateFrame->LatentState == LatentRunState::MoveTo)
+		LatentRunState latentState = pawn->StateFrame->GetLatentState();
+		if (latentState == LatentRunState::MoveTo)
 		{
 			end = pawn->Destination();
 		}
-		else if (pawn->StateFrame->LatentState == LatentRunState::MoveToward && pawn->MoveTarget())
+		else if (latentState == LatentRunState::MoveToward && pawn->MoveTarget())
 		{
 			end = pawn->MoveTarget()->Location();
 		}
-		else if (pawn->StateFrame->LatentState == LatentRunState::StrafeTo)
+		else if (latentState == LatentRunState::StrafeTo)
 		{
 			end = pawn->Destination();
 		}
-		else if (pawn->StateFrame->LatentState == LatentRunState::StrafeFacing)
+		else if (latentState == LatentRunState::StrafeFacing)
 		{
 			end = pawn->Destination();
 		}

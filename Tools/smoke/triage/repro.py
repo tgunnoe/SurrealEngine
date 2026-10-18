@@ -23,6 +23,21 @@ def _gameplay_stubs(scn, path):
                   if extract.classify(scn, extract.owner_of(scn, s))[0] != "non-gameplay")
 
 
+def log_path(scn, name):
+    return os.path.join(scn.repro_logdir, name + ".log")
+
+
+def engine_args(scn, exe, name):
+    """The engine command for one map up to the game folder: the options the
+    sweep used, so the re-run is the same run. The documents show it too."""
+    args = [exe, "--autostart", "--exit-after=%d" % scn.exit_after_seconds,
+            "--smoke-log=" + log_path(scn, name),
+            "--url=" + name + "".join(scn.url_options)]
+    if scn.exec:
+        args.append("--exec=" + scn.exec)
+    return args
+
+
 def compare(scn, old_log, new_log):
     """Return (verdict, first_line_run1, first_line_run2). Runs agree when
     their first failing line matches after masking addresses; with no
@@ -40,13 +55,11 @@ def run(scn, exe, game, logdir, out, maps):
     os.makedirs(scn.repro_logdir, exist_ok=True)
     res = {}
     for m in maps:
-        log = os.path.join(scn.repro_logdir, m + ".log")
+        log = log_path(scn, m)
         if os.path.exists(log):
             os.remove(log)
-        cmd = [exe, "--autostart", "--exit-after=%d" % scn.exit_after_seconds,
-               "--smoke-log=" + log, "--url=" + m, *scn.url_options, game]
         try:
-            code = subprocess.run(cmd, timeout=scn.repro_timeout_seconds, stdout=subprocess.DEVNULL,
+            code = subprocess.run([*engine_args(scn, exe, m), game], timeout=scn.repro_timeout_seconds, stdout=subprocess.DEVNULL,
                                   stderr=subprocess.DEVNULL).returncode
         except subprocess.TimeoutExpired:
             code = "timeout"

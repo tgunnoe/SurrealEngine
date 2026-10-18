@@ -46,6 +46,7 @@ void UActor::TickPhysics(float elapsed)
 void UActor::SetPhysics(uint8_t newPhysics)
 {
 	Physics() = newPhysics;
+	LadderMode = false;
 }
 
 void UActor::SetCollision(bool newColActors, bool newBlockActors, bool newBlockPlayers)
@@ -146,6 +147,9 @@ bool UActor::SetCollisionSize(float newRadius, float newHeight)
 
 void UActor::PhysLanded(UActor* hitActor, const vec3& hitNormal)
 {
+	if (!hitActor)
+		hitActor = Level();
+
 	// landed on the floor
 	CallEvent(this, EventName::Landed, { ExpressionValue::VectorValue(hitNormal) });
 

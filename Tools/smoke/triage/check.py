@@ -9,7 +9,8 @@ import re
 import string
 from collections import Counter
 
-from .build import is_loaded, show_count, warnings_fail, warnings_total
+from .build import (is_loaded, match_unstarted, matches_started, show_count,
+                    warnings_fail, warnings_total)
 
 # With require_first_five, the first N non-clean maps in sweep order must
 # have been re-run (not "not-run").
@@ -38,6 +39,15 @@ def template_regex(template, **fragments):
     return "".join(out)
 
 
+def repro_regex(scn, name):
+    """The section's repro line: the scenario's engine arguments, each bare or
+    quoted whole as the build quotes them, then the game placeholder."""
+    exec_rx = "'?--exec=%s'? " % re.escape(scn.exec) if scn.exec else ""
+    return (r"^%srepro: `%s --autostart --exit-after=%d '?--smoke-log=\S+ '?--url=%s%s'? %s"
+            % (re.escape(scn.bullet), re.escape(scn.exe), scn.exit_after_seconds, re.escape(name),
+               re.escape("".join(scn.url_options)), exec_rx))
+
+
 def check(scn, datadir, docdir):
     """Return (sections, nonclean, problems)."""
     bad = []
@@ -57,7 +67,8 @@ def check(scn, datadir, docdir):
         gp = [s for s in stubs["maps"][n] if s["class"] != "non-gameplay"]
         e = errs[n]
         if (m["verdict"] != "pass" or not is_loaded(scn, n, m["maps_loaded"]) or m["fps_avg"] is None
-                or e["errors"] or e["fatal_after_summary"] or gp or warnings_fail(scn, m)):
+                or e["errors"] or e["fatal_after_summary"] or gp or warnings_fail(scn, m)
+                or match_unstarted(scn, m)):
             nonclean.append(n)
     nonclean_set = set(nonclean)
     row_of = {m["map"]: m for m in sweep}
@@ -71,12 +82,10 @@ def check(scn, datadir, docdir):
         bad.append("section set differs from non-clean set: extra=%s missing=%s"
                    % (sorted(set(sections) - nonclean_set), sorted(nonclean_set - set(sections))))
 
-    repro_rx = r"^%srepro: `%s --autostart --exit-after=%d --smoke-log=\S+ --url=%%s " % (
-        b, re.escape(scn.exe), scn.exit_after_seconds)
     for n, body in sections.items():
         for label, pat in (("reproduced line", r"^%sreproduced: (%s)" % (b, REPRO_VALUES)),
                            ("maps_loaded line", r"^%smaps_loaded: " % b),
-                           ("repro command", repro_rx % re.escape(n)),
+                           ("repro command", repro_regex(scn, n)),
                            ("owner line", r"^%sowner: \S" % b)):
             if not re.search(pat, body, flags=re.M):
                 bad.append("%s: missing %s" % (n, label))
@@ -101,6 +110,10 @@ def check(scn, datadir, docdir):
             ml = re.search(r"^%smaps_loaded: (.+)$" % b, body, flags=re.M)
             if not ml or json.dumps(row["maps_loaded"]) not in ml.group(1):
                 bad.append("%s: maps_loaded line missing or differs from sweep.json" % n)
+        if scn.require_match_start:
+            ms = re.search(r"^%smatch_started: (.+)$" % b, body, flags=re.M)
+            if not ms or ms.group(1) != json.dumps(row.get("match_started")):
+                bad.append("%s: match_started line missing or differs from sweep.json" % n)
         if scn.verdict_line_equal:
             rx = template_regex(scn.verdict_template, verdict=re.escape(str(row["verdict"])),
                                 exit_code=re.escape(str(row["exit_code"])))
@@ -127,7 +140,7 @@ def check(scn, datadir, docdir):
         line = scn.counts_template.format(
             maps=len(sweep), clean=len(sweep) - len(nonclean_set), fail=v["fail"],
             crash=v["crash"], timeout=v["timeout"], stub_only=stub_only,
-            warnings=show_count(warnings_total(sweep)))
+            warnings=show_count(warnings_total(sweep)), matches_started=matches_started(sweep))
         if line not in _text(docdir, "SUMMARY.md"):
             bad.append("SUMMARY.md: counts line differs from: " + line)
 

@@ -23,6 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 MAP_SUFFIXES = {".unr", ".dx"}
 KILL_GRACE_SECONDS = 45
 GRIM_TIMEOUT_SECONDS = 10
+PORTABLE_GAME = "<game folder>"
 
 
 def list_maps(game):
@@ -38,15 +39,31 @@ def list_maps(game):
 def parse_log(path):
     info = {"script_errors": 0, "stub_hits": 0, "missing_natives": 0,
             "exceptions": 0, "script_warnings": 0, "fps_avg": None, "fatal_signal": False,
-            "summary": False, "maps_loaded": []}
+            "summary": False, "maps_loaded": [], "login": False, "match_started": False}
     fps = []
     try:
         lines = Path(path).read_text(errors="replace").splitlines()
     except OSError:
         return info, fps
+    state = None
+    pressed = False
     for line in lines:
         kind, _, rest = line.partition(" ")
-        if kind == "SCRIPT_ERROR":
+        if kind == "LOGIN":
+            info["login"] = True
+        elif kind == "STATE":
+            fields = rest.split()
+            if len(fields) >= 2:
+                state = fields[1]
+                if pressed and state == "PlayerWalking":
+                    info["match_started"] = True
+        elif kind == "EXEC":
+            # Only a command that ran is the press; EXEC_FAILED and EXEC_SKIPPED are other kinds.
+            if not pressed:
+                pressed = True
+                if state == "PlayerWalking":
+                    info["match_started"] = True
+        elif kind == "SCRIPT_ERROR":
             info["script_errors"] += 1
         elif kind == "SCRIPT_WARNING":
             info["script_warnings"] += 1
@@ -89,7 +106,7 @@ def classify(info, exit_code, timed_out, requested_map):
     return "fail"
 
 
-def run_map(exe, game, map_path, seconds, logdir):
+def run_map(exe, game, map_path, seconds, logdir, url_options="", exec_text="", portable=False):
     name = map_path.stem
     log = logdir / f"{name}.log"
     shot = logdir / f"{name}.png"
@@ -97,7 +114,10 @@ def run_map(exe, game, map_path, seconds, logdir):
     log.unlink(missing_ok=True)
     shot.unlink(missing_ok=True)
     cmd = [str(exe), "--autostart", f"--exit-after={seconds}",
-           f"--smoke-log={log}", f"--url={name}", str(game)]
+           f"--smoke-log={log}", f"--url={name}{url_options}"]
+    if exec_text:
+        cmd.append(f"--exec={exec_text}")
+    cmd.append(str(game))
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                             start_new_session=True)
     start = time.monotonic()
@@ -136,8 +156,10 @@ def run_map(exe, game, map_path, seconds, logdir):
         "script_warnings": info["script_warnings"],
         "fps_avg": info["fps_avg"],
         "maps_loaded": info["maps_loaded"],
-        "log": str(log),
-        "screenshot": screenshot,
+        "login": info["login"],
+        "match_started": info["match_started"],
+        "log": log.name if portable else str(log),
+        "screenshot": None if portable else screenshot,
         "verdict": verdict,
     }
 
@@ -150,6 +172,9 @@ def main():
     ap.add_argument("--out", required=True, help="report JSON path")
     ap.add_argument("--exe", default=str(REPO_ROOT / "build" / "SurrealEngine"))
     ap.add_argument("--logdir", help="directory for per-map logs and screenshots (default: <out>.d)")
+    ap.add_argument("--url-options", default="", help="text appended to every --url=<map>, e.g. ?NumBots=4")
+    ap.add_argument("--exec", dest="exec_text", default="", help="passed as --exec=<text> to every run")
+    ap.add_argument("--portable", action="store_true", help="write a report with no host path in it")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -161,9 +186,12 @@ def main():
         maps = maps[:args.limit]
 
     results = []
-    report = {"game": str(args.game), "seconds": args.seconds, "maps": results}
+    report = {"game": PORTABLE_GAME if args.portable else str(args.game), "seconds": args.seconds,
+              "url_options": args.url_options or None, "exec": args.exec_text or None,
+              "maps": results}
     for m in maps:
-        entry = run_map(args.exe, args.game, m, args.seconds, logdir)
+        entry = run_map(args.exe, args.game, m, args.seconds, logdir,
+                        args.url_options, args.exec_text, args.portable)
         print(f"{entry['verdict']:8} {entry['map']}", flush=True)
         results.append(entry)
         # Rewritten after every map so an interrupted sweep keeps its rows.
