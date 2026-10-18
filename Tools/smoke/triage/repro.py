@@ -7,6 +7,8 @@ import json
 import os
 import subprocess
 
+import sweep
+
 from . import extract
 
 
@@ -21,6 +23,11 @@ def _gameplay_stubs(scn, path):
     stubs, _, _, _ = extract.parse(path)
     return sorted(s for s in stubs
                   if extract.classify(scn, extract.owner_of(scn, s))[0] != "non-gameplay")
+
+
+def _match_started(path):
+    # The sweep's own rule: a re-run and a sweep row cannot disagree on what a start is.
+    return sweep.parse_log(path)[0]["match_started"]
 
 
 def log_path(scn, name):
@@ -39,16 +46,32 @@ def engine_args(scn, exe, name):
 
 
 def compare(scn, old_log, new_log):
-    """Return (verdict, first_line_run1, first_line_run2). Runs agree when
-    their first failing line matches after masking addresses; with no
-    failing line in either, when their gameplay stub sets match."""
+    """Return (verdict, first_line_run1, first_line_run2).
+
+    Runs agree when their first failing line matches after masking addresses;
+    with no failing line in either, when their gameplay stub sets match. When
+    the scenario requires a match start, the runs must also agree on whether
+    the match started, and a non-start counts as a failure: the verdict is
+    "no" when the first run failed (a failing line or a non-start) and the
+    second did not, "flaky" when the runs disagree otherwise. Each line then
+    ends with "; match_started:<true|false>".
+    """
     a, b = _first_failing(old_log), _first_failing(new_log)
     if a is None and b is None:
         old, new = _gameplay_stubs(scn, old_log), _gameplay_stubs(scn, new_log)
-        return ("yes" if old == new else "flaky"), "stubs:" + ",".join(old), "stubs:" + ",".join(new)
-    if a is None or b is None:
-        return ("no" if b is None else "flaky"), a, b
-    return ("yes" if a == b else "flaky"), a, b
+        agree, line1, line2 = old == new, "stubs:" + ",".join(old), "stubs:" + ",".join(new)
+    else:
+        agree, line1, line2 = a == b, a, b
+    failed1, failed2 = a is not None, b is not None
+    if scn.require_match_start:
+        started1, started2 = _match_started(old_log), _match_started(new_log)
+        agree = agree and started1 == started2
+        failed1, failed2 = failed1 or not started1, failed2 or not started2
+        line1 = "%s; match_started:%s" % (line1 or "no failing line", str(started1).lower())
+        line2 = "%s; match_started:%s" % (line2 or "no failing line", str(started2).lower())
+    if agree:
+        return "yes", line1, line2
+    return ("no" if failed1 and not failed2 else "flaky"), line1, line2
 
 
 def run(scn, exe, game, logdir, out, maps):
