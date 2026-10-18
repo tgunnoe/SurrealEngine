@@ -49,6 +49,25 @@ namespace AIMath
 		return std::abs(WrapSigned(angle - central)) <= halfWidth;
 	}
 
+	// Half width of the yaw window for a script's yawDistribution, given in degrees. Scripts that want
+	// any direction pass a central yaw of zero with a distribution of zero, so zero and below mean the
+	// whole circle rather than a single heading.
+	inline int YawHalfWidth(float distributionDegrees)
+	{
+		if (!(distributionDegrees > 0.0f))
+			return AngleUnits / 2;
+		return std::min(AngleUnits / 2, (int)std::lround(DegreesToUnits(std::min(distributionDegrees, 360.0f))));
+	}
+
+	// Half width of the pitch window for pitchDistribution in degrees. Unlike yaw, zero means exactly the
+	// central pitch, which keeps a walking pawn's random picks level.
+	inline int PitchHalfWidth(float distributionDegrees)
+	{
+		if (!(distributionDegrees > 0.0f))
+			return 0;
+		return std::min(AngleUnits / 2, (int)std::lround(DegreesToUnits(std::min(distributionDegrees, 360.0f))));
+	}
+
 	// Maps unit in [0, 1] linearly onto central +- halfWidth and wraps the result into [0, 65536).
 	inline int SampleAngularWindow(int central, int halfWidth, float unit)
 	{

@@ -99,6 +99,31 @@ TEST(AIAngularWindowHalfTurnOrWiderAcceptsEverything)
 		CHECK(AIMath::InAngularWindow(angle, 12345, 32768));
 }
 
+TEST(AIYawHalfWidthZeroMeansWholeCircle)
+{
+	// Scripts ask for "any direction" with a central yaw of 0 and a distribution of 0.
+	CHECK_EQ(AIMath::YawHalfWidth(0.0f), 32768);
+	CHECK_EQ(AIMath::YawHalfWidth(-3.0f), 32768);
+	for (int angle = 0; angle < AIMath::AngleUnits; angle += 997)
+		CHECK(AIMath::InAngularWindow(angle, 0, AIMath::YawHalfWidth(0.0f)));
+}
+
+TEST(AIYawHalfWidthIsDegreesClampedToHalfTurn)
+{
+	CHECK_EQ(AIMath::YawHalfWidth(90.0f), 16384);
+	CHECK_EQ(AIMath::YawHalfWidth(180.0f), 32768);
+	CHECK_EQ(AIMath::YawHalfWidth(720.0f), 32768);
+	CHECK_EQ(AIMath::YawHalfWidth(0.25f), 46);
+}
+
+TEST(AIPitchHalfWidthZeroMeansCentralPitchOnly)
+{
+	CHECK_EQ(AIMath::PitchHalfWidth(0.0f), 0);
+	CHECK_EQ(AIMath::PitchHalfWidth(-5.0f), 0);
+	CHECK_EQ(AIMath::PitchHalfWidth(90.0f), 16384);
+	CHECK_EQ(AIMath::PitchHalfWidth(720.0f), 32768);
+}
+
 TEST(AIAngularWindowSampleEndpoints)
 {
 	CHECK_EQ(AIMath::SampleAngularWindow(100, 300, 0.0f), 65336);
