@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <random>
 
 // These cover the arithmetic behind the Deus Ex AI natives (sight, destination picking,
@@ -131,9 +132,62 @@ TEST(AIPitchHalfWidthZeroMeansCentralPitchOnly)
 {
 	CHECK_EQ(AIMath::PitchHalfWidth(0.0f), 0);
 	CHECK_EQ(AIMath::PitchHalfWidth(-5.0f), 0);
-	CHECK_EQ(AIMath::PitchHalfWidth(0.5f), 16384);
-	CHECK_EQ(AIMath::PitchHalfWidth(1.0f), 32768);
-	CHECK_EQ(AIMath::PitchHalfWidth(3.0f), 32768);
+}
+
+TEST(AIPitchHalfWidthStopsAtAQuarterTurn)
+{
+	CHECK_EQ(AIMath::PitchHalfWidth(0.25f), 8192);
+	CHECK_EQ(AIMath::PitchHalfWidth(0.5f), Quarter);
+	CHECK_EQ(AIMath::PitchHalfWidth(0.6f), Quarter);
+	CHECK_EQ(AIMath::PitchHalfWidth(0.8f), Quarter);
+	CHECK_EQ(AIMath::PitchHalfWidth(1.0f), Quarter);
+	CHECK_EQ(AIMath::PitchHalfWidth(3.0f), Quarter);
+}
+
+TEST(AIPitchSampleNeverFoldsOverVertical)
+{
+	// A sample past a quarter turn points back over the pawn's shoulder, which is how a fleeing pawn
+	// was handed destinations in the air. Whatever the distribution, a level central pitch must keep
+	// every sampled direction on the near side of vertical.
+	const float distributions[] = { 0.25f, 0.5f, 0.6f, 0.8f, 1.0f, 3.0f };
+	for (float distribution : distributions)
+	{
+		int halfWidth = AIMath::PitchHalfWidth(distribution);
+		for (int step = 0; step <= 200; step++)
+		{
+			int pitch = AIMath::SampleAngularWindow(0, halfWidth, step / 200.0f);
+			CHECK_MSG(AIMath::Forward(pitch, 0).x >= -1e-4f,
+				"distribution " + std::to_string(distribution) + " sampled pitch " + std::to_string(pitch) + " past vertical");
+		}
+	}
+}
+
+TEST(AIGroundedZStandsOnTheFloorBeneathTheSample)
+{
+	// The pawn's centre rests one half-height above the floor the drop found, wherever the sample was.
+	std::optional<float> z = AIMath::GroundedZ(100.0f, true, 44.0f);
+	CHECK(z.has_value());
+	CHECK(Near(*z, 144.0f));
+	z = AIMath::GroundedZ(-250.0f, true, 23.0f);
+	CHECK(z.has_value());
+	CHECK(Near(*z, -227.0f));
+}
+
+TEST(AIGroundedZWithNoFloorIsRefused)
+{
+	// A sample with nothing to stand on is no destination for a walking pawn, and the hit value that
+	// goes with it must not leak into an answer.
+	CHECK(!AIMath::GroundedZ(0.0f, false, 44.0f).has_value());
+	CHECK(!AIMath::GroundedZ(9999.0f, false, 44.0f).has_value());
+}
+
+TEST(AIGroundedZIsNotCappedByTheSampleHeight)
+{
+	// A ledge higher than the pawn is still a floor to stand on, so nothing but the floor and the half
+	// height sets the answer.
+	std::optional<float> z = AIMath::GroundedZ(600.0f, true, 44.0f);
+	CHECK(z.has_value());
+	CHECK(Near(*z, 644.0f));
 }
 
 TEST(AIAngularWindowSampleEndpoints)
