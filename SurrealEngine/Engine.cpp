@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "Engine.h"
 #include "Utils/File.h"
+#include "Utils/UserDirs.h"
 #include "Utils/StrTools.h"
 #include "Utils/SHA1Sum.h"
 #include "Render/RenderSubsystem.h"
@@ -60,12 +61,36 @@
 #include "Video/VideoPlayer.h"
 #include "Utils/Convert.h"
 #include <chrono>
+#include <iostream>
 #include <set>
 
 Engine* engine = nullptr;
 
+// Runs from the destructor, where an exception would end the process: a log that cannot be written
+// is reported and the shutdown carries on.
+static void SaveLastRunLog() noexcept
+{
+	try
+	{
+		const fs::path directory = UserDirs::appConfigDir();
+		Directory::create(directory.string());
+		Logger::Get()->SaveLogAsPlaintext((directory / "SE-Log-LastRun.txt").string());
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "SurrealEngine: could not save SE-Log-LastRun.txt: " << e.what() << "\n";
+	}
+	catch (...)
+	{
+		std::cerr << "SurrealEngine: could not save SE-Log-LastRun.txt\n";
+	}
+}
+
 Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 {
+	// Every entry point constructs the engine once the game is chosen, so this covers them all
+	WritePolicy::setForbiddenRoot(LaunchInfo.gameRootFolder);
+
 	engine = this;
 
 	packages = std::make_unique<PackageManager>(LaunchInfo);
@@ -110,7 +135,7 @@ Engine::~Engine()
 	if (audiodev)
 		audiodev->ShutdownDevice();
 
-	Logger::Get()->SaveLogAsPlaintext((Directory::localAppData() / "SurrealEngine/SE-Log-LastRun.txt").string());
+	SaveLastRunLog();
 
 	engine = nullptr;
 }

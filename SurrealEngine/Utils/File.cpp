@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "Utils/File.h"
 #include "Utils/UTF16.h"
+#include "Utils/UserDirs.h"
 #include "Utils/StrTools.h"
 #ifdef WIN32
 #include <Windows.h>
@@ -109,6 +110,8 @@ public:
 
 std::shared_ptr<File> File::create_always(const std::string &filename)
 {
+	WritePolicy::check(filename);
+
 	HANDLE handle = CreateFile(to_utf16(filename).c_str(), GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
 	if (handle == INVALID_HANDLE_VALUE)
 		Exception::Throw("Could not create " + filename);
@@ -127,6 +130,8 @@ std::shared_ptr<File> File::open_existing(const std::string &filename)
 
 bool File::try_delete(const std::string& filename)
 {
+	WritePolicy::check(filename);
+
 	return DeleteFile(to_utf16(filename).c_str()) == TRUE;
 }
 
@@ -138,6 +143,9 @@ void File::delete_always(const std::string& filename)
 
 void File::rename(const std::string& sourceName, const std::string& destinationName)
 {
+	WritePolicy::check(sourceName);
+	WritePolicy::check(destinationName);
+
 	std::filesystem::rename(sourceName, destinationName);
 }
 
@@ -208,6 +216,8 @@ public:
 
 std::shared_ptr<File> File::create_always(const std::string &filename)
 {
+	WritePolicy::check(filename);
+
 	FILE* handle = fopen(filename.c_str(), "wb");
 	if (handle == nullptr)
 		Exception::Throw("Could not create " + filename);
@@ -226,6 +236,8 @@ std::shared_ptr<File> File::open_existing(const std::string &filename)
 
 bool File::try_delete(const std::string& filename)
 {
+	WritePolicy::check(filename);
+
 	return std::remove(filename.c_str()) == 0;
 }
 
@@ -237,6 +249,9 @@ void File::delete_always(const std::string& filename)
 
 void File::rename(const std::string& sourceName, const std::string& destinationName)
 {
+	WritePolicy::check(sourceName);
+	WritePolicy::check(destinationName);
+
 	std::filesystem::rename(sourceName, destinationName);
 }
 
@@ -298,6 +313,8 @@ Array<std::string> File::read_all_lines(const std::string& filename)
 
 void Directory::create(const std::string& path)
 {
+	WritePolicy::check(path);
+
 	BOOL result = CreateDirectory(to_utf16(path).c_str(), nullptr);
 	if (result == FALSE)
 	{
@@ -326,28 +343,12 @@ void Directory::create(const std::string& path)
 	}
 }
 
-fs::path Directory::localAppData()
-{
-	PWSTR path = nullptr;
-	if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, KF_FLAG_CREATE, nullptr, &path)))
-		throw std::runtime_error("SHGetKnownFolderPath(FOLDERID_LocalAppData) failed");
-	try
-	{
-		std::string folder = from_utf16(path);
-		CoTaskMemFree(path);
-		return folder;
-	}
-	catch (...)
-	{
-		CoTaskMemFree(path);
-		throw;
-	}
-}
-
 #else
 
 void Directory::create(const std::string& dirname)
 {
+	WritePolicy::check(dirname);
+
 	if (mkdir(dirname.c_str(), 0777) == 0)
 		return;
 	if (errno == EEXIST)
@@ -371,22 +372,16 @@ void Directory::create(const std::string& dirname)
 	Exception::Throw("Could not create directory " + dirname);
 }
 
-fs::path Directory::localAppData()
-{
-	// We're trying to find "~/.config" here
-	const char* homeDir = getenv("HOME");
-
-	if (!homeDir)
-		throw std::runtime_error("HOME environment variable is not set... somehow.");
-
-	return fs::path(homeDir) / ".config";
-}
-
 #endif
 
 void Directory::remove_all(const std::string& path)
 {
-	std::filesystem::remove_all(path);
+	WritePolicy::check(path);
+
+	std::error_code ec;
+	std::filesystem::remove_all(path, ec);
+	if (ec)
+		throw std::runtime_error("Could not remove " + path + ": " + ec.message());
 }
 
 std::string OS::executable_path()
