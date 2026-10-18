@@ -78,11 +78,14 @@ namespace AIMath
 	}
 
 	// Height for the centre of a walking pawn's random destination: one half height above the floor the
-	// drop under the sampled point found, wherever that floor is (a ledge above the pawn is still a floor),
-	// or level with the pawn when no floor lay within the drop. hitZ means nothing without a hit.
-	inline std::optional<float> GroundedZ(float hitZ, bool hasHit, float pawnZ, float collisionHeight)
+	// drop under the sampled point found, wherever that floor is (a ledge above the pawn is still a floor).
+	// Empty when no floor lay within the drop, since a point with nothing to stand on is no destination for
+	// a pawn that walks. hitZ means nothing without a hit.
+	inline std::optional<float> GroundedZ(float hitZ, bool hasHit, float collisionHeight)
 	{
-		return hasHit ? hitZ + collisionHeight : pawnZ;
+		if (!hasHit)
+			return std::nullopt;
+		return hitZ + collisionHeight;
 	}
 
 	// Maps unit in [0, 1] linearly onto central +- halfWidth and wraps the result into [0, 65536).

@@ -165,10 +165,10 @@ TEST(AIPitchSampleNeverFoldsOverVertical)
 TEST(AIGroundedZStandsOnTheFloorBeneathTheSample)
 {
 	// The pawn's centre rests one half-height above the floor the drop found, wherever the sample was.
-	std::optional<float> z = AIMath::GroundedZ(100.0f, true, 500.0f, 44.0f);
+	std::optional<float> z = AIMath::GroundedZ(100.0f, true, 44.0f);
 	CHECK(z.has_value());
 	CHECK(Near(*z, 144.0f));
-	z = AIMath::GroundedZ(-250.0f, true, 500.0f, 23.0f);
+	z = AIMath::GroundedZ(-250.0f, true, 23.0f);
 	CHECK(z.has_value());
 	CHECK(Near(*z, -227.0f));
 }
@@ -177,14 +177,15 @@ TEST(AIGroundedZWithNoFloorIsRefused)
 {
 	// A sample with nothing to stand on is no destination for a walking pawn, and the hit value that
 	// goes with it must not leak into an answer.
-	CHECK(!AIMath::GroundedZ(0.0f, false, 500.0f, 44.0f).has_value());
-	CHECK(!AIMath::GroundedZ(9999.0f, false, -80.0f, 44.0f).has_value());
+	CHECK(!AIMath::GroundedZ(0.0f, false, 44.0f).has_value());
+	CHECK(!AIMath::GroundedZ(9999.0f, false, 44.0f).has_value());
 }
 
-TEST(AIGroundedZFollowsAFloorAboveThePawn)
+TEST(AIGroundedZIsNotCappedByTheSampleHeight)
 {
-	// A ledge higher than the pawn is still a floor to stand on; the pawn's own height does not cap it.
-	std::optional<float> z = AIMath::GroundedZ(600.0f, true, 500.0f, 44.0f);
+	// A ledge higher than the pawn is still a floor to stand on, so nothing but the floor and the half
+	// height sets the answer.
+	std::optional<float> z = AIMath::GroundedZ(600.0f, true, 44.0f);
 	CHECK(z.has_value());
 	CHECK(Near(*z, 644.0f));
 }

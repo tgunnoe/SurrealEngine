@@ -275,26 +275,23 @@ bool UPawn::AIPickRandomDestination(float minDist, float maxDist, int centralYaw
 	const int pitchHalfWidth = AIMath::PitchHalfWidth(pitchDistribution);
 
 	// A pawn that walks needs somewhere to stand, so a sample in open air is dropped onto the floor
-	// beneath it (or put level with the pawn when no floor lies within the drop). Fliers and swimmers
-	// keep the sampled point.
+	// beneath it, and a sample with no floor within the drop is no destination at all. Fliers and
+	// swimmers keep the sampled point.
 	const bool needsFloor = Physics() != PHYS_Flying && Physics() != PHYS_Swimming;
-	auto groundedZ = [&](const vec3& sample)
+	auto groundedZ = [&](const vec3& sample) -> std::optional<float>
 	{
-		bool hasHit = false;
-		float floorZ = 0.0f;
-		if (maxDist > 0.0f)
-		{
-			TraceFlags flags;
-			flags.world = true;
-			flags.movers = true;
-			vec3 extents(CollisionRadius(), CollisionRadius(), CollisionHeight());
-			CollisionHit hit = XLevel()->Collision.TraceFirstHit(sample, sample - vec3(0.0f, 0.0f, maxDist), this, extents, flags);
-			// As in CylinderTraceClear, only a hit comes back with an actor. The swept cylinder stops one
-			// half height above the surface it struck, and GroundedZ puts it back that far above the floor.
-			hasHit = hit.Actor != nullptr;
-			floorZ = sample.z - maxDist * hit.Fraction - CollisionHeight();
-		}
-		return AIMath::GroundedZ(floorZ, hasHit, Location().z, CollisionHeight()).value();
+		if (!(maxDist > 0.0f))
+			return std::nullopt;
+
+		TraceFlags flags;
+		flags.world = true;
+		flags.movers = true;
+		vec3 extents(CollisionRadius(), CollisionRadius(), CollisionHeight());
+		CollisionHit hit = XLevel()->Collision.TraceFirstHit(sample, sample - vec3(0.0f, 0.0f, maxDist), this, extents, flags);
+		// As in CylinderTraceClear, only a hit comes back with an actor. The swept cylinder stops one
+		// half height above the surface it struck, and GroundedZ puts it back that far above the floor.
+		float floorZ = sample.z - maxDist * hit.Fraction - CollisionHeight();
+		return AIMath::GroundedZ(floorZ, hit.Actor != nullptr, CollisionHeight());
 	};
 
 	float farthest = maxDist;
@@ -304,10 +301,16 @@ bool UPawn::AIPickRandomDestination(float minDist, float maxDist, int centralYaw
 		int pitch = AIMath::SampleAngularWindow(centralPitch, pitchHalfWidth, random01());
 		float distance = minDist + (std::max(minDist, farthest) - minDist) * random01();
 		vec3 candidate = AIMath::PointAlong(Location(), pitch, yaw, distance);
+		bool standable = true;
 		if (needsFloor)
-			candidate.z = groundedZ(candidate);
+		{
+			std::optional<float> z = groundedZ(candidate);
+			standable = z.has_value();
+			if (standable)
+				candidate.z = *z;
+		}
 
-		if (CylinderTraceClear(Location(), candidate) && PointReachable(candidate))
+		if (standable && CylinderTraceClear(Location(), candidate) && PointReachable(candidate))
 		{
 			dest = candidate;
 			return true;
