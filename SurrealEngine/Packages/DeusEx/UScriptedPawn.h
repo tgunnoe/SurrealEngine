@@ -25,6 +25,14 @@ struct UDXInitialAllianceInfoEx
 	};
 };
 
+// The rule behind ScriptedPawn.IsValidEnemy, kept free of engine types so it can be tested without a
+// loaded level. checkAlliance is true unless the script passed an explicit false; hostile is only
+// consulted when it is true.
+inline bool EnemyValidity(bool candidateExists, bool isSelf, bool alive, bool detectable, bool checkAlliance, bool hostile)
+{
+	return false; // placeholder until the tests below drive the real rule
+}
+
 class UScriptedPawn : public UPawn
 {
 public:
