@@ -268,6 +268,7 @@ void Engine::Run()
 
 		// Before the exit-after check, so a command due at the exit time still runs
 		RunDueExecCommands();
+		NoteStateChanges();
 
 		if (SmokeLog::Get()->OnFrame(LaunchInfo.exitAfterSeconds))
 			quit = true;
@@ -1186,6 +1187,36 @@ void Engine::RunDueExecCommands()
 		ConsoleCommand(viewport->Actor(), item.command, found.ToType<BitfieldBool&>());
 		SmokeLog::Get()->Event(found.ToType<BitfieldBool&>() ? "EXEC" : "EXEC_FAILED", FormatExecItem(item));
 	}
+}
+
+void Engine::NoteStateChanges()
+{
+	if (!SmokeLog::Get()->IsOpen() || execLoginSeconds < 0.0)
+		return;
+
+	UPlayerPawn* actor = viewport->Actor();
+	if (!actor)
+		return;
+
+	NameString stateName = actor->GetStateName();
+	if (actor == stateSeenActor && stateName == stateSeenName)
+		return;
+
+	// The clock is the --exec one, so STATE and EXEC times agree and stay monotonic across maps
+	char seconds[32];
+	std::snprintf(seconds, sizeof(seconds), "%.1f", SmokeLog::Get()->SecondsSinceStart() - execLoginSeconds);
+	std::string text = std::string(seconds) + " " + stateName.ToString();
+	if (actor != stateSeenActor)
+	{
+		const vec3& location = actor->Location();
+		char at[96];
+		std::snprintf(at, sizeof(at), " at (%.1f, %.1f, %.1f)", location.x, location.y, location.z);
+		text += at;
+	}
+	SmokeLog::Get()->Event("STATE", text);
+
+	stateSeenActor = actor;
+	stateSeenName = stateName;
 }
 
 Array<ExecItem> Engine::UnrunExecCommands() const
