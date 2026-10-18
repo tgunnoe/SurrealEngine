@@ -110,10 +110,11 @@ UTBOTS = Scenario(
     },
     error_owner={
         "match did not start": (
-            "no cause identified: in the logs of the maps listed, the player's state "
-            "is `None` from within two seconds of login through the fire press, so the "
-            "press finds no state to act on; the log cannot say whether the map is not "
-            "a match or the engine drops the player's state",
+            "cause: the map's DefaultGameType is UTIntro, whose Login hides the player "
+            "and views through a SpectatorCam and which has no match to start (BotPack.u, "
+            "class UTIntro); the map is a cinematic, not a botmatch; the player's state "
+            "is `None` from within two seconds of login, so the fire press finds no "
+            "state to act on",
             "none applies"),
     },
     status_natives=_STATUS,

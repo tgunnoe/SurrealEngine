@@ -22,7 +22,7 @@ Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 - match_started: false
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-ut-bots/CityIntro.log '--url=CityIntro?NumBots=4' --exec=5:Fire "<game folder>"`
-- owner: no cause identified: in the logs of the maps listed, the player's state is `None` from within two seconds of login through the fire press, so the press finds no state to act on; the log cannot say whether the map is not a match or the engine drops the player's state
+- owner: cause: the map's DefaultGameType is UTIntro, whose Login hides the player and views through a SpectatorCam and which has no match to start (BotPack.u, class UTIntro); the map is a cinematic, not a botmatch; the player's state is `None` from within two seconds of login, so the fire press finds no state to act on
 - Status.md: none applies
 - reproduced: yes (second run exit code 0; run1 first line `stubs:`; run2 first line `stubs:`)
 
@@ -35,7 +35,7 @@ Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 - match_started: false
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-ut-bots/EOL_Assault.log '--url=EOL_Assault?NumBots=4' --exec=5:Fire "<game folder>"`
-- owner: no cause identified: in the logs of the maps listed, the player's state is `None` from within two seconds of login through the fire press, so the press finds no state to act on; the log cannot say whether the map is not a match or the engine drops the player's state
+- owner: cause: the map's DefaultGameType is UTIntro, whose Login hides the player and views through a SpectatorCam and which has no match to start (BotPack.u, class UTIntro); the map is a cinematic, not a botmatch; the player's state is `None` from within two seconds of login, so the fire press finds no state to act on
 - Status.md: none applies
 - reproduced: yes (second run exit code 0; run1 first line `stubs:`; run2 first line `stubs:`)
 
@@ -48,7 +48,7 @@ Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 - match_started: false
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-ut-bots/EOL_CTF.log '--url=EOL_CTF?NumBots=4' --exec=5:Fire "<game folder>"`
-- owner: no cause identified: in the logs of the maps listed, the player's state is `None` from within two seconds of login through the fire press, so the press finds no state to act on; the log cannot say whether the map is not a match or the engine drops the player's state
+- owner: cause: the map's DefaultGameType is UTIntro, whose Login hides the player and views through a SpectatorCam and which has no match to start (BotPack.u, class UTIntro); the map is a cinematic, not a botmatch; the player's state is `None` from within two seconds of login, so the fire press finds no state to act on
 - Status.md: none applies
 - reproduced: yes (second run exit code 0; run1 first line `stubs:`; run2 first line `stubs:`)
 
@@ -61,7 +61,7 @@ Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 - match_started: false
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-ut-bots/EOL_Challenge.log '--url=EOL_Challenge?NumBots=4' --exec=5:Fire "<game folder>"`
-- owner: no cause identified: in the logs of the maps listed, the player's state is `None` from within two seconds of login through the fire press, so the press finds no state to act on; the log cannot say whether the map is not a match or the engine drops the player's state
+- owner: cause: the map's DefaultGameType is UTIntro, whose Login hides the player and views through a SpectatorCam and which has no match to start (BotPack.u, class UTIntro); the map is a cinematic, not a botmatch; the player's state is `None` from within two seconds of login, so the fire press finds no state to act on
 - Status.md: none applies
 - reproduced: yes (second run exit code 0; run1 first line `stubs:`; run2 first line `stubs:`)
 
@@ -74,7 +74,7 @@ Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 - match_started: false
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-ut-bots/EOL_Deathmatch.log '--url=EOL_Deathmatch?NumBots=4' --exec=5:Fire "<game folder>"`
-- owner: no cause identified: in the logs of the maps listed, the player's state is `None` from within two seconds of login through the fire press, so the press finds no state to act on; the log cannot say whether the map is not a match or the engine drops the player's state
+- owner: cause: the map's DefaultGameType is UTIntro, whose Login hides the player and views through a SpectatorCam and which has no match to start (BotPack.u, class UTIntro); the map is a cinematic, not a botmatch; the player's state is `None` from within two seconds of login, so the fire press finds no state to act on
 - Status.md: none applies
 - reproduced: yes (second run exit code 0; run1 first line `stubs:`; run2 first line `stubs:`)
 
@@ -87,7 +87,7 @@ Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 - match_started: false
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-ut-bots/EOL_Domination.log '--url=EOL_Domination?NumBots=4' --exec=5:Fire "<game folder>"`
-- owner: no cause identified: in the logs of the maps listed, the player's state is `None` from within two seconds of login through the fire press, so the press finds no state to act on; the log cannot say whether the map is not a match or the engine drops the player's state
+- owner: cause: the map's DefaultGameType is UTIntro, whose Login hides the player and views through a SpectatorCam and which has no match to start (BotPack.u, class UTIntro); the map is a cinematic, not a botmatch; the player's state is `None` from within two seconds of login, so the fire press finds no state to act on
 - Status.md: none applies
 - reproduced: not-run
 
@@ -100,7 +100,7 @@ Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 - match_started: false
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-ut-bots/EOL_Statues.log '--url=EOL_Statues?NumBots=4' --exec=5:Fire "<game folder>"`
-- owner: no cause identified: in the logs of the maps listed, the player's state is `None` from within two seconds of login through the fire press, so the press finds no state to act on; the log cannot say whether the map is not a match or the engine drops the player's state
+- owner: cause: the map's DefaultGameType is UTIntro, whose Login hides the player and views through a SpectatorCam and which has no match to start (BotPack.u, class UTIntro); the map is a cinematic, not a botmatch; the player's state is `None` from within two seconds of login, so the fire press finds no state to act on
 - Status.md: none applies
 - reproduced: not-run
 
@@ -113,6 +113,6 @@ Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 - match_started: false
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-ut-bots/UTCredits.log '--url=UTCredits?NumBots=4' --exec=5:Fire "<game folder>"`
-- owner: no cause identified: in the logs of the maps listed, the player's state is `None` from within two seconds of login through the fire press, so the press finds no state to act on; the log cannot say whether the map is not a match or the engine drops the player's state
+- owner: cause: the map's DefaultGameType is UTIntro, whose Login hides the player and views through a SpectatorCam and which has no match to start (BotPack.u, class UTIntro); the map is a cinematic, not a botmatch; the player's state is `None` from within two seconds of login, so the fire press finds no state to act on
 - Status.md: none applies
 - reproduced: not-run
