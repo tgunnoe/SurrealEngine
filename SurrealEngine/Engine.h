@@ -210,8 +210,9 @@ public:
 	double execLoginSeconds = -1.0;
 	size_t execCursor = 0;
 
-	// Writes a STATE line to the smoke log when the player's state changes, or when the player
-	// actor is a new one. Called once per frame, so a state entered and left between two frames is not seen.
+	// Writes a STATE line to the smoke log when the player's state name changes, and on the first
+	// frame after every LOGIN, with the player's location. Called once per frame, so a state entered
+	// and left between two frames is not seen.
 	void NoteStateChanges();
 	UPlayerPawn* stateSeenActor = nullptr;
 	NameString stateSeenName;
