@@ -331,7 +331,31 @@ void NPawn::LineOfSightTo_Deus(UObject* Self, UObject* Other, std::optional<bool
 
 void NPawn::ReachablePathnodes(UObject* Self, UObject* BaseClass, UObject*& NavPoint, UObject* FromPoint, float& distance, std::optional<bool> bUsePrunedPaths)
 {
-	LogUnimplemented("Pawn.ReachablePathnodes");
+	UPawn* selfPawn = UObject::Cast<UPawn>(Self);
+	Frame::CreatedIterator = std::make_unique<ReachablePathnodesIterator>(BaseClass, &NavPoint, &distance,
+		selfPawn->ReachablePathnodes(UObject::Cast<UActor>(FromPoint), bUsePrunedPaths.value_or(false)));
+}
+
+ReachablePathnodesIterator::ReachablePathnodesIterator(UObject* baseClass, UObject** outNavPoint, float* outDistance, std::vector<std::pair<UNavigationPoint*, int>> nodes)
+	: baseClass(baseClass), outNavPoint(outNavPoint), outDistance(outDistance), nodes(std::move(nodes))
+{
+}
+
+bool ReachablePathnodesIterator::Next()
+{
+	while (nextNode < nodes.size())
+	{
+		auto [navPoint, distance] = nodes[nextNode++];
+		if (!baseClass || navPoint->IsA(baseClass->Name))
+		{
+			*outNavPoint = navPoint;
+			*outDistance = (float)distance;
+			return true;
+		}
+	}
+
+	*outNavPoint = nullptr;
+	return false;
 }
 
 void NPawn::StrafeFacing_Deus(UObject* Self, const vec3& NewDestination, UObject* NewTarget, std::optional<float> speed)

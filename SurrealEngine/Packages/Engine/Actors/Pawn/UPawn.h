@@ -76,6 +76,13 @@ public:
 	UObject* FindPathToward(UObject* anActor, bool singlePath);
 	UObject* FindBestInventoryPath(bool predictRespawns, float& outBestWeight);
 	UNavigationPoint* FindClosestNavPoint(vec3 location);
+	// The closest navigation point to the pawn that ActorReachable accepts, or null
+	UNavigationPoint* FindNearestReachableNavPoint();
+	// Every navigation point reachable through the reach specs from fromPoint (when it is a navigation
+	// point), else from the navigation point closest to it, else from the nearest one the pawn can reach
+	// itself, paired with its path distance and nearest first. Pruned reach specs only count when
+	// usePrunedPaths is set.
+	std::vector<std::pair<UNavigationPoint*, int>> ReachablePathnodes(UActor* fromPoint, bool usePrunedPaths);
 	bool MarkReachableNavEndPoints();
 
 	// Deus Ex AI functions
