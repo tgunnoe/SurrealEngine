@@ -45,6 +45,7 @@ class Scenario:
     repro_timeout_seconds: int = 0
     repro_logdir: str = ""
     url_options: tuple = ()          # extra argv after --url=<map>
+    exec: str = ""
 
     # Checker options.
     # A map with a recorded SCRIPT_WARNING count above zero is non-clean. Off by
@@ -62,3 +63,4 @@ class Scenario:
     maps_loaded_equal: bool = False
     verdict_line_equal: bool = False
     map_match_case_insensitive: bool = False
+    require_match_start: bool = False

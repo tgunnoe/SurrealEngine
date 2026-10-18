@@ -171,7 +171,7 @@ def build(scn, datadir, outdir, repro_path):
             maps=len(rows), clean=clean, fail=verdicts["fail"], crash=verdicts["crash"],
             timeout=verdicts["timeout"],
             stub_only=sum(1 for m, e, gp, r in nonclean if m["verdict"] == "pass"),
-            warnings=show_count(warnings_total(sweep))) + "\n\n")
+            warnings=show_count(warnings_total(sweep)), matches_started=-1) + "\n\n")
         f.write("Check: the verdict counts are recomputed from sweep.json by check_triage.py,\n"
                 "which exits 0 only if they equal the line above.\n\n")
         f.write("## Failure signatures\n\n| Signature | Maps | Affected |\n| :--- | ---: | :--- |\n")

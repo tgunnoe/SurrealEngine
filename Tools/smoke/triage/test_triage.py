@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 SMOKE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SMOKE))
@@ -379,6 +380,161 @@ class TestWarningsPolicy(Fixture):
         # A partial sum would read as a measurement; the checker must reject it.
         self.edit_doc("SUMMARY.md", " warnings: not recorded.", " warnings: 4.")
         self.assertTrue(any("counts line differs" in p for p in self.problems(scn)))
+
+
+class TestReproCommand(unittest.TestCase):
+    """The engine command a re-run starts and the command the document shows."""
+
+    def command(self, scn):
+        with tempfile.TemporaryDirectory() as tmp:
+            old = os.path.join(tmp, "old")
+            os.mkdir(old)
+            open(os.path.join(old, "M1.log"), "w").close()
+            scn = dataclasses.replace(scn, repro_logdir=os.path.join(tmp, "new"))
+            seen = []
+
+            def fake_run(cmd, **kwargs):
+                seen.append(cmd)
+                open(next(a for a in cmd if a.startswith("--smoke-log=")).split("=", 1)[1], "w").close()
+                return mock.Mock(returncode=0)
+
+            with mock.patch.object(repro.subprocess, "run", side_effect=fake_run):
+                repro.run(scn, "Engine", "<game>", old, os.path.join(tmp, "repro.json"), ["M1"])
+        self.assertEqual(len(seen), 1)
+        return seen[0]
+
+    def test_options_are_joined_to_the_url_and_exec_follows(self):
+        cmd = self.command(dataclasses.replace(TOY, url_options=("?NumBots=4", "?Foo=1"), exec="5:Fire"))
+        self.assertEqual(cmd[4:], ["--url=M1?NumBots=4?Foo=1", "--exec=5:Fire", "<game>"])
+
+    def test_no_exec_means_no_flag(self):
+        cmd = self.command(dataclasses.replace(TOY, url_options=("?NumBots=4",)))
+        self.assertEqual(cmd[4:], ["--url=M1?NumBots=4", "<game>"])
+
+    def test_plain_scenario_command_is_unchanged(self):
+        self.assertEqual(self.command(TOY)[4:], ["--url=M1", "<game>"])
+
+
+class TestRequireMatchStart(Fixture):
+    """A map whose match never started is not clean, when the scenario says
+    so; the flag is recorded by the sweep and an absent flag is unknown."""
+
+    OWNER = {"match did not start": ("the match owner", "none applies")}
+    COUNTS = TOY.counts_template + " matches started: {matches_started}."
+
+    def record(self, **started):
+        def apply(o):
+            for m in o["maps"]:
+                if m["map"] in started:
+                    m["match_started"] = started[m["map"]]
+        self.edit_data("sweep.json", apply)
+
+    def record_all(self, **overrides):
+        names = ["M1", "M2", "M3", "M4", "M5", "M6", "Cove", "Cased"]
+        self.record(**{n: overrides.get(n, True) for n in names})
+
+    def matching(self, **opts):
+        return self.only(require_match_start=True, error_owner={**TOY.error_owner, **self.OWNER}, **opts)
+
+    def section(self, name):
+        with open(os.path.join(self.docs, "TRIAGE.md")) as f:
+            return f.read().split("## %s\n" % name, 1)[1].split("\n## ", 1)[0]
+
+    def read(self, name):
+        with open(os.path.join(self.docs, name)) as f:
+            return f.read()
+
+    def test_options_default_off(self):
+        self.assertIs(Scenario().require_match_start, False)
+        self.assertEqual(Scenario().exec, "")
+
+    def test_unstarted_match_is_nonclean_with_its_reason(self):
+        self.record_all(Cove=False)
+        scn = self.matching()
+        self.generate(scn)
+        self.assertEqual(check.check(scn, self.data, self.docs), (7, 7, []))
+        cove = self.section("Cove")
+        self.assertIn("- match_started: false\n", cove)
+        self.assertIn("- owner: the match owner\n", cove)
+        self.assertIn("| match did not start | 1 | Cove |", self.read("SUMMARY.md"))
+
+    def test_started_matches_stay_clean(self):
+        self.record_all()
+        scn = self.matching()
+        self.generate(scn)
+        self.assertNotIn("## Cove", self.read("TRIAGE.md"))
+        self.assertEqual(check.check(scn, self.data, self.docs), (6, 6, []))
+
+    def test_absent_flag_never_flags_a_map(self):
+        scn = self.matching()
+        self.generate(scn)
+        self.assertNotIn("## Cove", self.read("TRIAGE.md"))
+        self.assertEqual(check.check(scn, self.data, self.docs), (6, 6, []))
+
+    def test_flag_is_ignored_when_the_option_is_off(self):
+        self.record_all(Cove=False)
+        scn = self.only()
+        self.generate(scn)
+        self.assertNotIn("## Cove", self.read("TRIAGE.md"))
+        self.assertNotIn("match_started", self.read("TRIAGE.md"))
+        self.assertEqual(check.check(scn, self.data, self.docs), (6, 6, []))
+
+    def test_checker_compares_the_section_line_with_the_row(self):
+        self.record_all(Cove=False)
+        scn = self.matching()
+        self.generate(scn)
+        self.edit_doc("TRIAGE.md", "- match_started: false", "- match_started: true")
+        self.assertTrue(any("match_started line" in p for p in self.problems(scn)))
+
+    def test_checker_notices_documents_built_without_the_option(self):
+        self.record_all(Cove=False)
+        self.generate(self.only())
+        self.assertTrue(any("section set differs" in p for p in self.problems(self.matching())))
+
+    def test_matches_started_count(self):
+        self.record_all(Cove=False)
+        scn = self.only(summary_counts_line=True, counts_template=self.COUNTS)
+        self.generate(scn)
+        self.assertIn(" matches started: 7.\n", self.read("SUMMARY.md"))
+        self.assertEqual(self.problems(scn), [])
+        self.edit_doc("SUMMARY.md", " matches started: 7.", " matches started: 8.")
+        self.assertTrue(any("counts line differs" in p for p in self.problems(scn)))
+
+    def test_matches_started_counts_only_recorded_true(self):
+        self.record(M1=True, M2=True, M3=False)
+        scn = self.only(summary_counts_line=True, counts_template=self.COUNTS)
+        self.generate(scn)
+        self.assertIn(" matches started: 2.\n", self.read("SUMMARY.md"))
+        self.assertEqual(self.problems(scn), [])
+
+
+class TestReproLine(Fixture):
+    """The command a section shows is the one a shell can run, and the
+    checker holds it to the scenario's options."""
+
+    def scenario(self):
+        return self.only(url_options=("?NumBots=4",), exec="5:Fire")
+
+    def test_line_carries_options_quoted_and_exec(self):
+        scn = self.scenario()
+        self.generate(scn)
+        with open(os.path.join(self.docs, "TRIAGE.md")) as f:
+            body = f.read()
+        self.assertIn("- repro: `Engine --autostart --exit-after=7 --smoke-log=/nonexistent/repro/M1.log "
+                      "'--url=M1?NumBots=4' --exec=5:Fire \"<game>\"`\n", body)
+        self.assertEqual(self.problems(scn), [])
+
+    def test_checker_flags_a_line_without_the_exec(self):
+        scn = self.scenario()
+        self.generate(scn)
+        self.edit_doc("TRIAGE.md", " --exec=5:Fire", "")
+        self.assertTrue(any("M1: missing repro command" in p for p in self.problems(scn)))
+
+    def test_checker_flags_a_line_without_the_url_options(self):
+        scn = self.scenario()
+        self.generate(scn)
+        self.edit_doc("TRIAGE.md", "'--url=M1?NumBots=4'", "--url=M1")
+        self.assertTrue(any("M1: missing repro command" in p for p in self.problems(scn)))
 
 
 class TestDeusExByteIdentity(unittest.TestCase):

@@ -127,7 +127,7 @@ def check(scn, datadir, docdir):
         line = scn.counts_template.format(
             maps=len(sweep), clean=len(sweep) - len(nonclean_set), fail=v["fail"],
             crash=v["crash"], timeout=v["timeout"], stub_only=stub_only,
-            warnings=show_count(warnings_total(sweep)))
+            warnings=show_count(warnings_total(sweep)), matches_started=-1)
         if line not in _text(docdir, "SUMMARY.md"):
             bad.append("SUMMARY.md: counts line differs from: " + line)
 
