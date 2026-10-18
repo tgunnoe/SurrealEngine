@@ -135,6 +135,12 @@ hierarchy, bare-owner table, error attribution, prose, document formats,
 re-run options and the checker options. Functions take the scenario and
 explicit directories, never a literal or the working directory.
 
+Warnings are counted and shown (a `warnings` line in each TRIAGE section
+and a total in the SUMMARY counts line, each `not recorded` where the
+sweep rows carry no `script_warnings`) but do not make a map non-clean
+unless the scenario sets `warnings_fail_clean`, because the original
+games log `Accessed None` constantly.
+
 A scenario wraps the module in a few lines: put `Tools/smoke` on
 `sys.path`, import the scenario value, and call the module function.
 `scenarios/deusex/` is the reference: `scenario.py` holds its literals and

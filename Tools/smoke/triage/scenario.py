@@ -34,7 +34,9 @@ class Scenario:
     verdict_template: str = ""       # fields: verdict, exit_code
     # fields: reproduced, exit_code, run1, run2
     reproduced_template: str = ""
-    counts_template: str = ""        # fields: maps, clean, fail, crash, timeout, stub_only
+    # fields: maps, clean, fail, crash, timeout, stub_only, warnings; warnings is
+    # the total SCRIPT_WARNING count, or "not recorded" unless every sweep row has one
+    counts_template: str = ""
 
     # Re-running.
     exe: str = ""                    # name shown in repro lines
@@ -45,6 +47,10 @@ class Scenario:
     url_options: tuple = ()          # extra argv after --url=<map>
 
     # Checker options.
+    # A map with a recorded SCRIPT_WARNING count above zero is non-clean. Off by
+    # default: the original games log Accessed None constantly. A row with no
+    # recorded count is unknown and never makes a map non-clean.
+    warnings_fail_clean: bool = False
     row_count: int | None = None
     screenshots_null: bool = False
     errors_in_section: bool = False

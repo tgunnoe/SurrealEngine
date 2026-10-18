@@ -1,6 +1,6 @@
 # Deus Ex 1112fm sweep summary
 
-Maps: 88. clean: 0. fail: 4. crash: 1. timeout: 0. pass-verdict but non-clean (stub-only): 83.
+Maps: 88. clean: 0. fail: 4. crash: 1. timeout: 0. pass-verdict but non-clean (stub-only): 83. warnings: not recorded.
 
 Check: the verdict counts are recomputed from sweep.json by check_triage.py,
 which exits 0 only if they equal the line above.

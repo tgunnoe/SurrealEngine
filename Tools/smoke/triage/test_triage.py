@@ -176,6 +176,21 @@ class TestExtract(unittest.TestCase):
         self.assertTrue(errs["M1"]["fatal_after_summary"])
         self.assertEqual(set(stubs["maps"]), {"M1"})
 
+    def test_extract_counts_warnings(self):
+        with tempfile.TemporaryDirectory() as logs, tempfile.TemporaryDirectory() as out:
+            with open(os.path.join(logs, "M1.log"), "w") as f:
+                f.write("MAP M1\nSCRIPT_WARNING Accessed None 'A'\nSCRIPT_WARNING Accessed None 'A'\n"
+                        "SCRIPT_WARNING Accessed None 'B'\nSUMMARY done\n")
+            with open(os.path.join(logs, "M2.log"), "w") as f:
+                f.write("MAP M2\nSUMMARY done\n")
+            extract.extract(TOY, logs, out)
+            with open(os.path.join(out, "errors.json")) as f:
+                errs = json.load(f)
+        # Every line counts, as in the sweep's own tally, so repeated text is not collapsed.
+        self.assertEqual(errs["M1"].get("warnings"), 3)
+        self.assertEqual(errs["M2"].get("warnings"), 0)
+        self.assertEqual(errs["M1"]["errors"], [])
+
     def test_strip_native_stack(self):
         self.assertEqual(extract.strip_native_stack("a b at /x(f+0x1) [0x2] at /y(g+0x3) [0x4]"), "a b")
 
@@ -273,6 +288,97 @@ class TestCheckOptions(Fixture):
         self.generate(base)
         self.edit_doc("TRIAGE.md", "## M2", "## Renamed")
         self.assertTrue(any("section set differs" in p for p in self.problems(base)))
+
+
+class TestWarningsPolicy(Fixture):
+    """Warnings are counted and shown; they make a map non-clean only when the
+    scenario asks, and an absent count is unknown, never zero."""
+
+    WITH_TOTAL = TOY.counts_template + " warnings: {warnings}."
+
+    def record(self, **counts):
+        def apply(o):
+            for m in o["maps"]:
+                if m["map"] in counts:
+                    m["script_warnings"] = counts[m["map"]]
+        self.edit_data("sweep.json", apply)
+
+    def record_all(self):
+        def apply(o):
+            for i, m in enumerate(o["maps"]):
+                m["script_warnings"] = i
+        self.edit_data("sweep.json", apply)
+        return sum(range(8))
+
+    def failing_on_warnings(self, **opts):
+        # Asserted, so a scenario without the option fails the test instead of
+        # raising from dataclasses.replace.
+        self.assertIn("warnings_fail_clean", {f.name for f in dataclasses.fields(Scenario)})
+        return self.only(warnings_fail_clean=True, **opts)
+
+    def section(self, name):
+        with open(os.path.join(self.docs, "TRIAGE.md")) as f:
+            return f.read().split("## %s\n" % name, 1)[1].split("\n## ", 1)[0]
+
+    def test_option_defaults_off(self):
+        self.assertIs(getattr(Scenario(), "warnings_fail_clean", None), False)
+
+    def test_warnings_only_map_is_clean_by_default(self):
+        self.record(Cove=3)
+        scn = self.only()
+        self.generate(scn)
+        with open(os.path.join(self.docs, "TRIAGE.md")) as f:
+            self.assertNotIn("## Cove", f.read())
+        self.assertEqual(check.check(scn, self.data, self.docs), (6, 6, []))
+
+    def test_warnings_only_map_is_nonclean_when_option_set(self):
+        self.record(Cove=3)
+        scn = self.failing_on_warnings()
+        self.generate(scn)
+        self.assertEqual(check.check(scn, self.data, self.docs), (7, 7, []))
+        self.assertIn("- warnings: 3\n", self.section("Cove"))
+        with open(os.path.join(self.docs, "SUMMARY.md")) as f:
+            self.assertIn("| warnings | 1 | Cove |", f.read())
+
+    def test_zero_count_stays_clean_when_option_set(self):
+        self.record(Cove=0)
+        scn = self.failing_on_warnings()
+        self.generate(scn)
+        self.assertEqual(check.check(scn, self.data, self.docs), (6, 6, []))
+
+    def test_absent_count_never_flags_a_map(self):
+        scn = self.failing_on_warnings()
+        self.generate(scn)
+        with open(os.path.join(self.docs, "TRIAGE.md")) as f:
+            self.assertNotIn("## Cove", f.read())
+        self.assertEqual(check.check(scn, self.data, self.docs), (6, 6, []))
+
+    def test_section_warnings_line_recorded_and_absent(self):
+        self.record(M1=4)
+        self.generate(self.only())
+        self.assertIn("- warnings: 4\n", self.section("M1"))
+        self.assertIn("- warnings: not recorded\n", self.section("M2"))
+
+    def test_summary_total_when_every_row_records(self):
+        total = self.record_all()
+        scn = self.only(summary_counts_line=True, counts_template=self.WITH_TOTAL)
+        self.generate(scn)
+        with open(os.path.join(self.docs, "SUMMARY.md")) as f:
+            self.assertIn(" warnings: %d.\n" % total, f.read())
+        self.assertEqual(self.problems(scn), [])
+        self.edit_doc("SUMMARY.md", " warnings: %d." % total, " warnings: %d." % (total + 1))
+        self.assertTrue(any("counts line differs" in p for p in self.problems(scn)))
+
+    def test_summary_total_not_recorded_when_any_row_lacks_it(self):
+        self.record(M1=4)
+        scn = self.only(summary_counts_line=True, counts_template=self.WITH_TOTAL)
+        self.generate(scn)
+        with open(os.path.join(self.docs, "SUMMARY.md")) as f:
+            self.assertIn(" warnings: not recorded.\n", f.read())
+        self.assertEqual(self.problems(scn), [])
+        # A partial sum would read as a measurement; the checker must reject it.
+        self.edit_doc("SUMMARY.md", " warnings: not recorded.", " warnings: 4.")
+        self.assertTrue(any("counts line differs" in p for p in self.problems(scn)))
 
 
 class TestDeusExByteIdentity(unittest.TestCase):
