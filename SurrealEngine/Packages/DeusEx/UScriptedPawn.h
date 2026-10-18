@@ -30,7 +30,7 @@ struct UDXInitialAllianceInfoEx
 // consulted when it is true.
 inline bool EnemyValidity(bool candidateExists, bool isSelf, bool alive, bool detectable, bool checkAlliance, bool hostile)
 {
-	return false; // placeholder until the tests below drive the real rule
+	return candidateExists && !isSelf && alive && detectable && (!checkAlliance || hostile);
 }
 
 class UScriptedPawn : public UPawn
