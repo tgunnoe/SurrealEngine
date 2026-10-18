@@ -4,6 +4,7 @@
 #include "VM/Bytecode.h"
 #include "VM/Expression.h"
 #include "VM/NativeFunc.h"
+#include "VM/NativeFunctionFixture.h"
 #include "Native/NObject.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UFunction.h"
@@ -18,15 +19,12 @@
 
 namespace
 {
-	// A native declared the way the loader leaves it: Native flag, owning class and index set.
+	// A native declared the way the loader leaves it: Native flag, owning class, index and frame
+	// layout set.
 	UFunction* MakeNative(const char* owner, const char* name, int index)
 	{
 		UClass* ownerClass = GC::Alloc<UClass>(owner, nullptr, ObjectFlags::NoFlags);
-		UFunction* func = GC::Alloc<UFunction>(name, ownerClass, ObjectFlags::NoFlags);
-		func->FuncFlags = FunctionFlags::Native;
-		func->NativeFuncIndex = index;
-		func->NativeStruct = ownerClass;
-		return func;
+		return MakeNativeFunction(name, ownerClass, {}, index);
 	}
 
 	UObject* MakeInstance()

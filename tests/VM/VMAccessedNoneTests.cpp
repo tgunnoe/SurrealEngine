@@ -2,6 +2,7 @@
 #include "TestRunner.h"
 #include "VM/Frame.h"
 #include "VM/NativeFunc.h"
+#include "VM/NativeFunctionFixture.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UFunction.h"
 #include "Packages/Core/Properties/UFloatProperty.h"
@@ -27,13 +28,7 @@ namespace
 			parm->DataOffset = { 0, 1 };
 			parm->PropFlags = parmFlags;
 
-			Func = GC::Alloc<UFunction>("NoneTestNative", Class, ObjectFlags::NoFlags);
-			Func->FuncFlags = FunctionFlags::Native;
-			Func->NativeStruct = Class;
-			Func->Properties.push_back(parm);
-			Func->StructSize = sizeof(float);
-			Func->StructAlignment = alignof(float);
-			Func->NumParms = 1;
+			Func = MakeNativeFunction("NoneTestNative", Class, { parm });
 
 			NativeFunctions::NativeByName[{ Func->Name, Class->Name }] = [this](UObject*, ExpressionValue* args)
 			{
