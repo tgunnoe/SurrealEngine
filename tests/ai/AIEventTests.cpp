@@ -829,6 +829,33 @@ TEST(AIEventEarlierSenderWinsATie)
 	CHECK_EQ(w.Trace(listener), "Begin(2) Pulse(2)");
 }
 
+TEST(AIEventListenerKeepsItsBestSenderOnATie)
+{
+	World w;
+	UActor* listener = Actor(1);
+	UActor* earlier = Actor(2);
+	UActor* held = Actor(3);
+	w.Place(listener, 0);
+	w.Place(earlier, 100);
+	w.Place(held, 100);
+	w.manager.SetCallback(listener, Reg("Alarm", "AlarmHeard"));
+
+	// The earlier alarm cannot be seen at first, so the later one is what the listener hears.
+	w.blind.insert({ listener, earlier });
+	w.clock = 1.0;
+	w.manager.StartEvent(earlier, "Alarm", Audio, 2.0f, 0.0f);
+	w.clock = 2.0;
+	w.manager.StartEvent(held, "Alarm", Audio, 2.0f, 0.0f);
+	CHECK_EQ(w.Trace(listener), "Begin(3)");
+
+	// Both now score the same. Handlers act on Begin and Pulse and not on ChangeBest, so swapping
+	// between equals every time one drifts in and out of sight would silence them.
+	w.blind.clear();
+	w.PulseAt(3.0);
+	w.PulseAt(4.0);
+	CHECK_EQ(w.Trace(listener), "Begin(3) Pulse(3) Pulse(3)");
+}
+
 TEST(AIEventTwoSendersGiveOneDeliveryPerListenerPerPulse)
 {
 	World w;
