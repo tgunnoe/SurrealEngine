@@ -267,6 +267,33 @@ bool UPawn::AIDirectionReachable(const vec3& focus, int yaw, int pitch, float mi
 	return found;
 }
 
+bool UPawn::AIPickRandomDestination(float minDist, float maxDist, int centralYaw, float yawDistribution, int centralPitch, float pitchDistribution, int tries, float multiplier, vec3& dest)
+{
+	auto random01 = []() { return std::rand() / (float)RAND_MAX; };
+
+	const int yawHalfWidth = AIMath::YawHalfWidth(yawDistribution);
+	const int pitchHalfWidth = AIMath::PitchHalfWidth(pitchDistribution);
+
+	float farthest = maxDist;
+	for (int attempt = 0; attempt < tries; attempt++)
+	{
+		int yaw = AIMath::SampleAngularWindow(centralYaw, yawHalfWidth, random01());
+		int pitch = AIMath::SampleAngularWindow(centralPitch, pitchHalfWidth, random01());
+		float distance = minDist + (std::max(minDist, farthest) - minDist) * random01();
+		vec3 candidate = AIMath::PointAlong(Location(), pitch, yaw, distance);
+
+		if (CylinderTraceClear(Location(), candidate) && PointReachable(candidate))
+		{
+			dest = candidate;
+			return true;
+		}
+
+		// Each miss pulls the far limit in (or out) so later tries look nearer (or farther).
+		farthest *= multiplier;
+	}
+	return false;
+}
+
 float UPawn::AICanSmell(UActor* other, std::optional<float> smell)
 {
 	LogUnimplemented("Pawn.AICanSmell() [Deus Ex]");

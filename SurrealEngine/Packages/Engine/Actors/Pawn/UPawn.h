@@ -83,6 +83,7 @@ public:
 	float AICanSee(UActor* other, std::optional<float> visibility, std::optional<bool> bCheckVisibility, std::optional<bool> bCheckDir, std::optional<bool> bCheckCylinder, std::optional<bool> bCheckLOS);
 	float AICanSmell(UActor* other, std::optional<float> smell);
 	bool AIDirectionReachable(const vec3& focus, int yaw, int pitch, float minDist, float maxDist, vec3& bestDest);
+	bool AIPickRandomDestination(float minDist, float maxDist, int centralYaw, float yawDistribution, int centralPitch, float pitchDistribution, int tries, float multiplier, vec3& dest);
 
 	float& AccelRate() { return Value<float>(PropOffsets_Pawn.AccelRate); }
 	float& AirControl() { return Value<float>(PropOffsets_Pawn.AirControl); }

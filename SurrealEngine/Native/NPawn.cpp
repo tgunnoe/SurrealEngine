@@ -313,8 +313,8 @@ void NPawn::AIDirectionReachable(UObject* Self, const vec3& Focus, int Yaw, int 
 
 void NPawn::AIPickRandomDestination_Deus(UObject* Self, float minDist, float maxDist, int centralYaw, float yawDistribution, int centralPitch, float pitchDistribution, int tries, float multiplier, vec3& dest, BitfieldBool& ReturnValue)
 {
-	LogUnimplemented("Pawn.AIPickRandomDestination_Deus");
-	ReturnValue = false;
+	UPawn* selfPawn = UObject::Cast<UPawn>(Self);
+	ReturnValue = selfPawn->AIPickRandomDestination(minDist, maxDist, centralYaw, yawDistribution, centralPitch, pitchDistribution, tries, multiplier, dest);
 }
 
 void NPawn::ComputePathnodeDistances(UObject* Self, std::optional<UObject*> startActor)
