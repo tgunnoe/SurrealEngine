@@ -1,404 +1,454 @@
 {
  "00_Intro": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "00_Training": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "00_TrainingCombat": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "00_TrainingFinal": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "01_NYC_UNATCOHQ": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "01_NYC_UNATCOIsland": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 89545
  },
  "02_NYC_Bar": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "02_NYC_BatteryPark": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 32295
  },
  "02_NYC_FreeClinic": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "02_NYC_Hotel": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "02_NYC_Smug": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 5472
  },
  "02_NYC_Street": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 35700
  },
  "02_NYC_Underground": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 67906
  },
  "02_NYC_Warehouse": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 243395
  },
  "03_NYC_747": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "03_NYC_Airfield": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 20158
  },
  "03_NYC_AirfieldHeliBase": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 46423
  },
  "03_NYC_BatteryPark": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "03_NYC_BrooklynBridgeStation": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "03_NYC_Hangar": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "03_NYC_MolePeople": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "03_NYC_UNATCOHQ": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "03_NYC_UNATCOIsland": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "04_NYC_Bar": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "04_NYC_BatteryPark": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "04_NYC_Hotel": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "04_NYC_NSFHQ": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 214140
  },
  "04_NYC_Smug": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 10719
  },
  "04_NYC_Street": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "04_NYC_UNATCOHQ": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "04_NYC_UNATCOIsland": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "04_NYC_Underground": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 22705
  },
  "05_NYC_UNATCOHQ": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "05_NYC_UNATCOIsland": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "05_NYC_UNATCOMJ12lab": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "06_HongKong_Helibase": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 2043
  },
  "06_HongKong_MJ12lab": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 10609
  },
  "06_HongKong_Storage": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 4849
  },
  "06_HongKong_TongBase": {
-  "errors": [
-   {
-    "kind": "EXCEPTION",
-    "map_section": "06_HongKong_TongBase",
-    "text": "GameInfo login failed: Failed to spawn player actor"
-   },
-   {
-    "kind": "FATAL",
-    "map_section": "06_HongKong_TongBase",
-    "text": "GameInfo login failed: Failed to spawn player actor"
-   }
-  ],
-  "fatal_after_summary": false
+  "errors": [],
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "06_HongKong_VersaLife": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "06_HongKong_WanChai_Canal": {
-  "errors": [
-   {
-    "kind": "EXCEPTION",
-    "map_section": "06_HongKong_WanChai_Canal",
-    "text": "GameInfo login failed: Failed to spawn player actor"
-   },
-   {
-    "kind": "FATAL",
-    "map_section": "06_HongKong_WanChai_Canal",
-    "text": "GameInfo login failed: Failed to spawn player actor"
-   }
-  ],
-  "fatal_after_summary": false
+  "errors": [],
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "06_HongKong_WanChai_Garage": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "06_HongKong_WanChai_Market": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "06_HongKong_WanChai_Street": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 309024
  },
  "06_HongKong_WanChai_Underworld": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "08_NYC_Bar": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "08_NYC_FreeClinic": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "08_NYC_Hotel": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "08_NYC_Smug": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 10731
  },
  "08_NYC_Street": {
-  "errors": [
-   {
-    "kind": "EXCEPTION",
-    "map_section": "08_NYC_Street",
-    "text": "Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)"
-   },
-   {
-    "kind": "FATAL",
-    "map_section": "08_NYC_Street",
-    "text": "Script execution error:    Iterator statement without an iterator in UNATCOTroop0.GetOvershootDestination    Call stack:    at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)  Script call stack: at ScriptedPawn.Seeking.GetOvershootDestination line 10362: iterator(ReachablePathnodes({ name=\"NavigationPoint\", class=Class }, NavPoint, null, distance)) at ScriptedPawn.Seeking line 10463: MoveTarget = GetOvershootDestination(0.500000)"
-   }
-  ],
-  "fatal_after_summary": false
+  "errors": [],
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "08_NYC_Underground": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 75117
  },
  "09_NYC_Dockyard": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 203319
  },
  "09_NYC_Graveyard": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "09_NYC_Ship": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "09_NYC_ShipBelow": {
-  "errors": [
-   {
-    "kind": "FATAL",
-    "map_section": "09_NYC_ShipBelow",
-    "text": "signal 11"
-   }
-  ],
-  "fatal_after_summary": false
+  "errors": [],
+  "fatal_after_summary": false,
+  "warnings": 92567
  },
  "09_NYC_ShipFan": {
-  "errors": [
-   {
-    "kind": "EXCEPTION",
-    "map_section": "09_NYC_ShipFan",
-    "text": "GameInfo login failed: Failed to spawn player actor"
-   },
-   {
-    "kind": "FATAL",
-    "map_section": "09_NYC_ShipFan",
-    "text": "GameInfo login failed: Failed to spawn player actor"
-   }
-  ],
-  "fatal_after_summary": false
+  "errors": [],
+  "fatal_after_summary": false,
+  "warnings": 7
  },
  "10_Paris_Catacombs": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "10_Paris_Catacombs_Tunnels": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 55299
  },
  "10_Paris_Chateau": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "10_Paris_Club": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "10_Paris_Metro": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "11_Paris_Cathedral": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 17840
  },
  "11_Paris_Everett": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "11_Paris_Underground": {
-  "errors": [],
-  "fatal_after_summary": false
+  "errors": [
+   {
+    "kind": "FATAL",
+    "map_section": "11_Paris_Underground",
+    "text": "signal 11"
+   }
+  ],
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "12_Vandenberg_Cmd": {
-  "errors": [],
-  "fatal_after_summary": false
+  "errors": [
+   {
+    "kind": "FATAL",
+    "map_section": "12_Vandenberg_Cmd",
+    "text": "signal 11"
+   }
+  ],
+  "fatal_after_summary": false,
+  "warnings": 22174
  },
  "12_Vandenberg_Computer": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 248466
  },
  "12_Vandenberg_Gas": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "12_Vandenberg_Tunnels": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 104934
  },
  "14_OceanLab_Lab": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 2792
  },
  "14_OceanLab_UC": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 64775
  },
  "14_Oceanlab_Silo": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 694
  },
  "14_Vandenberg_Sub": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 246
  },
  "15_Area51_Bunker": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 458
  },
  "15_Area51_Entrance": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 3276
  },
  "15_Area51_Final": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 91
  },
  "15_Area51_Page": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 6
  },
  "99_Endgame1": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 45335
  },
  "99_Endgame2": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 2691
  },
  "99_Endgame3": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "99_Endgame4": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 14312
  },
  "DX": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 2085
  },
  "DXMP_Area51Bunker": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "DXMP_CMD": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "DXMP_Cathedral": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "DXMP_Silo": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "DXMP_Smuggler": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  },
  "DXOnly": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 1811
  },
  "Entry": {
   "errors": [],
-  "fatal_after_summary": false
+  "fatal_after_summary": false,
+  "warnings": 0
  }
 }

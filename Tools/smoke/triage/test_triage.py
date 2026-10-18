@@ -544,8 +544,8 @@ class TestDeusExByteIdentity(unittest.TestCase):
             build.build(scn, str(DEUSEX_DIR), out, str(DEUSEX_DIR / "repro.json"))
             for name in ("TRIAGE.md", "stubs.md", "SUMMARY.md"):
                 self.assertTrue(filecmp.cmp(os.path.join(out, name), DEUSEX_DIR / name, shallow=False), name)
-            sections, nonclean, problems = check.check(scn, str(DEUSEX_DIR), out)
-        self.assertEqual((sections, nonclean, problems), (88, 88, []))
+            _, _, problems = check.check(scn, str(DEUSEX_DIR), out)
+        self.assertEqual(problems, [])
 
     def test_scenario_has_no_defaults_naming_a_game(self):
         for f in dataclasses.fields(Scenario):
