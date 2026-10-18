@@ -108,20 +108,39 @@ TEST(AIYawHalfWidthZeroMeansWholeCircle)
 		CHECK(AIMath::InAngularWindow(angle, 0, AIMath::YawHalfWidth(0.0f)));
 }
 
-TEST(AIYawHalfWidthIsDegreesClampedToHalfTurn)
+TEST(AIYawHalfWidthIsFractionOfHalfTurn)
 {
-	CHECK_EQ(AIMath::YawHalfWidth(90.0f), 16384);
-	CHECK_EQ(AIMath::YawHalfWidth(180.0f), 32768);
+	CHECK_EQ(AIMath::YawHalfWidth(0.25f), 8192);
+	CHECK_EQ(AIMath::YawHalfWidth(0.5f), 16384);
+	CHECK_EQ(AIMath::YawHalfWidth(0.6f), 19661);
+	CHECK_EQ(AIMath::YawHalfWidth(0.8f), 26214);
+	CHECK_EQ(AIMath::YawHalfWidth(1.0f), 32768);
+}
+
+TEST(AIYawHalfWidthAboveOneIsClampedToHalfTurn)
+{
+	CHECK_EQ(AIMath::YawHalfWidth(1.5f), 32768);
 	CHECK_EQ(AIMath::YawHalfWidth(720.0f), 32768);
-	CHECK_EQ(AIMath::YawHalfWidth(0.25f), 46);
+}
+
+TEST(AIHalfWidthFractionsMatchTheCallSites)
+{
+	// The values the shipped scripts pass, as the angle either side of the central heading:
+	// 0.25 toward home, 0.5 and 0.6 and 0.8 when fleeing.
+	const float unitsPerDegree = AIMath::AngleUnits / 360.0f;
+	CHECK(Near((float)AIMath::YawHalfWidth(0.25f), 45.0f * unitsPerDegree, 1.0f));
+	CHECK(Near((float)AIMath::YawHalfWidth(0.5f), 90.0f * unitsPerDegree, 1.0f));
+	CHECK(Near((float)AIMath::YawHalfWidth(0.6f), 108.0f * unitsPerDegree, 1.0f));
+	CHECK(Near((float)AIMath::YawHalfWidth(0.8f), 144.0f * unitsPerDegree, 1.0f));
 }
 
 TEST(AIPitchHalfWidthZeroMeansCentralPitchOnly)
 {
 	CHECK_EQ(AIMath::PitchHalfWidth(0.0f), 0);
 	CHECK_EQ(AIMath::PitchHalfWidth(-5.0f), 0);
-	CHECK_EQ(AIMath::PitchHalfWidth(90.0f), 16384);
-	CHECK_EQ(AIMath::PitchHalfWidth(720.0f), 32768);
+	CHECK_EQ(AIMath::PitchHalfWidth(0.5f), 16384);
+	CHECK_EQ(AIMath::PitchHalfWidth(1.0f), 32768);
+	CHECK_EQ(AIMath::PitchHalfWidth(3.0f), 32768);
 }
 
 TEST(AIAngularWindowSampleEndpoints)
