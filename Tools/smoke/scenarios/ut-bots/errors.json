@@ -12,12 +12,12 @@
  "AS-HiSpeed": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 1
+  "warnings": 19
  },
  "AS-Mazon": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 1
+  "warnings": 3
  },
  "AS-OceanFloor": {
   "errors": [],
@@ -27,7 +27,7 @@
  "AS-Overlord": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 0
+  "warnings": 3
  },
  "AS-Rook": {
   "errors": [],
@@ -42,7 +42,7 @@
  "CTF-Command": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 0
+  "warnings": 20
  },
  "CTF-Coret": {
   "errors": [],
@@ -67,7 +67,7 @@
  "CTF-EternalCave": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 0
+  "warnings": 11
  },
  "CTF-Face": {
   "errors": [],
@@ -92,12 +92,12 @@
  "CTF-High": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 6
+  "warnings": 5
  },
  "CTF-Hydro16": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 1
+  "warnings": 0
  },
  "CTF-Kosov": {
   "errors": [],
@@ -107,7 +107,7 @@
  "CTF-LavaGiant": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 0
+  "warnings": 6
  },
  "CTF-Niven": {
   "errors": [],
@@ -137,7 +137,7 @@
  "CTF-Tutorial": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 11
+  "warnings": 3253
  },
  "CityIntro": {
   "errors": [],
@@ -272,7 +272,7 @@
  "DM-Pyramid": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 1
+  "warnings": 0
  },
  "DM-Shrapnel][": {
   "errors": [],
@@ -305,7 +305,13 @@
   "warnings": 0
  },
  "DM-Tutorial": {
-  "errors": [],
+  "errors": [
+   {
+    "kind": "FATAL",
+    "map_section": "DM-Tutorial",
+    "text": "signal 6"
+   }
+  ],
   "fatal_after_summary": false,
   "warnings": 0
  },
@@ -317,7 +323,7 @@
  "DOM-Cinder": {
   "errors": [],
   "fatal_after_summary": false,
-  "warnings": 0
+  "warnings": 15
  },
  "DOM-Condemned": {
   "errors": [],
