@@ -145,6 +145,7 @@ void Engine::Run()
 	SmokeLog::Get()->Event("GAME", LaunchInfo.gameName + " " + LaunchInfo.gameVersionString);
 
 	LogMessage("Game: " + LaunchInfo.gameName + " (Version: " + LaunchInfo.gameVersionString + ")");
+	LogMessage("User directories: config=" + packages->GetConfigFolderPath().string() + " data=" + packages->GetDataFolderPath().string());
 	LoadEngineSettings();
 	LogMessage("Loaded Engine settings");
 	LoadKeybindings();
@@ -367,8 +368,8 @@ void Engine::Run()
 		renderdev->SaveConfig();
 	}
 	packages->SetIniValue("System", "Engine.SurrealWindowSystem", "WindowSystem", windowingSystemName);
-	// Unattended runs must leave the game folder untouched.
-	if (!LaunchInfo.autostart)
+	// Unattended runs write no ini unless they were given a directory for it
+	if (LaunchInfo.CanWriteUserFiles())
 		packages->SaveAllIniFiles();
 
 	LogMessage("Closing window...");

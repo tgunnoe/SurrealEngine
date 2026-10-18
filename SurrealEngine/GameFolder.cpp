@@ -6,6 +6,7 @@
 #include "UE1GameDatabase.h"
 #include "LauncherSettings.h"
 #include "Utils/CommandLine.h"
+#include "Utils/UserDirs.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -77,6 +78,8 @@ GameLaunchInfo GameFolderSelection::GetLaunchInfo(int selectedGame)
 	info.autostart = commandline->HasArg("", "--autostart");
 	if (commandline->HasArg("", "--exit-after"))
 		info.exitAfterSeconds = commandline->GetArgDouble("", "--exit-after");
+	if (commandline->HasArg("", "--user-dir"))
+		info.userDir = UserDirs::resolveUserDirArg(commandline->GetArg("", "--user-dir")).string();
 	return info;
 }
 

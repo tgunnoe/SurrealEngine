@@ -7,6 +7,7 @@
 #include "PackageWriter.h"
 #include "Utils/File.h"
 #include "Utils/StrTools.h"
+#include "Utils/UserDirs.h"
 #include "VM/NativeFunc.h"
 #include "Packages/ConSys/UConAudioList.h"
 #include "Packages/ConSys/UConCamera.h"
@@ -314,6 +315,10 @@ PackageManager::PackageManager(const GameLaunchInfo& launchInfo) : launchInfo(la
 {
 	gameRootFolderPath = fs::path(launchInfo.gameRootFolder);
 	gameSystemFolderPath = gameRootFolderPath / "System";
+
+	const UserDirs::GameDirs userDirs = UserDirs::gameDirs(launchInfo, UserDirs::processEnv());
+	gameConfigFolderPath = userDirs.config;
+	gameDataFolderPath = userDirs.data;
 
 	NativeFunctions::Reset();
 	RegisterNativeClasses();
@@ -712,8 +717,10 @@ std::unique_ptr<IniFile>& PackageManager::LoadIniFile(NameString iniName)
 	auto& ini = iniFiles[iniName];
 	if (!ini)
 	{
-		const auto iniFilePath = gameSystemFolderPath / (iniName.ToString() + ".ini");
-		ini = std::make_unique<IniFile>(iniFilePath.string());
+		// The per-user copy wins; the install's own file is read when there is none (and is the one reported when neither exists)
+		const auto userIniPath = gameConfigFolderPath / ("SE-" + iniName.ToString() + ".ini");
+		const auto installIniPath = gameSystemFolderPath / (iniName.ToString() + ".ini");
+		ini = std::make_unique<IniFile>((fs::is_regular_file(userIniPath) ? userIniPath : installIniPath).string());
 	}
 
 	return ini;
@@ -738,13 +745,7 @@ std::unique_ptr<IniFile>& PackageManager::LoadUserIniFile()
 	auto& ini = iniFiles["User"];
 
 	if (!ini)
-	{
-		// Case sensitivity check
-		if (fs::exists(gameSystemFolderPath / "User.ini"))
-			ini = std::make_unique<IniFile>((gameSystemFolderPath / "User.ini").string());
-		else
-			ini = std::make_unique<IniFile>((gameSystemFolderPath/ "user.ini").string());
-	}
+		ini = std::make_unique<IniFile>(ResolveUserIniPath().string());
 
 	return ini;
 }
@@ -817,15 +818,18 @@ void PackageManager::SaveAllIniFiles()
 {
 	for (auto& iniFile: iniFiles)
 	{
-		if (iniFile.first == launchInfo.gameExecutableName || iniFile.first == "System")
-		{
-			const std::string engineIniName = "SE-" + iniFile.first.ToString() + ".ini";
-			iniFile.second->UpdateIfExists((gameSystemFolderPath / engineIniName).string());
-		}
-		else if (iniFile.first == "User")
-			iniFile.second->UpdateIfExists((gameSystemFolderPath / "SE-User.ini").string());
-		else
-			iniFile.second->UpdateFile();
+	// Everything is written beside the other per-user files as SE-<name>.ini, never over the file it was
+	// read from: the install is not ours to write to, and a legacy SE- file there is only a starting point.
+	Directory::create(gameConfigFolderPath.string());
+
+		const bool isEngineIni = iniFile.first == launchInfo.gameExecutableName || iniFile.first == "System" || iniFile.first == "User";
+
+		// The engine inis are always written so the per-user copy exists after the first run; any other ini
+		// only when something changed it
+		if (!isEngineIni && !iniFile.second->IsModified())
+			continue;
+
+		iniFile.second->UpdateIfExists((gameConfigFolderPath / ("SE-" + iniFile.first.ToString() + ".ini")).string());
 	}
 }
 
@@ -841,36 +845,51 @@ void PackageManager::LoadPackageRemaps()
 
 void PackageManager::LoadEngineIniFiles()
 {
-	// Load SE-[GameName].ini and SE-User.ini from the appropriate places
+fs::path PackageManager::ResolveUserIniPath() const
+{
+	// The per-user SE-User.ini, then the install's SE-User.ini (written by older builds), User.ini and DefUser.ini.
+	// DefUser.ini is the last resort even when missing, so the failure to open it names a file a user would look for.
+	for (const fs::path& candidate : { gameConfigFolderPath / "SE-User.ini", gameSystemFolderPath / "SE-User.ini", gameSystemFolderPath / "User.ini" })
+	{
+		if (fs::is_regular_file(candidate))
+			return candidate;
+	}
+	return gameSystemFolderPath / "DefUser.ini";
+}
+
+	// Load SE-[GameName].ini and SE-User.ini from the per-user directory first, then from the install
 	// If they do not exist, import the appropriate [GameName].ini and User.ini files
 	// If those also do not exist, import Default.ini and DefUser.ini files
 	const auto systemIniName = IsCliveBarkersUndying() ? "System" : launchInfo.gameExecutableName;
-	std::string systemIniFileName = "SE-" + systemIniName + ".ini";
-	std::string userIniName = "SE-User.ini";
+	const std::string seSystemIniFileName = "SE-" + systemIniName + ".ini";
+	const fs::path userSystemIniPath = gameConfigFolderPath / seSystemIniFileName;
+	const fs::path installSystemIniPath = gameSystemFolderPath / seSystemIniFileName;
 
-	if ( !File::try_open_existing((gameSystemFolderPath / systemIniFileName).string()) )
+	fs::path systemIniPath;
+	if (fs::is_regular_file(userSystemIniPath))
+	{
+		systemIniPath = userSystemIniPath;
+	}
+	else if (fs::is_regular_file(installSystemIniPath))
+	{
+		systemIniPath = installSystemIniPath;
+	}
+	else
 	{
 		missing_se_system_ini = true;
-		systemIniFileName = systemIniFileName.substr(3); // Trim off the "SE-" part
-		if (!File::try_open_existing((gameSystemFolderPath / systemIniFileName).string()))
-			systemIniFileName = "Default.ini"; // use the default ini as a last resort
+		systemIniPath = gameSystemFolderPath / (systemIniName + ".ini");
+		if (!fs::is_regular_file(systemIniPath))
+			systemIniPath = gameSystemFolderPath / "Default.ini"; // use the default ini as a last resort
 	}
 
 	// Also load Default.ini, so that we can reset values.
 	defaultIniFile = std::make_unique<IniFile>((gameSystemFolderPath / "Default.ini").string());
 
-	iniFiles[systemIniName] = std::make_unique<IniFile>((gameSystemFolderPath / systemIniFileName).string());
+	iniFiles[systemIniName] = std::make_unique<IniFile>(systemIniPath.string());
 
 	if (launchInfo.ue1Version > 219)
 	{
-		if (!File::try_open_existing((gameSystemFolderPath / userIniName).string()))
-		{
-			userIniName = userIniName.substr(3); // Trim off the "SE-" part
-			if (!File::try_open_existing((gameSystemFolderPath / userIniName).string()))
-				userIniName = "DefUser.ini";
-		}
-
-		iniFiles["User"] = std::make_unique<IniFile>((gameSystemFolderPath / userIniName).string());
+		iniFiles["User"] = std::make_unique<IniFile>(ResolveUserIniPath().string());
 		defaultUserFile = std::make_unique<IniFile>((gameSystemFolderPath / "DefUser.ini").string());
 	}
 }

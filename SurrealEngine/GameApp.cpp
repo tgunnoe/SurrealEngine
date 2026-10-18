@@ -10,6 +10,7 @@
 #include "UI/ErrorWindow/ErrorWindow.h"
 #include "UI/Launcher/LauncherWindow.h"
 #include "Utils/File.h"
+#include "Utils/UserDirs.h"
 #include <stdexcept>
 #include <iostream>
 
@@ -23,9 +24,11 @@ int GameApp::main(Array<std::string> args)
 	commandline = &cmd;
 
 	const bool autostart = commandline->HasArg("", "--autostart");
+	std::string smokeLogPath;
 	if (commandline->HasArg("", "--smoke-log"))
 	{
 		const std::string path = commandline->GetArg("", "--smoke-log");
+		smokeLogPath = path;
 		if (!SmokeLog::Get()->Open(path))
 		{
 			std::cerr << "Unable to open smoke log " << path << "\n";
@@ -47,6 +50,8 @@ int GameApp::main(Array<std::string> args)
 		{
 			std::cout << "SurrealEngine [--url=<mapname>] [--engineversion=X] [Path to game folder]\n"
 				"  --autostart          Skip the launcher and run the given game folder; write nothing to it\n"
+				"  --user-dir=<path>    Keep ini files, saves and exports in this folder; with --autostart this\n"
+				"                       also allows them to be written\n"
 				"  --exit-after=<secs>  Quit the main loop this many seconds after process start\n"
 				"  --exec=<secs>:<command>[;<secs>:<command>...]\n"
 				"                       Run console commands this many seconds after the first login\n"
@@ -66,11 +71,44 @@ int GameApp::main(Array<std::string> args)
 			}
 		}
 
+		// Like --exec, a --user-dir that names nothing stops the run before the launcher or any game folder is touched
+		if (commandline->HasArg("", "--user-dir"))
+		{
+			try
+			{
+				UserDirs::resolveUserDirArg(commandline->GetArg("", "--user-dir"));
+			}
+			catch (const std::exception& e)
+			{
+				std::cerr << "SurrealEngine: invalid --user-dir: " << e.what() << "\n";
+				return 2;
+			}
+		}
+
 		int selectedGameIndex = autostart ? GameFolderSelection::AutoSelect() : LauncherWindow::ExecModal();
 		if (selectedGameIndex >= 0)
 		{
 			GameLaunchInfo info = GameFolderSelection::GetLaunchInfo(selectedGameIndex);
 			info.execSchedule = std::move(execSchedule.items);
+
+			// Output the run was told to write that lands inside the game folder ends it before any package loads.
+			// The smoke log was opened before a game was selected, so this is the first chance to look at it.
+			WritePolicy::setForbiddenRoot(info.gameRootFolder);
+			for (const std::string& output : { info.userDir, smokeLogPath })
+			{
+				if (output.empty())
+					continue;
+				try
+				{
+					WritePolicy::check(output);
+				}
+				catch (const std::runtime_error& e)
+				{
+					std::cerr << e.what() << "\n";
+					return 2;
+				}
+			}
+
 			Engine engine(info);
 			engine.Run();
 			unrunExec = engine.UnrunExecCommands();
