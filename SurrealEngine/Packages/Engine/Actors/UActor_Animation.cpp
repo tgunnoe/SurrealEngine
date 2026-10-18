@@ -109,7 +109,6 @@ void UActor::PlayAnim(const NameString& sequence, float rate, float tweenTime)
 
 void UActor::PlayBlendAnim(const NameString& sequenceName, float rate, float tweenTime, int blendSlot)
 {
-	LogUnimplemented("Actor.PlayBlendAnim");
 	if (blendSlot < 0 || blendSlot > 3)
 	{
 		LogMessage("Invalid channel for PlayBlendAnim!");
