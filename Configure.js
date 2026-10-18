@@ -39,6 +39,8 @@ var commonSources = [
 	"SurrealEngine/Utils/File.h",
 	"SurrealEngine/Utils/Logger.cpp",
 	"SurrealEngine/Utils/Logger.h",
+	"SurrealEngine/Utils/UserDirs.cpp",
+	"SurrealEngine/Utils/UserDirs.h",
 	"SurrealEngine/Utils/JsonValue.cpp",
 	"SurrealEngine/Utils/JsonValue.h",
 	"SurrealEngine/Utils/SHA1Sum.cpp",

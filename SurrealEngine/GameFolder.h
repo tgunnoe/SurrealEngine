@@ -20,6 +20,7 @@ struct GameLaunchInfo
 	std::string gameExecutableName = "";	// Name of the game executable (e.g. "UnrealTournament")
 	std::string gameVersionString = "";		// Version (+ sub version) info as a string (e.g. "469d")
 	std::string url = "";					// The UnrealURL to launch upon startup
+	std::string userDir = "";				// Absolute --user-dir: replaces the per-user config and data directories; empty when not given
 	Array<ExecItem> execSchedule;			// Console commands from --exec, stably sorted by seconds since the first login
 
 	bool IsUnreal1() const { return gameExecutableName == "Unreal"; }

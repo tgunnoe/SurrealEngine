@@ -63,6 +63,7 @@ class Directory
 {
 public:
 	static void create(const std::string& path);
+	static void remove_all(const std::string& path);
 	static fs::path localAppData();
 };
 

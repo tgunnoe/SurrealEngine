@@ -384,6 +384,11 @@ fs::path Directory::localAppData()
 
 #endif
 
+void Directory::remove_all(const std::string& path)
+{
+	std::filesystem::remove_all(path);
+}
+
 std::string OS::executable_path()
 {
 #if defined(WIN32)
