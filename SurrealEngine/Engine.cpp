@@ -923,10 +923,10 @@ void Engine::PossessSavedPlayer()
 
 void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const
 {
-	// Saves are written under the game folder, which unattended runs must leave untouched.
-	if (LaunchInfo.autostart)
+	// Saves go to the per-user data directory. Unattended runs write there only when given a directory of their own.
+	if (!LaunchInfo.CanWriteUserFiles())
 	{
-		LogMessage("Save game skipped: --autostart does not write to the game folder");
+		LogMessage("Save game skipped: --autostart without --user-dir does not write saves");
 		SmokeLog::Get()->Event("WARNING", "save to slot " + std::to_string(slotNum) + " skipped under --autostart");
 		return;
 	}
@@ -936,8 +936,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 
 	// First and foremost ensure the Save folder exists
 	const auto saveFolderPath = packages->GetSaveFolderPath();
-	if (!fs::exists(saveFolderPath))
-		fs::create_directory(saveFolderPath);
+	Directory::create(saveFolderPath.string());
 
 	if (packages->IsDeusEx())
 	{
@@ -951,8 +950,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		auto saveFolder = "Save" + slotNumStr;
 
 		auto saveSlotFolder = saveFolderPath / saveFolder;
-		if (!fs::exists(saveSlotFolder) || !fs::is_directory(saveSlotFolder))
-			fs::create_directory(saveSlotFolder);
+		Directory::create(saveSlotFolder.string());
 
 		auto levelName = Level->package->GetPackageName().ToString() + "." + packages->GetSaveExtension();
 		auto saveInfoName = "SaveInfo." + packages->GetSaveExtension();

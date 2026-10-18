@@ -319,6 +319,7 @@ PackageManager::PackageManager(const GameLaunchInfo& launchInfo) : launchInfo(la
 	const UserDirs::GameDirs userDirs = UserDirs::gameDirs(launchInfo, UserDirs::processEnv());
 	gameConfigFolderPath = userDirs.config;
 	gameDataFolderPath = userDirs.data;
+	gameSaveFolderPath = gameDataFolderPath / "Save";
 
 	NativeFunctions::Reset();
 	RegisterNativeClasses();
@@ -508,10 +509,7 @@ void PackageManager::ScanPaths()
 		paths = GetIniValues("system", "Core.System", "Paths");
 	}
 
-	// Handle SavePath and CachePath
-	const auto savePath = convert_path_separators(GetIniValue("System", "Core.System", "SavePath"));
-	gameSaveFolderPath = (gameSystemFolderPath / savePath).lexically_normal();
-
+	// The ini SavePath is ignored: saves live in the per-user data directory, never in the install
 	const auto cachePath = convert_path_separators(GetIniValue("System", "Core.System", "CachePath"));
 	gameCacheFolderPath = (gameSystemFolderPath / cachePath).lexically_normal();
 
@@ -566,6 +564,10 @@ void PackageManager::ScanPaths()
 
 void PackageManager::ScanSaveInfos()
 {
+	// The save folder only exists once something has been saved
+	if (!fs::is_directory(gameSaveFolderPath))
+		return;
+
 	for (const auto& entry : fs::directory_iterator{gameSaveFolderPath})
 	{
 		if (!entry.is_directory())
@@ -816,12 +818,12 @@ void PackageManager::SetIniValues(NameString iniName, const NameString& sectionN
 
 void PackageManager::SaveAllIniFiles()
 {
-	for (auto& iniFile: iniFiles)
-	{
 	// Everything is written beside the other per-user files as SE-<name>.ini, never over the file it was
 	// read from: the install is not ours to write to, and a legacy SE- file there is only a starting point.
 	Directory::create(gameConfigFolderPath.string());
 
+	for (auto& iniFile: iniFiles)
+	{
 		const bool isEngineIni = iniFile.first == launchInfo.gameExecutableName || iniFile.first == "System" || iniFile.first == "User";
 
 		// The engine inis are always written so the per-user copy exists after the first run; any other ini
@@ -843,8 +845,6 @@ void PackageManager::LoadPackageRemaps()
 	}
 }
 
-void PackageManager::LoadEngineIniFiles()
-{
 fs::path PackageManager::ResolveUserIniPath() const
 {
 	// The per-user SE-User.ini, then the install's SE-User.ini (written by older builds), User.ini and DefUser.ini.
@@ -857,6 +857,8 @@ fs::path PackageManager::ResolveUserIniPath() const
 	return gameSystemFolderPath / "DefUser.ini";
 }
 
+void PackageManager::LoadEngineIniFiles()
+{
 	// Load SE-[GameName].ini and SE-User.ini from the per-user directory first, then from the install
 	// If they do not exist, import the appropriate [GameName].ini and User.ini files
 	// If those also do not exist, import Default.ini and DefUser.ini files
