@@ -5,6 +5,7 @@
 #include "Packages/Engine/Actors/Pawn/UPawn_AIMath.h"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <random>
 
 // These cover the arithmetic behind the Deus Ex AI natives (sight, destination picking,
@@ -304,6 +305,24 @@ TEST(AIRayDistancesNegativeMinStartsAtZero)
 	CHECK(Near(samples[0], 0.0f));
 	CHECK(Near(samples[1], 64.0f));
 	CHECK(Near(samples[2], 100.0f));
+}
+
+TEST(AIRayDistancesRefusesRangesTooLongToWalk)
+{
+	// A range needing more samples than the cap is refused, not walked, so a runaway script value
+	// cannot stall a tick on millions of traces.
+	CHECK(AIMath::RayDistances(0.0f, 1000000.0f, 64.0f).empty());
+	CHECK(!AIMath::RayDistances(0.0f, 4096.0f * 64.0f, 64.0f).empty());
+}
+
+TEST(AIRayDistancesRefusesNonFiniteRanges)
+{
+	const float inf = std::numeric_limits<float>::infinity();
+	const float nan = std::numeric_limits<float>::quiet_NaN();
+	CHECK(AIMath::RayDistances(0.0f, inf, 64.0f).empty());
+	CHECK(AIMath::RayDistances(0.0f, nan, 64.0f).empty());
+	CHECK(AIMath::RayDistances(nan, 100.0f, 64.0f).empty());
+	CHECK(AIMath::RayDistances(0.0f, 100.0f, nan).empty());
 }
 
 TEST(AIRayDistancesAreStrictlyIncreasing)
