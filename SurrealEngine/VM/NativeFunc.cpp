@@ -40,6 +40,11 @@ void NativeFunctions::RegisterHandler(const NameString& className, const NameStr
 	}
 }
 
+static std::string DescribeNative(UFunction* func)
+{
+	return func->NativeStruct->Name.ToString() + "." + func->Name.ToString();
+}
+
 void NativeFunctions::RegisterNativeFunc(UFunction* func)
 {
 	int nativeIndex = func->NativeFuncIndex;
@@ -53,8 +58,8 @@ void NativeFunctions::RegisterNativeFunc(UFunction* func)
 
 		if (FuncByIndex[nativeIndex] != nullptr)
 			Exception::Throw("Attempted to assign native index "
-				+ std::to_string(nativeIndex) + " to " + UObject::GetUClassFullName(func).ToString()
-				+ ", which was already assigned to a different native function.");
+				+ std::to_string(nativeIndex) + " to " + DescribeNative(func)
+				+ ", which was already assigned to " + DescribeNative(FuncByIndex[nativeIndex]) + ".");
 
 		FuncByIndex[nativeIndex] = func;
 	}
