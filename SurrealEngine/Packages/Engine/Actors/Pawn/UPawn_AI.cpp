@@ -294,7 +294,7 @@ bool UPawn::AIPickRandomDestination(float minDist, float maxDist, int centralYaw
 			hasHit = hit.Actor != nullptr;
 			floorZ = sample.z - maxDist * hit.Fraction - CollisionHeight();
 		}
-		return AIMath::GroundedZ(floorZ, hasHit, Location().z, CollisionHeight());
+		return AIMath::GroundedZ(floorZ, hasHit, Location().z, CollisionHeight()).value();
 	};
 
 	float farthest = maxDist;

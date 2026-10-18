@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <random>
 
 // These cover the arithmetic behind the Deus Ex AI natives (sight, destination picking,
@@ -164,21 +165,28 @@ TEST(AIPitchSampleNeverFoldsOverVertical)
 TEST(AIGroundedZStandsOnTheFloorBeneathTheSample)
 {
 	// The pawn's centre rests one half-height above the floor the drop found, wherever the sample was.
-	CHECK(Near(AIMath::GroundedZ(100.0f, true, 500.0f, 44.0f), 144.0f));
-	CHECK(Near(AIMath::GroundedZ(-250.0f, true, 500.0f, 23.0f), -227.0f));
+	std::optional<float> z = AIMath::GroundedZ(100.0f, true, 500.0f, 44.0f);
+	CHECK(z.has_value());
+	CHECK(Near(*z, 144.0f));
+	z = AIMath::GroundedZ(-250.0f, true, 500.0f, 23.0f);
+	CHECK(z.has_value());
+	CHECK(Near(*z, -227.0f));
 }
 
-TEST(AIGroundedZWithNoFloorIsLevelWithThePawn)
+TEST(AIGroundedZWithNoFloorIsRefused)
 {
-	// The hit value is meaningless without a hit, so it must not leak into the answer.
-	CHECK(Near(AIMath::GroundedZ(0.0f, false, 500.0f, 44.0f), 500.0f));
-	CHECK(Near(AIMath::GroundedZ(9999.0f, false, -80.0f, 44.0f), -80.0f));
+	// A sample with nothing to stand on is no destination for a walking pawn, and the hit value that
+	// goes with it must not leak into an answer.
+	CHECK(!AIMath::GroundedZ(0.0f, false, 500.0f, 44.0f).has_value());
+	CHECK(!AIMath::GroundedZ(9999.0f, false, -80.0f, 44.0f).has_value());
 }
 
 TEST(AIGroundedZFollowsAFloorAboveThePawn)
 {
 	// A ledge higher than the pawn is still a floor to stand on; the pawn's own height does not cap it.
-	CHECK(Near(AIMath::GroundedZ(600.0f, true, 500.0f, 44.0f), 644.0f));
+	std::optional<float> z = AIMath::GroundedZ(600.0f, true, 500.0f, 44.0f);
+	CHECK(z.has_value());
+	CHECK(Near(*z, 644.0f));
 }
 
 TEST(AIAngularWindowSampleEndpoints)

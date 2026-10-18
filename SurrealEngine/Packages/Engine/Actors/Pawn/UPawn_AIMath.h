@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <optional>
 #include <queue>
 #include <utility>
 #include <vector>
@@ -79,7 +80,7 @@ namespace AIMath
 	// Height for the centre of a walking pawn's random destination: one half height above the floor the
 	// drop under the sampled point found, wherever that floor is (a ledge above the pawn is still a floor),
 	// or level with the pawn when no floor lay within the drop. hitZ means nothing without a hit.
-	inline float GroundedZ(float hitZ, bool hasHit, float pawnZ, float collisionHeight)
+	inline std::optional<float> GroundedZ(float hitZ, bool hasHit, float pawnZ, float collisionHeight)
 	{
 		return hasHit ? hitZ + collisionHeight : pawnZ;
 	}
