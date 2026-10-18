@@ -297,6 +297,49 @@ TEST(AIEventRangeIsStrictAndScoreFallsOffLinearly)
 	CHECK(Near(w.log.back().params.score, 1.5f));
 }
 
+TEST(AIEventRangeEdgeIsOutsideEvenForAScoreFunctionThatWouldPassIt)
+{
+	World w;
+	UActor* listener = Actor(1);
+	UActor* sender = Actor(2);
+	w.Place(listener, 0);
+	// A raw score of zero at the edge would drop the delivery anyway; a score function that replaces it
+	// is what shows the edge itself is outside.
+	w.scorers["Generous"] = [](UActor*, UActor*, float) { return 5.0f; };
+	w.manager.SetCallback(listener, Reg("LoudNoise", "OnNoise", "Generous"));
+
+	w.Place(sender, 512);
+	w.manager.SendEvent(sender, "LoudNoise", Audio, 2.0f, 512.0f);
+	CHECK_EQ(w.Trace(listener), "");
+	CHECK_EQ(w.scoreInputs.size(), (size_t)0);
+
+	w.Place(sender, 511);
+	w.manager.SendEvent(sender, "LoudNoise", Audio, 2.0f, 512.0f);
+	CHECK_EQ(w.Trace(listener), "Begin(2)");
+	CHECK(Near(w.log[0].params.score, 5.0f));
+}
+
+TEST(AIEventListenerNeverHearsItself)
+{
+	World w;
+	UActor* a = Actor(1);
+	UActor* b = Actor(2);
+	w.Place(a, 0);
+	w.Place(b, 100);
+	for (UActor* actor : { a, b })
+	{
+		w.manager.SetCallback(actor, Reg("LoudNoise", "OnNoise"));
+		w.manager.SetCallback(actor, Reg("Alarm", "AlarmHeard"));
+	}
+
+	w.manager.SendEvent(a, "LoudNoise", Audio, 1.0f, 0.0f);
+	w.manager.StartEvent(a, "Alarm", Audio, 1.0f, 0.0f);
+	w.PulseAt(1.0);
+
+	CHECK_EQ(w.Trace(b), "Begin(1) Begin(1) Pulse(1)");
+	CHECK_EQ(w.Trace(a), "");
+}
+
 TEST(AIEventNoRadiusMeansUnlimitedRange)
 {
 	World w;
@@ -574,11 +617,12 @@ TEST(AIEventStartingTheSameRecordAgainReplacesIt)
 	w.Place(sender, 100);
 	w.manager.SetCallback(listener, Reg("Alarm", "AlarmHeard"));
 
-	w.manager.StartEvent(sender, "Alarm", Audio, 1.0f, 0.0f);
 	w.manager.StartEvent(sender, "Alarm", Audio, 5.0f, 0.0f);
+	w.manager.StartEvent(sender, "Alarm", Audio, 1.0f, 0.0f);
 	w.PulseAt(1.0);
 	CHECK_EQ(w.Trace(listener), "Begin(2) Pulse(2)");
-	CHECK(Near(w.log.back().params.score, 5.0f));
+	// The later start stands even though it is weaker; a second record would still be scored 5.
+	CHECK(Near(w.log.back().params.score, 1.0f));
 
 	// One record, so one end.
 	w.manager.EndEvent(sender, "Alarm", Audio);
@@ -738,6 +782,29 @@ TEST(AIEventForgettingTheBestSenderChangesBest)
 
 	// Never a pulse naming an actor that has been forgotten.
 	CHECK_EQ(w.Trace(listener), "Begin(2) ChangeBest(3) ChangeBest(2)");
+}
+
+TEST(AIEventAForgottenBestIsNotRememberedAsBest)
+{
+	World w;
+	UActor* listener = Actor(1);
+	UActor* weak = Actor(2);
+	UActor* strong = Actor(3);
+	w.Place(listener, 0);
+	w.Place(weak, 100);
+	w.Place(strong, 200);
+	w.manager.SetCallback(listener, Reg("Alarm", "AlarmHeard"));
+	w.manager.StartEvent(weak, "Alarm", Audio, 1.0f, 0.0f);
+	w.manager.StartEvent(strong, "Alarm", Audio, 3.0f, 0.0f);
+	w.PulseAt(1.0);
+	w.manager.Forget(strong);
+
+	// A new actor can be allocated at the address of the one destroyed. It is a different sender, so it
+	// taking over is a change of best and not a continuing pulse.
+	w.manager.StartEvent(strong, "Alarm", Audio, 3.0f, 0.0f);
+	w.PulseAt(2.0);
+
+	CHECK_EQ(w.Trace(listener), "Begin(2) ChangeBest(3) ChangeBest(3)");
 }
 
 TEST(AIEventEarlierSenderWinsATie)
