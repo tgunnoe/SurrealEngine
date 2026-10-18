@@ -65,6 +65,15 @@ void NativeFunctions::RegisterNativeFunc(UFunction* func)
 	}
 }
 
+void NativeFunctions::ShareIndex(int nativeIndex, const NameString& opcodeClass)
+{
+}
+
+const NativeFuncHandler* NativeFunctions::FindHandler(int nativeIndex, const NameString& funcName, const NameString& className)
+{
+	return nullptr;
+}
+
 void RegisterLatentAction(int nativeIndex, LatentRunState latentAction)
 {
 	if (NativeFunctions::LatentActionByIndex.size() <= (size_t)nativeIndex) NativeFunctions::LatentActionByIndex.resize((size_t)nativeIndex + 1);

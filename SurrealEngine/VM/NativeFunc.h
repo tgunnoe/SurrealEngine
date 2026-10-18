@@ -21,6 +21,8 @@ public:
 
 	static void RegisterHandler(const NameString& className, const NameString& funcName, int nativeIndex, NativeFuncHandler handler);
 	static void RegisterNativeFunc(UFunction* func);
+	static void ShareIndex(int nativeIndex, const NameString& opcodeClass);
+	static const NativeFuncHandler* FindHandler(int nativeIndex, const NameString& funcName, const NameString& className);
 
 	// The registry is process-global; each PackageManager repopulates it from scratch.
 	static void Reset();

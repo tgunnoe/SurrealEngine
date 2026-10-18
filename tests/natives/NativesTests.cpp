@@ -56,6 +56,62 @@ namespace
 	}
 }
 
+TEST(NativesSharedIndexRunsEachOwnersHandler)
+{
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	int leftCalls = 0;
+	int rightCalls = 0;
+	CHECK_MSG(RegisterCounting("Left", "First", 3001, leftCalls), "a shared index must accept its first native");
+	CHECK_MSG(RegisterCounting("Right", "Second", 3001, rightCalls), "a shared index must accept its second native");
+	UFunction* first = MakeNative("Left", "First", 3001);
+	UFunction* second = MakeNative("Right", "Second", 3001);
+	UObject* instance = MakeInstance();
+
+	CallNoArgs(first, instance);
+	CHECK_EQ(leftCalls, 1);
+	CHECK_EQ(rightCalls, 0);
+
+	CallNoArgs(second, instance);
+	CHECK_EQ(leftCalls, 1);
+	CHECK_EQ(rightCalls, 1);
+}
+
+TEST(NativesSharedIndexHandlersAreFoundByName)
+{
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	int calls = 0;
+	CHECK_MSG(RegisterCounting("Left", "First", 3001, calls), "a shared index must accept its first native");
+	CHECK_MSG(RegisterCounting("Right", "Second", 3001, calls), "a shared index must accept its second native");
+
+	CHECK(NativeFunctions::FindHandler(3001, "First", "Left") != nullptr);
+	CHECK(NativeFunctions::FindHandler(3001, "Second", "Right") != nullptr);
+	// The index alone names no handler, and a name nobody registered must not borrow one.
+	CHECK(NativeFunctions::FindHandler(3001, "Second", "Left") == nullptr);
+	CHECK(NativeFunctions::FindHandler(3001, "Third", "Right") == nullptr);
+}
+
+TEST(NativesSharedIndexOpcodeResolvesToDeclaredOwner)
+{
+	UFunction* first = MakeNative("Left", "First", 3001);
+	UFunction* second = MakeNative("Right", "Second", 3001);
+
+	// Bytecode carries only the index, so which function it means cannot depend on which
+	// class the loader happened to reach first.
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	CHECK_MSG(Succeeds([&] { NativeFunctions::RegisterNativeFunc(first); }), "declared index rejected its first function");
+	CHECK_MSG(Succeeds([&] { NativeFunctions::RegisterNativeFunc(second); }), "declared index rejected its second function");
+	CHECK(NativeFunctions::FuncByIndex[3001] == second);
+
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	CHECK_MSG(Succeeds([&] { NativeFunctions::RegisterNativeFunc(second); }), "declared index rejected its first function");
+	CHECK_MSG(Succeeds([&] { NativeFunctions::RegisterNativeFunc(first); }), "declared index rejected its second function");
+	CHECK(NativeFunctions::FuncByIndex[3001] == second);
+}
+
 // Two natives on one index are a startup error. The error text must be buildable for
 // functions that have no package, like the ones built here.
 TEST(NativesUndeclaredIndexClashStillThrows)
