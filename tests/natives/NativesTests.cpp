@@ -141,3 +141,16 @@ TEST(NativesHandlerAtGreaterStrStrIndexIsReached)
 
 	CHECK_EQ(calls, 1);
 }
+
+TEST(NativesCallOfUnregisteredIndexThrows)
+{
+	NativeFunctions::Reset();
+	int calls = 0;
+	CHECK(RegisterCounting("Left", "First", 3003, calls));
+	UObject* instance = MakeInstance();
+
+	// One index lies past everything registered, the other inside it with no handler.
+	CHECK_THROWS(CallNoArgs(MakeNative("Left", "Second", 100000), instance));
+	CHECK_THROWS(CallNoArgs(MakeNative("Left", "Third", 3002), instance));
+	CHECK_EQ(calls, 0);
+}

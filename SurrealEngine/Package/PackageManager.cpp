@@ -1151,6 +1151,10 @@ void PackageManager::RegisterFunctions()
 		NCheckboxWindow::RegisterFunctions();
 		NClipWindow::RegisterFunctions();
 		NComputerWindow::RegisterFunctions();
+		// ConEvent.GetSoundLength and Conversation.ClearBindEvents both declare index 2054. The
+		// shipped scripts call ClearBindEvents through the opcode and never call GetSoundLength,
+		// so the opcode means the Conversation function.
+		NativeFunctions::ShareIndex(2054, "Conversation");
 		NConEvent::RegisterFunctions();
 		NConEventRandomLabel::RegisterFunctions();
 		NConversation::RegisterFunctions();
