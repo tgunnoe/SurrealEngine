@@ -38,34 +38,40 @@ namespace AIMath
 		return wrapped > AngleUnits / 2 - 1 ? wrapped - AngleUnits : wrapped;
 	}
 
-	inline float DegreesToUnits(float degrees)
-	{
-		return degrees * (AngleUnits / 360.0f);
-	}
-
 	// True when angle is within halfWidth units of central, compared modulo a full turn.
 	inline bool InAngularWindow(int angle, int central, int halfWidth)
 	{
 		return std::abs(WrapSigned(angle - central)) <= halfWidth;
 	}
 
-	// Half width of the yaw window for a script's yawDistribution, given in degrees. Scripts that want
-	// any direction pass a central yaw of zero with a distribution of zero, so zero and below mean the
-	// whole circle rather than a single heading.
-	inline int YawHalfWidth(float distributionDegrees)
+	// A script's yawDistribution and pitchDistribution are fractions of a half turn, not degrees: the
+	// window either side of the central heading is distribution * 32768 units wide, up to the half turn
+	// that makes it the whole circle. Every non-zero value the shipped scripts pass (0.25 as a bias toward
+	// home, 0.5, 0.6 and 0.8 when fleeing) is such a fraction; as degrees they would be cones under one
+	// degree wide, and as fractions they give plus or minus 45, 90, 108 and 144 degrees, which is what
+	// those call sites want. The original mapping is not recoverable, so this is this engine's own rule.
+	inline int HalfTurnFractionWidth(float fraction)
 	{
-		if (!(distributionDegrees > 0.0f))
-			return AngleUnits / 2;
-		return std::min(AngleUnits / 2, (int)std::lround(DegreesToUnits(std::min(distributionDegrees, 360.0f))));
+		return std::min(AngleUnits / 2, (int)std::lround(std::min(fraction, 1.0f) * (AngleUnits / 2)));
 	}
 
-	// Half width of the pitch window for pitchDistribution in degrees. Unlike yaw, zero means exactly the
-	// central pitch, which keeps a walking pawn's random picks level.
-	inline int PitchHalfWidth(float distributionDegrees)
+	// Half width of the yaw window for a script's yawDistribution. Scripts that want any direction pass a
+	// central yaw of zero with a distribution of zero, so zero and below mean the whole circle rather than
+	// a single heading.
+	inline int YawHalfWidth(float distribution)
 	{
-		if (!(distributionDegrees > 0.0f))
+		if (!(distribution > 0.0f))
+			return AngleUnits / 2;
+		return HalfTurnFractionWidth(distribution);
+	}
+
+	// Half width of the pitch window for pitchDistribution. Unlike yaw, zero and below mean exactly the
+	// central pitch, which keeps a walking pawn's random picks level.
+	inline int PitchHalfWidth(float distribution)
+	{
+		if (!(distribution > 0.0f))
 			return 0;
-		return std::min(AngleUnits / 2, (int)std::lround(DegreesToUnits(std::min(distributionDegrees, 360.0f))));
+		return HalfTurnFractionWidth(distribution);
 	}
 
 	// Maps unit in [0, 1] linearly onto central +- halfWidth and wraps the result into [0, 65536).

@@ -73,13 +73,6 @@ TEST(AIAngleWrapSigned)
 	CHECK_EQ(AIMath::WrapSigned(32768), -32768);
 }
 
-TEST(AIAngleDegreesToUnits)
-{
-	CHECK(Near(AIMath::DegreesToUnits(90.0f), 16384.0f));
-	CHECK(Near(AIMath::DegreesToUnits(360.0f), 65536.0f));
-	CHECK(Near(AIMath::DegreesToUnits(0.0f), 0.0f));
-}
-
 TEST(AIAngularWindowWrapsAroundFullTurn)
 {
 	// A window centred just below 65536 reaches across zero.
