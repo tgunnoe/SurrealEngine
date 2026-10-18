@@ -545,7 +545,14 @@ class TestDeusExByteIdentity(unittest.TestCase):
             for name in ("TRIAGE.md", "stubs.md", "SUMMARY.md"):
                 self.assertTrue(filecmp.cmp(os.path.join(out, name), DEUSEX_DIR / name, shallow=False), name)
             sections, nonclean, problems = check.check(scn, str(DEUSEX_DIR), out)
-        self.assertEqual((sections, nonclean, problems), (88, 88, []))
+        # The module exposes no function that decides which rows are non-clean,
+        # so the expectation is the committed TRIAGE.md's section headings, one
+        # per non-clean map, which the byte-identity checks above tie to the data.
+        with open(DEUSEX_DIR / "TRIAGE.md") as f:
+            expected = sum(1 for line in f if line.startswith("## "))
+        self.assertEqual(problems, [])
+        self.assertEqual(sections, nonclean)
+        self.assertEqual(nonclean, expected)
 
     def test_scenario_has_no_defaults_naming_a_game(self):
         for f in dataclasses.fields(Scenario):
