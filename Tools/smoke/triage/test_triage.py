@@ -11,6 +11,7 @@ from unittest import mock
 
 SMOKE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SMOKE))
+import sweep  # noqa: E402
 from triage import build, check, extract, repro  # noqa: E402
 from triage.scenario import Scenario  # noqa: E402
 
@@ -226,6 +227,66 @@ class TestReproCompare(unittest.TestCase):
                                              "STUB Actor.A\nSTUB Actor.B\n"))
         self.assertEqual(same, ("yes", "stubs:Actor.A,Actor.B", "stubs:Actor.A,Actor.B"))
         self.assertEqual(repro.compare(TOY, *self.logs("STUB Actor.A\n", "STUB Actor.B\n"))[0], "flaky")
+
+    # With require_match_start a non-start is a failure like a failing line,
+    # judged by the sweep's own rule; without it the flag is not looked at.
+    STARTED = "STATE 0.0 PlayerWalking\nEXEC 5 Fire\n"
+    UNSTARTED = "STATE 0.0 PlayerWaiting\nEXEC 5 Fire\n"
+    MATCH = dataclasses.replace(TOY, require_match_start=True)
+
+    def test_non_start_in_both_runs_is_yes(self):
+        self.assertEqual(repro.compare(self.MATCH, *self.logs(self.UNSTARTED, self.UNSTARTED))[0], "yes")
+
+    def test_non_start_then_start_is_no(self):
+        v, a, b = repro.compare(self.MATCH, *self.logs(self.UNSTARTED, self.STARTED))
+        self.assertEqual((v, a, b), ("no", "stubs:; match_started:false", "stubs:; match_started:true"))
+
+    def test_start_then_non_start_is_flaky(self):
+        v, a, b = repro.compare(self.MATCH, *self.logs(self.STARTED, self.UNSTARTED))
+        self.assertEqual((v, a, b), ("flaky", "stubs:; match_started:true", "stubs:; match_started:false"))
+
+    def test_flag_is_ignored_without_the_option(self):
+        self.assertEqual(repro.compare(TOY, *self.logs(self.UNSTARTED, self.STARTED)),
+                         ("yes", "stubs:", "stubs:"))
+
+    def test_stub_sets_are_still_compared_when_the_matches_agree(self):
+        self.assertEqual(repro.compare(self.MATCH, *self.logs(self.STARTED + "STUB Actor.A\n",
+                                                              self.STARTED + "STUB Actor.B\n"))[0], "flaky")
+
+    def test_every_combination_follows_the_rule(self):
+        # A run is its first failing line (none, x or y) and whether its match started.
+        runs = [(line, started) for line in (None, "x", "y") for started in (False, True)]
+
+        def body(run):
+            line, started = run
+            return ("" if line is None else "SCRIPT_ERROR %s\n" % line) + (self.STARTED if started else self.UNSTARTED)
+
+        def unclean(run):
+            return run[0] is not None or not run[1]
+
+        for old in runs:
+            for new in runs:
+                want = "yes" if old == new else "no" if unclean(old) and not unclean(new) else "flaky"
+                with self.subTest(old=old, new=new):
+                    v, a, b = repro.compare(self.MATCH, *self.logs(body(old), body(new)))
+                    self.assertEqual(v, want)
+                    self.assertTrue(str(a).endswith("; match_started:" + str(old[1]).lower()), a)
+                    self.assertTrue(str(b).endswith("; match_started:" + str(new[1]).lower()), b)
+
+    def test_start_is_the_sweeps_rule(self):
+        bodies = [
+            ("STATE 0.0 PlayerWalking at (1.0, 2.0, 3.0)\nEXEC 5 Fire\n", True),
+            ("STATE 0.0 PlayerWaiting\nEXEC 5 Fire\nSTATE 6.0 PlayerWalking\n", True),
+            ("STATE 0.0 PlayerWalking\nSTATE 3.0 PlayerWaiting\nEXEC 5 Fire\n", False),
+            ("STATE 0.0 PlayerWalking\nEXEC_FAILED 5 Fire\nSTATE 6.0 PlayerWalking\n", False),
+            ("STATE 0.0 PlayerWalking\n", False),
+        ]
+        for text, want in bodies:
+            old, new = self.logs(text, text)
+            with self.subTest(text=text):
+                self.assertIs(sweep.parse_log(old)[0]["match_started"], want)
+                _, a, b = repro.compare(self.MATCH, old, new)
+                self.assertTrue(str(a).endswith("; match_started:" + str(want).lower()), a)
 
 
 class TestCheckOptions(Fixture):
