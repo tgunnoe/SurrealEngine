@@ -1165,6 +1165,25 @@ std::string Engine::ParseClassName(std::string className)
 	return packages->GetIniValue("system", sectionName, keyName);
 }
 
+void InputHoldSchedule::Add(Kind kind, const std::string& name, float value, double until)
+{
+}
+
+Array<InputHoldSchedule::Hold> InputHoldSchedule::TakeExpired(double now)
+{
+	return {};
+}
+
+Array<InputHoldSchedule::Hold> InputHoldSchedule::TakeAll()
+{
+	return {};
+}
+
+HoldParseResult ParseHoldCommand(const Array<std::string>& args, double now)
+{
+	return { {}, "not implemented" };
+}
+
 void Engine::NotePlayerLogin()
 {
 	SmokeLog::Get()->Event("LOGIN");
