@@ -307,8 +307,8 @@ void NPawn::AICanSmell(UObject* Self, UObject* Other, std::optional<float> Smell
 
 void NPawn::AIDirectionReachable(UObject* Self, const vec3& Focus, int Yaw, int Pitch, float minDist, float maxDist, vec3& bestDest, BitfieldBool& ReturnValue)
 {
-	LogUnimplemented("Pawn.AIDirectionReachable");
-	ReturnValue = false;
+	UPawn* selfPawn = UObject::Cast<UPawn>(Self);
+	ReturnValue = selfPawn->AIDirectionReachable(Focus, Yaw, Pitch, minDist, maxDist, bestDest);
 }
 
 void NPawn::AIPickRandomDestination_Deus(UObject* Self, float minDist, float maxDist, int centralYaw, float yawDistribution, int centralPitch, float pitchDistribution, int tries, float multiplier, vec3& dest, BitfieldBool& ReturnValue)

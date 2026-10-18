@@ -42,6 +42,12 @@ public:
 	bool CanHearNoise(UActor* source, float loudness);
 	bool ActorReachable(UActor* anActor, bool checkNavpoint = false);
 	bool PointReachable(vec3 aPoint);
+	// PointReachable minus the line of sight from the pawn's eye: only the zone tests and whether the
+	// pawn's cylinder fits at the point. For points that need not be visible from where the pawn stands.
+	bool PointReachableWithoutSight(vec3 aPoint);
+	// True when the pawn's cylinder can sweep from one point to the other without touching level
+	// geometry or movers. Other actors are ignored.
+	bool CylinderTraceClear(const vec3& from, const vec3& to);
 
 	bool ReachableFlying(UActor* anActor);
 	bool ReachableSpider(UActor* anActor);
@@ -76,6 +82,7 @@ public:
 	float AICanHear(UActor* other, std::optional<float> volume, std::optional<float> radius);
 	float AICanSee(UActor* other, std::optional<float> visibility, std::optional<bool> bCheckVisibility, std::optional<bool> bCheckDir, std::optional<bool> bCheckCylinder, std::optional<bool> bCheckLOS);
 	float AICanSmell(UActor* other, std::optional<float> smell);
+	bool AIDirectionReachable(const vec3& focus, int yaw, int pitch, float minDist, float maxDist, vec3& bestDest);
 
 	float& AccelRate() { return Value<float>(PropOffsets_Pawn.AccelRate); }
 	float& AirControl() { return Value<float>(PropOffsets_Pawn.AirControl); }

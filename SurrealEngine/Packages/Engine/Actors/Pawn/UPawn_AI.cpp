@@ -238,6 +238,35 @@ float UPawn::AICanSee(UActor* other, std::optional<float> visibility, std::optio
 	return AIMath::SightMagnitude(nearest, SightRadius(), viewVisibility);
 }
 
+bool UPawn::AIDirectionReachable(const vec3& focus, int yaw, int pitch, float minDist, float maxDist, vec3& bestDest)
+{
+	// Walk out from focus along the direction in fixed steps. The first step that cannot be reached
+	// ends the walk, so the answer is the farthest point connected to focus by clear steps.
+	const float step = 64.0f;
+	vec3 previous = focus;
+	vec3 farthest;
+	bool found = false;
+	for (float distance : AIMath::RayDistances(minDist, maxDist, step))
+	{
+		vec3 sample = AIMath::PointAlong(focus, pitch, yaw, distance);
+
+		// The focus may be somewhere the pawn cannot see (a spot it is seeking), so the clearance
+		// comes from the sweep between samples and not from a line of sight to each one.
+		if (!CylinderTraceClear(previous, sample))
+			break;
+		if (!PointReachableWithoutSight(sample))
+			break;
+
+		farthest = sample;
+		found = true;
+		previous = sample;
+	}
+
+	if (found)
+		bestDest = farthest;
+	return found;
+}
+
 float UPawn::AICanSmell(UActor* other, std::optional<float> smell)
 {
 	LogUnimplemented("Pawn.AICanSmell() [Deus Ex]");
