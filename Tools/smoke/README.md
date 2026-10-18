@@ -28,6 +28,10 @@ player's ready signal, press fire five seconds after login:
 SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/ut.log '--url=DM-Deck16][?NumBots=4' --exec=5:Fire "<game folder>"
 ```
 
+With the fire press the log shows `STATE 0.0 PlayerWaiting at (909.3, 1916.3, -634.6)`
+and then `STATE 6.0 PlayerWalking`; without it the player stays in
+`PlayerWaiting` for the whole run.
+
 Other commands work the same way, for example `--exec='10:open DM-Deck16]['`
 to travel to another map ten seconds after login.
 
@@ -69,6 +73,7 @@ each. The entry-map preload is not logged.
 | `EXEC <seconds> <command>` | An `--exec` command ran; `<seconds>` is the scheduled time, not the time the command ran. Written after `LOGIN`, once per command, in schedule order. |
 | `EXEC_FAILED <seconds> <command>` | An `--exec` command ran, but the console found neither a built-in command nor an `exec` function of that name. A script `exec` function that rejects its arguments still counts as `EXEC`. |
 | `EXEC_SKIPPED <seconds> <command>` | An `--exec` command never ran because the run ended first (or no login happened). Written just before `SUMMARY`; absent after a fatal run. |
+| `STATE <seconds> <state>` | The player's state name, as seen once per frame after the first `LOGIN`; `None` means the player has no state. `<seconds>` counts from that first `LOGIN` with one decimal and keeps counting across maps. A line is written when the state changes and when a new map's player is first seen, even if its state name is unchanged. The first line for each player carries ` at (x, y, z)`, the player's location with one decimal per coordinate. A state entered and left between two frames is not seen. |
 | `FPS <value>` | Frames per second, sampled about once per second. |
 | `SUMMARY script_errors=N stub_hits=N missing_natives=N exceptions=N script_warnings=N fps_avg=X` | Last line of a clean `--exit-after` run. |
 | `FATAL <text>` / `FATAL signal <n>` | Last line of a fatal run; `SUMMARY` is then absent. A crash during teardown, after the main loop ended, can still append `FATAL signal <n>` after `SUMMARY`. |
