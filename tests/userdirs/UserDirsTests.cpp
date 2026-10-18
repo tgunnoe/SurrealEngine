@@ -48,6 +48,20 @@ namespace
 		}
 	}
 
+	// The same for WritePolicy::checkAgainst
+	std::string RefusalAgainst(const std::filesystem::path& folder, const std::filesystem::path& path)
+	{
+		try
+		{
+			WritePolicy::checkAgainst(folder, path);
+			return {};
+		}
+		catch (const std::exception& e)
+		{
+			return e.what();
+		}
+	}
+
 	std::string Refused(const std::filesystem::path& path)
 	{
 		return "refusing to write inside the game folder: " + path.string();
@@ -437,3 +451,59 @@ TEST(UserDirsWrapperRemoveAllRefusesInsideTheRoot)
 	Directory::remove_all(outsideDir.string());
 	CHECK(!std::filesystem::exists(outsideDir));
 }
+
+TEST(UserDirsCheckAgainstRefusesTheFolderAndEverythingBelowIt)
+{
+	Sandbox box("against");
+	WritePolicy::clearForbiddenRoot();
+	const std::filesystem::path folder = box.Game();
+	const std::string sep(1, std::filesystem::path::preferred_separator);
+
+	// No stored root is needed: the caller names the folder
+	for (const std::filesystem::path& p : { folder, folder / "System", folder / "System" / "x.log", folder / "System" / ".." / "x.log", folder.parent_path() / "game" / "a" / ".." / "b" })
+		CHECK_EQ(RefusalAgainst(folder, p), Refused(p));
+
+	// A trailing separator on the folder or on the path changes nothing
+	CHECK_EQ(RefusalAgainst(folder.string() + sep, folder / "x.log"), Refused(folder / "x.log"));
+	CHECK_EQ(RefusalAgainst(folder, folder.string() + sep), Refused(folder.string() + sep));
+}
+
+TEST(UserDirsCheckAgainstAllowsOutsidePathsAndPrefixSiblings)
+{
+	Sandbox box("againstout");
+	const std::filesystem::path folder = box.Base / "g" / "Unreal";
+
+	for (const std::filesystem::path& p : { folder.parent_path(), folder.parent_path() / "UnrealGold" / "x.log", folder.parent_path() / "Unreal.bak", box.Out() / "x.log", folder / ".." / "x.log" })
+		CHECK_EQ(RefusalAgainst(folder, p), std::string());
+
+	// Nothing to compare: an empty folder or an empty path is not a refusal
+	CHECK_EQ(RefusalAgainst(std::filesystem::path(), folder / "x.log"), std::string());
+	CHECK_EQ(RefusalAgainst(folder, std::filesystem::path()), std::string());
+}
+
+TEST(UserDirsCheckAgainstLeavesTheStoredRootAlone)
+{
+	Sandbox box("againstroot");
+	WritePolicy::setForbiddenRoot(box.Out());
+
+	CHECK_EQ(RefusalAgainst(box.Game(), box.Game() / "x.log"), Refused(box.Game() / "x.log"));
+
+	// The stored root still guards its own folder and still allows the other one
+	CHECK_EQ(Refusal(box.Out() / "x"), Refused(box.Out() / "x"));
+	CHECK_EQ(Refusal(box.Game() / "x"), std::string());
+}
+
+#ifndef WIN32
+
+TEST(UserDirsCheckAgainstFollowsSymbolicLinks)
+{
+	Sandbox box("againstlink");
+	const std::filesystem::path link = box.Out() / "gamelink";
+	std::filesystem::create_directory_symlink(box.Game(), link);
+
+	// A log named through a link into the folder is inside it, whichever side the link is on
+	CHECK_EQ(RefusalAgainst(box.Game(), link / "System" / "x.log"), Refused(link / "System" / "x.log"));
+	CHECK_EQ(RefusalAgainst(link, box.Game() / "System" / "x.log"), Refused(box.Game() / "System" / "x.log"));
+}
+
+#endif

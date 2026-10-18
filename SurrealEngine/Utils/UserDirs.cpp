@@ -145,6 +145,14 @@ namespace
 		return StripTrailingSeparators(resolved);
 	}
 
+	// root is already canonical; path is resolved here
+	void RefuseIfInside(const fs::path& root, const fs::path& path)
+	{
+		const fs::path target = Canonical(path);
+		if (std::mismatch(root.begin(), root.end(), target.begin(), target.end()).first == root.end())
+			throw std::runtime_error("refusing to write inside the game folder: " + path.string());
+	}
+
 	std::mutex ForbiddenRootMutex;
 	std::optional<fs::path> ForbiddenRoot;
 }
@@ -230,6 +238,15 @@ void WritePolicy::clearForbiddenRoot()
 	ForbiddenRoot.reset();
 }
 
+void WritePolicy::checkAgainst(const fs::path& folder, const fs::path& path)
+{
+	// Nothing to compare, and an empty name cannot be created anywhere
+	if (folder.empty() || path.empty())
+		return;
+
+	RefuseIfInside(Canonical(folder), path);
+}
+
 void WritePolicy::check(const fs::path& path)
 {
 	fs::path root;
@@ -244,7 +261,5 @@ void WritePolicy::check(const fs::path& path)
 	if (path.empty())
 		return;
 
-	const fs::path target = Canonical(path);
-	if (std::mismatch(root.begin(), root.end(), target.begin(), target.end()).first == root.end())
-		throw std::runtime_error("refusing to write inside the game folder: " + path.string());
+	RefuseIfInside(root, path);
 }

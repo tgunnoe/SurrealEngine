@@ -60,4 +60,8 @@ public:
 	// Throws std::runtime_error when path is the forbidden root or lies below it (symbolic links and ".."
 	// are resolved first). Before a root is set, everything is allowed: the smoke log opens earlier.
 	static void check(const std::filesystem::path& path);
+
+	// The same refusal against a folder given by the caller instead of the stored root, which it leaves
+	// alone. For output that is opened before a game is selected, such as a log named on the command line.
+	static void checkAgainst(const std::filesystem::path& folder, const std::filesystem::path& path);
 };

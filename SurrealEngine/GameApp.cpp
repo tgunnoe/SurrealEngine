@@ -11,8 +11,35 @@
 #include "UI/Launcher/LauncherWindow.h"
 #include "Utils/File.h"
 #include "Utils/UserDirs.h"
+#include <filesystem>
 #include <stdexcept>
 #include <iostream>
+
+namespace
+{
+	// The guard's message when output lies inside a folder named on the command line, else empty. With --autostart the
+	// first folder is the game that runs; without it the launcher may pick any of them. The launcher's saved list of
+	// folders is not consulted.
+	std::string RefusalInsideNamedFolders(const std::string& output)
+	{
+		for (const std::string& item : commandline->GetItems())
+		{
+			std::error_code ec;
+			if (!std::filesystem::is_directory(item, ec))
+				continue;
+
+			try
+			{
+				WritePolicy::checkAgainst(item, output);
+			}
+			catch (const std::runtime_error& e)
+			{
+				return e.what();
+			}
+		}
+		return {};
+	}
+}
 
 int GameApp::main(Array<std::string> args)
 {
@@ -28,6 +55,15 @@ int GameApp::main(Array<std::string> args)
 	if (commandline->HasArg("", "--smoke-log"))
 	{
 		const std::string path = commandline->GetArg("", "--smoke-log");
+
+		// Opening creates or truncates the file, so a log inside a game folder must be refused before it is opened
+		const std::string refusal = RefusalInsideNamedFolders(path);
+		if (!refusal.empty())
+		{
+			std::cerr << refusal << "\n";
+			return 2;
+		}
+
 		smokeLogPath = path;
 		if (!SmokeLog::Get()->Open(path))
 		{
@@ -71,16 +107,25 @@ int GameApp::main(Array<std::string> args)
 			}
 		}
 
-		// Like --exec, a --user-dir that names nothing stops the run before the launcher or any game folder is touched
+		// Like --exec, a --user-dir that names nothing or lies inside a game folder named on the command line stops
+		// the run before the launcher or any game folder is touched
 		if (commandline->HasArg("", "--user-dir"))
 		{
+			std::string userDir;
 			try
 			{
-				UserDirs::resolveUserDirArg(commandline->GetArg("", "--user-dir"));
+				userDir = UserDirs::resolveUserDirArg(commandline->GetArg("", "--user-dir")).string();
 			}
 			catch (const std::exception& e)
 			{
 				std::cerr << "SurrealEngine: invalid --user-dir: " << e.what() << "\n";
+				return 2;
+			}
+
+			const std::string refusal = RefusalInsideNamedFolders(userDir);
+			if (!refusal.empty())
+			{
+				std::cerr << refusal << "\n";
 				return 2;
 			}
 		}
@@ -91,8 +136,8 @@ int GameApp::main(Array<std::string> args)
 			GameLaunchInfo info = GameFolderSelection::GetLaunchInfo(selectedGameIndex);
 			info.execSchedule = std::move(execSchedule.items);
 
-			// Output the run was told to write that lands inside the game folder ends it before any package loads.
-			// The smoke log was opened before a game was selected, so this is the first chance to look at it.
+			// A game picked in the launcher was not known when the command line was checked, so look at the output once more.
+			// A smoke log was opened by then and stays; the run still ends here, before any package loads.
 			WritePolicy::setForbiddenRoot(info.gameRootFolder);
 			for (const std::string& output : { info.userDir, smokeLogPath })
 			{

@@ -70,9 +70,16 @@ with `<path>`, so the files above become `<path>/SE-<Game>.ini`,
 directory. The launcher settings, crash reports and last-run log stay under the
 config root.
 
-A `--user-dir` inside the game folder is refused: the engine prints
-`refusing to write inside the game folder: <path>` and exits with code 2 before
-loading anything. A `--smoke-log` inside the game folder is refused the same way.
+A `--user-dir` or `--smoke-log` inside a game folder named on the command line is
+refused: the engine prints `refusing to write inside the game folder: <path>` and
+exits with code 2, and the smoke log is checked before it is opened, so an existing
+file there is not truncated. Every folder named on the command line is checked, not
+only the game that runs. The launcher's saved list of folders is not.
+
+When the game is picked in the launcher, its folder is not known yet when the smoke
+log is opened. The log is then created as asked; once the game is chosen, a smoke log
+or `--user-dir` inside its folder still ends the run with code 2 before any package
+loads, and every later write is guarded as usual.
 
 ## Unattended runs
 
