@@ -320,8 +320,8 @@ static std::vector<HullPlane> ReadHullPlanes(UModel* model, const BspNode& node)
 }
 
 // A box that penetrates a hull by a few units has free space just outside that hull, which the coarse
-// neighbour grid of CheckLocation steps over. Move out through the shallowest face of the first hull hit
-// and retest, accepting the first free spot within one body size of the request.
+// neighbour grid of CheckLocation steps over. When the grid finds nothing, move out through the shallowest
+// face of the first hull hit and retest, accepting the first free spot within one body size of the request.
 static std::optional<vec3> ResolvePenetration(ULevel* level, const vec3& location, float radius, float height, CollisionHitList hits)
 {
 	const int maxRounds = 8;
@@ -366,13 +366,6 @@ std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float h
 	if (!check)
 		return { true, location };
 
-	CollisionHitList startHits = XLevel()->Collision.OverlapTest(location, height, radius, false, true, false);
-	if (startHits.empty())
-		return { true, location };
-
-	if (std::optional<vec3> resolved = ResolvePenetration(XLevel(), location, radius, height, startHits))
-		return { true, *resolved };
-
 	// What is a reasonable size for this grid? what did UE1 do?
 	bool found = false;
 	float scale = std::max(radius, height);
@@ -394,7 +387,15 @@ std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float h
 	}
 
 	if (!found)
+	{
+		// Only a start the grid cannot place gets the hull exit, so every placement the grid
+		// finds stays exactly where it always was. The first grid candidate is the location itself.
+		CollisionHitList startHits = XLevel()->Collision.OverlapTest(location, height, radius, false, true, false);
+		if (std::optional<vec3> resolved = ResolvePenetration(XLevel(), location, radius, height, startHits))
+			return { true, *resolved };
+
 		LogBlockedCandidates(XLevel(), location, radius, height);
+	}
 
 	return { found, location };
 }
