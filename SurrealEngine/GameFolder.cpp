@@ -6,6 +6,9 @@
 #include "UE1GameDatabase.h"
 #include "LauncherSettings.h"
 #include "Utils/CommandLine.h"
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <stdexcept>
 
@@ -494,3 +497,104 @@ Array<std::string> GameFolderSelection::FindGameFolders()
 }
 
 #endif
+
+namespace
+{
+	std::string Trim(const std::string& text)
+	{
+		const char* whitespace = " \t\r\n";
+		size_t first = text.find_first_not_of(whitespace);
+		if (first == std::string::npos)
+			return {};
+		size_t last = text.find_last_not_of(whitespace);
+		return text.substr(first, last - first + 1);
+	}
+
+	// A plain non-negative decimal. The character check comes first because strtod also
+	// accepts signs, exponents, hexadecimal, "inf" and "nan", none of which belong in a time.
+	bool ParseSeconds(const std::string& text, double& seconds)
+	{
+		bool hasDigit = false;
+		bool hasPoint = false;
+		for (char c : text)
+		{
+			if (c >= '0' && c <= '9')
+				hasDigit = true;
+			else if (c == '.' && !hasPoint)
+				hasPoint = true;
+			else
+				return false;
+		}
+		if (!hasDigit)
+			return false;
+
+		char* end = nullptr;
+		seconds = std::strtod(text.c_str(), &end);
+		return end == text.c_str() + text.size();
+	}
+
+	std::string QuoteItem(const std::string& item)
+	{
+		return "\"" + item + "\"";
+	}
+
+	// Returns an empty string on success, otherwise why the item was rejected.
+	std::string ParseExecItem(const std::string& item, ExecItem& out)
+	{
+		size_t colon = item.find(':');
+		if (colon == std::string::npos)
+			return QuoteItem(item) + ": expected <seconds>:<command>";
+
+		const std::string time = Trim(item.substr(0, colon));
+		if (!ParseSeconds(time, out.seconds))
+			return QuoteItem(item) + ": the time " + QuoteItem(time) + " is not a non-negative number of seconds";
+
+		out.command = Trim(item.substr(colon + 1));
+		if (out.command.empty())
+			return QuoteItem(item) + ": the command is empty";
+
+		return {};
+	}
+}
+
+ExecScheduleResult ParseExecSchedule(const std::string& text)
+{
+	ExecScheduleResult result;
+	size_t begin = 0;
+	while (true)
+	{
+		size_t semicolon = text.find(';', begin);
+		const std::string item = text.substr(begin, semicolon == std::string::npos ? std::string::npos : semicolon - begin);
+
+		ExecItem parsed;
+		std::string error = ParseExecItem(item, parsed);
+		if (!error.empty())
+			return { {}, error };
+		result.items.push_back(std::move(parsed));
+
+		if (semicolon == std::string::npos)
+			break;
+		begin = semicolon + 1;
+	}
+
+	std::stable_sort(result.items.begin(), result.items.end(), [](const ExecItem& a, const ExecItem& b) { return a.seconds < b.seconds; });
+	return result;
+}
+
+size_t DueCommands(const Array<ExecItem>& schedule, double secondsSinceLogin, size_t cursor)
+{
+	if (secondsSinceLogin < 0.0)
+		return cursor;
+
+	size_t end = cursor;
+	while (end < schedule.size() && schedule[end].seconds <= secondsSinceLogin)
+		end++;
+	return end;
+}
+
+std::string FormatExecItem(const ExecItem& item)
+{
+	char seconds[32];
+	std::snprintf(seconds, sizeof(seconds), "%.15g", item.seconds);
+	return std::string(seconds) + " " + item.command;
+}
