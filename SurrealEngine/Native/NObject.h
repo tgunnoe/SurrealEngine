@@ -254,4 +254,12 @@ public:
 
 	static void GetConfigString_Nerf(const std::string& section, const std::string& key, const std::string& iniName, std::string& ReturnValue);
 	static void SetConfigString_Nerf(const std::string& section, const std::string& key, const std::string& value, const std::string& iniName);
+
+	static void clock(int& Cycles);
+	static void unclock(int& Cycles);
+	static void CyclesToSeconds(int Cycles, float& ReturnValue);
+
+	// The cycle arithmetic of clock and unclock, apart from reading the counter, so it can be checked on plain values.
+	static int SubtractCycles(int Cycles, uint32_t Now);
+	static int AddCycles(int Cycles, uint32_t Now);
 };

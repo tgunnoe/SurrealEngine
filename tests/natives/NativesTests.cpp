@@ -4,8 +4,11 @@
 #include "VM/Bytecode.h"
 #include "VM/Expression.h"
 #include "VM/NativeFunc.h"
+#include "Native/NObject.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UFunction.h"
+#include <chrono>
+#include <thread>
 
 // The registry is process-global; every test starts from an empty one.
 //
@@ -226,4 +229,48 @@ TEST(NativesFunctionTableSpansEveryOpcodeIndex)
 	NativeFunctions::Reset();
 
 	CHECK(NativeFunctions::FuncByIndex.size() > 4095);
+}
+
+// clock and unclock bracket a span: the first subtracts the counter from the script's int, the
+// second adds it back, leaving the span. The counter counts microseconds and wraps like the
+// 32-bit value scripts hold.
+TEST(NativesClockSubtractsTheCounter)
+{
+	CHECK_EQ(NObject::SubtractCycles(0, 1000), -1000);
+	CHECK_EQ(NObject::SubtractCycles(500, 1000), -500);
+}
+
+TEST(NativesUnclockAddsTheCounter)
+{
+	CHECK_EQ(NObject::AddCycles(-1000, 3500), 2500);
+}
+
+TEST(NativesClockedSpanSurvivesCounterWrap)
+{
+	int cycles = NObject::SubtractCycles(0, 0xFFFFFFF0u);
+	cycles = NObject::AddCycles(cycles, 0x10u);
+
+	CHECK_EQ(cycles, 0x20);
+}
+
+TEST(NativesCyclesToSecondsDividesByMicroseconds)
+{
+	float seconds = -1.0f;
+	NObject::CyclesToSeconds(2500000, seconds);
+	CHECK_EQ(seconds, 2.5f);
+
+	NObject::CyclesToSeconds(-500000, seconds);
+	CHECK_EQ(seconds, -0.5f);
+}
+
+TEST(NativesClockAndUnclockMeasureElapsedTime)
+{
+	int cycles = 0;
+	NObject::clock(cycles);
+	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	NObject::unclock(cycles);
+
+	// At least the sleep, and well short of five seconds' worth of microseconds.
+	CHECK(cycles >= 5000);
+	CHECK(cycles < 5000000);
 }

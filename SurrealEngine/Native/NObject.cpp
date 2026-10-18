@@ -1705,3 +1705,25 @@ void NObject::SetConfigString_Nerf(const std::string& section, const std::string
 		realIniName = realIniName.substr(0, pos);
 	engine->packages->SetIniValue(realIniName, section, key, value);
 }
+
+void NObject::clock(int& Cycles)
+{
+}
+
+void NObject::unclock(int& Cycles)
+{
+}
+
+void NObject::CyclesToSeconds(int Cycles, float& ReturnValue)
+{
+}
+
+int NObject::SubtractCycles(int Cycles, uint32_t Now)
+{
+	return 0;
+}
+
+int NObject::AddCycles(int Cycles, uint32_t Now)
+{
+	return 0;
+}
