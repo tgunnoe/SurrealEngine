@@ -318,11 +318,17 @@ ExpressionValue Frame::Call(UFunction* func, UObject* instance, const ArrayView<
 			{
 				// An arg may be missing (trailing optional args), or be a Nothing value
 				// (skipped optional arg, None context, nested call that returned early).
-				// The storage was already default constructed above, and storing Nothing
-				// into a struct or array parameter would copy from a null pointer.
+				// Storing Nothing into a struct or array parameter would copy from a null
+				// pointer, so such an arg gets the property's default value as upstream
+				// does, except an array: DefaultValue builds no array for it, and the
+				// storage constructed above already is the default.
 				if (argindex < args.size() && args[argindex].GetType() != ExpressionValueType::Nothing)
 				{
 					lvalue.Store(args[argindex]);
+				}
+				else if (prop->ValueType != ExpressionValueType::ValueArray)
+				{
+					lvalue.Store(ExpressionValue::DefaultValue(prop));
 				}
 
 				argindex++;
