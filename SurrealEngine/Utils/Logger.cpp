@@ -33,13 +33,13 @@ void Logger::LogMessage(const std::string& message)
 	if (SmokeLog::Get()->IsOpen())
 		SmokeLog::Get()->OnLogMessage(message);
 
-	if (!Frame::Callstack.empty() && Frame::Callstack.back()->Func)
+	if (!Frame::Callstack.empty() && Frame::Callstack.back()->GetFunc())
 	{
 		std::string name;
 
 		if (Frame::Callstack.size() > 1)
 		{
-			UStruct* func = Frame::Callstack[Frame::Callstack.size() - 2]->Func;
+			UStruct* func = Frame::Callstack[Frame::Callstack.size() - 2]->GetFunc();
 			for (UStruct* s = func; s != nullptr; s = s->StructParent)
 			{
 				if (name.empty())
@@ -50,7 +50,7 @@ void Logger::LogMessage(const std::string& message)
 		}
 		else
 		{
-			name = UObject::GetUClassFullName(Frame::Callstack.front()->Object).ToString();
+			name = UObject::GetUClassFullName(Frame::Callstack.front()->GetUObject()).ToString();
 		}
 
 		for (const std::string& text : SplitNewlines(message))
