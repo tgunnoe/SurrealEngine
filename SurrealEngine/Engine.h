@@ -75,7 +75,7 @@ public:
 	struct Hold
 	{
 		Kind kind = Kind::Button;
-		std::string name;	// The player property: a bool for a button, a float for an axis
+		std::string name;	// The player property: a byte or bool for a button, a float for an axis
 		float value = 0.0f;	// The axis value while held; unused for a button
 		double until = 0.0;	// The clock time at which the hold ends
 	};
@@ -253,6 +253,14 @@ public:
 	void RunDueExecCommands();
 	double execLoginSeconds = -1.0;
 	size_t execCursor = 0;
+
+	// The "hold" console command keeps a button or an axis down for a fixed time, on the --exec
+	// clock. A hold acts on the player below the key bindings, so it neither needs nor disturbs
+	// activeInputButtons and activeInputAxes; UpdateInput applies and ends it.
+	InputHoldSchedule inputHolds;
+	double LoginClockSeconds() const;
+	bool HoldInput(const Array<std::string>& args);
+	void ReleaseHolds(const Array<InputHoldSchedule::Hold>& holds);
 
 	// Writes a STATE line to the smoke log when the player's state name changes, and on the first
 	// frame after every LOGIN, with the player's location. Called once per frame, so a state entered
