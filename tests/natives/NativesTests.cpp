@@ -83,6 +83,18 @@ namespace
 	}
 }
 
+// The loader sizes a native function's frame as one ExpressionValue per property (none here)
+// and the call path writes ExpressionValues into it, so a function built for these tests must
+// carry the same layout.
+TEST(NativesFixtureSizesFrameLikeTheLoader)
+{
+	UFunction* func = MakeNative("Left", "First", 3001);
+
+	CHECK(func->IsNativeFunc);
+	CHECK_EQ(func->StructSize, func->Properties.size() * sizeof(ExpressionValue));
+	CHECK_EQ(func->StructAlignment, alignof(ExpressionValue));
+}
+
 TEST(NativesSharedIndexRunsEachOwnersHandler)
 {
 	NativeFunctions::Reset();

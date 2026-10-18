@@ -75,3 +75,15 @@ TEST(VMAccessedNoneInParamEntersNative)
 
 	CHECK_MSG(fixture.HandlerEntered, "a native with a None in parameter was skipped");
 }
+
+// The native call path writes one ExpressionValue per property into the frame, so the loader
+// sizes a native function's frame that way. A fixture that sizes it any other way makes the
+// call path assign an ExpressionValue into storage that was never constructed as one.
+TEST(VMNativeFixtureSizesFrameLikeTheLoader)
+{
+	NativeNoneFixture fixture(PropertyFlags::Parm);
+
+	CHECK(fixture.Func->IsNativeFunc);
+	CHECK_EQ(fixture.Func->StructSize, fixture.Func->Properties.size() * sizeof(ExpressionValue));
+	CHECK_EQ(fixture.Func->StructAlignment, alignof(ExpressionValue));
+}
