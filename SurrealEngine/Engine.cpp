@@ -1170,6 +1170,10 @@ void Engine::NotePlayerLogin()
 	SmokeLog::Get()->Event("LOGIN");
 	if (execLoginSeconds < 0.0)
 		execLoginSeconds = SmokeLog::Get()->SecondsSinceStart();
+
+	// A new map's player may reuse the old player's address and state name, so the pointer alone
+	// cannot tell the two apart
+	stateSeenActor = nullptr;
 }
 
 void Engine::RunDueExecCommands()
