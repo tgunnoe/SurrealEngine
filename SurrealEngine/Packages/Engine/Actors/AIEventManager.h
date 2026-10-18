@@ -5,6 +5,7 @@
 #include "Packages/Engine/Actors/UActor.h"
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <vector>
 
 // What an actor asked to hear about through AISetEventCallback: the script function to call when the
@@ -87,12 +88,52 @@ public:
 
 	// Drops everything that involves the actor, ending what its events made listeners hear.
 	void Forget(UActor* actor);
-};
 
-inline void AIEventManager::SetCallback(UActor* listener, const AIEventRegistration& registration) { }
-inline void AIEventManager::ClearCallback(UActor* listener, const NameString& event) { }
-inline void AIEventManager::SendEvent(UActor* sender, const NameString& event, EAIEventType type, float value, float radius) { }
-inline void AIEventManager::StartEvent(UActor* sender, const NameString& event, EAIEventType type, float value, float radius) { }
-inline void AIEventManager::EndEvent(UActor* sender, const NameString& event, EAIEventType type) { }
-inline void AIEventManager::Pulse(double now) { }
-inline void AIEventManager::Forget(UActor* actor) { }
+private:
+	// One (listener, event name) registration and what that listener is hearing under it.
+	struct Listener
+	{
+		uint64_t Id = 0;
+		UActor* Actor = nullptr;
+		AIEventRegistration Registration;
+		bool Hearing = false;
+		// Who the listener last heard as best: never an actor that has been forgotten.
+		UActor* Best = nullptr;
+	};
+
+	// A persistent event a sender has started and not ended.
+	struct Record
+	{
+		UActor* Sender = nullptr;
+		NameString Event;
+		EAIEventType Type = EAIEventType::EAITYPE_Audio;
+		float Value = 1.0f;
+		float Radius = 0.0f;
+		double StartedAt = 0.0;
+	};
+
+	struct Candidate
+	{
+		Record Source;
+		float Score = 0.0f;
+	};
+
+	// How much of the Begin, Pulse, ChangeBest, End machine a caller wants run for a listener.
+	enum class SettleMode { Full, BeginOnly, EndOnly };
+
+	// Listeners and records are copied before any hook runs: hooks run script, and script may register,
+	// clear, send, start, end or destroy while the manager is in the middle of walking them.
+	std::optional<Candidate> Consider(const Listener& listener, const Record& record);
+	std::optional<Candidate> BestFor(Listener listener);
+	void Settle(uint64_t id, SettleMode mode);
+	void Notify(uint64_t id, EAIEventState state, const AIEventParams& params);
+	void ForgetDead();
+	std::vector<uint64_t> ListenerIds(const NameString& event) const;
+	Listener* Find(uint64_t id);
+
+	// In registration order, which is the order callbacks are called in.
+	std::vector<Listener> Listeners;
+	std::vector<Record> Records;
+	uint64_t NextId = 1;
+	double LastPulse = 0.0;
+};
