@@ -141,6 +141,10 @@ bool UActor::Destroy()
 
 	CallEvent(this, EventName::Destroyed);
 
+	// Deus Ex: whatever this actor was telling AI listeners, or listening to, ends with it.
+	if (Level() && Level()->EventManager)
+		Level()->EventManager->Forget(this);
+
 	if (engine->LaunchInfo.IsUnrealTournament_469())
 	{
 		for (const auto actor : Touching_UT469())
