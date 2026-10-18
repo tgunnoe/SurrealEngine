@@ -14,8 +14,9 @@ UTBOTS = Scenario(
         "the fire press ran five seconds after login, or became `PlayerWalking`\n"
         "afterwards. Every map ran with four bots (`?NumBots=4`) in the game type\n"
         "the map itself selects, including maps that are not matches. `fps_avg` is\n"
-        "not evidence in this sweep: every run rendered at about one frame per\n"
-        "second on a shared host.\n\n"),
+        "recorded per row in sweep.json, and a row below 50 is weak evidence of\n"
+        "absence: a map that rendered few frames had little chance to log an error\n"
+        "or a stub.\n\n"),
     triage_evidence=(
         "Evidence for a row is its verdict line, `maps_loaded`, failing lines and\n"
         "`match_started` line (sweep.json, errors.json) and its stub list\n"
