@@ -35,6 +35,23 @@ and then `STATE 6.0 PlayerWalking`; without it the player stays in
 Other commands work the same way, for example `--exec='10:open DM-Deck16]['`
 to travel to another map ten seconds after login.
 
+Two commands let a run move the player and act without a keyboard:
+`hold button <name> <seconds>` keeps a player button down (for example
+`--exec='8:hold button bDuck 3'`) and `hold axis <name> <speed> <seconds>` keeps a
+player axis at a value (for example `--exec='10:hold axis aForward 300 4'`,
+which walks forward for four seconds, so the player's footsteps make noise).
+`release` ends every hold at once. A hold acts on the player's properties
+below the key bindings and ends at the given time, counted in seconds from the
+moment the command ran, or at `release`, whichever comes first. A later `hold`
+of the same button or axis replaces the earlier one. The name is a property of
+the player: a byte or bool for a button (`bFire`, `bRun`, `bDuck`), a float for
+an axis (`aForward`, `aStrafe`, `aTurn` and so on).
+
+Because a hold sits below the bindings, it sets the button the way a held key
+does but never runs the commands bound to that key. In particular
+`hold button bFire` does not start an Unreal Tournament botmatch, whose waiting
+state leaves only through the `Fire` or `AltFire` console commands.
+
 To make a deterministic fatal exception, request a map that does not exist
 (`--url=NoSuchMap`): the log ends with `EXCEPTION` and `FATAL` lines and the
 exit code is 1.
@@ -71,7 +88,7 @@ each. The entry-map preload is not logged.
 | `MISSING_NATIVE <text>` | An unknown native function. Either it aborted the run (followed by `FATAL`), or the VM caught it inside another native's callback and logged it as a script error, in which case the run continues and it is counted here, not as `SCRIPT_ERROR`. |
 | `EXCEPTION <text>` | An exception reached the top level; always followed by `FATAL`. |
 | `EXEC <seconds> <command>` | An `--exec` command ran; `<seconds>` is the scheduled time, not the time the command ran. Written after `LOGIN`, once per command, in schedule order. |
-| `EXEC_FAILED <seconds> <command>` | An `--exec` command ran, but the console found neither a built-in command nor an `exec` function of that name. A script `exec` function that rejects its arguments still counts as `EXEC`. |
+| `EXEC_FAILED <seconds> <command>` | An `--exec` command ran, but the console found neither a built-in command nor an `exec` function of that name, or a `hold` command was refused (a duration that is not positive, a speed that is not a number, or a name the player has no property of that type for; the engine log says which). A script `exec` function that rejects its arguments still counts as `EXEC`. |
 | `EXEC_SKIPPED <seconds> <command>` | An `--exec` command never ran because the run ended first (or no login happened). Written just before `SUMMARY`; absent after a fatal run. |
 | `STATE <seconds> <state>` | The player's state name, as seen once per frame after the first `LOGIN`; `None` means the player has no state. `<seconds>` counts from that first `LOGIN` with one decimal and keeps counting across maps. A line is written when the state changes and when a new map's player is first seen, even if its state name is unchanged. The first line for each player carries ` at (x, y, z)`, the player's location with one decimal per coordinate. A state entered and left between two frames is not seen. |
 | `FPS <value>` | Frames per second, sampled about once per second. |
