@@ -1,6 +1,7 @@
 
 #include "Precomp.h"
 #include "ULevel.h"
+#include "Packages/Engine/Actors/AIEventManager.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Actors/Pawn/UPlayerPawn.h"
 #include "Packages/Engine/Actors/NavigationPoint/UNavigationPoint.h"
@@ -115,6 +116,10 @@ void ULevel::Tick(float elapsed, bool gamePaused)
 			if (Actors[i])
 				TickActor(elapsed, Actors[i]);
 		}
+
+		// Deus Ex: running AI events pulse on the level being played, not on the entry level behind it.
+		if (this == engine->Level && engine->LevelInfo && engine->LevelInfo->EventManager)
+			engine->LevelInfo->EventManager->Pulse(engine->LevelInfo->TimeSeconds());
 	}
 
 	Array<UActor*> newActorList;

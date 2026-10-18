@@ -492,6 +492,7 @@ var commonSources = [
 	"SurrealEngine/Packages/Engine/USurrealClient.cpp",
 	"SurrealEngine/Packages/Engine/USurrealClient.h",
 	"SurrealEngine/Packages/Engine/UViewport.h",
+	"SurrealEngine/Packages/Engine/Actors/AIEventManager.cpp",
 	"SurrealEngine/Packages/Engine/Actors/UActor.cpp",
 	"SurrealEngine/Packages/Engine/Actors/UActor.h",
 	"SurrealEngine/Packages/Engine/Actors/UActor_Animation.cpp",
