@@ -131,7 +131,6 @@ public:
 		{
 			volume = newVolume;
 			alSourcef(id, AL_GAIN, volume * globalVolume);
-			alSourcef(id, AL_MAX_GAIN, volume * globalVolume);
 		}
 	}
 
