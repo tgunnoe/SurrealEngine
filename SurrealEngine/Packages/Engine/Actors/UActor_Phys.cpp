@@ -10,6 +10,9 @@
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
 #include "Collision/TopLevel/Placement.h"
+#include <map>
+#include <set>
+#include <tuple>
 
 void UActor::TickPhysics(float elapsed)
 {
@@ -322,14 +325,12 @@ static std::vector<HullPlane> ReadHullPlanes(UModel* model, const BspNode& node)
 // A box that penetrates a hull by a few units has free space just outside that hull, which the coarse
 // neighbour grid of CheckLocation steps over. When the grid finds nothing, move out through the shallowest
 // face of the first hull hit and retest, accepting the first free spot within one body size of the request.
-static std::optional<vec3> ResolvePenetration(ULevel* level, const vec3& location, float radius, float height, CollisionHitList hits)
+static std::optional<vec3> ResolvePenetration(ULevel* level, const vec3& location, float radius, float height, CollisionHitList hits, std::vector<std::string>& moves)
 {
 	const int maxRounds = 8;
 	const double maxDisplacement = (double)height + (double)radius;
 	const dvec3 extents(radius, radius, height);
 
-	// Logged only if the placement is found, so a failed attempt leaves no misleading lines
-	std::vector<std::string> moves;
 	vec3 current = location;
 	for (int round = 0; round < maxRounds && !hits.empty(); round++)
 	{
@@ -354,9 +355,54 @@ static std::optional<vec3> ResolvePenetration(ULevel* level, const vec3& locatio
 	if (!hits.empty())
 		return std::nullopt;
 
+	return current;
+}
+
+// Callers retry a blocked spot freely (reachability probes, debris, a pawn's patrol), so each requested
+// location gets its placement lines once per level: the moves once, the failure dump once and a single
+// "again" line on the first repeat. The record is dropped when the level changes.
+namespace
+{
+	typedef std::tuple<int, int, int> PlacementKey;
+
+	struct PlacementLogRecord
+	{
+		ULevel* Level = nullptr;
+		std::set<PlacementKey> Moved;
+		std::map<PlacementKey, int> Failures;
+	};
+
+	PlacementLogRecord PlacementLog;
+
+	PlacementKey LogKeyFor(ULevel* level, const vec3& location)
+	{
+		if (PlacementLog.Level != level)
+		{
+			PlacementLog.Level = level;
+			PlacementLog.Moved.clear();
+			PlacementLog.Failures.clear();
+		}
+		return { (int)std::lround(location.x), (int)std::lround(location.y), (int)std::lround(location.z) };
+	}
+}
+
+static void LogResolvedMoves(ULevel* level, const vec3& location, const std::vector<std::string>& moves)
+{
+	if (!PlacementLog.Moved.insert(LogKeyFor(level, location)).second)
+		return;
+
 	for (const std::string& move : moves)
 		LogMessage(move);
-	return current;
+}
+
+static void LogPlacementFailure(ULevel* level, const vec3& location, float radius, float height)
+{
+	int& seen = PlacementLog.Failures[LogKeyFor(level, location)];
+	if (seen == 0)
+		LogBlockedCandidates(level, location, radius, height);
+	else if (seen == 1)
+		LogMessage("CheckLocation: no free candidate for " + FormatVec3(location) + " again");
+	seen++;
 }
 
 std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float height, bool check)
@@ -391,10 +437,14 @@ std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float h
 		// Only a start the grid cannot place gets the hull exit, so every placement the grid
 		// finds stays exactly where it always was. The first grid candidate is the location itself.
 		CollisionHitList startHits = XLevel()->Collision.OverlapTest(location, height, radius, false, true, false);
-		if (std::optional<vec3> resolved = ResolvePenetration(XLevel(), location, radius, height, startHits))
+		std::vector<std::string> moves;
+		if (std::optional<vec3> resolved = ResolvePenetration(XLevel(), location, radius, height, startHits, moves))
+		{
+			LogResolvedMoves(XLevel(), location, moves);
 			return { true, *resolved };
+		}
 
-		LogBlockedCandidates(XLevel(), location, radius, height);
+		LogPlacementFailure(XLevel(), location, radius, height);
 	}
 
 	return { found, location };
