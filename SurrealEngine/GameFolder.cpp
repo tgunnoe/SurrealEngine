@@ -494,3 +494,19 @@ Array<std::string> GameFolderSelection::FindGameFolders()
 }
 
 #endif
+
+// Placeholders so the tests build and fail by assertion; the parser lands next.
+ExecScheduleResult ParseExecSchedule(const std::string& text)
+{
+	return {};
+}
+
+size_t DueCommands(const Array<ExecItem>& schedule, double secondsSinceLogin, size_t cursor)
+{
+	return cursor;
+}
+
+std::string FormatExecItem(const ExecItem& item)
+{
+	return {};
+}

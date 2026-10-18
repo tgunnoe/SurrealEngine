@@ -1,5 +1,12 @@
 #pragma once
 
+// One console command to run a fixed time after the first login (see --exec).
+struct ExecItem
+{
+	double seconds = 0.0;
+	std::string command;
+};
+
 struct GameLaunchInfo
 {
 	int ue1Version = 0;						// Epic UE1 engine version game was forked from. 500 means unknown version newer than UT but before UE2
@@ -13,6 +20,7 @@ struct GameLaunchInfo
 	std::string gameExecutableName = "";	// Name of the game executable (e.g. "UnrealTournament")
 	std::string gameVersionString = "";		// Version (+ sub version) info as a string (e.g. "469d")
 	std::string url = "";					// The UnrealURL to launch upon startup
+	Array<ExecItem> execSchedule;			// Console commands from --exec, stably sorted by seconds since the first login
 
 	bool IsUnreal1() const { return gameExecutableName == "Unreal"; }
 	bool IsUnreal1_226() const { return IsUnreal1() && gameVersion == 226; }
@@ -43,3 +51,22 @@ private:
 	static Array<std::string> FindGameFolders();
 	static std::string GetExePath();
 };
+
+struct ExecScheduleResult
+{
+	Array<ExecItem> items;	// Stably sorted by seconds; empty when the text was rejected
+	std::string error;		// Names the offending item; empty when the text was accepted
+
+	bool ok() const { return error.empty(); }
+};
+
+// Parses the value of --exec: "<seconds>:<command>[;<seconds>:<command>...]".
+ExecScheduleResult ParseExecSchedule(const std::string& text);
+
+// Returns the end of the run of items, starting at cursor, that are due once secondsSinceLogin
+// have passed; a negative value means the player has not logged in yet and nothing is due.
+// The schedule must be sorted by seconds, as ParseExecSchedule returns it.
+size_t DueCommands(const Array<ExecItem>& schedule, double secondsSinceLogin, size_t cursor);
+
+// "<seconds> <command>", the text that follows EXEC in the smoke log.
+std::string FormatExecItem(const ExecItem& item);
