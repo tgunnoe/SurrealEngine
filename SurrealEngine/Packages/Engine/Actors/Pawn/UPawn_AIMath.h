@@ -66,18 +66,22 @@ namespace AIMath
 	}
 
 	// Half width of the pitch window for pitchDistribution. Unlike yaw, zero and below mean exactly the
-	// central pitch, which keeps a walking pawn's random picks level.
+	// central pitch, which keeps a walking pawn's random picks level. It stops at a quarter turn: a pitch
+	// past that points back over the pawn's shoulder (Forward folds over vertical), so the fleeing values
+	// 0.6 and 0.8 would otherwise sample upward directions into open air.
 	inline int PitchHalfWidth(float distribution)
 	{
 		if (!(distribution > 0.0f))
 			return 0;
-		return HalfTurnFractionWidth(distribution);
+		return std::min(HalfTurnFractionWidth(distribution), AngleUnits / 4);
 	}
 
-	// Height for the centre of a walking pawn's random destination. Placeholder until the rule lands.
+	// Height for the centre of a walking pawn's random destination: one half height above the floor the
+	// drop under the sampled point found, wherever that floor is (a ledge above the pawn is still a floor),
+	// or level with the pawn when no floor lay within the drop. hitZ means nothing without a hit.
 	inline float GroundedZ(float hitZ, bool hasHit, float pawnZ, float collisionHeight)
 	{
-		return pawnZ;
+		return hasHit ? hitZ + collisionHeight : pawnZ;
 	}
 
 	// Maps unit in [0, 1] linearly onto central +- halfWidth and wraps the result into [0, 65536).
