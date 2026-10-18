@@ -11,6 +11,7 @@
 #include "Package/ObjectFlags.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UEnum.h"
+#include <chrono>
 #include <cmath>
 
 #ifdef _MSC_VER
@@ -278,6 +279,10 @@ void NObject::RegisterFunctions()
 	{
 		RegisterVMNativeFunc_2("Object", "AllObjects", &NObject::AllObjects_DeusEx, 1001);
 		RegisterVMNativeFunc_1("Object", "CriticalDelete", &NObject::CriticalDelete, 751);
+		RegisterVMNativeFunc_1("Object", "clock", &NObject::clock, 1005);
+		RegisterVMNativeFunc_1("Object", "unclock", &NObject::unclock, 1006);
+		RegisterVMNativeFunc_2("Object", "CyclesToSeconds", &NObject::CyclesToSeconds, 1007);
+		RegisterVMNativeFunc_3("Object", "GetConfig", &NObject::GetConfig, 0);
 	}
 
 	// Package 61 stuff
@@ -1706,24 +1711,40 @@ void NObject::SetConfigString_Nerf(const std::string& section, const std::string
 	engine->packages->SetIniValue(realIniName, section, key, value);
 }
 
+// Cycles are microseconds from a steady clock, truncated to the 32 bits a script int holds.
+static uint32_t CycleCount()
+{
+	using namespace std::chrono;
+	return (uint32_t)duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
 void NObject::clock(int& Cycles)
 {
+	Cycles = SubtractCycles(Cycles, CycleCount());
 }
 
 void NObject::unclock(int& Cycles)
 {
+	Cycles = AddCycles(Cycles, CycleCount());
 }
 
 void NObject::CyclesToSeconds(int Cycles, float& ReturnValue)
 {
+	ReturnValue = (float)Cycles / 1000000.0f;
 }
 
+// The arithmetic wraps like the counter does, so a span that crosses the wrap still comes out right.
 int NObject::SubtractCycles(int Cycles, uint32_t Now)
 {
-	return 0;
+	return (int)((uint32_t)Cycles - Now);
 }
 
 int NObject::AddCycles(int Cycles, uint32_t Now)
 {
-	return 0;
+	return (int)((uint32_t)Cycles + Now);
+}
+
+void NObject::GetConfig(const std::string& ConfigSection, const std::string& ConfigKey, std::string& ReturnValue)
+{
+	ReturnValue = engine->packages->GetIniValue("system", ConfigSection, ConfigKey, "");
 }

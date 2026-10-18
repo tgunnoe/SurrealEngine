@@ -258,6 +258,7 @@ public:
 	static void clock(int& Cycles);
 	static void unclock(int& Cycles);
 	static void CyclesToSeconds(int Cycles, float& ReturnValue);
+	static void GetConfig(const std::string& ConfigSection, const std::string& ConfigKey, std::string& ReturnValue);
 
 	// The cycle arithmetic of clock and unclock, apart from reading the counter, so it can be checked on plain values.
 	static int SubtractCycles(int Cycles, uint32_t Now);
