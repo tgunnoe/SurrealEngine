@@ -131,9 +131,54 @@ TEST(AIPitchHalfWidthZeroMeansCentralPitchOnly)
 {
 	CHECK_EQ(AIMath::PitchHalfWidth(0.0f), 0);
 	CHECK_EQ(AIMath::PitchHalfWidth(-5.0f), 0);
-	CHECK_EQ(AIMath::PitchHalfWidth(0.5f), 16384);
-	CHECK_EQ(AIMath::PitchHalfWidth(1.0f), 32768);
-	CHECK_EQ(AIMath::PitchHalfWidth(3.0f), 32768);
+}
+
+TEST(AIPitchHalfWidthStopsAtAQuarterTurn)
+{
+	CHECK_EQ(AIMath::PitchHalfWidth(0.25f), 8192);
+	CHECK_EQ(AIMath::PitchHalfWidth(0.5f), Quarter);
+	CHECK_EQ(AIMath::PitchHalfWidth(0.6f), Quarter);
+	CHECK_EQ(AIMath::PitchHalfWidth(0.8f), Quarter);
+	CHECK_EQ(AIMath::PitchHalfWidth(1.0f), Quarter);
+	CHECK_EQ(AIMath::PitchHalfWidth(3.0f), Quarter);
+}
+
+TEST(AIPitchSampleNeverFoldsOverVertical)
+{
+	// A sample past a quarter turn points back over the pawn's shoulder, which is how a fleeing pawn
+	// was handed destinations in the air. Whatever the distribution, a level central pitch must keep
+	// every sampled direction on the near side of vertical.
+	const float distributions[] = { 0.25f, 0.5f, 0.6f, 0.8f, 1.0f, 3.0f };
+	for (float distribution : distributions)
+	{
+		int halfWidth = AIMath::PitchHalfWidth(distribution);
+		for (int step = 0; step <= 200; step++)
+		{
+			int pitch = AIMath::SampleAngularWindow(0, halfWidth, step / 200.0f);
+			CHECK_MSG(AIMath::Forward(pitch, 0).x >= -1e-4f,
+				"distribution " + std::to_string(distribution) + " sampled pitch " + std::to_string(pitch) + " past vertical");
+		}
+	}
+}
+
+TEST(AIGroundedZStandsOnTheFloorBeneathTheSample)
+{
+	// The pawn's centre rests one half-height above the floor the drop found, wherever the sample was.
+	CHECK(Near(AIMath::GroundedZ(100.0f, true, 500.0f, 44.0f), 144.0f));
+	CHECK(Near(AIMath::GroundedZ(-250.0f, true, 500.0f, 23.0f), -227.0f));
+}
+
+TEST(AIGroundedZWithNoFloorIsLevelWithThePawn)
+{
+	// The hit value is meaningless without a hit, so it must not leak into the answer.
+	CHECK(Near(AIMath::GroundedZ(0.0f, false, 500.0f, 44.0f), 500.0f));
+	CHECK(Near(AIMath::GroundedZ(9999.0f, false, -80.0f, 44.0f), -80.0f));
+}
+
+TEST(AIGroundedZFollowsAFloorAboveThePawn)
+{
+	// A ledge higher than the pawn is still a floor to stand on; the pawn's own height does not cap it.
+	CHECK(Near(AIMath::GroundedZ(600.0f, true, 500.0f, 44.0f), 644.0f));
 }
 
 TEST(AIAngularWindowSampleEndpoints)

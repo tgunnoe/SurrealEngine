@@ -74,6 +74,12 @@ namespace AIMath
 		return HalfTurnFractionWidth(distribution);
 	}
 
+	// Height for the centre of a walking pawn's random destination. Placeholder until the rule lands.
+	inline float GroundedZ(float hitZ, bool hasHit, float pawnZ, float collisionHeight)
+	{
+		return pawnZ;
+	}
+
 	// Maps unit in [0, 1] linearly onto central +- halfWidth and wraps the result into [0, 65536).
 	inline int SampleAngularWindow(int central, int halfWidth, float unit)
 	{
