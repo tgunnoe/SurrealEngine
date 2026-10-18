@@ -243,15 +243,24 @@ std::optional<AIEventManager::Candidate> AIEventManager::BestFor(Listener listen
 			relevant.push_back(r);
 	}
 
+	// Scripts act on Begin and Pulse but not on ChangeBest, so on equal scores the sender already heard
+	// stays best; only then does the earlier event win.
+	UActor* held = listener.Hearing ? listener.Best : nullptr;
+	auto outranks = [&](const Candidate& a, const Candidate& b)
+	{
+		if (a.Score != b.Score)
+			return a.Score > b.Score;
+		const bool aHeld = a.Source.Sender == held;
+		if (aHeld != (b.Source.Sender == held))
+			return aHeld;
+		return a.Source.StartedAt < b.Source.StartedAt;
+	};
+
 	std::optional<Candidate> best;
 	for (const Record& record : relevant)
 	{
 		std::optional<Candidate> heard = Consider(listener, record);
-		if (!heard)
-			continue;
-		bool better = !best || heard->Score > best->Score ||
-			(heard->Score == best->Score && heard->Source.StartedAt < best->Source.StartedAt);
-		if (better)
+		if (heard && (!best || outranks(*heard, *best)))
 			best = heard;
 	}
 	return best;

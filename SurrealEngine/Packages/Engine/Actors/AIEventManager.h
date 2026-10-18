@@ -67,7 +67,8 @@ struct AIEventHooks
 // A sender is heard when the listener is inside its radius (strictly; no radius means anywhere), passes
 // the sight checks of its registration, and the score is above zero. The score is the value, falling
 // linearly to zero at the radius, then replaced by the registration's score function if it has one. The
-// best sender is the highest score; an earlier-started event wins a tie. A listener never hears itself.
+// best sender is the highest score; on a tie the sender the listener already hears stays best, and
+// otherwise the earlier-started event wins. A listener never hears itself.
 class AIEventManager
 {
 public:
