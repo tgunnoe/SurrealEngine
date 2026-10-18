@@ -1,6 +1,7 @@
 
 #include "Precomp.h"
 #include "UActor.h"
+#include "Packages/Core/UClass.h"
 #include "VM/ScriptCall.h"
 #include "Engine.h"
 #include "Packages/Engine/Actors/UProjectile.h"
@@ -248,6 +249,61 @@ void UActor::RecomputeVelocityFromDisplacement(float elapsed)
 		Velocity() = (Location() - OldLocation()) / elapsed;
 }
 
+// Offsets of the candidate grid, in the order CheckLocation tests them
+static const int CheckLocationOffsets[] = { 0, 1, -1 };
+
+static std::string FormatVec3(const vec3& v)
+{
+	return "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
+}
+
+// An overlap hit on the level geometry carries no point and a zero normal, so it is named by the
+// BSP node the test matched: the hull bounds, the node plane and the surface (and brush) it came from.
+static std::string DescribeBlockingHit(UModel* model, const CollisionHit& hit)
+{
+	if (hit.Actor)
+		return hit.Actor->Name.ToString() + " (" + hit.Actor->Class->Name.ToString() + ")";
+
+	if (!hit.Node)
+		return "world with no node";
+
+	BBox bounds = hit.Node->GetCollisionBox(model);
+	std::string what = "world at " + FormatVec3(bounds.center()) +
+		" normal " + FormatVec3({ hit.Node->PlaneX, hit.Node->PlaneY, hit.Node->PlaneZ }) +
+		" node=" + std::to_string(hit.Node - &model->Nodes.front()) +
+		" surf=" + std::to_string(hit.Node->Surf) +
+		" bounds=" + FormatVec3(bounds.min) + "-" + FormatVec3(bounds.max);
+
+	int surf = hit.Node->Surf;
+	if (surf >= 0 && surf < (int)model->Surfaces.size() && model->Surfaces[surf].BrushActor)
+	{
+		UActor* brush = model->Surfaces[surf].BrushActor;
+		what += " brush=" + brush->Name.ToString() + " (" + brush->Class->Name.ToString() + ")";
+	}
+	return what;
+}
+
+// CheckLocation discards its hits, so the failure path repeats the identical grid to name what blocked each
+// candidate. The success path pays nothing for this.
+static void LogBlockedCandidates(ULevel* level, const vec3& location, float radius, float height)
+{
+	float scale = std::max(radius, height);
+	for (int z = 0; z < 3; z++)
+	{
+		for (int y = 0; y < 3; y++)
+		{
+			for (int x = 0; x < 3; x++)
+			{
+				vec3 testlocation = location + vec3(CheckLocationOffsets[x] * scale, CheckLocationOffsets[y] * scale, CheckLocationOffsets[z] * scale);
+				CollisionHitList hits = level->Collision.OverlapTest(testlocation, height, radius, false, true, false);
+				std::string what = hits.empty() ? "nothing on re-test" : DescribeBlockingHit(level->Model, hits.front());
+				LogMessage("CheckLocation: candidate " + FormatVec3(testlocation) + " r=" + std::to_string(radius) + " h=" + std::to_string(height) + " blocked by " + what);
+			}
+		}
+	}
+	LogMessage("CheckLocation: no free candidate for " + FormatVec3(location));
+}
+
 std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float height, bool check)
 {
 	// Search for a valid spot near the location
@@ -256,7 +312,6 @@ std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float h
 		return { true, location };
 
 	// What is a reasonable size for this grid? what did UE1 do?
-	int offset[] = { 0, 1, -1 };
 	bool found = false;
 	float scale = std::max(radius, height);
 	for (int z = 0; z < 3 && !found; z++)
@@ -265,7 +320,7 @@ std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float h
 		{
 			for (int x = 0; x < 3 && !found; x++)
 			{
-				vec3 testlocation = location + vec3(offset[x] * scale, offset[y] * scale, offset[z] * scale);
+				vec3 testlocation = location + vec3(CheckLocationOffsets[x] * scale, CheckLocationOffsets[y] * scale, CheckLocationOffsets[z] * scale);
 				CollisionHitList hits = XLevel()->Collision.OverlapTest(testlocation, height, radius, false, true, false);
 				if (hits.empty())
 				{
@@ -275,6 +330,10 @@ std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float h
 			}
 		}
 	}
+
+	if (!found)
+		LogBlockedCandidates(XLevel(), location, radius, height);
+
 	return { found, location };
 }
 
