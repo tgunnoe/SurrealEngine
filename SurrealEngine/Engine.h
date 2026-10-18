@@ -6,6 +6,7 @@
 #include "Math/floating.h"
 #include "RenderDevice/RenderDevice.h"
 #include "GameWindow.h"
+#include "Packages/Core/Properties/UProperty.h"
 #include "Packages/Engine/Actors/UActor.h"
 #include "UnrealURL.h"
 #include "GameFolder.h"
@@ -63,6 +64,56 @@ struct SurfaceFacet;
 struct MeshFace;
 
 static constexpr int32_t DONT_SAVE_GAME = -2; // Since -1 might be used as the autosave slot in some UE1 games...
+
+// The buttons and axes the harness holds down for a fixed time (the "hold" console command). The
+// clock is the --exec one, seconds since the first login. Plain values only, so the bookkeeping
+// can be tested without an engine.
+class InputHoldSchedule
+{
+public:
+	enum class Kind { Button, Axis };
+
+	struct Hold
+	{
+		Kind kind = Kind::Button;
+		std::string name;	// The player property: a byte or bool for a button, a float for an axis
+		float value = 0.0f;	// The axis value while held; unused for a button
+		double until = 0.0;	// The clock time at which the hold ends
+	};
+
+	// A hold of the same kind and name replaces the one already there, so the latest command wins
+	void Add(Kind kind, const std::string& name, float value, double until);
+
+	// Removes and returns the holds that have ended by now
+	Array<Hold> TakeExpired(double now);
+
+	// Removes and returns every hold
+	Array<Hold> TakeAll();
+
+	const Array<Hold>& Active() const { return holds; }
+
+private:
+	Array<Hold> holds;
+};
+
+struct HoldParseResult
+{
+	InputHoldSchedule::Hold hold;	// Valid only when the command was accepted
+	std::string error;				// Names the offending part; empty when the command was accepted
+
+	bool ok() const { return error.empty(); }
+};
+
+// Parses "hold button <name> <seconds>" and "hold axis <name> <speed> <seconds>" (the arguments
+// as the console splits them) into a hold that ends <seconds> after now. The duration must be
+// positive and finite, the speed finite.
+HoldParseResult ParseHoldCommand(const Array<std::string>& args, double now);
+
+// Why a player property cannot be held as this kind of input, or an empty string when it can.
+// Only properties the scripts declare as input are held: the engine writes a held property every
+// frame, so any other byte, bool or float of the player (GroundSpeed, Physics) would be left at
+// the held value for good.
+std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string& name, ExpressionValueType type, PropertyFlags flags);
 
 class Engine : public GameWindowHost
 {
@@ -209,6 +260,14 @@ public:
 	void RunDueExecCommands();
 	double execLoginSeconds = -1.0;
 	size_t execCursor = 0;
+
+	// The "hold" console command keeps a button or an axis down for a fixed time, on the --exec
+	// clock. A hold acts on the player below the key bindings, so it neither needs nor disturbs
+	// activeInputButtons and activeInputAxes; UpdateInput applies and ends it.
+	InputHoldSchedule inputHolds;
+	double LoginClockSeconds() const;
+	bool HoldInput(const Array<std::string>& args);
+	void ReleaseHolds(const Array<InputHoldSchedule::Hold>& holds);
 
 	// Writes a STATE line to the smoke log when the player's state name changes, and on the first
 	// frame after every LOGIN, with the player's location. Called once per frame, so a state entered

@@ -61,8 +61,11 @@
 #include "Video/VideoPlayer.h"
 #include "Utils/Convert.h"
 #include <chrono>
+#include <cmath>
+#include <cstdlib>
 #include <iostream>
 #include <set>
+#include <utility>
 
 Engine* engine = nullptr;
 
@@ -1165,6 +1168,101 @@ std::string Engine::ParseClassName(std::string className)
 	return packages->GetIniValue("system", sectionName, keyName);
 }
 
+void InputHoldSchedule::Add(Kind kind, const std::string& name, float value, double until)
+{
+	for (Hold& existing : holds)
+	{
+		if (existing.kind == kind && existing.name == name)
+		{
+			existing = Hold{ kind, name, value, until };
+			return;
+		}
+	}
+	holds.push_back(Hold{ kind, name, value, until });
+}
+
+Array<InputHoldSchedule::Hold> InputHoldSchedule::TakeExpired(double now)
+{
+	Array<Hold> expired;
+	Array<Hold> kept;
+	for (Hold& hold : holds)
+		(hold.until <= now ? expired : kept).push_back(std::move(hold));
+	holds = std::move(kept);
+	return expired;
+}
+
+Array<InputHoldSchedule::Hold> InputHoldSchedule::TakeAll()
+{
+	return std::exchange(holds, {});
+}
+
+namespace
+{
+	// The whole text as a finite number: strtod alone would take a prefix, "nan" and "inf"
+	bool ParseFiniteNumber(const std::string& text, double& value)
+	{
+		if (text.empty())
+			return false;
+		char* end = nullptr;
+		value = std::strtod(text.c_str(), &end);
+		return end == text.c_str() + text.size() && std::isfinite(value);
+	}
+}
+
+HoldParseResult ParseHoldCommand(const Array<std::string>& args, double now)
+{
+	const char* usage = "hold takes 'button <name> <seconds>' or 'axis <name> <speed> <seconds>'";
+
+	if (args.size() < 2)
+		return { {}, usage };
+
+	std::string what = args[1];
+	for (char& c : what) c = std::tolower(c);
+
+	InputHoldSchedule::Hold hold;
+	size_t secondsIndex;
+	if (what == "button" && args.size() == 4)
+	{
+		hold.kind = InputHoldSchedule::Kind::Button;
+		secondsIndex = 3;
+	}
+	else if (what == "axis" && args.size() == 5)
+	{
+		hold.kind = InputHoldSchedule::Kind::Axis;
+		secondsIndex = 4;
+
+		double speed;
+		if (!ParseFiniteNumber(args[3], speed) || !std::isfinite((float)speed))
+			return { {}, "hold speed '" + args[3] + "' is not a number" };
+		hold.value = (float)speed;
+	}
+	else
+	{
+		return { {}, usage };
+	}
+	hold.name = args[2];
+
+	double seconds;
+	if (!ParseFiniteNumber(args[secondsIndex], seconds) || seconds <= 0.0)
+		return { {}, "hold duration '" + args[secondsIndex] + "' is not a positive number of seconds" };
+	hold.until = now + seconds;
+
+	return { hold, {} };
+}
+
+std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string& name, ExpressionValueType type, PropertyFlags flags)
+{
+	if (!AllFlags(flags, PropertyFlags::Input))
+		return "the player's property '" + name + "' is not an input";
+
+	const bool isButton = kind == InputHoldSchedule::Kind::Button;
+	const bool typeFits = isButton ? (type == ExpressionValueType::ValueByte || type == ExpressionValueType::ValueBool) : type == ExpressionValueType::ValueFloat;
+	if (!typeFits)
+		return "the player's property '" + name + "' is not " + (isButton ? "a byte or bool button" : "a float axis");
+
+	return {};
+}
+
 void Engine::NotePlayerLogin()
 {
 	SmokeLog::Get()->Event("LOGIN");
@@ -1673,18 +1771,98 @@ void Engine::UpdateInput(float timeElapsed)
 	if (!viewport->Actor())
 		return;
 
-	for (auto& it : activeInputButtons)
-		viewport->Actor()->SetBool(it.first, true);
-	for (auto& it : activeInputAxes)
+	// A hold that has ended is released before the key tables are applied, so a key still held on
+	// the same button or axis keeps it
+	ReleaseHolds(inputHolds.TakeExpired(LoginClockSeconds()));
+
+	auto setAxis = [&](const std::string& name, float value)
 	{
-		if (it.first == "aMouseX" || it.first == "aMouseY")
+		if (name == "aMouseX" || name == "aMouseY")
 		{
-			viewport->Actor()->SetFloat(it.first, it.second.Value / (timeElapsed * 150.0f));
+			viewport->Actor()->SetFloat(name, value / (timeElapsed * 150.0f));
 		}
 		else
 		{
-			viewport->Actor()->SetFloat(it.first, it.second.Value);
+			viewport->Actor()->SetFloat(name, value);
 		}
+	};
+
+	for (auto& it : activeInputButtons)
+		viewport->Actor()->SetBool(it.first, true);
+	for (auto& it : activeInputAxes)
+		setAxis(it.first, it.second.Value);
+
+	// Held last, so a hold wins over a key bound to the same axis
+	for (const InputHoldSchedule::Hold& hold : inputHolds.Active())
+	{
+		if (hold.kind == InputHoldSchedule::Kind::Button)
+			viewport->Actor()->SetBool(hold.name, true);
+		else
+			setAxis(hold.name, hold.value);
+	}
+}
+
+double Engine::LoginClockSeconds() const
+{
+	return SmokeLog::Get()->SecondsSinceStart() - execLoginSeconds;
+}
+
+bool Engine::HoldInput(const Array<std::string>& args)
+{
+	UPlayerPawn* actor = viewport->Actor();
+	if (!actor || execLoginSeconds < 0.0)
+	{
+		LogMessage("hold: there is no player to hold input for");
+		return false;
+	}
+
+	HoldParseResult parsed = ParseHoldCommand(args, LoginClockSeconds());
+	if (!parsed.ok())
+	{
+		LogMessage("hold: " + parsed.error);
+		return false;
+	}
+
+	// UpdateInput writes the property every frame, so a name that is missing, not an input or of
+	// the wrong type must be refused here rather than throw in the middle of a frame or leave a
+	// property such as GroundSpeed at the held value. Buttons such as bFire are bytes in the
+	// scripts, and SetBool reaches them the way a key press does.
+	const InputHoldSchedule::Hold& hold = parsed.hold;
+	if (!actor->HasProperty(hold.name))
+	{
+		LogMessage("hold: the player has no property named '" + hold.name + "'");
+		return false;
+	}
+	UProperty* prop = actor->GetMemberProperty(hold.name);
+
+	// The schedule compares names exactly and the player finds properties without regard to case,
+	// so a hold is kept under the declared name: "aforward" and "aForward" are one hold, and
+	// aMouseX is recognised for its scaling
+	const std::string declaredName = prop->Name.ToString();
+	const std::string refusal = HoldPropertyRefusal(hold.kind, declaredName, prop->ValueType, prop->PropFlags);
+	if (!refusal.empty())
+	{
+		LogMessage("hold: " + refusal);
+		return false;
+	}
+
+	inputHolds.Add(hold.kind, declaredName, hold.value, hold.until);
+	return true;
+}
+
+void Engine::ReleaseHolds(const Array<InputHoldSchedule::Hold>& holds)
+{
+	UPlayerPawn* actor = viewport->Actor();
+	if (!actor)
+		return;
+
+	// The same values a key release writes
+	for (const InputHoldSchedule::Hold& hold : holds)
+	{
+		if (hold.kind == InputHoldSchedule::Kind::Button)
+			actor->SetBool(hold.name, false);
+		else
+			actor->SetFloat(hold.name, 0.0f);
 	}
 }
 
@@ -1973,6 +2151,19 @@ void Engine::InputEvent(EInputKey key, EInputType type, int delta)
 
 bool Engine::ExecCommand(const Array<std::string>& args)
 {
+	// The harness's own commands come first: the player has no script exec function for them
+	std::string command = args[0];
+	for (char& c : command) c = std::tolower(c);
+	if (command == "hold")
+	{
+		return HoldInput(args);
+	}
+	else if (command == "release")
+	{
+		ReleaseHolds(inputHolds.TakeAll());
+		return true;
+	}
+
 	for (UObject* target : { static_cast<UObject*>(viewport->Actor()), static_cast<UObject*>(console) })
 	{
 		if (!target)
