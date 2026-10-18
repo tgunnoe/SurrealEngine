@@ -80,7 +80,8 @@ DEUSEX = Scenario(
     reproduced_template=("reproduced: {reproduced} (second run exit code {exit_code}; "
                          "run1 first line `{run1}`; run2 first line `{run2}`)"),
     counts_template=("Maps: {maps}. clean: {clean}. fail: {fail}. crash: {crash}. "
-                     "timeout: {timeout}. pass-verdict but non-clean (stub-only): {stub_only}."),
+                     "timeout: {timeout}. pass-verdict but non-clean (stub-only): {stub_only}. "
+                     "warnings: {warnings}."),
     exe="SurrealEngine",
     game_placeholder="<game folder>",
     exit_after_seconds=60,

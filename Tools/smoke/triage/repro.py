@@ -11,14 +11,14 @@ from . import extract
 
 
 def _first_failing(path):
-    _, errors, _ = extract.parse(path)
+    _, errors, _, _ = extract.parse(path)
     if errors:
         return "%s %s" % (errors[0]["kind"], extract.HEX.sub("0x?", errors[0]["text"]))
     return None
 
 
 def _gameplay_stubs(scn, path):
-    stubs, _, _ = extract.parse(path)
+    stubs, _, _, _ = extract.parse(path)
     return sorted(s for s in stubs
                   if extract.classify(scn, extract.owner_of(scn, s))[0] != "non-gameplay")
 

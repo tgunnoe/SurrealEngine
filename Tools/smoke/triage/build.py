@@ -27,6 +27,31 @@ def is_loaded(scn, name, maps_loaded):
     return name in maps_loaded
 
 
+NOT_RECORDED = "not recorded"
+
+
+def warning_count(m):
+    """SCRIPT_WARNING count of a sweep row; None when the sweep that wrote the
+    row predates the count, which is unknown and not zero."""
+    return m.get("script_warnings")
+
+
+def warnings_fail(scn, m):
+    n = warning_count(m)
+    return scn.warnings_fail_clean and n is not None and n > 0
+
+
+def warnings_total(sweep):
+    """Total over all rows, or None unless every row has a count: a partial
+    sum would read as a measurement."""
+    counts = [warning_count(m) for m in sweep]
+    return None if any(c is None for c in counts) else sum(counts)
+
+
+def show_count(n):
+    return NOT_RECORDED if n is None else str(n)
+
+
 def _load(datadir, name):
     with open(os.path.join(datadir, name)) as f:
         return json.load(f)
@@ -52,6 +77,8 @@ def build(scn, datadir, outdir, repro_path):
         if not is_loaded(scn, name, m["maps_loaded"]) or m["fps_avg"] is None:
             reasons.append("idle" if m["verdict"] == "pass" else "no render")
         reasons += [error_signature(scn, x) for x in e["errors"]]
+        if warnings_fail(scn, m):
+            reasons.append("warnings")
         if e["fatal_after_summary"]:
             reasons.append("FATAL after SUMMARY")
         reasons += ["stub " + s["text"] for s in gp]
@@ -77,12 +104,15 @@ def build(scn, datadir, outdir, repro_path):
                     f.write("%sfatal_after_summary: true\n" % b)
             else:
                 f.write("%sfailing lines: none (no SCRIPT_ERROR, MISSING_NATIVE, EXCEPTION or FATAL)\n" % b)
+            f.write("%swarnings: %s\n" % (b, show_count(warning_count(m))))
             f.write("%sgameplay stubs: %s\n" % (b, ", ".join("`%s`" % s["text"] for s in gp) or "none"))
             argv = [scn.exe, "--autostart", "--exit-after=%d" % scn.exit_after_seconds,
                     "--smoke-log=%s/%s.log" % (scn.repro_logdir, name), "--url=%s" % name,
                     *scn.url_options]
             f.write("%srepro: `%s \"%s\"`\n" % (b, " ".join(argv), scn.game_placeholder))
             sigs = [error_signature(scn, x) for x in e["errors"]]
+            if warnings_fail(scn, m):
+                sigs.append("warnings")
             owners, cites = [], []
             for s in dict.fromkeys(sigs):
                 o, c = scn.error_owner.get(s, ("unattributed (%s)" % s, "none applies"))
@@ -140,7 +170,8 @@ def build(scn, datadir, outdir, repro_path):
         f.write(scn.counts_template.format(
             maps=len(rows), clean=clean, fail=verdicts["fail"], crash=verdicts["crash"],
             timeout=verdicts["timeout"],
-            stub_only=sum(1 for m, e, gp, r in nonclean if m["verdict"] == "pass")) + "\n\n")
+            stub_only=sum(1 for m, e, gp, r in nonclean if m["verdict"] == "pass"),
+            warnings=show_count(warnings_total(sweep))) + "\n\n")
         f.write("Check: the verdict counts are recomputed from sweep.json by check_triage.py,\n"
                 "which exits 0 only if they equal the line above.\n\n")
         f.write("## Failure signatures\n\n| Signature | Maps | Affected |\n| :--- | ---: | :--- |\n")

@@ -9,7 +9,7 @@ import re
 import string
 from collections import Counter
 
-from .build import is_loaded
+from .build import is_loaded, show_count, warnings_fail, warnings_total
 
 # With require_first_five, the first N non-clean maps in sweep order must
 # have been re-run (not "not-run").
@@ -57,7 +57,7 @@ def check(scn, datadir, docdir):
         gp = [s for s in stubs["maps"][n] if s["class"] != "non-gameplay"]
         e = errs[n]
         if (m["verdict"] != "pass" or not is_loaded(scn, n, m["maps_loaded"]) or m["fps_avg"] is None
-                or e["errors"] or e["fatal_after_summary"] or gp):
+                or e["errors"] or e["fatal_after_summary"] or gp or warnings_fail(scn, m)):
             nonclean.append(n)
     nonclean_set = set(nonclean)
     row_of = {m["map"]: m for m in sweep}
@@ -126,7 +126,8 @@ def check(scn, datadir, docdir):
         stub_only = sum(1 for n in nonclean_set if row_of[n]["verdict"] == "pass")
         line = scn.counts_template.format(
             maps=len(sweep), clean=len(sweep) - len(nonclean_set), fail=v["fail"],
-            crash=v["crash"], timeout=v["timeout"], stub_only=stub_only)
+            crash=v["crash"], timeout=v["timeout"], stub_only=stub_only,
+            warnings=show_count(warnings_total(sweep)))
         if line not in _text(docdir, "SUMMARY.md"):
             bad.append("SUMMARY.md: counts line differs from: " + line)
 

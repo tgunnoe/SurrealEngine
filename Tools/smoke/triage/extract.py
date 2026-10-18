@@ -49,8 +49,10 @@ def strip_native_stack(text):
 
 def parse(path):
     """Return (distinct stub texts, first five distinct errors, whether a
-    FATAL followed the SUMMARY line)."""
+    FATAL followed the SUMMARY line, number of SCRIPT_WARNING lines). Warnings
+    are counted line by line, as the sweep tallies them."""
     stubs, errors, section = [], [], None
+    warnings = 0
     seen_summary = False
     fatal_after_summary = False
     with open(path, encoding="utf-8", errors="replace") as f:
@@ -63,6 +65,8 @@ def parse(path):
                 section = text
             elif kind == "SUMMARY":
                 seen_summary = True
+            elif kind == "SCRIPT_WARNING":
+                warnings += 1
             elif kind == "STUB":
                 if text not in stubs:
                     stubs.append(text)
@@ -71,7 +75,7 @@ def parse(path):
                     fatal_after_summary = True
                 if not any(e["text"] == text and e["kind"] == kind for e in errors):
                     errors.append({"kind": kind, "text": text, "map_section": section})
-    return stubs, errors[:5], fatal_after_summary
+    return stubs, errors[:5], fatal_after_summary, warnings
 
 
 def extract(scn, logdir, outdir):
@@ -80,7 +84,7 @@ def extract(scn, logdir, outdir):
         if not name.endswith(".log"):
             continue
         m = name[:-4]
-        stubs, errors, fas = parse(os.path.join(logdir, name))
+        stubs, errors, fas, warnings = parse(os.path.join(logdir, name))
         rows = []
         for s in stubs:
             owner = owner_of(scn, s)
@@ -88,7 +92,7 @@ def extract(scn, logdir, outdir):
             owners[owner] = {"class": cls, "reason": reason}
             rows.append({"text": s, "owner": owner, "class": cls})
         stubs_out[m] = rows
-        errors_out[m] = {"errors": errors, "fatal_after_summary": fas}
+        errors_out[m] = {"errors": errors, "fatal_after_summary": fas, "warnings": warnings}
     with open(os.path.join(outdir, "stubs.json"), "w") as f:
         json.dump({"owners": owners, "maps": stubs_out}, f, indent=1, sort_keys=True)
         f.write("\n")
