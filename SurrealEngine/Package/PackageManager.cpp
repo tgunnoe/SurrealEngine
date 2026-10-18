@@ -1119,6 +1119,7 @@ void PackageManager::RegisterFunctions()
 	NScriptedTexture::RegisterFunctions();
 	NStatLog::RegisterFunctions();
 	NStatLogFile::RegisterFunctions();
+	NTimeDemo::RegisterFunctions();
 	NWarpZoneInfo::RegisterFunctions();
 	NZoneInfo::RegisterFunctions();
 	NInternetLink::RegisterFunctions();
@@ -1175,7 +1176,6 @@ void PackageManager::RegisterFunctions()
 		NTextLogWindow::RegisterFunctions();
 		NTextWindow::RegisterFunctions();
 		NTileWindow::RegisterFunctions();
-		NTimeDemo::RegisterFunctions();
 		NToggleWindow::RegisterFunctions();
 		NViewportWindow::RegisterFunctions();
 		NWebRequest::RegisterFunctions();
