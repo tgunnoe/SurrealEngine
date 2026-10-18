@@ -683,7 +683,7 @@ void ExpressionEvaluator::Expr(GlobalFunctionExpression* expr)
 
 void ExpressionEvaluator::Expr(NativeFunctionExpression* expr)
 {
-	Call(NativeFunctions::FuncByIndex[expr->nativeindex], expr->Args);
+	Call(NativeFunctions::OpcodeFunc(expr->nativeindex), expr->Args);
 }
 
 void ExpressionEvaluator::Expr(ConstructExpression* expr)

@@ -1888,7 +1888,7 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 					ArrayView<ExpressionValue> funcArgs(&stack->value[valueEnd - funcExpr->Args.size()], funcExpr->Args.size());
 					valueEnd -= (int)funcArgs.size();
 
-					PushValue(Frame::Call(NativeFunctions::FuncByIndex[funcExpr->nativeindex], context, funcArgs));
+					PushValue(Frame::Call(NativeFunctions::OpcodeFunc(funcExpr->nativeindex), context, funcArgs));
 					PopExpr();
 				}
 			}

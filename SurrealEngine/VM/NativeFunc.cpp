@@ -3,7 +3,7 @@
 #include "NativeFunc.h"
 #include "Packages/Core/UFunction.h"
 
-Array<UFunction*> NativeFunctions::FuncByIndex;
+Array<UFunction*> NativeFunctions::FuncByIndex(NativeFunctions::OpcodeIndexLimit);
 Array<NativeFuncHandler> NativeFunctions::NativeByIndex;
 std::map<std::pair<NameString, NameString>, NativeFuncHandler> NativeFunctions::NativeByName;
 std::map<int, NameString> NativeFunctions::SharedIndices;
@@ -12,7 +12,7 @@ std::map<LatentRunState, int> NativeFunctions::IndexForLatentAction;
 
 void NativeFunctions::Reset()
 {
-	FuncByIndex.clear();
+	FuncByIndex.assign(OpcodeIndexLimit, nullptr);
 	NativeByIndex.clear();
 	NativeByName.clear();
 	SharedIndices.clear();
@@ -91,7 +91,10 @@ const NativeFuncHandler* NativeFunctions::FindHandler(int nativeIndex, const Nam
 
 UFunction* NativeFunctions::OpcodeFunc(int nativeIndex)
 {
-	return nullptr;
+	UFunction* func = (size_t)nativeIndex < FuncByIndex.size() ? FuncByIndex[nativeIndex] : nullptr;
+	if (!func)
+		Exception::Throw("Unknown native function with index " + std::to_string(nativeIndex));
+	return func;
 }
 
 void RegisterLatentAction(int nativeIndex, LatentRunState latentAction)

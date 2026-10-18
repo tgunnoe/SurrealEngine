@@ -1,6 +1,8 @@
 #include "Precomp.h"
 #include "TestRunner.h"
 #include "VM/Frame.h"
+#include "VM/Bytecode.h"
+#include "VM/Expression.h"
 #include "VM/NativeFunc.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UFunction.h"
@@ -48,6 +50,28 @@ namespace
 	bool RegisterCounting(const char* owner, const char* name, int index, int& calls)
 	{
 		return Succeeds([&] { NativeFunctions::RegisterHandler(owner, name, index, [&calls](UObject*, ExpressionValue*) { calls++; }); });
+	}
+
+	// A script function whose body calls the native opcode carrying nativeIndex, as compiled
+	// script does.
+	UFunction* MakeOpcodeCaller(int nativeIndex)
+	{
+		UClass* cls = GC::Alloc<UClass>("OpcodeCallerClass", nullptr, ObjectFlags::NoFlags);
+		UFunction* func = GC::Alloc<UFunction>("OpcodeCaller", cls, ObjectFlags::NoFlags);
+		func->Code = std::make_shared<Bytecode>(Array<uint8_t>(), nullptr);
+
+		// Statements holds raw pointers, so the expressions must outlive the function.
+		static std::vector<std::unique_ptr<Expression>> expressions;
+		auto call = std::make_unique<NativeFunctionExpression>();
+		call->nativeindex = nativeIndex;
+		call->StatementIndex = 0;
+		auto ret = std::make_unique<ReturnExpression>();
+		ret->StatementIndex = 1;
+		func->Code->Statements.push_back(call.get());
+		func->Code->Statements.push_back(ret.get());
+		expressions.push_back(std::move(call));
+		expressions.push_back(std::move(ret));
+		return func;
 	}
 
 	void CallNoArgs(UFunction* func, UObject* instance)
@@ -165,4 +189,41 @@ TEST(NativesOpcodeLookupRejectsUnregisteredIndex)
 	// Inside the table with nothing registered, then past its end.
 	CHECK_THROWS(NativeFunctions::OpcodeFunc(3002));
 	CHECK_THROWS(NativeFunctions::OpcodeFunc(100000));
+}
+
+TEST(NativesOpcodeCallReachesDeclaredOwnerHandler)
+{
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	int leftCalls = 0;
+	int rightCalls = 0;
+	CHECK(RegisterCounting("Left", "First", 3001, leftCalls));
+	CHECK(RegisterCounting("Right", "Second", 3001, rightCalls));
+	NativeFunctions::RegisterNativeFunc(MakeNative("Left", "First", 3001));
+	NativeFunctions::RegisterNativeFunc(MakeNative("Right", "Second", 3001));
+
+	CallNoArgs(MakeOpcodeCaller(3001), MakeInstance());
+
+	CHECK_EQ(leftCalls, 0);
+	CHECK_EQ(rightCalls, 1);
+}
+
+TEST(NativesOpcodeCallOfUnregisteredIndexThrows)
+{
+	NativeFunctions::Reset();
+	NativeFunctions::RegisterNativeFunc(MakeNative("Left", "First", 3003));
+	UObject* instance = MakeInstance();
+
+	// 4095 is the highest index an opcode can carry.
+	CHECK_THROWS(CallNoArgs(MakeOpcodeCaller(3002), instance));
+	CHECK_THROWS(CallNoArgs(MakeOpcodeCaller(4095), instance));
+}
+
+// The error for an unknown opcode index describes the failing statement through code that
+// reads the function table directly; it must find every encodable index in range.
+TEST(NativesFunctionTableSpansEveryOpcodeIndex)
+{
+	NativeFunctions::Reset();
+
+	CHECK(NativeFunctions::FuncByIndex.size() > 4095);
 }

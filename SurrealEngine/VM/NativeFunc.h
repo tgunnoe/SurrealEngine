@@ -13,6 +13,10 @@ typedef std::function<void(UObject* self, ExpressionValue* Args)> NativeFuncHand
 class NativeFunctions
 {
 public:
+	// Script opcodes encode native indices below this, and FuncByIndex always spans them, so code
+	// that indexes it directly with an opcode's index (the disassembler) never reads out of range.
+	static constexpr int OpcodeIndexLimit = 4096;
+
 	static Array<UFunction*> FuncByIndex;
 	static Array<NativeFuncHandler> NativeByIndex;
 	static std::map<std::pair<NameString, NameString>, NativeFuncHandler> NativeByName;
