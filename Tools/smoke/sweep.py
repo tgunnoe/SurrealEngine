@@ -38,7 +38,7 @@ def list_maps(game):
 def parse_log(path):
     info = {"script_errors": 0, "stub_hits": 0, "missing_natives": 0,
             "exceptions": 0, "script_warnings": 0, "fps_avg": None, "fatal_signal": False,
-            "summary": False, "maps_loaded": []}
+            "summary": False, "maps_loaded": [], "login": False, "match_started": False}
     fps = []
     try:
         lines = Path(path).read_text(errors="replace").splitlines()
@@ -89,7 +89,7 @@ def classify(info, exit_code, timed_out, requested_map):
     return "fail"
 
 
-def run_map(exe, game, map_path, seconds, logdir):
+def run_map(exe, game, map_path, seconds, logdir, url_options="", exec_text=""):
     name = map_path.stem
     log = logdir / f"{name}.log"
     shot = logdir / f"{name}.png"
@@ -136,6 +136,8 @@ def run_map(exe, game, map_path, seconds, logdir):
         "script_warnings": info["script_warnings"],
         "fps_avg": info["fps_avg"],
         "maps_loaded": info["maps_loaded"],
+        "login": info["login"],
+        "match_started": info["match_started"],
         "log": str(log),
         "screenshot": screenshot,
         "verdict": verdict,
@@ -150,6 +152,9 @@ def main():
     ap.add_argument("--out", required=True, help="report JSON path")
     ap.add_argument("--exe", default=str(REPO_ROOT / "build" / "SurrealEngine"))
     ap.add_argument("--logdir", help="directory for per-map logs and screenshots (default: <out>.d)")
+    ap.add_argument("--url-options", default="", help="text appended to every --url=<map>, e.g. ?NumBots=4")
+    ap.add_argument("--exec", dest="exec_text", default="", help="passed as --exec=<text> to every run")
+    ap.add_argument("--portable", action="store_true", help="write a report with no host path in it")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -161,7 +166,8 @@ def main():
         maps = maps[:args.limit]
 
     results = []
-    report = {"game": str(args.game), "seconds": args.seconds, "maps": results}
+    report = {"game": str(args.game), "seconds": args.seconds, "url_options": None, "exec": None,
+              "maps": results}
     for m in maps:
         entry = run_map(args.exe, args.game, m, args.seconds, logdir)
         print(f"{entry['verdict']:8} {entry['map']}", flush=True)
