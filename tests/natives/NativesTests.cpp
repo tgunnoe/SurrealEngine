@@ -4,6 +4,7 @@
 #include "VM/Bytecode.h"
 #include "VM/Expression.h"
 #include "VM/NativeFunc.h"
+#include "VM/NativeFunctionFixture.h"
 #include "Native/NObject.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UFunction.h"
@@ -18,15 +19,12 @@
 
 namespace
 {
-	// A native declared the way the loader leaves it: Native flag, owning class and index set.
+	// A native declared the way the loader leaves it: Native flag, owning class, index and frame
+	// layout set.
 	UFunction* MakeNative(const char* owner, const char* name, int index)
 	{
 		UClass* ownerClass = GC::Alloc<UClass>(owner, nullptr, ObjectFlags::NoFlags);
-		UFunction* func = GC::Alloc<UFunction>(name, ownerClass, ObjectFlags::NoFlags);
-		func->FuncFlags = FunctionFlags::Native;
-		func->NativeFuncIndex = index;
-		func->NativeStruct = ownerClass;
-		return func;
+		return MakeNativeFunction(name, ownerClass, {}, index);
 	}
 
 	UObject* MakeInstance()
@@ -81,6 +79,18 @@ namespace
 	{
 		Frame::Call(func, instance, ArrayView<ExpressionValue>());
 	}
+}
+
+// The loader sizes a native function's frame as one ExpressionValue per property (none here)
+// and the call path writes ExpressionValues into it, so a function built for these tests must
+// carry the same layout.
+TEST(NativesFixtureSizesFrameLikeTheLoader)
+{
+	UFunction* func = MakeNative("Left", "First", 3001);
+
+	CHECK(func->IsNativeFunc);
+	CHECK_EQ(func->StructSize, func->Properties.size() * sizeof(ExpressionValue));
+	CHECK_EQ(func->StructAlignment, alignof(ExpressionValue));
 }
 
 TEST(NativesSharedIndexRunsEachOwnersHandler)
