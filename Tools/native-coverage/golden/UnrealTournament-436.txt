@@ -1,4 +1,3 @@
-Core.Object.Greater_StrStr index=116
 UWeb.WebRequest.AddVariable index=0
 UWeb.WebRequest.DecodeBase64 index=0
 UWeb.WebRequest.GetVariable index=0
@@ -8,4 +7,4 @@ UWeb.WebResponse.ClearSubst index=0
 UWeb.WebResponse.IncludeBinaryFile index=0
 UWeb.WebResponse.IncludeUHTM index=0
 UWeb.WebResponse.Subst index=0
-MISSING 10
+MISSING 9

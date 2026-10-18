@@ -65,14 +65,16 @@ Goldens exist for Unreal 226b, Unreal Tournament 436 and Deus Ex 1112fm.
 
 ## Drift risk
 
-The lookup in `NativeFuncExtractor::FindMissing`
-(`SurrealEngine/Commandlet/Native/NativeFuncExtractor.cpp`) is a hand-kept copy
-of the handler lookup in `Frame::CallNative` (`SurrealEngine/VM/Frame.cpp`
-lines 306-357), including the `GetSoundLength` / 2054 special case from
-`NativeFunctions::RegisterHandler`. If `CallNative` changes how it finds a
-handler, the two silently disagree. Extracting one shared lookup function used
-by both is deferred until `Frame.cpp` is free to edit.
+`NativeFuncExtractor::FindMissing` and `Frame::CallNative` find a handler
+through the same function, `NativeFunctions::FindHandler`
+(`SurrealEngine/VM/NativeFunc.cpp`), so a native reported missing here is one
+a script call would fail to find. What can still drift is the registrations
+themselves: a handler registered under the wrong index or class name makes its
+native show up as missing, and `check.sh` fails on the added line.
 
-`ConEvent.GetSoundLength` (index 2054) is reported missing by design: its index
-collides with another native, registration drops it, and `CallNative` would
-dispatch the call to the other function's handler.
+Deus Ex declares index 2054 twice, for `ConEvent.GetSoundLength` and
+`Conversation.ClearBindEvents`. It is declared a shared index with
+`NativeFunctions::ShareIndex` in `SurrealEngine/Package/PackageManager.cpp`:
+script opcodes carry only the index and mean `Conversation.ClearBindEvents`,
+and `ConEvent.GetSoundLength` is found by name. Both have handlers, so neither
+appears in the Deus Ex golden.

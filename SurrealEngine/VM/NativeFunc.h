@@ -13,14 +13,34 @@ typedef std::function<void(UObject* self, ExpressionValue* Args)> NativeFuncHand
 class NativeFunctions
 {
 public:
+	// Script opcodes encode native indices below this, and FuncByIndex always spans them, so code
+	// that indexes it directly with an opcode's index (the disassembler) never reads out of range.
+	static constexpr int OpcodeIndexLimit = 4096;
+
 	static Array<UFunction*> FuncByIndex;
 	static Array<NativeFuncHandler> NativeByIndex;
 	static std::map<std::pair<NameString, NameString>, NativeFuncHandler> NativeByName;
+	static std::map<int, NameString> SharedIndices; // index -> class whose function a script opcode means
 	static Array<LatentRunState> LatentActionByIndex;
 	static std::map<LatentRunState, int> IndexForLatentAction;
 
 	static void RegisterHandler(const NameString& className, const NameString& funcName, int nativeIndex, NativeFuncHandler handler);
 	static void RegisterNativeFunc(UFunction* func);
+
+	// Allows several natives to declare nativeIndex, which RegisterHandler and RegisterNativeFunc
+	// would otherwise reject as a clash. Their handlers are then kept by name, like those of natives
+	// without an index. Script opcodes carry only the index, so they are taken to mean the function
+	// that opcodeClass declares at it, whichever class the loader reaches first. Call this before
+	// registering any of the natives.
+	static void ShareIndex(int nativeIndex, const NameString& opcodeClass);
+
+	// The function a script opcode carrying nativeIndex calls. Throws, as calling a native without a
+	// handler does, when no function was registered at the index.
+	static UFunction* OpcodeFunc(int nativeIndex);
+
+	// The handler a call of this native runs, or null if it has none: found by index, or by name
+	// when the native has no index or its index is shared.
+	static const NativeFuncHandler* FindHandler(int nativeIndex, const NameString& funcName, const NameString& className);
 
 	// The registry is process-global; each PackageManager repopulates it from scratch.
 	static void Reset();

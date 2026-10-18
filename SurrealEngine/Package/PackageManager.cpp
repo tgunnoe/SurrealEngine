@@ -1119,6 +1119,7 @@ void PackageManager::RegisterFunctions()
 	NScriptedTexture::RegisterFunctions();
 	NStatLog::RegisterFunctions();
 	NStatLogFile::RegisterFunctions();
+	NTimeDemo::RegisterFunctions();
 	NWarpZoneInfo::RegisterFunctions();
 	NZoneInfo::RegisterFunctions();
 	NInternetLink::RegisterFunctions();
@@ -1151,6 +1152,10 @@ void PackageManager::RegisterFunctions()
 		NCheckboxWindow::RegisterFunctions();
 		NClipWindow::RegisterFunctions();
 		NComputerWindow::RegisterFunctions();
+		// ConEvent.GetSoundLength and Conversation.ClearBindEvents both declare index 2054. The
+		// shipped scripts call ClearBindEvents through the opcode and never call GetSoundLength,
+		// so the opcode means the Conversation function.
+		NativeFunctions::ShareIndex(2054, "Conversation");
 		NConEvent::RegisterFunctions();
 		NConEventRandomLabel::RegisterFunctions();
 		NConversation::RegisterFunctions();
@@ -1171,7 +1176,6 @@ void PackageManager::RegisterFunctions()
 		NTextLogWindow::RegisterFunctions();
 		NTextWindow::RegisterFunctions();
 		NTileWindow::RegisterFunctions();
-		NTimeDemo::RegisterFunctions();
 		NToggleWindow::RegisterFunctions();
 		NViewportWindow::RegisterFunctions();
 		NWebRequest::RegisterFunctions();

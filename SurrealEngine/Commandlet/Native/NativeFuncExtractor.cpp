@@ -81,25 +81,10 @@ Array<std::string> NativeFuncExtractor::FindMissing(PackageManager* packages, Ar
 				if (!func || !AllFlags(func->FuncFlags, FunctionFlags::Native))
 					continue;
 
-				// Mirrors the handler lookup in Frame::CallNative (VM/Frame.cpp:306-357), which is
-				// the source of truth. Keep this in sync by hand. The one deliberate difference is
-				// GetSoundLength at 2054 below, which is reported missing although CallNative would
-				// find another native's handler at that index.
-				bool found = false;
-				if (func->NativeFuncIndex != 0)
-				{
-					// RegisterHandler drops GetSoundLength at 2054 (index shared with another native), so it
-					// never has a handler of its own and CallNative would dispatch to the wrong one.
-					bool dropped = func->NativeFuncIndex == 2054 && func->Name == "GetSoundLength";
-					size_t index = (size_t)func->NativeFuncIndex;
-					found = !dropped && index < NativeFunctions::NativeByIndex.size() && NativeFunctions::NativeByIndex[index];
-				}
-				else
-				{
-					UStruct* owner = func->NativeStruct ? func->NativeStruct : cls;
-					auto it = NativeFunctions::NativeByName.find({ func->Name, owner->Name });
-					found = it != NativeFunctions::NativeByName.end() && it->second;
-				}
+				// The same lookup Frame::CallNative runs, so a native reported missing here is one a
+				// script call would fail to find.
+				UStruct* owner = func->NativeStruct ? func->NativeStruct : cls;
+				bool found = NativeFunctions::FindHandler(func->NativeFuncIndex, func->Name, owner->Name) != nullptr;
 
 				if (!found)
 					missing.insert(pkgname.ToString() + "." + cls->Name.ToString() + "." + func->Name.ToString() + " index=" + std::to_string(func->NativeFuncIndex));

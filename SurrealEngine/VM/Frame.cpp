@@ -314,58 +314,26 @@ ExpressionValue Frame::CallNative(UFunction* func, UObject* instance, const Arra
 			argindex++;
 	}
 
-	if (func->NativeFuncIndex != 0)
+	const NativeFuncHandler* callback = NativeFunctions::FindHandler(func->NativeFuncIndex, func->Name, func->NativeStruct->Name);
+	if (!callback)
+		Exception::Throw("Unknown native function " + func->NativeStruct->Name.ToString() + "." + func->Name.ToString());
+
 	{
-		auto& callback = NativeFunctions::NativeByIndex[func->NativeFuncIndex];
-		if (callback)
+		Frame frame(instance, func);
+		ActiveCallStackFrame activeFrame(&frame);
+		try
 		{
-			Frame frame(instance, func);
-			ActiveCallStackFrame activeFrame(&frame);
-			try
-			{
-				callback(instance, args.data());
-			}
-			catch (const std::exception& e)
-			{
-				LogMessage(std::string("Script error: ") + e.what());
-				return ExpressionValue::NothingValue();
-			}
-			catch (...)
-			{
-				LogMessage("Script error: Unknown error");
-				return ExpressionValue::NothingValue();
-			}
+			(*callback)(instance, args.data());
 		}
-		else
+		catch (const std::exception& e)
 		{
-			Exception::Throw("Unknown native function " + func->NativeStruct->Name.ToString() + "." + func->Name.ToString());
+			LogMessage(std::string("Script error: ") + e.what());
+			return ExpressionValue::NothingValue();
 		}
-	}
-	else
-	{
-		auto& callback = NativeFunctions::NativeByName[{ func->Name, func->NativeStruct->Name }];
-		if (callback)
+		catch (...)
 		{
-			Frame frame(instance, func);
-			ActiveCallStackFrame activeFrame(&frame);
-			try
-			{
-				callback(instance, args.data());
-			}
-			catch (const std::exception& e)
-			{
-				LogMessage(std::string("Script error: ") + e.what());
-				return ExpressionValue::NothingValue();
-			}
-			catch (...)
-			{
-				LogMessage("Script error: Unknown error");
-				return ExpressionValue::NothingValue();
-			}
-		}
-		else
-		{
-			Exception::Throw("Unknown native function " + func->NativeStruct->Name.ToString() + "." + func->Name.ToString());
+			LogMessage("Script error: Unknown error");
+			return ExpressionValue::NothingValue();
 		}
 	}
 
@@ -1920,7 +1888,7 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 					ArrayView<ExpressionValue> funcArgs(&stack->value[valueEnd - funcExpr->Args.size()], funcExpr->Args.size());
 					valueEnd -= (int)funcArgs.size();
 
-					PushValue(Frame::Call(NativeFunctions::FuncByIndex[funcExpr->nativeindex], context, funcArgs));
+					PushValue(Frame::Call(NativeFunctions::OpcodeFunc(funcExpr->nativeindex), context, funcArgs));
 					PopExpr();
 				}
 			}
