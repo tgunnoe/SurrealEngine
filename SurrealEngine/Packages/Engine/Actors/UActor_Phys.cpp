@@ -9,6 +9,7 @@
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
+#include "Collision/TopLevel/Placement.h"
 
 void UActor::TickPhysics(float elapsed)
 {
@@ -304,12 +305,73 @@ static void LogBlockedCandidates(ULevel* level, const vec3& location, float radi
 	LogMessage("CheckLocation: no free candidate for " + FormatVec3(location));
 }
 
+// The convex hull a leaf node's overlap test matched, read the way OverlapAABBModel reads it
+static std::vector<HullPlane> ReadHullPlanes(UModel* model, const BspNode& node)
+{
+	std::vector<HullPlane> hull;
+	const int32_t* hullIndexList = &model->LeafHulls[node.CollisionBound];
+	for (int i = 0; hullIndexList[i] >= 0; i++)
+	{
+		bool flipped = !!(hullIndexList[i] & 0x4000'0000);
+		const BspNode& hullNode = model->Nodes[hullIndexList[i] & ~0x4000'0000];
+		hull.push_back({ dvec4(hullNode.PlaneX, hullNode.PlaneY, hullNode.PlaneZ, hullNode.PlaneW), flipped });
+	}
+	return hull;
+}
+
+// A box that penetrates a hull by a few units has free space just outside that hull, which the coarse
+// neighbour grid of CheckLocation steps over. Move out through the shallowest face of the first hull hit
+// and retest, accepting the first free spot within one body size of the request.
+static std::optional<vec3> ResolvePenetration(ULevel* level, const vec3& location, float radius, float height, CollisionHitList hits)
+{
+	const int maxRounds = 8;
+	const double maxDisplacement = (double)height + (double)radius;
+	const dvec3 extents(radius, radius, height);
+
+	// Logged only if the placement is found, so a failed attempt leaves no misleading lines
+	std::vector<std::string> moves;
+	vec3 current = location;
+	for (int round = 0; round < maxRounds && !hits.empty(); round++)
+	{
+		const BspNode* node = hits.front().Node;
+		if (!node || node->CollisionBound < 0)
+			return std::nullopt;
+
+		std::optional<std::pair<dvec3, double>> exit = HullExit(to_dvec3(current), extents, ReadHullPlanes(level->Model, *node));
+		if (!exit)
+			return std::nullopt;
+
+		// The overlap test takes floats, so continue from the float position it will see
+		vec3 next = to_vec3(to_dvec3(current) + exit->first * exit->second);
+		if (length(next - location) > maxDisplacement)
+			return std::nullopt;
+
+		moves.push_back("CheckLocation: moved " + FormatVec3(current) + " to " + FormatVec3(next) + " out of node " + std::to_string(node - &level->Model->Nodes.front()));
+		current = next;
+		hits = level->Collision.OverlapTest(current, height, radius, false, true, false);
+	}
+
+	if (!hits.empty())
+		return std::nullopt;
+
+	for (const std::string& move : moves)
+		LogMessage(move);
+	return current;
+}
+
 std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float height, bool check)
 {
 	// Search for a valid spot near the location
 
 	if (!check)
 		return { true, location };
+
+	CollisionHitList startHits = XLevel()->Collision.OverlapTest(location, height, radius, false, true, false);
+	if (startHits.empty())
+		return { true, location };
+
+	if (std::optional<vec3> resolved = ResolvePenetration(XLevel(), location, radius, height, startHits))
+		return { true, *resolved };
 
 	// What is a reasonable size for this grid? what did UE1 do?
 	bool found = false;
