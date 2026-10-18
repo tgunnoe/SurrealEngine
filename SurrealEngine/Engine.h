@@ -6,6 +6,7 @@
 #include "Math/floating.h"
 #include "RenderDevice/RenderDevice.h"
 #include "GameWindow.h"
+#include "Packages/Core/Properties/UProperty.h"
 #include "Packages/Engine/Actors/UActor.h"
 #include "UnrealURL.h"
 #include "GameFolder.h"
@@ -107,6 +108,12 @@ struct HoldParseResult
 // as the console splits them) into a hold that ends <seconds> after now. The duration must be
 // positive and finite, the speed finite.
 HoldParseResult ParseHoldCommand(const Array<std::string>& args, double now);
+
+// Why a player property cannot be held as this kind of input, or an empty string when it can.
+// Only properties the scripts declare as input are held: the engine writes a held property every
+// frame, so any other byte, bool or float of the player (GroundSpeed, Physics) would be left at
+// the held value for good.
+std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string& name, ExpressionValueType type, PropertyFlags flags);
 
 class Engine : public GameWindowHost
 {

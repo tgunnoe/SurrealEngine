@@ -284,3 +284,54 @@ TEST(HarnessHoldParseErrorsNameTheProblem)
 	CHECK(!r.ok());
 	CHECK_MSG(r.error.find("-3") != std::string::npos, r.error);
 }
+
+TEST(HarnessHoldAcceptsAnInputPropertyOfTheRightType)
+{
+	const PropertyFlags input = PropertyFlags::Input | PropertyFlags::Edit;
+	CHECK_EQ(HoldPropertyRefusal(Kind::Button, "bFire", ExpressionValueType::ValueByte, input), std::string());
+	CHECK_EQ(HoldPropertyRefusal(Kind::Button, "bExtra0", ExpressionValueType::ValueBool, input), std::string());
+	CHECK_EQ(HoldPropertyRefusal(Kind::Axis, "aForward", ExpressionValueType::ValueFloat, input), std::string());
+
+	// The same properties without the flag are refused, so this is not green for a function that accepts everything
+	CHECK(!HoldPropertyRefusal(Kind::Button, "bFire", ExpressionValueType::ValueByte, PropertyFlags::Edit).empty());
+	CHECK(!HoldPropertyRefusal(Kind::Axis, "aForward", ExpressionValueType::ValueFloat, PropertyFlags::Edit).empty());
+}
+
+TEST(HarnessHoldRefusesAPropertyThatIsNotAnInput)
+{
+	// GroundSpeed and Physics have the right types for an axis and a button but are not inputs
+	std::string axis = HoldPropertyRefusal(Kind::Axis, "GroundSpeed", ExpressionValueType::ValueFloat, PropertyFlags::Edit | PropertyFlags::Config);
+	CHECK(!axis.empty());
+	CHECK_MSG(axis.find("GroundSpeed") != std::string::npos, axis);
+	CHECK_MSG(axis.find("not an input") != std::string::npos, axis);
+
+	std::string button = HoldPropertyRefusal(Kind::Button, "Physics", ExpressionValueType::ValueByte, PropertyFlags{});
+	CHECK(!button.empty());
+	CHECK_MSG(button.find("Physics") != std::string::npos, button);
+	CHECK_MSG(button.find("not an input") != std::string::npos, button);
+
+	// An input with the same type is held
+	CHECK_EQ(HoldPropertyRefusal(Kind::Axis, "aForward", ExpressionValueType::ValueFloat, PropertyFlags::Input), std::string());
+	CHECK_EQ(HoldPropertyRefusal(Kind::Button, "bFire", ExpressionValueType::ValueByte, PropertyFlags::Input), std::string());
+}
+
+TEST(HarnessHoldRefusesAnInputOfTheWrongType)
+{
+	const PropertyFlags input = PropertyFlags::Input;
+	CHECK_EQ(HoldPropertyRefusal(Kind::Button, "bFire", ExpressionValueType::ValueByte, input), std::string());
+	CHECK_EQ(HoldPropertyRefusal(Kind::Axis, "aForward", ExpressionValueType::ValueFloat, input), std::string());
+
+	// A float is not a button; a byte, bool or int is not an axis
+	for (ExpressionValueType type : { ExpressionValueType::ValueFloat, ExpressionValueType::ValueInt, ExpressionValueType::ValueObject })
+	{
+		std::string r = HoldPropertyRefusal(Kind::Button, "aForward", type, input);
+		CHECK_MSG(!r.empty(), "a button accepted type " + std::to_string((int)type));
+		CHECK_MSG(r.find("aForward") != std::string::npos, r);
+	}
+	for (ExpressionValueType type : { ExpressionValueType::ValueByte, ExpressionValueType::ValueBool, ExpressionValueType::ValueInt })
+	{
+		std::string r = HoldPropertyRefusal(Kind::Axis, "bFire", type, input);
+		CHECK_MSG(!r.empty(), "an axis accepted type " + std::to_string((int)type));
+		CHECK_MSG(r.find("bFire") != std::string::npos, r);
+	}
+}

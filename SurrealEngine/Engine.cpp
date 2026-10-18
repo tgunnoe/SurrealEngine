@@ -1250,6 +1250,19 @@ HoldParseResult ParseHoldCommand(const Array<std::string>& args, double now)
 	return { hold, {} };
 }
 
+std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string& name, ExpressionValueType type, PropertyFlags flags)
+{
+	if (!AllFlags(flags, PropertyFlags::Input))
+		return "the player's property '" + name + "' is not an input";
+
+	const bool isButton = kind == InputHoldSchedule::Kind::Button;
+	const bool typeFits = isButton ? (type == ExpressionValueType::ValueByte || type == ExpressionValueType::ValueBool) : type == ExpressionValueType::ValueFloat;
+	if (!typeFits)
+		return "the player's property '" + name + "' is not " + (isButton ? "a byte or bool button" : "a float axis");
+
+	return {};
+}
+
 void Engine::NotePlayerLogin()
 {
 	SmokeLog::Get()->Event("LOGIN");
@@ -1810,25 +1823,30 @@ bool Engine::HoldInput(const Array<std::string>& args)
 		return false;
 	}
 
-	// UpdateInput writes the property every frame, so a name that is missing or of the wrong
-	// type must be refused here rather than throw in the middle of a frame. Buttons such as
-	// bFire are bytes in the scripts, and SetBool reaches them the way a key press does.
+	// UpdateInput writes the property every frame, so a name that is missing, not an input or of
+	// the wrong type must be refused here rather than throw in the middle of a frame or leave a
+	// property such as GroundSpeed at the held value. Buttons such as bFire are bytes in the
+	// scripts, and SetBool reaches them the way a key press does.
 	const InputHoldSchedule::Hold& hold = parsed.hold;
-	const bool isButton = hold.kind == InputHoldSchedule::Kind::Button;
 	if (!actor->HasProperty(hold.name))
 	{
 		LogMessage("hold: the player has no property named '" + hold.name + "'");
 		return false;
 	}
-	const ExpressionValueType type = actor->GetMemberProperty(hold.name)->ValueType;
-	const bool typeFits = isButton ? (type == ExpressionValueType::ValueByte || type == ExpressionValueType::ValueBool) : type == ExpressionValueType::ValueFloat;
-	if (!typeFits)
+	UProperty* prop = actor->GetMemberProperty(hold.name);
+
+	// The schedule compares names exactly and the player finds properties without regard to case,
+	// so a hold is kept under the declared name: "aforward" and "aForward" are one hold, and
+	// aMouseX is recognised for its scaling
+	const std::string declaredName = prop->Name.ToString();
+	const std::string refusal = HoldPropertyRefusal(hold.kind, declaredName, prop->ValueType, prop->PropFlags);
+	if (!refusal.empty())
 	{
-		LogMessage(std::string("hold: the player's property '") + hold.name + "' is not " + (isButton ? "a byte or bool button" : "a float axis"));
+		LogMessage("hold: " + refusal);
 		return false;
 	}
 
-	inputHolds.Add(hold.kind, hold.name, hold.value, hold.until);
+	inputHolds.Add(hold.kind, declaredName, hold.value, hold.until);
 	return true;
 }
 
