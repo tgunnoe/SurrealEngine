@@ -54,6 +54,13 @@ does but never runs the commands bound to that key. In particular
 `hold button bFire` does not start an Unreal Tournament botmatch, whose waiting
 state leaves only through the `Fire` or `AltFire` console commands.
 
+The seconds of a hold are wall-clock seconds on the same clock as `--exec`, not
+game seconds, and a hold acts once per frame, so what it achieves depends on the
+frame rate: a four-second hold covers about 240 frames at 60 frames per second
+and about 4 at one frame per second. The `FPS` lines of the log show that rate.
+A run whose `FPS` falls to about 1 during the hold is therefore not evidence
+that the held input had no effect.
+
 To make a deterministic fatal exception, request a map that does not exist
 (`--url=NoSuchMap`): the log ends with `EXCEPTION` and `FATAL` lines and the
 exit code is 1.
