@@ -36,6 +36,8 @@ int GameApp::main(Array<std::string> args)
 			SmokeLog::Get()->InstallSignalHandlers();
 	}
 
+	Array<ExecItem> unrunExec;
+
 	try
 	{
 		if (!autostart && ErrorWindow::CheckCrashReporter())
@@ -46,16 +48,32 @@ int GameApp::main(Array<std::string> args)
 			std::cout << "SurrealEngine [--url=<mapname>] [--engineversion=X] [Path to game folder]\n"
 				"  --autostart          Skip the launcher and run the given game folder; write nothing to it\n"
 				"  --exit-after=<secs>  Quit the main loop this many seconds after process start\n"
+				"  --exec=<secs>:<command>[;<secs>:<command>...]\n"
+				"                       Run console commands this many seconds after the first login\n"
 				"  --smoke-log=<path>   Write a structured, flushed event log for unattended runs\n";
 			return 0;
+		}
+
+		// A malformed --exec stops the run here, before the launcher or any game folder is touched
+		ExecScheduleResult execSchedule;
+		if (commandline->HasArg("", "--exec"))
+		{
+			execSchedule = ParseExecSchedule(commandline->GetArg("", "--exec"));
+			if (!execSchedule.ok())
+			{
+				std::cerr << "SurrealEngine: invalid --exec: " << execSchedule.error << "\n";
+				return 2;
+			}
 		}
 
 		int selectedGameIndex = autostart ? GameFolderSelection::AutoSelect() : LauncherWindow::ExecModal();
 		if (selectedGameIndex >= 0)
 		{
 			GameLaunchInfo info = GameFolderSelection::GetLaunchInfo(selectedGameIndex);
+			info.execSchedule = std::move(execSchedule.items);
 			Engine engine(info);
 			engine.Run();
+			unrunExec = engine.UnrunExecCommands();
 		}
 	}
 	catch (const std::exception& e)
@@ -83,6 +101,10 @@ int GameApp::main(Array<std::string> args)
 
 	DeinitWidgetResources();
 	if (SmokeLog::Get()->IsOpen() && !SmokeLog::Get()->IsFinished())
+	{
+		for (const ExecItem& item : unrunExec)
+			SmokeLog::Get()->Event("EXEC_SKIPPED", FormatExecItem(item));
 		SmokeLog::Get()->Summary();
+	}
 	return 0;
 }

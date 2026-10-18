@@ -71,6 +71,9 @@ public:
 	~Engine();
 
 	void Run();
+
+	// The --exec commands that never became due; read once Run has returned.
+	Array<ExecItem> UnrunExecCommands() const;
 	void ClientTravel(const std::string& URL, ETravelType travelType, bool transferItems);
 	UnrealURL GetDefaultURL(const std::string& map);
 	void LoadEntryMap();
@@ -199,6 +202,13 @@ public:
 	vec3 PlayerHitLocation = vec3(0.0f);
 
 	bool quit = false;
+
+	// --exec: LaunchInfo.execSchedule[execCursor...] has not run yet. The clock starts at the
+	// first login and later logins (map changes) leave it alone; negative until then.
+	void NotePlayerLogin();
+	void RunDueExecCommands();
+	double execLoginSeconds = -1.0;
+	size_t execCursor = 0;
 
 	uint64_t lastTime = 0;
 

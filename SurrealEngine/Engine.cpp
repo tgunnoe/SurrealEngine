@@ -240,6 +240,9 @@ void Engine::Run()
 		viewport->SetViewportRect(0, 0, engine->window->GetPixelWidth(), engine->window->GetPixelHeight());
 		render->DrawGame(levelElapsed);
 
+		// Before the exit-after check, so a command due at the exit time still runs
+		RunDueExecCommands();
+
 		if (SmokeLog::Get()->OnFrame(LaunchInfo.exitAfterSeconds))
 			quit = true;
 
@@ -889,7 +892,7 @@ void Engine::PossessSavedPlayer()
 
 	render->OnMapLoaded();
 	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
-	SmokeLog::Get()->Event("LOGIN");
+	NotePlayerLogin();
 }
 
 void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const
@@ -1060,7 +1063,7 @@ void Engine::LoginPlayer()
 	CallEvent(LevelInfo->Game(), EventName::PostLogin, { ExpressionValue::ObjectValue(pawn) });
 
 	render->OnMapLoaded();
-	SmokeLog::Get()->Event("LOGIN");
+	NotePlayerLogin();
 }
 
 UZoneInfo* Engine::GetZoneActor(int zoneIndex)
@@ -1135,6 +1138,38 @@ std::string Engine::ParseClassName(std::string className)
 	}
 
 	return packages->GetIniValue("system", sectionName, keyName);
+}
+
+void Engine::NotePlayerLogin()
+{
+	SmokeLog::Get()->Event("LOGIN");
+	if (execLoginSeconds < 0.0)
+		execLoginSeconds = SmokeLog::Get()->SecondsSinceStart();
+}
+
+void Engine::RunDueExecCommands()
+{
+	if (execLoginSeconds < 0.0)
+		return;
+
+	const size_t end = DueCommands(LaunchInfo.execSchedule, SmokeLog::Get()->SecondsSinceStart() - execLoginSeconds, execCursor);
+	while (execCursor < end)
+	{
+		// Advance first: a command that quits or travels must not run again on a later frame
+		const ExecItem& item = LaunchInfo.execSchedule[execCursor++];
+
+		ExpressionValue found = ExpressionValue::BoolValue(false);
+		ConsoleCommand(viewport->Actor(), item.command, found.ToType<BitfieldBool&>());
+		SmokeLog::Get()->Event(found.ToType<BitfieldBool&>() ? "EXEC" : "EXEC_FAILED", FormatExecItem(item));
+	}
+}
+
+Array<ExecItem> Engine::UnrunExecCommands() const
+{
+	Array<ExecItem> unrun;
+	for (size_t i = execCursor; i < LaunchInfo.execSchedule.size(); i++)
+		unrun.push_back(LaunchInfo.execSchedule[i]);
+	return unrun;
 }
 
 std::string Engine::ConsoleCommand(UObject* context, const std::string& commandline, BitfieldBool& found)
