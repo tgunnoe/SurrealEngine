@@ -1,0 +1,32 @@
+{
+ "CityIntro": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:",
+  "first_line_run2": "stubs:",
+  "reproduced": "yes"
+ },
+ "EOL_Assault": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:",
+  "first_line_run2": "stubs:",
+  "reproduced": "yes"
+ },
+ "EOL_CTF": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:",
+  "first_line_run2": "stubs:",
+  "reproduced": "yes"
+ },
+ "EOL_Challenge": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:",
+  "first_line_run2": "stubs:",
+  "reproduced": "yes"
+ },
+ "EOL_Deathmatch": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:",
+  "first_line_run2": "stubs:",
+  "reproduced": "yes"
+ }
+}

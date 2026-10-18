@@ -102,7 +102,16 @@ python3 -I Tools/smoke/sweep.py --game "<game folder>" --seconds 15 --limit 3 --
 
 Options: `--game`, `--out` (required); `--seconds` (default 15); `--limit`
 (first N maps, default all); `--exe` (default `build/SurrealEngine`);
-`--logdir` (default `<out>.d`, holds per-map logs and screenshots).
+`--logdir` (default `<out>.d`, holds per-map logs and screenshots);
+`--url-options`, `--exec`, `--portable` (below).
+
+`--url-options <text>` appends the text to every `--url=<map>`, for example
+`?NumBots=4`, so a botmatch run starts `--url=DM-Deck16][?NumBots=4`.
+`--exec <text>` passes `--exec=<text>` to every run, for example `5:Fire` to
+press fire five seconds after login. `--portable` writes a report that can be
+committed: `game` is `<game folder>`, each row's `log` is the log file's name
+only, and `screenshot` is `null`. The report records the first two flags as
+`url_options` and `exec`, `null` when the flag is absent.
 
 Screenshots capture the whole desktop, so a window in front of the engine
 appears in them, and an occluded engine window renders slowly.
@@ -110,13 +119,18 @@ appears in them, and an occluded engine window renders slowly.
 ## Report schema
 
 ```
-{ "game": "<folder>", "seconds": 15,
+{ "game": "<folder>", "seconds": 15, "url_options": null, "exec": null,
   "maps": [ { "map", "exit_code", "script_errors", "stub_hits",
               "missing_natives", "exceptions", "script_warnings", "fps_avg", "maps_loaded",
-              "log", "screenshot", "verdict" } ] }
+              "login", "match_started", "log", "screenshot", "verdict" } ] }
 ```
 
-`maps_loaded` lists the `MAP` values in order. The report is rewritten after
+`maps_loaded` lists the `MAP` values in order. `login` is true when the log
+has a `LOGIN` line. `match_started` is true when the player's state was
+`PlayerWalking` when the first `EXEC` line was written, or a later `STATE` line
+names `PlayerWalking` (an `EXEC_FAILED` or `EXEC_SKIPPED` line is not the fire
+press, and a run with no `EXEC` line has no match); neither field affects the
+`verdict`. The report is rewritten after
 every map, so an interrupted sweep keeps the rows finished so far. The
 per-map log and screenshot are deleted before each child starts. `exit_code` is Python's return code, which is a negative signal number
 (for example -11) when the child died from a signal, not the shell's 139. `fps_avg` and
@@ -149,7 +163,10 @@ games log `Accessed None` constantly.
 A scenario wraps the module in a few lines: put `Tools/smoke` on
 `sys.path`, import the scenario value, and call the module function.
 `scenarios/deusex/` is the reference: `scenario.py` holds its literals and
-the four scripts keep their original command lines.
+the four scripts keep their original command lines. `scenarios/ut-bots/` is
+the Unreal Tournament botmatch sweep (four bots in each map's own game type,
+fire pressed five seconds after login): a map is clean only if it is clean by
+the rules above and its match started (`require_match_start`).
 
 Tests, from the repository root (the second is the sweep unittest):
 
