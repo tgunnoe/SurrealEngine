@@ -22,6 +22,4 @@ candidate. Partial means the map loses one reason but keeps others.
 | 1 | fix signature: crash: FATAL signal 11 | 0 | 2 |
 | 2 | fix signature: verdict crash | 0 | 2 |
 
-Fixing every file above together unblocks every stub-only map; the
-three login failures, the iterator failure and the segfault each
-need their own fix on top.
+A map becomes clean only when every signature that lists it above is fixed.

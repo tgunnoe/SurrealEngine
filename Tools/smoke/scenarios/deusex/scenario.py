@@ -8,9 +8,8 @@ DEUSEX = Scenario(
     triage_intro=(
         "Non-clean maps: {nonclean} of {total}. A map is clean only when it passes, loaded\n"
         "the requested map, rendered, and logged no error line and no\n"
-        "gameplay-class stub. Every map hit at least one gameplay-class stub,\n"
-        "so every map has a section. `fps_avg` is not evidence in this run\n"
-        "(three sweeps shared one display).\n\n"),
+        "gameplay-class stub. Every non-clean map has a section. Other engine\n"
+        "runs shared the display during this sweep, so `fps_avg` is not evidence.\n\n"),
     triage_evidence=(
         "Evidence for a stub-only row is its stub list (stubs.json) and its\n"
         "exit code and SUMMARY-bearing pass verdict (sweep.json).\n\n"),
@@ -21,9 +20,7 @@ DEUSEX = Scenario(
         "descends only from Object, so it is non-gameplay by that definition\n"
         "even though gameplay script calls it.\n"),
     summary_footer=(
-        "\nFixing every file above together unblocks every stub-only map; the\n"
-        "three login failures, the iterator failure and the segfault each\n"
-        "need their own fix on top.\n"),
+        "\nA map becomes clean only when every signature that lists it above is fixed.\n"),
     # Owner class -> superclass chain, read from the export tables of the Deus Ex
     # 1112fm packages (Engine.u, DeusEx.u, Core.u): each class export carries its
     # super class. Classification needs the chain because a class counts as
@@ -68,9 +65,10 @@ DEUSEX = Scenario(
             "'STUB Pawn.ReachablePathnodes'",
             _STATUS_NATIVES),
         "crash: FATAL signal 11": (
-            "unknown native or VM subsystem: SIGSEGV after LOGIN with no script "
-            "line before it; no debugger was available (gdb not found), so the "
-            "faulting frame is not identified",
+            "unknown native or VM subsystem: the logs show SIGSEGV after LOGIN "
+            "with no SCRIPT_ERROR, MISSING_NATIVE or EXCEPTION line before it, "
+            "and the map did not crash when re-run alone, so the faulting frame "
+            "is not identified",
             "none applies"),
     },
     status_natives=_STATUS_NATIVES,
