@@ -1,6 +1,1 @@
-Core.Object.Greater_StrStr index=116
-Engine.StatLogFile.GetPlayerChecksum index=0
-Engine.TimeDemo.CloseFile index=0
-Engine.TimeDemo.OpenFile index=0
-Engine.TimeDemo.WriteToFile index=0
-MISSING 5
+MISSING 0

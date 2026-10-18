@@ -1,7 +1,1 @@
-ConSys.ConEvent.GetSoundLength index=2054
-Core.Object.CyclesToSeconds index=1007
-Core.Object.GetConfig index=0
-Core.Object.Greater_StrStr index=116
-Core.Object.clock index=1005
-Core.Object.unclock index=1006
-MISSING 6
+MISSING 0
