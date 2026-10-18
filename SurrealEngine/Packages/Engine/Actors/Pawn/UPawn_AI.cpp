@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "UPawn.h"
 #include "UPlayerPawn.h"
+#include "UPawn_AIMath.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Actors/Info/UGameInfo.h"
@@ -183,8 +184,58 @@ float UPawn::AICanHear(UActor* other, std::optional<float> volume, std::optional
 
 float UPawn::AICanSee(UActor* other, std::optional<float> visibility, std::optional<bool> bCheckVisibility, std::optional<bool> bCheckDir, std::optional<bool> bCheckCylinder, std::optional<bool> bCheckLOS)
 {
-	LogUnimplemented("Pawn.AICanSee() [Deus Ex]");
-	return 0.0f;
+	if (!other)
+		return 0.0f;
+
+	// The viewer is this pawn and callers use the result as a magnitude, so it is the strength of the
+	// sighting (0 for unseen) and not a yes/no.
+	const float viewVisibility = visibility.value_or(1.0f);
+	const float range = SightRadius() * viewVisibility;
+
+	vec3 eye = Location();
+	eye.z += BaseEyeHeight();
+
+	// With bCheckCylinder the target is seen if its centre, top or bottom is, instead of the centre only.
+	const vec3 centre = other->Location();
+	const vec3 halfHeight(0.0f, 0.0f, other->CollisionHeight());
+	const vec3 points[] = { centre, centre + halfHeight, centre - halfHeight };
+	const size_t pointCount = bCheckCylinder.value_or(false) ? 3 : 1;
+
+	// AI pawns do not keep ViewRotation in step with where they face (scripts assign it when they need
+	// it), so the facing is Rotation, as in CanSee. AIAddViewRotation turns the view off that facing.
+	// AIHorizontalFov is deliberately not used: the cone is the PeripheralVision cosine alone.
+	const Rotator facing = Rotation();
+	const Rotator added = AIAddViewRotation();
+	const bool checkDir = bCheckDir.value_or(false);
+
+	float nearest = FLT_MAX;
+	for (size_t i = 0; i < pointCount; i++)
+	{
+		float distance = length(points[i] - eye);
+		if (!(distance < range))
+			continue;
+		if (checkDir && !AIMath::InViewCone(eye, facing.Pitch, facing.Yaw, added.Pitch, added.Yaw, points[i], PeripheralVision()))
+			continue;
+		nearest = std::min(nearest, distance);
+	}
+	if (nearest == FLT_MAX)
+		return 0.0f;
+
+	// Pawn.Visibility is a byte on Pawn only, so any other kind of target is fully visible.
+	if (bCheckVisibility.value_or(false))
+	{
+		UPawn* otherPawn = UObject::TryCast<UPawn>(other);
+		float targetVisibility = otherPawn ? otherPawn->Visibility() / 255.0f : 1.0f;
+		if (!(viewVisibility * targetVisibility > VisibilityThreshold()))
+			return 0.0f;
+	}
+
+	// The distance was judged against the visibility-scaled range above, so skip LineOfSightTo's own
+	// check against the plain SightRadius.
+	if (bCheckLOS.value_or(false) && !LineOfSightTo(other, true))
+		return 0.0f;
+
+	return AIMath::SightMagnitude(nearest, SightRadius(), viewVisibility);
 }
 
 float UPawn::AICanSmell(UActor* other, std::optional<float> smell)
