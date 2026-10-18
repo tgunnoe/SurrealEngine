@@ -47,6 +47,8 @@ public:
 
 	fs::path GetRootFolderPath() const { return gameRootFolderPath; }
 	fs::path GetSystemFolderPath() const { return gameSystemFolderPath; }
+	fs::path GetConfigFolderPath() const { return gameConfigFolderPath; }
+	fs::path GetDataFolderPath() const { return gameDataFolderPath; }
 	fs::path GetSaveFolderPath() const { return gameSaveFolderPath; }
 	fs::path GetCacheFolderPath() const { return gameCacheFolderPath; }
 
@@ -102,6 +104,7 @@ private:
 	std::unique_ptr<IniFile>& LoadIniFile(NameString iniName);
 	std::unique_ptr<IniFile>& LoadUserIniFile();
 	std::unique_ptr<IniFile>& LoadSystemIniFile();
+	fs::path ResolveUserIniPath() const;
 	void LoadEngineIniFiles();
 	void LoadFileExtensions();
 	void LoadIntFiles();
@@ -148,6 +151,8 @@ private:
 	// So that we don't have to build fs::path()s all over the place
 	fs::path gameRootFolderPath;
 	fs::path gameSystemFolderPath;
+	fs::path gameConfigFolderPath; // Per-user: the SE- ini files
+	fs::path gameDataFolderPath;   // Per-user: Save and Export
 	fs::path gameSaveFolderPath;
 	fs::path gameCacheFolderPath;
 

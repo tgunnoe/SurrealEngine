@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "Engine.h"
 #include "Utils/File.h"
+#include "Utils/UserDirs.h"
 #include "Utils/StrTools.h"
 #include "Utils/SHA1Sum.h"
 #include "Render/RenderSubsystem.h"
@@ -60,12 +61,36 @@
 #include "Video/VideoPlayer.h"
 #include "Utils/Convert.h"
 #include <chrono>
+#include <iostream>
 #include <set>
 
 Engine* engine = nullptr;
 
+// Runs from the destructor, where an exception would end the process: a log that cannot be written
+// is reported and the shutdown carries on.
+static void SaveLastRunLog() noexcept
+{
+	try
+	{
+		const fs::path directory = UserDirs::appConfigDir();
+		Directory::create(directory.string());
+		Logger::Get()->SaveLogAsPlaintext((directory / "SE-Log-LastRun.txt").string());
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "SurrealEngine: could not save SE-Log-LastRun.txt: " << e.what() << "\n";
+	}
+	catch (...)
+	{
+		std::cerr << "SurrealEngine: could not save SE-Log-LastRun.txt\n";
+	}
+}
+
 Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 {
+	// Every entry point constructs the engine once the game is chosen, so this covers them all
+	WritePolicy::setForbiddenRoot(LaunchInfo.gameRootFolder);
+
 	engine = this;
 
 	packages = std::make_unique<PackageManager>(LaunchInfo);
@@ -110,7 +135,7 @@ Engine::~Engine()
 	if (audiodev)
 		audiodev->ShutdownDevice();
 
-	Logger::Get()->SaveLogAsPlaintext((Directory::localAppData() / "SurrealEngine/SE-Log-LastRun.txt").string());
+	SaveLastRunLog();
 
 	engine = nullptr;
 }
@@ -120,6 +145,7 @@ void Engine::Run()
 	SmokeLog::Get()->Event("GAME", LaunchInfo.gameName + " " + LaunchInfo.gameVersionString);
 
 	LogMessage("Game: " + LaunchInfo.gameName + " (Version: " + LaunchInfo.gameVersionString + ")");
+	LogMessage("User directories: config=" + packages->GetConfigFolderPath().string() + " data=" + packages->GetDataFolderPath().string());
 	LoadEngineSettings();
 	LogMessage("Loaded Engine settings");
 	LoadKeybindings();
@@ -342,8 +368,8 @@ void Engine::Run()
 		renderdev->SaveConfig();
 	}
 	packages->SetIniValue("System", "Engine.SurrealWindowSystem", "WindowSystem", windowingSystemName);
-	// Unattended runs must leave the game folder untouched.
-	if (!LaunchInfo.autostart)
+	// Unattended runs write no ini unless they were given a directory for it
+	if (LaunchInfo.CanWriteUserFiles())
 		packages->SaveAllIniFiles();
 
 	LogMessage("Closing window...");
@@ -897,10 +923,10 @@ void Engine::PossessSavedPlayer()
 
 void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const
 {
-	// Saves are written under the game folder, which unattended runs must leave untouched.
-	if (LaunchInfo.autostart)
+	// Saves go to the per-user data directory. Unattended runs write there only when given a directory of their own.
+	if (!LaunchInfo.CanWriteUserFiles())
 	{
-		LogMessage("Save game skipped: --autostart does not write to the game folder");
+		LogMessage("Save game skipped: --autostart without --user-dir does not write saves");
 		SmokeLog::Get()->Event("WARNING", "save to slot " + std::to_string(slotNum) + " skipped under --autostart");
 		return;
 	}
@@ -910,8 +936,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 
 	// First and foremost ensure the Save folder exists
 	const auto saveFolderPath = packages->GetSaveFolderPath();
-	if (!fs::exists(saveFolderPath))
-		fs::create_directory(saveFolderPath);
+	Directory::create(saveFolderPath.string());
 
 	if (packages->IsDeusEx())
 	{
@@ -925,8 +950,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		auto saveFolder = "Save" + slotNumStr;
 
 		auto saveSlotFolder = saveFolderPath / saveFolder;
-		if (!fs::exists(saveSlotFolder) || !fs::is_directory(saveSlotFolder))
-			fs::create_directory(saveSlotFolder);
+		Directory::create(saveSlotFolder.string());
 
 		auto levelName = Level->package->GetPackageName().ToString() + "." + packages->GetSaveExtension();
 		auto saveInfoName = "SaveInfo." + packages->GetSaveExtension();

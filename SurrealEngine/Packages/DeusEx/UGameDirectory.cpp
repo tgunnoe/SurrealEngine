@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "UGameDirectory.h"
 #include "Utils/Logger.h"
+#include "Utils/File.h"
 #include "Engine.h"
 #include "Package/PackageManager.h"
 
@@ -113,7 +114,7 @@ void UDXGameDirectory::DeleteSaveInfo(UDXSaveInfo& saveInfo)
 		{
 			LoadedSaveInfoPointers().erase(it);
 			engine->packages->RemoveSaveInfoPackage(saveFolderName);
-			fs::remove_all(engine->packages->GetSaveFolderPath() / saveFolderName); // Also delete the folder
+			Directory::remove_all((engine->packages->GetSaveFolderPath() / saveFolderName).string()); // Also delete the folder
 			return;
 		}
 	}
@@ -125,17 +126,42 @@ void UDXGameDirectory::PurgeAllSaveInfo()
 	if (GameDirectoryType() == EGameDirectoryTypes::GD_Maps)
 		return;
 
-	if (fs::exists(currentDirectory) && fs::is_directory(currentDirectory))
-		for (auto& p : fs::directory_iterator(currentDirectory))
-			// We're not using remove_all() as we don't want to remove the Save folder itself
-			fs::remove(p.path());
+	// Scripts can reach this with any directory selected; only the player's own save folder may be emptied
+	if (currentDirectory != engine->packages->GetSaveFolderPath())
+	{
+		LogMessage("PurgeAllSaveInfo ignored: the selected directory is not the save folder");
+		return;
+	}
+
+	if (!engine->LaunchInfo.CanWriteUserFiles())
+	{
+		LogMessage("PurgeAllSaveInfo skipped: --autostart without --user-dir does not change saves");
+		return;
+	}
+
+	if (!fs::is_directory(currentDirectory))
+		return;
+
+	// Collected first so that removing entries cannot disturb the iteration
+	Array<std::string> entries;
+	for (auto& p : fs::directory_iterator(currentDirectory))
+		entries.push_back(p.path().string());
+
+	// Save slots are folders; the Save folder itself stays
+	for (const std::string& entry : entries)
+		Directory::remove_all(entry);
 }
 
 int UDXGameDirectory::GetSaveFreeSpace()
 {
 	// Returns a value in KBs, which limits us to ~2TB of "free space" max.
 	// Should be enough but still
-	const auto freeSpaceInKBs = static_cast<int>(fs::space(currentDirectory).free / 1024);
+	// The save folder does not exist until the first save; the space that matters is that of the nearest folder that does
+	fs::path folder = currentDirectory;
+	while (folder.has_parent_path() && folder != folder.parent_path() && !fs::exists(folder))
+		folder = folder.parent_path();
+
+	const auto freeSpaceInKBs = static_cast<int>(fs::space(folder).free / 1024);
 	// Capped at 1TB
 	return std::min(freeSpaceInKBs, 1000 * 1024 * 1024);
 }
