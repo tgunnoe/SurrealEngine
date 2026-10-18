@@ -34,8 +34,9 @@ class Scenario:
     verdict_template: str = ""       # fields: verdict, exit_code
     # fields: reproduced, exit_code, run1, run2
     reproduced_template: str = ""
-    # fields: maps, clean, fail, crash, timeout, stub_only, warnings; warnings is
-    # the total SCRIPT_WARNING count, or "not recorded" unless every sweep row has one
+    # fields: maps, clean, fail, crash, timeout, stub_only, warnings, matches_started;
+    # warnings is the total SCRIPT_WARNING count, or "not recorded" unless every sweep
+    # row has one; matches_started counts the rows whose match_started is true
     counts_template: str = ""
 
     # Re-running.
@@ -44,8 +45,8 @@ class Scenario:
     exit_after_seconds: int = 0
     repro_timeout_seconds: int = 0
     repro_logdir: str = ""
-    url_options: tuple = ()          # extra argv after --url=<map>
-    exec: str = ""
+    url_options: tuple = ()          # joined onto --url=<map>, e.g. ("?NumBots=4",)
+    exec: str = ""                   # passed as --exec=<exec> when not empty
 
     # Checker options.
     # A map with a recorded SCRIPT_WARNING count above zero is non-clean. Off by
@@ -63,4 +64,6 @@ class Scenario:
     maps_loaded_equal: bool = False
     verdict_line_equal: bool = False
     map_match_case_insensitive: bool = False
+    # A row whose sweep recorded match_started false is non-clean, reason
+    # "match did not start". A row with no recorded flag is unknown, as with warnings.
     require_match_start: bool = False

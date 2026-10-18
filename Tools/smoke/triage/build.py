@@ -5,9 +5,11 @@ results from a repro JSON file; writes the three documents to outdir.
 """
 import json
 import os
+import shlex
 from collections import Counter, defaultdict
 
 from .extract import HEX
+from .repro import engine_args
 
 
 def error_signature(scn, e):
@@ -48,6 +50,19 @@ def warnings_total(sweep):
     return None if any(c is None for c in counts) else sum(counts)
 
 
+MATCH_REASON = "match did not start"
+
+
+def match_unstarted(scn, m):
+    """Only a recorded false counts: a sweep that predates the flag, or a
+    row without it, is unknown and never makes a map non-clean."""
+    return scn.require_match_start and m.get("match_started") is False
+
+
+def matches_started(sweep):
+    return sum(1 for m in sweep if m.get("match_started") is True)
+
+
 def show_count(n):
     return NOT_RECORDED if n is None else str(n)
 
@@ -79,6 +94,8 @@ def build(scn, datadir, outdir, repro_path):
         reasons += [error_signature(scn, x) for x in e["errors"]]
         if warnings_fail(scn, m):
             reasons.append("warnings")
+        if match_unstarted(scn, m):
+            reasons.append(MATCH_REASON)
         if e["fatal_after_summary"]:
             reasons.append("FATAL after SUMMARY")
         reasons += ["stub " + s["text"] for s in gp]
@@ -105,14 +122,16 @@ def build(scn, datadir, outdir, repro_path):
             else:
                 f.write("%sfailing lines: none (no SCRIPT_ERROR, MISSING_NATIVE, EXCEPTION or FATAL)\n" % b)
             f.write("%swarnings: %s\n" % (b, show_count(warning_count(m))))
+            if scn.require_match_start:
+                f.write("%smatch_started: %s\n" % (b, json.dumps(m.get("match_started"))))
             f.write("%sgameplay stubs: %s\n" % (b, ", ".join("`%s`" % s["text"] for s in gp) or "none"))
-            argv = [scn.exe, "--autostart", "--exit-after=%d" % scn.exit_after_seconds,
-                    "--smoke-log=%s/%s.log" % (scn.repro_logdir, name), "--url=%s" % name,
-                    *scn.url_options]
-            f.write("%srepro: `%s \"%s\"`\n" % (b, " ".join(argv), scn.game_placeholder))
+            argv = " ".join(shlex.quote(a) for a in engine_args(scn, scn.exe, name))
+            f.write("%srepro: `%s \"%s\"`\n" % (b, argv, scn.game_placeholder))
             sigs = [error_signature(scn, x) for x in e["errors"]]
             if warnings_fail(scn, m):
                 sigs.append("warnings")
+            if match_unstarted(scn, m):
+                sigs.append(MATCH_REASON)
             owners, cites = [], []
             for s in dict.fromkeys(sigs):
                 o, c = scn.error_owner.get(s, ("unattributed (%s)" % s, "none applies"))
@@ -171,7 +190,8 @@ def build(scn, datadir, outdir, repro_path):
             maps=len(rows), clean=clean, fail=verdicts["fail"], crash=verdicts["crash"],
             timeout=verdicts["timeout"],
             stub_only=sum(1 for m, e, gp, r in nonclean if m["verdict"] == "pass"),
-            warnings=show_count(warnings_total(sweep)), matches_started=-1) + "\n\n")
+            warnings=show_count(warnings_total(sweep)),
+            matches_started=matches_started(sweep)) + "\n\n")
         f.write("Check: the verdict counts are recomputed from sweep.json by check_triage.py,\n"
                 "which exits 0 only if they equal the line above.\n\n")
         f.write("## Failure signatures\n\n| Signature | Maps | Affected |\n| :--- | ---: | :--- |\n")
