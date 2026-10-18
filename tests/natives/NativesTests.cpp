@@ -154,3 +154,15 @@ TEST(NativesCallOfUnregisteredIndexThrows)
 	CHECK_THROWS(CallNoArgs(MakeNative("Left", "Third", 3002), instance));
 	CHECK_EQ(calls, 0);
 }
+
+TEST(NativesOpcodeLookupRejectsUnregisteredIndex)
+{
+	NativeFunctions::Reset();
+	UFunction* func = MakeNative("Left", "First", 3003);
+	NativeFunctions::RegisterNativeFunc(func);
+
+	CHECK(NativeFunctions::OpcodeFunc(3003) == func);
+	// Inside the table with nothing registered, then past its end.
+	CHECK_THROWS(NativeFunctions::OpcodeFunc(3002));
+	CHECK_THROWS(NativeFunctions::OpcodeFunc(100000));
+}

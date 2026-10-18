@@ -30,6 +30,10 @@ public:
 	// registering any of the natives.
 	static void ShareIndex(int nativeIndex, const NameString& opcodeClass);
 
+	// The function a script opcode carrying nativeIndex calls. Throws, as calling a native without a
+	// handler does, when no function was registered at the index.
+	static UFunction* OpcodeFunc(int nativeIndex);
+
 	// The handler a call of this native runs, or null if it has none: found by index, or by name
 	// when the native has no index or its index is shared.
 	static const NativeFuncHandler* FindHandler(int nativeIndex, const NameString& funcName, const NameString& className);

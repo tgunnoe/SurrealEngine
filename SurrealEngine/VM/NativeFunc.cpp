@@ -89,6 +89,11 @@ const NativeFuncHandler* NativeFunctions::FindHandler(int nativeIndex, const Nam
 	return it != NativeByName.end() && it->second ? &it->second : nullptr;
 }
 
+UFunction* NativeFunctions::OpcodeFunc(int nativeIndex)
+{
+	return nullptr;
+}
+
 void RegisterLatentAction(int nativeIndex, LatentRunState latentAction)
 {
 	if (NativeFunctions::LatentActionByIndex.size() <= (size_t)nativeIndex) NativeFunctions::LatentActionByIndex.resize((size_t)nativeIndex + 1);
