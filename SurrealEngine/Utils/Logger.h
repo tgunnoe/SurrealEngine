@@ -4,6 +4,7 @@
 #include <list>
 #include <functional>
 #include <chrono>
+#include <exception>
 
 void LogMessage(const std::string& message);
 void LogUnimplemented(const std::string& message);
@@ -46,12 +47,21 @@ public:
 
 	void InstallSignalHandlers();
 
+	// The text written when std::terminate is reached: what() of the exception in flight, or a
+	// fixed phrase for a non-standard exception or none at all. `unwinding` is how many other
+	// exceptions were still unwinding (std::uncaught_exceptions()). Above zero, the exception in
+	// flight is the later throw of a double fault, not the one that started the unwind, and the
+	// text says so; with none in flight there is nothing to mark.
+	static std::string TerminateMessage(std::exception_ptr current, int unwinding);
+
 	// Measured from the first Get() call, which GameApp::main makes at process start.
 	double SecondsSinceStart() const { return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count(); }
 
 private:
 	static std::string Flatten(const std::string& text);
 	void WriteLine(const std::string& line);
+	// WriteLine without the finished check, for lines that must land even after SUMMARY or FATAL.
+	void WriteUnconditional(const std::string& line);
 
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 	int fd = -1;
