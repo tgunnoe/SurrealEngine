@@ -95,9 +95,9 @@ UNREAL = Scenario(
     ),
     error_owner={
         "crash: FATAL signal 6": (
-            "unknown: the sweep log shows SIGABRT after five FPS samples with no "
-            "SCRIPT_ERROR, MISSING_NATIVE or EXCEPTION line before it, so the "
-            "aborting frame is not identified",
+            "unknown: the row's recorded error lines hold only the signal line "
+            "(no script error, missing native, exception or terminate message "
+            "before it), so the aborting frame is not identified",
             "none applies"),
     },
     status_natives=_STATUS,

@@ -20,6 +20,6 @@ warnings line (sweep.json, errors.json) and its stub list (stubs.json).
 - warnings: 0
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-unreal/ExtremeLab.log --url=ExtremeLab "<game folder>"`
-- owner: unknown: the sweep log shows SIGABRT after five FPS samples with no SCRIPT_ERROR, MISSING_NATIVE or EXCEPTION line before it, so the aborting frame is not identified
+- owner: unknown: the row's recorded error lines hold only the signal line (no script error, missing native, exception or terminate message before it), so the aborting frame is not identified
 - Status.md: none applies
 - reproduced: yes (second run exit code -6; run1 first line `FATAL signal 6`; run2 first line `FATAL signal 6`)
