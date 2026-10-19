@@ -98,6 +98,10 @@ public:
 	Package* LoadMap(const std::string& path);
 	void UnloadPackage(Package* package);
 
+	// Drops the cached streams of a package: the cache is keyed by the package's address alone, so
+	// one left behind would be handed to whatever package is later allocated there
+	void ForgetStreams(Package* package);
+
 	void CloseStreams();
 
 	Package* LoadSaveSlot(int slotNum);

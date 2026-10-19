@@ -565,7 +565,11 @@ Package* PackageManager::LoadMap(const std::string& path)
 
 void PackageManager::UnloadPackage(Package* package)
 {
-	// Remove package from open streams cache:
+	ForgetStreams(package);
+}
+
+void PackageManager::ForgetStreams(Package* package)
+{
 	auto streamit = openStreams.begin();
 	while (streamit != openStreams.end())
 	{
