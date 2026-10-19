@@ -46,7 +46,7 @@ def parse_log(path):
             "summary": False, "maps_loaded": [], "login": False, "match_started": False}
     fps = []
     try:
-        lines = Path(path).read_text(errors="replace").splitlines()
+        lines = Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
     except OSError:
         return info, fps
     for line in lines:
