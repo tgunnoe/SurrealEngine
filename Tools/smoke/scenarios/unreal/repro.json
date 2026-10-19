@@ -1,0 +1,8 @@
+{
+ "ExtremeLab": {
+  "exit_code": -6,
+  "first_line_run1": "FATAL signal 6",
+  "first_line_run2": "FATAL signal 6",
+  "reproduced": "yes"
+ }
+}

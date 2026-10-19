@@ -90,6 +90,13 @@ UNREAL = Scenario(
          "script: Unsupported expression value property type"),
         ("FATAL", "startswith", "signal", "crash: FATAL signal {last}"),
     ),
+    error_owner={
+        "crash: FATAL signal 6": (
+            "unknown: the sweep log shows SIGABRT after five FPS samples with no "
+            "SCRIPT_ERROR, MISSING_NATIVE or EXCEPTION line before it, so the "
+            "aborting frame is not identified",
+            "none applies"),
+    },
     bullet="- ",
     status_label="Status.md",
     verdict_template="verdict: {verdict}, exit code {exit_code}",
