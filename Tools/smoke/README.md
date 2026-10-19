@@ -124,6 +124,20 @@ A call the VM would skip silently is refused the same way, with
 `call <Function> skipped: <reason>`: the player's state ignores the function,
 the level has not begun play, or the player is being deleted.
 
+`call <Property>.<Function> [arg ...]` runs the function on the object that one
+of the player's object properties holds, instead of on the player or the
+console. The Deus Ex menus are functions of the root window, which the player
+keeps in `rootWindow`, so `--exec='10:call rootWindow.InvokeLoadScreen'` opens
+the load screen and `call rootWindow.InvokeSaveScreen` the save screen. The
+property name is matched without regard to case, the arguments are read as
+above (`self` is still the player), and the console is not tried for such a
+name. The refusal is written as `call <Property>.<Function> refused: <reason>`,
+the reason being one of: the name has more than one `.` or nothing on one side
+of its `.`; `no player`; `the player has no property <Property>`;
+`<Property> is not an object property`; `<Property> is None`; or `the <Class>
+in <Property> has no function <Function>`. A call that is made logs
+`call <Property>.<Function> returned <value>`, the name as it was typed.
+
 A call that is made logs `call <Function> returned <value>` to the engine log
 (`True` or `False`, the number, the text, the object's name, `<unnamed ClassName>`
 for an object with no name, or `None` for no object, and `nothing` for a function
