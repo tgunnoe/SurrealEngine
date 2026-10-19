@@ -311,6 +311,26 @@
 #include "Native/NWebResponse.h"
 #include "Native/NWindow.h"
 
+std::string DeusExSaveFolderName(int slot)
+{
+	return {};
+}
+
+fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension)
+{
+	return {};
+}
+
+int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
+{
+	return 0;
+}
+
+std::optional<fs::path> NewestDeusExSaveLevel(const fs::path& slotFolder, const std::string& saveExtension)
+{
+	return std::nullopt;
+}
+
 PackageManager::PackageManager(const GameLaunchInfo& launchInfo) : launchInfo(launchInfo)
 {
 	gameRootFolderPath = fs::path(launchInfo.gameRootFolder);

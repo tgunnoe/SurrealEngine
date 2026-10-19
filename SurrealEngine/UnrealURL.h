@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 
 class UnrealURL
@@ -32,3 +33,11 @@ public:
 	int Port = 7777;
 	Array<std::string> Options;
 };
+
+// The slot a save-slot option or console argument names: an optional '-' followed by digits, within
+// int range. Anything else (trailing text, an empty text, a sign alone) is not a number.
+std::optional<int> ParseSaveSlot(const std::string& text);
+
+// The text of the option that asks for a load: `load` (Unreal, UT), else `loadgame` (the Deus Ex
+// scripts' spelling). Nothing when the URL carries neither; the text is empty for a bare `?load`.
+std::optional<std::string> LoadOptionText(const UnrealURL& url);

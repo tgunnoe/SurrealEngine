@@ -205,3 +205,12 @@ void UnrealURL::Clear()
 	Options.clear();
 }
 
+std::optional<int> ParseSaveSlot(const std::string& text)
+{
+	return std::nullopt;
+}
+
+std::optional<std::string> LoadOptionText(const UnrealURL& url)
+{
+	return std::nullopt;
+}
