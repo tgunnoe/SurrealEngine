@@ -74,3 +74,21 @@ size_t DueCommands(const Array<ExecItem>& schedule, double secondsSinceLogin, si
 
 // "<seconds> <command>", the text that follows EXEC in the smoke log.
 std::string FormatExecItem(const ExecItem& item);
+
+// One entry of --trace-script: a class, narrowed to one function when function is not empty.
+struct TraceScriptEntry
+{
+	std::string cls;
+	std::string function;
+};
+
+struct TraceScriptResult
+{
+	Array<TraceScriptEntry> entries;	// In the order written; empty when the text was rejected
+	std::string error;					// Names the offending value or entry; empty when the text was accepted
+
+	bool ok() const { return error.empty(); }
+};
+
+// Parses the value of --trace-script: "<Class>[.<Function>][,<Class>[.<Function>]...]".
+TraceScriptResult ParseTraceScript(const std::string& text);

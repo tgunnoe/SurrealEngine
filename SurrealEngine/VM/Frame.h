@@ -51,6 +51,7 @@ public:
 	static ExpressionValue Call(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args);
 	static std::string GetCallstack();
 	static std::string GetDisassembly(Expression* statement);
+	static std::string FormatTraceArgs(const ArrayView<ExpressionValue>& args);
 
 	static bool AddBreakpoint(const NameString& cls, const NameString& func, const NameString& state = {}, int statementIndex = 0);
 

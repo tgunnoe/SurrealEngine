@@ -601,3 +601,8 @@ std::string FormatExecItem(const ExecItem& item)
 	std::snprintf(seconds, sizeof(seconds), "%.15g", item.seconds);
 	return std::string(seconds) + " " + item.command;
 }
+
+TraceScriptResult ParseTraceScript(const std::string& text)
+{
+	return { {}, "not implemented" };
+}

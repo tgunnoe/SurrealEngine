@@ -494,6 +494,11 @@ void Frame::TraceCall(UFunction* func, UObject* instance, const ArrayView<Expres
 #endif
 }
 
+std::string Frame::FormatTraceArgs(const ArrayView<ExpressionValue>& args)
+{
+	return "not implemented";
+}
+
 void Frame::GotoLabel(const NameString& label)
 {
 	for (UClass* cls = Object->Class; cls != nullptr; cls = static_cast<UClass*>(cls->BaseStruct))
