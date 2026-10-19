@@ -49,8 +49,11 @@
 #include "Packages/ConSys/Events/UConEvent.h"
 #include "Packages/ConSys/Events/UConEventTransferObject.h"
 #include "Packages/ConSys/Events/UConEventCheckObject.h"
+#include "Packages/DeusEx/UDeusExDecoration.h"
 #include "Packages/DeusEx/UDeusExLevelInfo.h"
+#include "Packages/DeusEx/UDeusExPlayer.h"
 #include "Packages/DeusEx/UDeusExSaveInfo.h"
+#include "Packages/DeusEx/UScriptedPawn.h"
 #include "ObjectTravelInfo.h"
 #include "Math/quaternion.h"
 #include "Math/FrustumPlanes.h"
@@ -898,6 +901,8 @@ bool Engine::LoadFromSaveFile(const UnrealURL& url)
 	GameInfo = UObject::Cast<UGameInfo>(LevelInfo->Game());
 	if (!GameInfo)
 		Exception::Throw("Save file has no GameInfo actor for " + LevelPackage->GetPackageName().ToString() + "!");
+
+	RebindConversations();
 
 	LogMessage("Loaded game from slot " + std::to_string(slotNum) + ": " + realMapName);
 	return true;
@@ -2760,6 +2765,25 @@ void Engine::LinkActorsToLevel()
 	{
 		if (actor)
 			actor->RelinkBasedActor();
+	}
+}
+
+void Engine::RebindConversations()
+{
+	if (!LaunchInfo.IsDeusEx())
+		return;
+
+	// ConListItems is a transient property, so a save never holds it, and the scripts of these three classes
+	// fill it only from PostPostBeginPlay, which a load does not run. Without this no conversation can start
+	// on a loaded level. Needs the level's DeusExLevelInfo, which GetLevelObject has found by now.
+	for (UActor* actor : Level->Actors)
+	{
+		if (auto player = UObject::TryCast<UDeusExPlayer>(actor))
+			player->ConBindEvents();
+		else if (auto pawn = UObject::TryCast<UScriptedPawn>(actor))
+			pawn->ConBindEvents();
+		else if (auto decoration = UObject::TryCast<UDeusExDecoration>(actor))
+			decoration->ConBindEvents();
 	}
 }
 

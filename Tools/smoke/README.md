@@ -147,10 +147,9 @@ functions the player calls on a running conversation on every frame
 the 20000-call cap, which counts them too, is spent within seconds of the call:
 the stop line's own time in the log says when. Name the class of an object a
 script creates (`DeusExGoal`, for one) to see the calls made on it. Such an
-object has no name, because `new` gives it none, so it shows in the trace as
-`None`, and a `call` that returns it logs `returned None`, just as it does for
-no object at all; the traced calls made on the object are what tell the two
-apart.
+object has no name, because `new` gives it none, so in the trace and in the
+result of a `call` it shows as `<unnamed ClassName>`, with its class in place of
+`ClassName`, for example `<unnamed DeusExGoal>`; `None` means no object at all.
 
 To make a deterministic fatal exception, request a map that does not exist
 (`--url=NoSuchMap`): the log ends with `EXCEPTION` and `FATAL` lines and the
