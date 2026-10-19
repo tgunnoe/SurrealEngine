@@ -1,12 +1,11 @@
-# STUB messages across the Unreal Gold sweep
+# Distinct STUB messages, Unreal Gold 226b sweep
 
-Distinct `STUB` lines in the 55 logs (counted with
-`grep -h '^STUB' *.log | sort -u | wc -l`): 0.
-Rows in this table: 0.
+Distinct stub lines in the logs: 0. Rows below: 0.
 
-| Stub text | Maps hit | Class | Reason |
+| Stub | Maps | Class | Reason |
 | :--- | ---: | :--- | :--- |
 
-No map logged a `STUB` line (`stub_hits` is 0 in every row of
-`sweep.json`), so `stubs.json` holds an empty list for each map and no
-stub makes a map non-clean.
+A stub is gameplay when its owner descends from one of the gameplay roots
+listed in scenarios/unreal/scenario.py. An owner missing from that
+table is unclassified and counts as gameplay until the table is
+extended.

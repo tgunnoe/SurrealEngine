@@ -1,39 +1,25 @@
-# Unreal Gold 226b sweep summary (60 s per map, 55 maps)
+# Unreal Gold 226b sweep summary
 
-| Outcome | Maps |
-| :--- | ---: |
-| clean (pass, requested map loaded, fps recorded, no stubs) | 46 |
-| fail | 9 |
-| crash | 0 |
-| timeout | 0 |
-| idle (pass without the map loaded or without fps) | 0 |
+Maps: 55. clean: 54 of 55. fail: 0. crash: 1. timeout: 0. pass-verdict but non-clean: 0. warnings: 125.
 
-Check: the counts are the verdict tally of `sweep.json`
-(`python3 -I -c 'import json,collections;print(collections.Counter(m["verdict"] for m in json.load(open("sweep.json"))["maps"]))'`
-gives pass 46, fail 9), and `check_triage.py` derives the same 9
-non-clean maps (`non-clean: 9 of 55`). All 9 failing rows exit 0 with a
-`SUMMARY` line; they fail only because `script_errors` is above zero.
-No map logged a `STUB`, `MISSING_NATIVE`, `EXCEPTION` or `FATAL` line.
-`fps_avg` was not judged (three sweeps shared one display).
+Check: the verdict counts are recomputed from sweep.json by check_triage.py,
+which exits 0 only if they equal the line above.
 
 ## Failure signatures
 
-| Signature | Maps |
-| :--- | :--- |
-| `Accessed None` from `Object.SubtractEqual_FloatFloat` at `SinglePlayer.Killed` line 20 (`Killer.PlayerReplicationInfo.Score`) and `GameInfo.ScoreKill` line 1001 (`Other.PlayerReplicationInfo.Score`), reached from `Pawn.Died` | Bluff, Ceremony, Chizra, Dig, Dug, SkyCaves, SkyTown, SpireVillage, TheSunspire (9) |
+| Signature | Maps | Affected |
+| :--- | ---: | :--- |
+| crash: FATAL signal 6 | 1 | ExtremeLab |
+| verdict crash | 1 | ExtremeLab |
 
-## Ranked candidate fix work
+## Ranked fix candidates
 
-1. Make the engine report a None access uniformly, then let the project
-   owner rule whether a faithful `Accessed None` counts against clean.
-   Mechanism: `SubtractEqual_FloatFloat` receives a None out-parameter,
-   `ExpressionValue::CheckType` throws "Accessed None"
-   (`SurrealEngine/VM/ExpressionValue.h`), and the catch in
-   `Frame::CallNative` (`SurrealEngine/VM/Frame.cpp`) logs it as
-   "Script error: ", which the harness counts. The same condition in a
-   statement or call target logs an unprefixed line the harness never
-   sees. The None is reached by stock script (monsters and Nali have no
-   replication info), so it is not a map fault. Resolving either side
-   unblocks all 9 maps.
+Fully unblocks means every non-clean reason of the map is covered by the
+candidate. Partial means the map loses one reason but keeps others.
 
-No other work is needed for the other 46 maps by this sweep.
+| Rank | Candidate | Fully unblocks | Partial |
+| ---: | :--- | ---: | ---: |
+| 1 | fix signature: crash: FATAL signal 6 | 0 | 1 |
+| 2 | fix signature: verdict crash | 0 | 1 |
+
+A map becomes clean only when every signature that lists it above is fixed.
