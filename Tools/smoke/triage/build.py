@@ -3,6 +3,8 @@
 Reads sweep.json, stubs.json and errors.json from datadir, and the re-run
 results from a repro JSON file; writes the three documents to outdir.
 """
+import contextlib
+import io
 import json
 import os
 import shlex
@@ -13,14 +15,44 @@ from .repro import engine_args
 
 
 def error_signature(scn, e):
+    """The scenario's rule for the line, else `kind: text`. FATAL lines take no
+    rule: a crash row gets its signature from crash_signature, and a FATAL line
+    in any other row reads as the default."""
     t = e["text"]
-    for kind, mode, needle, signature in scn.signature_rules:
-        if kind is not None and e["kind"] != kind:
-            continue
-        hit = needle in t if mode == "contains" else t.startswith(needle)
-        if hit:
-            return signature.format(last=t.split()[-1])
+    if e["kind"] != "FATAL":
+        for kind, mode, needle, signature in scn.signature_rules:
+            if kind is not None and e["kind"] != kind:
+                continue
+            hit = needle in t if mode == "contains" else t.startswith(needle)
+            if hit:
+                return signature.format(last=t.split()[-1])
     return "%s: %s" % (e["kind"], HEX.sub("0x?", t)[:80])
+
+
+def crash_signature(m, e):
+    """The one signature of a crash row, taken from the sweep row: the signal
+    that killed the run, else its first recorded FATAL line, else its exit
+    code. The extractor keeps only five error lines, so the FATAL line itself
+    may be missing from the recorded ones."""
+    code = m["exit_code"]
+    if isinstance(code, int) and code < 0:
+        return "crash: FATAL signal %d" % -code
+    for x in e["errors"]:
+        if x["kind"] == "FATAL":
+            return "crash: FATAL %s" % HEX.sub("0x?", x["text"])[:80]
+    return "crash: exit %s" % code
+
+
+def error_signatures(scn, m, e):
+    """The distinct signatures of a row's recorded error lines, in log order.
+    In a crash row every FATAL line stands for the one crash signature, which
+    comes last when no FATAL line was recorded."""
+    crash = m["verdict"] == "crash"
+    sigs = [crash_signature(m, e) if crash and x["kind"] == "FATAL" else error_signature(scn, x)
+            for x in e["errors"]]
+    if crash and not any(x["kind"] == "FATAL" for x in e["errors"]):
+        sigs.append(crash_signature(m, e))
+    return list(dict.fromkeys(sigs))
 
 
 def is_loaded(scn, name, maps_loaded):
@@ -72,6 +104,16 @@ def _load(datadir, name):
         return json.load(f)
 
 
+@contextlib.contextmanager
+def _document(outdir, name):
+    """A buffer that is written to outdir/name as one document ending in
+    exactly one newline, whatever the pieces written to it ended with."""
+    buf = io.StringIO()
+    yield buf
+    with open(os.path.join(outdir, name), "w") as f:
+        f.write(buf.getvalue().rstrip() + "\n")
+
+
 def build(scn, datadir, outdir, repro_path):
     sweep = _load(datadir, "sweep.json")["maps"]
     stubs = _load(datadir, "stubs.json")
@@ -87,11 +129,11 @@ def build(scn, datadir, outdir, repro_path):
         gp = [s for s in stubs["maps"][name] if s["class"] != "non-gameplay"]
         e = errs[name]
         reasons = []
-        if m["verdict"] != "pass":
+        if m["verdict"] not in ("pass", "crash"):
             reasons.append("verdict " + m["verdict"])
         if not is_loaded(scn, name, m["maps_loaded"]) or m["fps_avg"] is None:
             reasons.append("idle" if m["verdict"] == "pass" else "no render")
-        reasons += [error_signature(scn, x) for x in e["errors"]]
+        reasons += error_signatures(scn, m, e)
         if warnings_fail(scn, m):
             reasons.append("warnings")
         if match_unstarted(scn, m):
@@ -102,7 +144,7 @@ def build(scn, datadir, outdir, repro_path):
         rows.append((m, e, gp, sorted(set(reasons))))
     nonclean = [r for r in rows if r[3]]
 
-    with open(os.path.join(outdir, "TRIAGE.md"), "w") as f:
+    with _document(outdir, "TRIAGE.md") as f:
         f.write("# %s sweep triage\n\n" % scn.label)
         f.write(scn.triage_intro.format(nonclean=len(nonclean), total=len(rows)))
         f.write(scn.triage_evidence)
@@ -127,7 +169,7 @@ def build(scn, datadir, outdir, repro_path):
             f.write("%sgameplay stubs: %s\n" % (b, ", ".join("`%s`" % s["text"] for s in gp) or "none"))
             argv = " ".join(shlex.quote(a) for a in engine_args(scn, scn.exe, name))
             f.write("%srepro: `%s \"%s\"`\n" % (b, argv, scn.game_placeholder))
-            sigs = [error_signature(scn, x) for x in e["errors"]]
+            sigs = error_signatures(scn, m, e)
             if warnings_fail(scn, m):
                 sigs.append("warnings")
             if match_unstarted(scn, m):
@@ -160,7 +202,7 @@ def build(scn, datadir, outdir, repro_path):
     for lst in stubs["maps"].values():
         for s in lst:
             cls[s["text"]] = s
-    with open(os.path.join(outdir, "stubs.md"), "w") as f:
+    with _document(outdir, "stubs.md") as f:
         f.write("# Distinct STUB messages, %s sweep\n\n" % scn.label)
         f.write("Distinct stub lines in the logs: %d. Rows below: %d.\n\n" % (len(count), len(count)))
         f.write("| Stub | Maps | Class | Reason |\n| :--- | ---: | :--- | :--- |\n")
@@ -184,7 +226,13 @@ def build(scn, datadir, outdir, repro_path):
     for m, e, gp, r in nonclean:
         stubfile_of[m["map"]] = {"stub " + s["text"]: owner_file.get(s["owner"], "unknown") for s in gp}
 
-    with open(os.path.join(outdir, "SUMMARY.md"), "w") as f:
+    warning_lines, warning_maps = Counter(), Counter()
+    for m in sweep:
+        for site, n in errs[m["map"]].get("warning_sites", {}).items():
+            warning_lines[site] += n
+            warning_maps[site] += 1
+
+    with _document(outdir, "SUMMARY.md") as f:
         f.write("# %s sweep summary\n\n" % scn.label)
         f.write(scn.counts_template.format(
             maps=len(rows), clean=clean, fail=verdicts["fail"], crash=verdicts["crash"],
@@ -192,15 +240,23 @@ def build(scn, datadir, outdir, repro_path):
             stub_only=sum(1 for m, e, gp, r in nonclean if m["verdict"] == "pass"),
             warnings=show_count(warnings_total(sweep)),
             matches_started=matches_started(sweep)) + "\n\n")
-        f.write("Check: the verdict counts are recomputed from sweep.json by check_triage.py,\n"
-                "which exits 0 only if they equal the line above.\n\n")
-        f.write("## Failure signatures\n\n| Signature | Maps | Affected |\n| :--- | ---: | :--- |\n")
+        f.write("Check: the verdict counts are recomputed from sweep.json by the `check`\n"
+                "command of the triage module, which exits 0 only if they equal the line\n"
+                "above.\n\n")
+        f.write("## Warning sites\n\n| Site | Lines | Maps |\n| :--- | ---: | ---: |\n")
+        for site, n in sorted(warning_lines.items(), key=lambda kv: (-kv[1], kv[0])):
+            f.write("| %s | %d | %d |\n" % (site.replace("|", "\\|"), n, warning_maps[site]))
+        if not warning_lines:
+            f.write("| none | | |\n")
+        f.write("\n## Failure signatures\n\n| Signature | Maps | Affected |\n| :--- | ---: | :--- |\n")
         for s, ms in sorted(sig_maps.items(), key=lambda kv: (-len(kv[1]), kv[0])):
             if len(ms) <= 5:
                 aff = ", ".join(sorted(ms))
             else:
                 aff = "%d maps (see TRIAGE.md)" % len(ms)
             f.write("| %s | %d | %s |\n" % (s, len(ms), aff))
+        if not sig_maps:
+            f.write("| none | | |\n")
         f.write("\n## Ranked fix candidates\n\n")
         f.write("Fully unblocks means every non-clean reason of the map is covered by the\n"
                 "candidate. Partial means the map loses one reason but keeps others.\n\n")
@@ -216,4 +272,6 @@ def build(scn, datadir, outdir, repro_path):
         f.write("| Rank | Candidate | Fully unblocks | Partial |\n| ---: | :--- | ---: | ---: |\n")
         for i, (c, full, part) in enumerate(cands, 1):
             f.write("| %d | %s | %d | %d |\n" % (i, c, full, part))
+        if not cands:
+            f.write("| none | | | |\n")
         f.write(scn.summary_footer)

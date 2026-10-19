@@ -1,7 +1,6 @@
 import contextlib
 import dataclasses
 import filecmp
-import importlib.util
 import io
 import json
 import os
@@ -15,22 +14,14 @@ from unittest import mock
 
 SMOKE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SMOKE))
-from triage import build, check, extract, repro  # noqa: E402
+from triage import build, check, cli, extract, repro  # noqa: E402
 from triage.scenario import Scenario  # noqa: E402
 
 SCENARIOS = SMOKE / "scenarios"
 
 
 def load_scenario(name):
-    # Loaded by path: discovery puts this directory on sys.path, where a bare
-    # "scenario" would be the package's own module.
-    spec = importlib.util.spec_from_file_location(
-        "scenario_" + name.replace("-", "_"), SCENARIOS / name / "scenario.py")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    found = [v for v in vars(mod).values() if isinstance(v, Scenario)]
-    assert len(found) == 1, (name, found)
-    return found[0]
+    return cli.load_scenario(SCENARIOS / name)
 
 
 TOY = Scenario(
@@ -817,7 +808,6 @@ class TestEntryPoint(unittest.TestCase):
             source.replace("REPRO_LOGDIR", repr(str(self.root / "rerun"))))
 
     def run_cli(self, *argv):
-        from triage import cli
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
             code = cli.main([str(a) for a in argv])

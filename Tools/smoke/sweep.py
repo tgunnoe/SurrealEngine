@@ -19,6 +19,10 @@ import sys
 import time
 from pathlib import Path
 
+# Isolated mode (python3 -I) puts no directory on sys.path.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from triage.matchrule import match_started  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MAP_SUFFIXES = {".unr", ".dx"}
 KILL_GRACE_SECONDS = 45
@@ -45,24 +49,10 @@ def parse_log(path):
         lines = Path(path).read_text(errors="replace").splitlines()
     except OSError:
         return info, fps
-    state = None
-    pressed = False
     for line in lines:
         kind, _, rest = line.partition(" ")
         if kind == "LOGIN":
             info["login"] = True
-        elif kind == "STATE":
-            fields = rest.split()
-            if len(fields) >= 2:
-                state = fields[1]
-                if pressed and state == "PlayerWalking":
-                    info["match_started"] = True
-        elif kind == "EXEC":
-            # Only a command that ran is the press; EXEC_FAILED and EXEC_SKIPPED are other kinds.
-            if not pressed:
-                pressed = True
-                if state == "PlayerWalking":
-                    info["match_started"] = True
         elif kind == "SCRIPT_ERROR":
             info["script_errors"] += 1
         elif kind == "SCRIPT_WARNING":
@@ -84,6 +74,7 @@ def parse_log(path):
                 pass
         elif kind == "FATAL" and rest.startswith("signal"):
             info["fatal_signal"] = True
+    info["match_started"] = match_started(lines)
     if fps:
         info["fps_avg"] = sum(fps) / len(fps)
     return info, fps

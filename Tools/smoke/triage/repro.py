@@ -6,28 +6,25 @@ Scenario.repro_logdir and are not meant to be committed.
 import json
 import os
 import subprocess
-
-import sweep
+from pathlib import Path
 
 from . import extract
+from .matchrule import match_started
 
 
-def _first_failing(path):
-    _, errors, _, _ = extract.parse(path)
-    if errors:
-        return "%s %s" % (errors[0]["kind"], extract.HEX.sub("0x?", errors[0]["text"]))
-    return None
-
-
-def _gameplay_stubs(scn, path):
-    stubs, _, _, _ = extract.parse(path)
-    return sorted(s for s in stubs
-                  if extract.classify(scn, extract.owner_of(scn, s))[0] != "non-gameplay")
+def _facts(scn, path):
+    """A run's first failing line (address-masked, None without one) and its
+    sorted gameplay stubs: the two things the checker holds against a map."""
+    stubs, errors, _, _ = extract.parse(path)
+    first = "%s %s" % (errors[0]["kind"], extract.HEX.sub("0x?", errors[0]["text"])) if errors else None
+    gameplay = sorted(s for s in stubs
+                      if extract.classify(scn, extract.owner_of(scn, s))[0] != "non-gameplay")
+    return first, gameplay
 
 
 def _match_started(path):
-    # The sweep's own rule: a re-run and a sweep row cannot disagree on what a start is.
-    return sweep.parse_log(path)[0]["match_started"]
+    # Read as the sweep reads a log, so the two cannot split a line differently.
+    return match_started(Path(path).read_text(encoding="utf-8", errors="replace").splitlines())
 
 
 def log_path(scn, name):
@@ -51,18 +48,20 @@ def compare(scn, old_log, new_log):
     Runs agree when their first failing line matches after masking addresses;
     with no failing line in either, when their gameplay stub sets match. When
     the scenario requires a match start, the runs must also agree on whether
-    the match started, and a non-start counts as a failure: the verdict is
-    "no" when the first run failed (a failing line or a non-start) and the
-    second did not, "flaky" when the runs disagree otherwise. Each line then
-    ends with "; match_started:<true|false>".
+    the match started. A run failed when it has a failing line or a gameplay
+    stub, as the checker counts it, or, when the scenario requires a match
+    start, when its match did not start. The verdict is "no" when the first
+    run failed and the second did not, "flaky" when the runs disagree
+    otherwise. Each line then ends with "; match_started:<true|false>".
     """
-    a, b = _first_failing(old_log), _first_failing(new_log)
+    a, old_stubs = _facts(scn, old_log)
+    b, new_stubs = _facts(scn, new_log)
     if a is None and b is None:
-        old, new = _gameplay_stubs(scn, old_log), _gameplay_stubs(scn, new_log)
-        agree, line1, line2 = old == new, "stubs:" + ",".join(old), "stubs:" + ",".join(new)
+        agree = old_stubs == new_stubs
+        line1, line2 = "stubs:" + ",".join(old_stubs), "stubs:" + ",".join(new_stubs)
     else:
         agree, line1, line2 = a == b, a, b
-    failed1, failed2 = a is not None, b is not None
+    failed1, failed2 = a is not None or bool(old_stubs), b is not None or bool(new_stubs)
     if scn.require_match_start:
         started1, started2 = _match_started(old_log), _match_started(new_log)
         agree = agree and started1 == started2

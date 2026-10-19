@@ -23,7 +23,9 @@ class Scenario:
 
     # Error attribution.
     # (kind or None, "contains" | "startswith", needle, signature); the
-    # signature may use {last}, the final word of the error text.
+    # signature may use {last}, the final word of the error text. FATAL
+    # lines are never matched: a crash row has one signature derived from its
+    # sweep row, and a FATAL line in any other row reads "FATAL: <text>".
     signature_rules: tuple = ()
     error_owner: dict = field(default_factory=dict)     # signature -> (owner, cite)
     status_natives: str = ""         # cite for unimplemented natives

@@ -170,6 +170,7 @@ screenshot. `verdict` is one of:
 - `fail`: anything else.
 
 ## Triage module
+## Triage module
 
 `Tools/smoke/triage/` is the shared code that turns sweep logs into triage
 documents: `extract` (logs to `stubs.json` and `errors.json`), `build`
@@ -180,19 +181,73 @@ hierarchy, bare-owner table, error attribution, prose, document formats,
 re-run options and the checker options. Functions take the scenario and
 explicit directories, never a literal or the working directory.
 
+A scenario is a directory under `Tools/smoke/scenarios/` whose `scenario.py`
+defines exactly one `Scenario` (two or none is an error), beside the sweep's
+`sweep.json` and the files the commands read and write. One entry point runs
+every command on any scenario directory, from any working directory:
+
+```
+python3 -I -B Tools/smoke/triage/__main__.py <scenario dir> extract <logdir>
+python3 -I -B Tools/smoke/triage/__main__.py <scenario dir> repro <exe> <game folder> <logdir> <out.json> <map>...
+python3 -I -B Tools/smoke/triage/__main__.py <scenario dir> build <repro.json>
+python3 -I -B Tools/smoke/triage/__main__.py <scenario dir> check
+```
+
+- `extract` reads the sweep's per-map `.log` files in `<logdir>` and writes
+  `stubs.json` and `errors.json` into the scenario directory.
+- `repro` re-runs the named maps one at a time and writes the comparison
+  with the sweep's logs to `<out.json>`; it needs the run environment above.
+- `build` reads `sweep.json`, `stubs.json`, `errors.json` and `<repro.json>`
+  and writes the three documents into the scenario directory.
+- `check` compares the documents with the sidecars, prints
+  `sections=<n> nonclean=<n> problems=<n>` and a `FAIL` line per problem, and
+  exits 0 only when there is none.
+
+`<repro.json>` and `<out.json>` are relative to the scenario directory unless
+absolute; `<logdir>`, `<exe>` and `<game folder>` are relative to the working
+directory. Isolated mode adds no directory to `sys.path`, so the file adds
+the one that holds the `triage` package itself; `python3 -B -m triage ...`
+from `Tools/smoke` runs the same commands. Before loading `scenario.py` the
+entry point puts the scenario directory and `Tools/smoke/scenarios` on
+`sys.path`, so a scenario can import a module beside it, as the two UT
+scenarios import their class tables from `scenarios/ut436_tables.py`.
+
 Warnings are counted and shown (a `warnings` line in each TRIAGE section
 and a total in the SUMMARY counts line, each `not recorded` where the
 sweep rows carry no `script_warnings`) but do not make a map non-clean
 unless the scenario sets `warnings_fail_clean`, because the original
-games log `Accessed None` constantly.
+games log `Accessed None` constantly. `extract` also records, per map,
+`warning_sites` in `errors.json`: each distinct `SCRIPT_WARNING` text, with
+whitespace collapsed and addresses masked, and the number of lines that
+carry it. `SUMMARY.md` lists them in a `## Warning sites` table between the
+counts line and the failure signatures: one row per site over all maps, with
+its line count and the number of maps it appears in, most lines first and
+then by name, so a site nobody has read is visible. `TRIAGE.md` sections keep
+only the count.
 
-A scenario wraps the module in a few lines: put `Tools/smoke` on
-`sys.path`, import the scenario value, and call the module function.
-`scenarios/deusex/` is the reference: `scenario.py` holds its literals and
-the four scripts keep their original command lines. `scenarios/ut-bots/` is
-the Unreal Tournament botmatch sweep (four bots in each map's own game type,
-fire pressed five seconds after login): a map is clean only if it is clean by
-the rules above and its match started (`require_match_start`).
+The `## Failure signatures` table has one row per distinct reason a map is
+non-clean. A crash (verdict `crash`) has exactly one signature, derived from
+its sweep row and spelled the same in every scenario: `crash: FATAL signal
+<n>` when the exit code is `-<n>`, else `crash: FATAL <text>` from its first
+recorded `FATAL` line, else `crash: exit <code>`. A `FATAL` line in any other
+row reads `FATAL: <text>`; a scenario's `signature_rules` never apply to
+`FATAL` lines, but its `error_owner` can key on a crash signature. A table
+with no rows has one `none` row, and every document ends with exactly one
+newline.
+
+`scenarios/deusex/` is the reference: `scenario.py` holds its literals.
+`scenarios/ut-bots/` is the Unreal Tournament botmatch sweep (four bots in
+each map's own game type, fire pressed five seconds after login): a map is
+clean only if it is clean by the rules above and its match started
+(`require_match_start`). `scenarios/ut/` is the same game without bots, and
+`scenarios/unreal/` is Unreal Gold.
+
+A re-run is compared with the sweep's log by `repro`: the runs agree when
+their first failing lines match, or with none in either, when their
+gameplay stub sets match; the verdict is `no` when the first run failed (a
+failing line, a gameplay stub, or under `require_match_start` a match that
+did not start) and the second did not. `triage/matchrule.py` holds the
+match-start rule, which `sweep.py` and the comparison both import.
 
 Tests, from the repository root (the second is the sweep unittest):
 
@@ -201,5 +256,6 @@ python3 -I -B -m unittest discover -s Tools/smoke/triage -p 'test_*.py'
 python3 -I -B -m unittest discover -s Tools/smoke -p test_sweep.py
 ```
 
-The first includes a byte-identity test that regenerates the committed
-Deus Ex documents from the committed sidecars.
+The first includes one identity test per scenario that rebuilds the
+committed documents from the committed sidecars and compares them with the
+committed ones.
