@@ -129,7 +129,6 @@ Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 		deusExPackage = packages->GetPackage("DeusEx");
 		dxgc = UObject::Cast<UGC>(transientpkg->NewObject("gc", extpkg->GetClass("GC"), ObjectFlags::Transient));
 		dxgc->Canvas() = canvas;
-		dxSaveInfo = UObject::Cast<UDXSaveInfo>(transientpkg->NewObject("DeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::Transient));
 		dxConMissionList = UObject::Cast<UConversationMissionList>(packages->GetPackage("DeusExConText")->GetUObject("ConversationMissionList", "ConMissionList"));
 	}
 
@@ -961,8 +960,21 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 	const auto saveFolderPath = packages->GetSaveFolderPath();
 	Directory::create(saveFolderPath.string());
 
+	fs::path savedFile;
+
 	if (packages->IsDeusEx())
 	{
+		// The scripts pass 0 for a new save and expect the next free slot, never Save0000
+		if (slotNum == 0)
+		{
+			slotNum = NextFreeDeusExSaveIndex(saveFolderPath);
+			if (slotNum == 0)
+			{
+				LogSkipped("Save game skipped: every save slot is taken");
+				return;
+			}
+		}
+
 		// Saving a game on Deus Ex does the following:
 		// - Create a folder using the slotNum (e.g. 1 -> "Save0001")
 		// - Save the level package using the name [MapName].dxs
@@ -971,28 +983,34 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		const auto saveSlotFolder = SaveSlotPath(true, slotNum, saveFolderPath, packages->GetSaveExtension());
 		Directory::create(saveSlotFolder.string());
 
-		auto levelName = Level->package->GetPackageName().ToString() + "." + packages->GetSaveExtension();
-		auto saveInfoName = "SaveInfo." + packages->GetSaveExtension();
-		auto saveFileFullPath = (saveSlotFolder / levelName).string();
-		auto saveInfoFullPath = (saveSlotFolder / saveInfoName).string();
-		LevelPackage->Save(Level, saveFileFullPath);
+		const std::string mapName = Level->package->GetPackageName().ToString();
+		savedFile = saveSlotFolder / (mapName + "." + packages->GetSaveExtension());
+		const auto saveInfoFile = saveSlotFolder / ("SaveInfo." + packages->GetSaveExtension());
+		LevelPackage->Save(Level, savedFile.string());
 
-		dxSaveInfo->DirectoryIndex() = slotNum;
-		dxSaveInfo->Description() = saveDescription;
-		dxSaveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
-		dxSaveInfo->MapName() = Level->package->GetPackageName().ToString();
-		dxSaveInfo->UpdateTimeStamp();
-		deusExPackage->Save(dxSaveInfo, saveInfoFullPath);
+		// The save info is made in the level's package, the one the writer is saving: it refuses an object
+		// of another package, and it exports the class of an object of the package it saves, so a save info
+		// from the DeusEx package would write the whole DeusExSaveInfo class into the file
+		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage->NewObject("DeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
+		saveInfo->DirectoryIndex() = slotNum;
+		saveInfo->Description() = saveDescription;
+		saveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
+		saveInfo->MapName() = mapName;
+		saveInfo->UpdateTimeStamp();
+		LevelPackage->Save(saveInfo, saveInfoFile.string());
 	}
 	else
 	{
-		const std::string saveFileFullPath = SaveSlotPath(false, slotNum, saveFolderPath, packages->GetSaveExtension()).string();
-		LevelPackage->Save(Level, saveFileFullPath);
+		savedFile = SaveSlotPath(false, slotNum, saveFolderPath, packages->GetSaveExtension());
+		LevelPackage->Save(Level, savedFile.string());
 
 		// The save package is later reloaded by its slot filename ("SaveN"), not by the original
 		// map name, so record the real map name here for LoadFromSaveFile() to recover.
 		packages->SetIniValue("user", "SaveGame", "MapName" + std::to_string(slotNum), Level->package->GetPackageName().ToString());
 	}
+
+	// The data folder is one game's subdirectory of the user directory, so this names the game too
+	LogMessage("Saved game to " + savedFile.lexically_relative(packages->GetDataFolderPath().parent_path()).generic_string());
 }
 
 std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems)
