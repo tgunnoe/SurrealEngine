@@ -1263,6 +1263,11 @@ std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string&
 	return {};
 }
 
+CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, UObject* self, const CallObjectResolver& resolve)
+{
+	return { {}, "not implemented" };
+}
+
 void Engine::NotePlayerLogin()
 {
 	SmokeLog::Get()->Event("LOGIN");
