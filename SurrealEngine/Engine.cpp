@@ -2476,14 +2476,19 @@ bool Engine::CallFunction(const Array<std::string>& args)
 
 		// What CallEvent would silently skip is reported instead
 		std::string skipReason;
-		if (!target->IsEventEnabled(func->Name))
-			skipReason = "the " + UObject::GetUClassName(target).ToString() + " ignores it in its state " + target->GetStateName().ToString();
-		else if (auto actor = UObject::TryCast<UActor>(target))
+		switch (SkipReasonFor(target, func->Name))
 		{
-			if (!actor->Level()->bBegunPlay())
-				skipReason = "the level has not begun play";
-			else if (actor->bDeleteMe())
-				skipReason = "the " + UObject::GetUClassName(target).ToString() + " is being deleted";
+		case ScriptCallSkip::EventDisabled:
+			skipReason = "the " + UObject::GetUClassName(target).ToString() + " ignores it in its state " + target->GetStateName().ToString();
+			break;
+		case ScriptCallSkip::LevelNotBegun:
+			skipReason = "the level has not begun play";
+			break;
+		case ScriptCallSkip::Deleting:
+			skipReason = "the " + UObject::GetUClassName(target).ToString() + " is being deleted";
+			break;
+		case ScriptCallSkip::None:
+			break;
 		}
 		if (!skipReason.empty())
 		{

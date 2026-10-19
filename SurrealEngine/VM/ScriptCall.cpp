@@ -67,29 +67,38 @@ bool NameStringToEventName(const NameString& name, EventName& eventName)
 
 ScriptCallSkip ScriptCallSkipReason(bool eventEnabled, bool isActor, bool begunPlay, bool deleted, bool allowDeleted)
 {
+	if (!eventEnabled)
+		return ScriptCallSkip::EventDisabled;
+
+	if (isActor)
+	{
+		if (!begunPlay)
+			return ScriptCallSkip::LevelNotBegun;
+		if (deleted && !allowDeleted)
+			return ScriptCallSkip::Deleting;
+	}
+
 	return ScriptCallSkip::None;
 }
 
 ScriptCallSkip SkipReasonFor(UObject* context, bool eventEnabled, bool allowDeleted)
 {
-	return ScriptCallSkip::None;
+	// A disabled event is decided before the context is looked at
+	UActor* actor = eventEnabled ? UObject::TryCast<UActor>(context) : nullptr;
+	return ScriptCallSkipReason(eventEnabled, actor != nullptr, actor && actor->Level()->bBegunPlay(), actor && actor->bDeleteMe(), allowDeleted);
 }
 
 ScriptCallSkip SkipReasonFor(UObject* context, const NameString& name)
 {
-	return ScriptCallSkip::None;
+	return SkipReasonFor(context, context->IsEventEnabled(name), false);
 }
 
 ExpressionValue CallEvent(UObject* Context, EventName eventname, Array<ExpressionValue> args)
 {
-	if (!Context->IsEventEnabled(eventname))
+	// UActor::Destroy marks an actor deleted before it sends Destroyed, so that is the one event an
+	// actor being deleted still gets
+	if (SkipReasonFor(Context, Context->IsEventEnabled(eventname), eventname == EventName::Destroyed) != ScriptCallSkip::None)
 		return ExpressionValue::NothingValue();
-
-	if (auto actor = UObject::TryCast<UActor>(Context))
-	{
-		if (!actor->Level()->bBegunPlay() || (actor->bDeleteMe() && eventname != EventName::Destroyed))
-			return ExpressionValue::NothingValue();
-	}
 
 	UFunction* func = FindEventFunction(Context, ToNameString(eventname));
 	if (func)
@@ -100,14 +109,8 @@ ExpressionValue CallEvent(UObject* Context, EventName eventname, Array<Expressio
 
 ExpressionValue CallEvent(UObject* Context, const NameString& name, Array<ExpressionValue> args)
 {
-	if (!Context->IsEventEnabled(name))
+	if (SkipReasonFor(Context, name) != ScriptCallSkip::None)
 		return ExpressionValue::NothingValue();
-
-	if (auto actor = UObject::TryCast<UActor>(Context))
-	{
-		if (!actor->Level()->bBegunPlay() || actor->bDeleteMe())
-			return ExpressionValue::NothingValue();
-	}
 
 	UFunction* func = FindEventFunction(Context, name);
 	if (func)
