@@ -329,7 +329,8 @@ void Engine::Run()
 			LoginPlayer();
 		}
 
-		if (ClientTravelInfo.URL.HasOption("load"))
+		// Deus Ex scripts ask for "loadgame" where the others ask for "load"
+		if (LoadOptionText(ClientTravelInfo.URL))
 		{
 			UnrealURL url(ClientTravelInfo.URL);
 			LoadFromSaveFile(url);
@@ -839,11 +840,15 @@ void Engine::LoadFromSaveFile(const UnrealURL& url)
 		CallEvent(console, EventName::NotifyLevelChange);
 
 	Package* savefilePackage = nullptr;
-	uint32_t slotNum = 0;
+	int slotNum = 0;
 
-	if (url.HasOption("load"))
+	if (const std::optional<std::string> slotText = LoadOptionText(url))
 	{
-		slotNum = Convert::to_uint32(url.GetOption("load"));
+		const std::optional<int> slot = ParseSaveSlot(*slotText);
+		if (!slot)
+			Exception::Throw("Load game: slot '" + *slotText + "' is not a number");
+
+		slotNum = *slot;
 		savefilePackage = packages->LoadSaveSlot(slotNum);
 	}
 

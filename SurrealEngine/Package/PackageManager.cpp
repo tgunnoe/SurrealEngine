@@ -460,7 +460,7 @@ Package* PackageManager::LoadSaveFile(const std::string& path)
 	return nullptr;
 }
 
-Package* PackageManager::LoadSaveSlot(const uint32_t slotNum)
+Package* PackageManager::LoadSaveSlot(int slotNum)
 {
 	return LoadSaveFile("Save" + std::to_string(slotNum) + "." + GetSaveExtension());
 }

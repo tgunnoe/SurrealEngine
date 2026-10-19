@@ -79,7 +79,7 @@ public:
 	void CloseStreams();
 
 	Package* LoadSaveFile(const std::string& path);
-	Package* LoadSaveSlot(const uint32_t slotNum);
+	Package* LoadSaveSlot(int slotNum);
 
 	std::shared_ptr<PackageStream> GetStream(Package* package);
 
