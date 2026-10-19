@@ -5,7 +5,11 @@
 
 std::string narrow_utf16(const std::wstring& str)
 {
-	return "stub";
+	std::string result;
+	result.reserve(str.size());
+	for (wchar_t c : str)
+		result.push_back(static_cast<uint32_t>(c) < 256 ? static_cast<char>(c) : '?');
+	return result;
 }
 
 #ifdef WIN32

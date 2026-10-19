@@ -3,6 +3,7 @@
 #include "Package.h"
 #include <string.h>
 #include "Utils/Exception.h"
+#include "Utils/UTF16.h"
 
 enum class ObjectFlags : uint32_t;
 class UClass;
@@ -88,6 +89,19 @@ public:
 		if (GetVersion() >= 64)
 		{
 			int len = ReadIndex();
+			if (len < 0 && len >= -(1024 * 1024))
+			{
+				// A negative count is the number of 16-bit code units, the terminating null included.
+				// A count below the cap falls through to the size check, so negating never overflows.
+				std::wstring units;
+				units.reserve(-len);
+				for (int i = 0; i < -len; i++)
+					units.push_back(ReadUInt16());
+				if (units.back() != 0)
+					Exception::Throw("ObjectStream::ReadString: Unterminated Unicode string in " + package->GetPackageName().ToString());
+				units.pop_back();
+				return narrow_utf16(units).c_str();
+			}
 			if (len < 0 || len > 1024 * 1024)
 				Exception::Throw("ObjectStream::ReadString: Invalid size in " + package->GetPackageName().ToString());
 			Array<char> s;
