@@ -305,7 +305,7 @@ TEST(SaveDirectoryListsTheSlotFoldersInSlotOrder)
 TEST(SaveDirectoryLeavesOutWhatIsNotASlotFolder)
 {
 	SaveSandbox sandbox("listexcludes");
-	MakeFolders(sandbox, { "Save0002", "QuickSave", "Save00-1", "Save0000", "Save1", "Save0002x", "Save99999999999", "save0005" });
+	MakeFolders(sandbox, { "Save0002", "QuickSave", "Save00-1", "Save0000", "Save1", "Save0002x", "Save99999999999", "save0005", "Sav", "ab" });
 	sandbox.Touch("notes.txt");
 	// A file with a slot's name is not a slot
 	sandbox.Touch("Save0004");

@@ -8,6 +8,7 @@
 #include "Utils/File.h"
 #include "Utils/StrTools.h"
 #include "Utils/UserDirs.h"
+#include "UnrealURL.h"
 #include "VM/NativeFunc.h"
 #include "Packages/ConSys/UConAudioList.h"
 #include "Packages/ConSys/UConCamera.h"
@@ -310,6 +311,7 @@
 #include "Native/NWebRequest.h"
 #include "Native/NWebResponse.h"
 #include "Native/NWindow.h"
+#include <algorithm>
 
 std::string DeusExSaveFolderName(int slot)
 {
@@ -355,9 +357,29 @@ int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
 std::vector<std::pair<int, std::string>> ListDeusExSaveSlots(const fs::path& saveFolder)
 {
 	std::vector<std::pair<int, std::string>> slots;
+
+	// The save folder does not exist until the first save, and a listing is no place to fail
 	std::error_code error;
-	for (const auto& entry : fs::directory_iterator{ saveFolder, error })
-		slots.emplace_back(0, entry.path().filename().string());
+	for (fs::directory_iterator it{ saveFolder, error }, end; !error && it != end; it.increment(error))
+	{
+		std::error_code entryError;
+		if (!it->is_directory(entryError))
+			continue;
+
+		// Only the exact spelling of a slot's folder is a slot, so that a folder of the player's own
+		// (or the quick save, which the scripts ask for separately) never reaches the menus
+		const std::string name = it->path().filename().string();
+		if (name.compare(0, 4, "Save") != 0)
+			continue;
+
+		const std::optional<int> slot = ParseSaveSlot(name.substr(4));
+		if (!slot || *slot < 1 || name != DeusExSaveFolderName(*slot))
+			continue;
+
+		slots.emplace_back(*slot, name);
+	}
+
+	std::sort(slots.begin(), slots.end());
 	return slots;
 }
 
