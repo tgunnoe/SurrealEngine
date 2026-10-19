@@ -40,7 +40,6 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 * viewclass command crashes with null deref.
 * Sometimes opening a map crashes the engine with a "Failed to spawn the player actor" error.
 * Sounds may become too loud (e.g. Pulse Rifle secondary fire, minigun firing sound)
-* Inventory from loaded saves do NOT transfer to the next map.
 * Saving packages (.u[xx] files, game saves, etc.) functionality is not fully implemented yet.
 * There is no networking support at all.
 * By design, native mods will never work with SE. Thankfully these kind of mods are extremely rare.
