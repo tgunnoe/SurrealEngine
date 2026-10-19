@@ -1036,6 +1036,11 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 	LogMessage("Saved game to " + savedFile.lexically_relative(packages->GetDataFolderPath().parent_path()).generic_string());
 }
 
+std::string TravelRecordName(const std::string& urlName, const std::string& iniName, const std::string& replicationName)
+{
+	return "stub";
+}
+
 std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems)
 {
 	auto travelInfo = Level->TravelInfo;

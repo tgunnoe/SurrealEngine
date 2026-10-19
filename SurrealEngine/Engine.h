@@ -174,6 +174,12 @@ struct CallTarget
 
 CallTarget SplitCallTarget(const std::string& text);
 
+// The name a travelling player's record is stored under: the first non-empty of the name in the URL of
+// the map being entered, the ini's player name and the name the player's replication info holds. The
+// login of the next map looks the record up by the first two of these, so keying the record by them
+// too is what lets that lookup find it when a game renames the player at login.
+std::string TravelRecordName(const std::string& urlName, const std::string& iniName, const std::string& replicationName);
+
 class Engine : public GameWindowHost
 {
 public:
