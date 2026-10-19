@@ -364,10 +364,25 @@ std::optional<std::string> RemoveSaveSlot(bool deusEx, int slot, const fs::path&
 		return "no save in slot " + std::to_string(slot);
 
 	// A link in the save folder may lead anywhere, and so may a save folder that is itself a link; the
-	// slot goes only when it lies inside the folder once both are resolved
-	const fs::path root = fs::weakly_canonical(fs::absolute(saveFolder, error), error);
-	const fs::path target = error ? fs::path() : fs::weakly_canonical(fs::absolute(path, error), error);
-	const fs::path relative = error ? fs::path() : target.lexically_relative(root);
+	// slot goes only when it lies inside the folder once both are resolved. A path that cannot be
+	// resolved is not shown to lie inside.
+	const auto resolve = [](const fs::path& unresolved) -> std::optional<fs::path>
+	{
+		std::error_code resolveError;
+		const fs::path absolute = fs::absolute(unresolved, resolveError);
+		if (resolveError)
+			return std::nullopt;
+
+		fs::path resolved = fs::weakly_canonical(absolute, resolveError);
+		if (resolveError)
+			return std::nullopt;
+
+		return resolved;
+	};
+
+	const std::optional<fs::path> root = resolve(saveFolder);
+	const std::optional<fs::path> target = resolve(path);
+	const fs::path relative = root && target ? target->lexically_relative(*root) : fs::path();
 	if (relative.empty() || relative == "." || relative.begin()->string() == "..")
 		return "slot " + std::to_string(slot) + " is outside the save folder";
 
