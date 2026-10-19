@@ -451,7 +451,6 @@ bool TraceTextureIterator::Next()
 
 		*HitNorm = m_Iterator->Normal;
 
-		// Surf is negative for a node that has no surface; VisibleFrame and the collision code skip it
 		if (node && node->Surf >= 0)
 		{
 			// A mover hit's node indexes the mover's own brush, not the level model
@@ -468,6 +467,13 @@ bool TraceTextureIterator::Next()
 			foundFlags = surface.PolyFlags;
 			if (surface.Material)
 				foundFlags |= surface.Material->PolyFlags();
+		}
+		else if (node)
+		{
+			// Surf is negative: the node has no surface. Collision still reports it as a solid hit
+			// (only VisibleFrame skips drawing it), so report it with the default texture and no
+			// flags, as a surface with no material, rather than let the trace see through it.
+			foundTexture = engine->LevelInfo->DefaultTexture();
 		}
 		else if (!node && *OutActor && (*OutActor)->IsA(BaseClass->Name))
 		{
