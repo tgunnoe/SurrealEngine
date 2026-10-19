@@ -320,7 +320,8 @@ void Engine::Run()
 				else if (LevelInfo->bNextItems())
 				{
 					ClientTravelInfo.TravelType = ETravelType::TRAVEL_Relative;
-					LoadMap(UnrealURL(LevelInfo->URL, LevelInfo->NextURL()), CreateTravelInfo(true));
+					UnrealURL url(LevelInfo->URL, LevelInfo->NextURL());
+					LoadMap(url, CreateTravelInfo(true, url));
 					LoginPlayer();
 				}
 				else
@@ -353,7 +354,7 @@ void Engine::Run()
 
 			UnrealURL url(ClientTravelInfo.URL);
 			LogMessage("Client travel to " + url.ToString());
-			LoadMap(url, CreateTravelInfo(ClientTravelInfo.TransferItems));
+			LoadMap(url, CreateTravelInfo(ClientTravelInfo.TransferItems, url));
 			LoginPlayer();
 		}
 
@@ -952,7 +953,7 @@ void Engine::PossessSavedPlayer()
 	// hands LoadMap the level's travel info and looks the player up in it by the URL's name, so give it the
 	// loaded player and items under the name they are stored by
 	LevelInfo->URL.AddOrReplaceOption("Name=" + TravelPlayerName(pawn));
-	Level->TravelInfo = CreateTravelInfo(true);
+	Level->TravelInfo = CreateTravelInfo(true, LevelInfo->URL);
 }
 
 void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const
@@ -1036,21 +1037,36 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 	LogMessage("Saved game to " + savedFile.lexically_relative(packages->GetDataFolderPath().parent_path()).generic_string());
 }
 
-std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems)
+std::string TravelRecordName(const std::string& urlName, const std::string& iniName, const std::string& replicationName)
 {
+	if (!urlName.empty())
+		return urlName;
+	if (!iniName.empty())
+		return iniName;
+	return replicationName;
+}
+
+std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems, const UnrealURL& destination)
+{
+	// The login of the destination looks the record up by the URL's name, else the ini's. A game may have
+	// renamed the player since (Unreal Tournament turns the default name into Player1 at every login), so
+	// the replication name is only the last resort.
+	const std::string urlName = destination.GetOption("Name");
+	const std::string iniName = packages->GetIniValue("system", "URL", "Name");
+
 	auto travelInfo = Level->TravelInfo;
 	for (UActor* actor : Level->Actors)
 	{
 		UPlayerPawn* pawn = UObject::TryCast<UPlayerPawn>(actor);
 		if (pawn && pawn->Player())
-			travelInfo[TravelPlayerName(pawn)] = ActorTravelInfo::Create(pawn, transferItems);
+			travelInfo[TravelRecordName(urlName, iniName, TravelPlayerName(pawn))] = ActorTravelInfo::Create(pawn, transferItems);
 	}
 	return travelInfo;
 }
 
 std::string Engine::TravelPlayerName(UPlayerPawn* pawn) const
 {
-	return LaunchInfo.ue1Version > 219 ? pawn->PlayerReplicationInfo()->PlayerName() : std::string("Player"); // To do: how to get the travel player name?
+	return LaunchInfo.ue1Version > 219 ? pawn->PlayerReplicationInfo()->PlayerName() : std::string("Player");
 }
 
 void Engine::LoginPlayer()

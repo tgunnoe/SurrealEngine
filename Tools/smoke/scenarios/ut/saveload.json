@@ -116,17 +116,17 @@
           "items": [
             {
               "package": "DM-Turbine",
-              "instance": "ImpactHammer2",
+              "instance": "ImpactHammer1",
               "class": "ImpactHammer"
             },
             {
               "package": "DM-Turbine",
-              "instance": "Miniammo2",
+              "instance": "Miniammo1",
               "class": "Miniammo"
             },
             {
               "package": "DM-Turbine",
-              "instance": "enforcer2",
+              "instance": "enforcer1",
               "class": "enforcer"
             }
           ],
@@ -134,11 +134,15 @@
           "weapon": "Botpack.enforcer"
         }
       ],
-      "offered": [],
-      "travel_skipped": true,
-      "skip_lines": [
-        "<Surreal Engine>: Skipping travel transfer. Player 'Player' not found in travel info"
+      "offered": [
+        "ShockCore0",
+        "ShockRifle0",
+        "ImpactHammer0",
+        "Miniammo0",
+        "enforcer0"
       ],
+      "travel_skipped": false,
+      "skip_lines": [],
       "summoned": [],
       "exec_failed": [],
       "exec_skipped": [],
@@ -169,17 +173,17 @@
           "items": [
             {
               "package": "Save2",
-              "instance": "ImpactHammer2",
+              "instance": "ImpactHammer1",
               "class": "ImpactHammer"
             },
             {
               "package": "Save2",
-              "instance": "Miniammo2",
+              "instance": "Miniammo1",
               "class": "Miniammo"
             },
             {
               "package": "Save2",
-              "instance": "enforcer2",
+              "instance": "enforcer1",
               "class": "enforcer"
             }
           ],
@@ -210,11 +214,13 @@
           "weapon": "Botpack.enforcer"
         }
       ],
-      "offered": [],
-      "travel_skipped": true,
-      "skip_lines": [
-        "<Surreal Engine>: Skipping travel transfer. Player 'Player' not found in travel info"
+      "offered": [
+        "ImpactHammer0",
+        "enforcer0",
+        "Miniammo0"
       ],
+      "travel_skipped": false,
+      "skip_lines": [],
       "summoned": [],
       "exec_failed": [],
       "exec_skipped": [],
@@ -310,8 +316,14 @@
         "ShockRifle"
       ],
       "gained": [],
-      "offered": [],
-      "travel_skipped": true
+      "offered": [
+        "ShockCore0",
+        "ShockRifle0",
+        "ImpactHammer0",
+        "Miniammo0",
+        "enforcer0"
+      ],
+      "travel_skipped": false
     },
     {
       "from": "load1-travel/after-travel",
@@ -340,8 +352,12 @@
       ],
       "lost": [],
       "gained": [],
-      "offered": [],
-      "travel_skipped": true
+      "offered": [
+        "ImpactHammer0",
+        "enforcer0",
+        "Miniammo0"
+      ],
+      "travel_skipped": false
     },
     {
       "from": "load2-travel/after-travel",

@@ -29,14 +29,14 @@ Kept reads as restored for a load and carried for a travel.
 | Hop | By | Kept | Lost | Gained | Offered | Travel skipped |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | save1/after-state to load1-travel/after-load | load | ShockCore, ShockRifle, ImpactHammer, Miniammo, enforcer | - | - | - | - |
-| load1-travel/after-load to load1-travel/after-travel | travel | ImpactHammer, miniammo, enforcer | ShockCore, ShockRifle | - | - | yes |
+| load1-travel/after-load to load1-travel/after-travel | travel | ImpactHammer, miniammo, enforcer | ShockCore, ShockRifle | - | ShockCore0, ShockRifle0, ImpactHammer0, Miniammo0, enforcer0 | no |
 | load1-travel/after-travel to load2-travel/after-load | load | ImpactHammer, Miniammo, enforcer | - | - | - | - |
-| load2-travel/after-load to load2-travel/after-travel | travel | ImpactHammer, Miniammo, enforcer | - | - | - | yes |
+| load2-travel/after-load to load2-travel/after-travel | travel | ImpactHammer, Miniammo, enforcer | - | - | ImpactHammer0, enforcer0, Miniammo0 | no |
 | load2-travel/after-travel to load3/after-load | load | ImpactHammer, Miniammo, enforcer | - | - | - | - |
 
 ## Verdict
 
-Unreal Tournament: loads restore what was saved; travels carry nothing: the engine skipped the transfer or offered no item to the acceptance on load1-travel/after-load to load1-travel/after-travel; load2-travel/after-load to load2-travel/after-travel, so the game rule that discards them in a deathmatch was not reached (lost on a travel: ShockCore, ShockRifle).
+Unreal Tournament: loads restore what was saved; travels discard the carried inventory by game rule (lost on a travel: ShockCore, ShockRifle).
 
 ## Limits of the claim
 
