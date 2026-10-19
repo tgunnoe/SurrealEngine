@@ -87,3 +87,39 @@ earlier run completely, run `git worktree remove --force <tree>` and
 `git branch -D merge-gate/<stamp>`, then delete that run's `logs/` directory
 (`git worktree remove` alone leaves the branch and the logs behind). Each kept
 run holds a full Release build, hundreds of MB.
+
+### The landing form: a node branch holds the merge
+
+The two upstream landings so far did not use the default form above. A node
+branch holds the merge instead. A node branch is a branch cut from the
+integration branch (`master` here) to carry one piece of work; this one starts at
+the integration tip, merges the upstream commit (any conflicts are resolved by
+hand) and is reviewed like any other branch. The gate then runs on that branch,
+with the node branch as `--ref` and the integration tip as `--base`:
+
+```
+bash Tools/merge-upstream.sh --base <integration tip> --ref <node branch> --cleanup
+```
+
+The node branch descends from the tip, so the gate's scratch merge is a
+fast-forward. The gate makes no merge commit of its own and builds, tests and
+runs exactly the tree that was reviewed, so its verdict is about the node
+branch's tip, and that tip is what lands, with `git merge --ff-only <node branch>`
+on the integration branch. `--cleanup` removes the worktree and the scratch
+branch but leaves the run's `logs/` directory.
+
+Two checks tie the verdict to the merge:
+
+- `logs/merge.log` in the run's directory reads `Updating <tip>..<node tip>` and
+  then `Fast-forward`. Any other result, such as `Merge made by the 'ort'
+  strategy`, means the node branch is not built on the tip the gate was given, and
+  the verdict is about a different tree.
+- When the node branch holds nothing but the upstream merge, its tree
+  (`git rev-parse <node branch>^{tree}`) equals the tree that
+  `git merge-tree --write-tree <integration tip> <upstream sha>` prints, so
+  nothing came in besides upstream's own changes.
+
+Keep the order of the two arguments. Given the other way round (`--base <node
+branch> --ref <integration tip>`), the tip is already contained in the base, and
+the script prints `nothing to merge` and `VERDICT: GREEN` and exits 0 without
+building or running anything: a green that checked nothing.
