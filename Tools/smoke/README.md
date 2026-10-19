@@ -408,6 +408,12 @@ result (`None` for no object, `<unnamed Class>` for a script-made object), and a
 `trace:` line of `TravelPreAccept` names an offered item. A `Skipping travel
 transfer` line in a travel's window means the travel carried nothing.
 
+Each package the engine loads as a map or a save logs one `Level info:
+<object> (the level's first actor) in <package>` line, or `Level info:
+<object> (by name; the first actor is <class or none>) in <package>` when the
+first actor is not a level info, which names the object the game binds to; the
+`Entry` package comes first.
+
 ### Report schema
 
 ```

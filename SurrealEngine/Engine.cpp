@@ -753,6 +753,8 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 
 	LevelPackage = packages->LoadMap(url.Map);
 
+	// The level info is the level's first actor, so it can only be picked once the level is loaded
+	GetLevelObject();
 	GetLevelInfoObject();
 
 	LevelInfo->ComputerName() = "MyComputer";
@@ -765,8 +767,6 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 	LevelInfo->DefaultTexture() = engine->DefaultTexture;
 
 	LevelInfo->URL = url;
-
-	GetLevelObject();
 
 	Level->TravelInfo = travelInfo; // Initially used travel info for level restart
 
@@ -872,6 +872,8 @@ bool Engine::LoadFromSaveFile(const UnrealURL& url)
 
 	LevelPackage = savefilePackage;
 
+	// The level info is the level's first actor, so it can only be picked once the level is loaded
+	GetLevelObject();
 	GetLevelInfoObject();
 
 	// Same as LoadMap: these are session/engine identity, not save data, and must be
@@ -891,8 +893,6 @@ bool Engine::LoadFromSaveFile(const UnrealURL& url)
 	if (realMapName.empty())
 		realMapName = LevelPackage->GetPackageName().ToString();
 	LevelInfo->URL = UnrealURL(realMapName);
-
-	GetLevelObject();
 
 	LinkActorsToLevel();
 
@@ -1044,6 +1044,28 @@ std::string TravelRecordName(const std::string& urlName, const std::string& iniN
 	if (!iniName.empty())
 		return iniName;
 	return replicationName;
+}
+
+std::string LevelInfoName(bool firstActorIsLevelInfo, const std::string& firstActorName, const std::vector<std::string>& levelInfoNames, int ue1Version)
+{
+	if (firstActorIsLevelInfo)
+		return firstActorName;
+
+	auto isPresent = [&](const std::string& name) { return std::find(levelInfoNames.begin(), levelInfoNames.end(), name) != levelInfoNames.end(); };
+
+	if (isPresent("LevelInfo0"))
+		return "LevelInfo0";
+
+	if (ue1Version < 300) // Unknown when this changed
+	{
+		for (int grr = 1; grr < 20; grr++)
+		{
+			std::string name = "LevelInfo" + std::to_string(grr);
+			if (isPresent(name))
+				return name;
+		}
+	}
+	return {};
 }
 
 std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems, const UnrealURL& destination)
@@ -2928,14 +2950,38 @@ void Engine::LogGamePackageSHA1Sums() const
 
 void Engine::GetLevelInfoObject()
 {
-	LevelInfo = UObject::Cast<ULevelInfo>(LevelPackage->GetUObject("LevelInfo", "LevelInfo0"));
-	if (LaunchInfo.ue1Version < 300) // Unknown when this changed
+	// The actors of a loaded map keep the level info the map saved, which is the level's first actor, so
+	// the game, the clock and the session fields must go on that one. A map can hold other level infos,
+	// some saved as deleted, and the name search alone can land on one of those.
+	UActor* firstActor = Level->Actors.empty() ? nullptr : Level->Actors.front();
+	ULevelInfo* firstLevelInfo = UObject::TryCast<ULevelInfo>(firstActor);
+
+	std::vector<std::string> levelInfoNames;
+	if (!firstLevelInfo)
 	{
-		for (int grr = 1; !LevelInfo && grr < 20; grr++)
-			LevelInfo = UObject::Cast<ULevelInfo>(LevelPackage->GetUObject("LevelInfo", "LevelInfo" + std::to_string(grr)));
+		for (int grr = 0; grr < 20; grr++)
+		{
+			std::string name = "LevelInfo" + std::to_string(grr);
+			if (UObject::TryCast<ULevelInfo>(LevelPackage->GetUObject("LevelInfo", name)))
+				levelInfoNames.push_back(name);
+		}
 	}
-	if (!LevelInfo)
-		Exception::Throw("Could not find the LevelInfo object for " + LevelPackage->GetPackageName().ToString() + "!");
+
+	const std::string packageName = LevelPackage->GetPackageName().ToString();
+	const std::string name = LevelInfoName(firstLevelInfo != nullptr, firstLevelInfo ? firstLevelInfo->Name.ToString() : std::string(), levelInfoNames, LaunchInfo.ue1Version);
+	if (firstLevelInfo)
+	{
+		LevelInfo = firstLevelInfo;
+		LogMessage("Level info: " + name + " (the level's first actor) in " + packageName);
+		return;
+	}
+
+	if (name.empty())
+		Exception::Throw("Could not find the LevelInfo object for " + packageName + "!");
+
+	LevelInfo = UObject::Cast<ULevelInfo>(LevelPackage->GetUObject("LevelInfo", name));
+	const std::string firstActorClass = firstActor ? UObject::GetUClassName(firstActor).ToString() : "none";
+	LogMessage("Level info: " + name + " (by name; the first actor is " + firstActorClass + ") in " + packageName);
 }
 
 void Engine::GetLevelObject()
