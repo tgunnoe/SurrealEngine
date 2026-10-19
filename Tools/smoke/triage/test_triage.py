@@ -389,6 +389,127 @@ class TestCheckOptions(Fixture):
         self.assertTrue(any("section set differs" in p for p in self.problems(base)))
 
 
+class TestWarningRegister(Fixture):
+    """With warning_register and register_heading set, every site that
+    errors.json records needs a row under that heading of the register, and the
+    row's counts are not compared."""
+
+    PATH = "../WARNINGS.md"
+
+    def log_sites(self, **sites):
+        def apply(o):
+            for name, counts in sites.items():
+                o[name]["warning_sites"] = counts
+        self.edit_data("errors.json", apply)
+
+    def write_register(self, text):
+        with open(os.path.join(self.data, self.PATH), "w") as f:
+            f.write(text)
+
+    @staticmethod
+    def rows(*sites):
+        return [(site, 1, 1, "faithful") for site in sites]
+
+    @staticmethod
+    def register(tables):
+        """A register in the committed form: a `### <heading>` table per entry,
+        then the `## Sites` section."""
+        out = ["# Register\n\n## Sites by sweep\n"]
+        for heading, rows in tables.items():
+            out.append("\n### %s\n\n| Site | Lines | Maps | Verdict | Grounds |\n"
+                       "| :--- | ---: | ---: | :--- | :--- |\n" % heading)
+            out.extend("| %s | %s | %s | %s | ground |\n" % r for r in rows)
+        out.append("\n## Sites\n")
+        return "".join(out)
+
+    def arm(self, tables, heading="toy"):
+        """M1 logs A.run and B.run, M2 logs A.run; the register holds `tables`."""
+        self.log_sites(M1={"Accessed None in A.run": 3, "Accessed None in B.run": 1},
+                       M2={"Accessed None in A.run": 2})
+        self.write_register(self.register(tables))
+        on = self.only(warning_register=self.PATH, register_heading=heading)
+        self.generate(on)
+        return on
+
+    @staticmethod
+    def missing(*keys):
+        return ["%s: no row in the warning register under toy" % k for k in keys]
+
+    def test_warning_register_passes_when_every_logged_site_has_a_row(self):
+        on = self.arm({"toy": self.rows("A.run", "B.run")})
+        self.assertEqual(self.problems(on), [])
+
+    def test_warning_register_flags_a_site_without_a_row_only_when_on(self):
+        on = self.arm({"toy": self.rows("A.run")})
+        self.assertEqual(self.problems(on), self.missing("Accessed None in B.run"))
+        self.assertEqual(self.problems(self.only()), [])
+
+    def test_warning_register_reports_each_site_once_in_sorted_order(self):
+        on = self.arm({"toy": []})
+        self.log_sites(M3={"Accessed None in C.run": 1})
+        self.assertEqual(self.problems(on), self.missing(
+            "Accessed None in A.run", "Accessed None in B.run", "Accessed None in C.run"))
+
+    def test_warning_register_does_not_compare_the_counts(self):
+        on = self.arm({"toy": [("A.run", 999, 99, "faithful"), ("B.run", "-", "-", "engine-side")]})
+        self.assertEqual(self.problems(on), [])
+
+    def test_warning_register_accepts_each_verdict_of_the_register_only(self):
+        on = self.arm({"toy": [("A.run", 5, 2, "undecided"), ("B.run", 1, 1, "pending")]})
+        self.assertEqual(self.problems(on), self.missing("Accessed None in B.run"))
+
+    def test_warning_register_ignores_rows_no_map_logs(self):
+        on = self.arm({"toy": self.rows("A.run", "B.run", "Z.run")})
+        self.assertEqual(self.problems(on), [])
+
+    def test_warning_register_ignores_a_row_under_the_next_heading(self):
+        on = self.arm({"toy": self.rows("A.run"), "other": self.rows("B.run")})
+        self.assertEqual(self.problems(on), self.missing("Accessed None in B.run"))
+
+    def test_warning_register_ignores_a_row_after_the_last_table(self):
+        on = self.arm({"toy": self.rows("A.run")})
+        with open(os.path.join(self.data, self.PATH), "a") as f:
+            f.write("| B.run | 1 | 1 | faithful | ground |\n")
+        self.assertEqual(self.problems(on), self.missing("Accessed None in B.run"))
+
+    def test_warning_register_matches_the_whole_heading(self):
+        on = self.arm({"toy-bots": self.rows("A.run", "B.run")})
+        problems = self.problems(on)
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn("### toy", problems[0])
+
+    def test_warning_register_strips_the_accessed_none_in_prefix_only(self):
+        other = "Accessed None when calling X.run"
+        on = self.arm({"toy": self.rows("A.run", "B.run", "X.run")})
+        self.log_sites(M3={other: 1})
+        self.assertEqual(self.problems(on), self.missing(other))
+        self.write_register(self.register({"toy": self.rows("A.run", "B.run", other)}))
+        self.assertEqual(self.problems(on), [])
+
+    def test_warning_register_skips_a_map_without_the_field(self):
+        on = self.arm({"toy": self.rows("A.run")})
+        self.log_sites(M1={"Accessed None in A.run": 3})
+        self.edit_data("errors.json", lambda o: o["M2"].pop("warning_sites"))
+        self.assertEqual(self.problems(on), [])
+
+    def test_warning_register_missing_heading_is_one_problem(self):
+        on = self.arm({"other": self.rows("A.run", "B.run")})
+        problems = self.problems(on)
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn("### toy", problems[0])
+
+    def test_warning_register_missing_file_is_one_problem(self):
+        on = self.arm({"toy": self.rows("A.run", "B.run")})
+        os.remove(os.path.join(self.data, self.PATH))
+        problems = self.problems(on)
+        self.assertEqual(len(problems), 1, problems)
+        self.assertIn("WARNINGS.md", problems[0])
+
+    def test_warning_register_empty_heading_is_one_problem(self):
+        on = self.arm({"toy": self.rows("A.run", "B.run")}, heading="")
+        self.assertEqual(self.problems(on), ["warning register: register_heading is empty"])
+
+
 class TestWarningsPolicy(Fixture):
     """Warnings are counted and shown; they make a map non-clean only when the
     scenario asks, and an absent count is unknown, never zero."""
@@ -1017,6 +1138,13 @@ class TestCommittedScenarios(unittest.TestCase):
 
     def test_ut(self):
         self.assert_regenerates("ut")
+
+    def test_warning_register_is_set_for_each_scenario(self):
+        for name in ("unreal", "ut", "ut-bots", "deusex"):
+            with self.subTest(name):
+                scn = load_scenario(name)
+                self.assertEqual((scn.warning_register, scn.register_heading),
+                                 ("../WARNINGS.md", name))
 
 
 class TestScenarioDefaults(unittest.TestCase):

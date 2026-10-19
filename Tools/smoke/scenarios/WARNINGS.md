@@ -15,22 +15,18 @@ site is read once by a reviewer and its verdict entered here, so that a new
 site is seen and read rather than absorbed into a total.
 
 A site that a sweep table lists and this register lacks is unread: nothing is
-known yet about whether the original engine would warn the same way. The bash
-command below compares, for each sweep, the rows of its table with the
-register's rows under the heading of the same name (site, lines and maps) and
-prints each row that one has and the other lacks, so a new site, a row missing
-from one sweep, or a count that changed since the verdict was entered shows up;
-it prints nothing when they agree. It reads only the rows of the form `Accessed
-None in <site>`; a table row of another form (`Accessed None when calling ...`,
-or an `unknown` row) needs a reader. A verdict is entered by adding the row and
-its section.
-
-```
-for s in unreal ut ut-bots deusex; do
-  diff <(grep '^| Accessed None in' Tools/smoke/scenarios/$s/SUMMARY.md | sed 's/Accessed None in //' | sort) \
-       <(sed -n "/^### $s\$/,/^##/p" Tools/smoke/scenarios/WARNINGS.md | grep -E '^\| [^|]+ \| [0-9]+ \| [0-9]+ \| (faithful|engine-side|undecided) \|' | cut -d'|' -f1-4 | sed 's/$/|/' | sort)
-done
-```
+known yet about whether the original engine would warn the same way.
+The check command of each scenario, `python3 -I -B
+Tools/smoke/triage/__main__.py Tools/smoke/scenarios/<name> check` fails for
+every site that the sweep's `errors.json` records and that has no row under the
+`###` heading of the same name as the scenario, so a new site fails the check
+until it is read. It compares the site alone: the lines and maps columns are the
+counts at the time the verdict was entered, are not compared, and are refreshed
+when the register is next touched. A warning of another form than `Accessed None
+in <site>` (`Accessed None when calling ...`) needs a row whose site cell is its
+whole text. A map whose `errors.json` entry has no `warning_sites` contributes
+nothing, so an `unknown` row in a sweep table needs a reader. A verdict is
+entered by adding the row and its section.
 
 ## Verdicts
 
@@ -46,8 +42,8 @@ done
   site's section says what would. Two kinds recur: the None exists only if the
   engine does something whose original behaviour is the question
   (`HorseFly.meander`: running state code after `Destroy()`); and the None is a
-  property (the replication info) of the pawn the engine itself hands to an event
-  (`SeePlayer`), so whom the original hands it to decides it.
+  property (the replication info) of the pawn the engine itself hands to an
+  event (`SeePlayer`), so whom the original hands it to decides it.
 
 Where no traced run observed the statement, the function decides the row. A
 function that offers one None operand (`BabyCow.PickDestination`,
@@ -134,7 +130,8 @@ lines and maps are `-` because no current sweep table lists them.
 
 ### HorseFly.meander
 
-Verdict `undecided`. Lines per map, `unreal`: Bluff 16, Ceremony 8, Chizra 12, DasaCellars 6, Dig 12, ExtremeDark 10, Harobed 8, SkyTown 14, TheSunspire 8.
+Verdict `undecided`. Lines per map, `unreal`: Bluff 16, Ceremony 8, Chizra 12,
+DasaCellars 6, Dig 12, ExtremeDark 10, Harobed 8, SkyTown 14, TheSunspire 8.
 
 Stock `UnrealShare.HorseFly`, state `meander`, label `wander`:
 
@@ -213,13 +210,14 @@ What would decide it: the original engine's rule for state code after
 children, as `UActor::Destroy` does here; the script's own `Owner == None` test
 is the sign read for it, and other shipped scripts test `Owner` for None the
 same way without being checked as evidence), or a run of the original on a map
-whose carcasses spawn flies (Bluff or Dig), reading its log for a `HorseFly` warning after the carcass is
-gone. No warning in several runs would make these lines engine-side; the
-runs are not deterministic, so one run settles nothing.
+whose carcasses spawn flies (Bluff or Dig), reading its log for a `HorseFly`
+warning after the carcass is gone. No warning in several runs would make these
+lines engine-side; the runs are not deterministic, so one run settles nothing.
 
 ### SinglePlayer.Killed
 
-Verdict `faithful`. Lines per map, `unreal`: Bluff 4, Ceremony 5, Chizra 2, Dig 1, SkyCaves 2, SkyTown 3, SpireVillage 1.
+Verdict `faithful`. Lines per map, `unreal`: Bluff 4, Ceremony 5, Chizra 2, Dig
+1, SkyCaves 2, SkyTown 3, SpireVillage 1.
 
 Stock `UnrealShare.SinglePlayer`, function `Killed`:
 
@@ -261,7 +259,8 @@ instigator kills one at 35.471638 (a None killer):
 
 ### SinglePlayer.ScoreKill
 
-Verdict `faithful`. Lines per map, `unreal`: Bluff 3, Ceremony 1, Dug 1, SkyCaves 3.
+Verdict `faithful`. Lines per map, `unreal`: Bluff 3, Ceremony 1, Dug 1,
+SkyCaves 3.
 
 Stock `Engine.GameInfo`, function `ScoreKill`, which `SinglePlayer` inherits:
 
@@ -278,11 +277,12 @@ A killer of None or a suicide takes the first branch, and the victim is a
 monster, whose `PlayerReplicationInfo` is None. Evidence, from the same Bluff
 run, which logged three `ScoreKill` lines: two at 0.025558, where the engine
 raised `FellOutOfWorld` for two pawns at the first tick and the stock handler
-killed them with a null killer, and the drowning death at 35.471638 above.
-The engine raises `FellOutOfWorld` for a pawn whose zone number is 0
-(`UActor::HasLeftWorld` in `SurrealEngine/Packages/Engine/Actors/UActor_Phys.cpp`);
-the null killer is the stock `Pawn.FellOutOfWorld`'s own argument, but whether
-the original raises the event for those pawns at the first tick was not read:
+killed them with a null killer, and the drowning death at 35.471638 above. The
+engine raises `FellOutOfWorld` for a pawn whose zone number is 0
+(`UActor::HasLeftWorld` in
+`SurrealEngine/Packages/Engine/Actors/UActor_Phys.cpp`); the null killer is the
+stock `Pawn.FellOutOfWorld`'s own argument, but whether the original raises the
+event for those pawns at the first tick was not read:
 
 ```
 [0.025558] GameInfo.Killed: Accessed None in SinglePlayer.ScoreKill
@@ -299,10 +299,10 @@ Verdict `faithful`. Lines per map, `unreal`: Chizra 2.
 
 `UnrealShare.Slith` defines no `TakeDamage`. Seven stock bodies in
 `UnrealShare.ScriptedPawn` read `Enemy` without a None check (some before and
-some after their call to `Global.TakeDamage`): the states `Patroling`, `Guarding`, `Acquisition`,
-`StakeOut`, `TriggerAlarm` and `AlarmPaused`, and the weave branch of
-`Charging`. The one the callstack names, stock `UnrealShare.ScriptedPawn`,
-state `Patroling`, function `TakeDamage`:
+some after their call to `Global.TakeDamage`): the states `Patroling`,
+`Guarding`, `Acquisition`, `StakeOut`, `TriggerAlarm` and `AlarmPaused`, and the
+weave branch of `Charging`. The one the callstack names, stock
+`UnrealShare.ScriptedPawn`, state `Patroling`, function `TakeDamage`:
 
 ```
 State Patroling
@@ -367,10 +367,11 @@ function eAttitude AttitudeToCreature(Pawn Other)
 }
 ```
 
-Two runs on ExtremeDark, 90 s each with `--trace-script=SkaarjBerserker.TakeDamage`,
-logged no `SkaarjBerserker.TakeDamage` warning. In them `SkaarjBerserker2` took
-traced `TakeDamage` calls from `SkaarjInfantry0` (never a None instigator) in
-the states `Charging`, `Hunting`, `RangedAttack`, `MeleeAttack`, `TakeHit`,
+Two runs on ExtremeDark, 90 s each with
+`--trace-script=SkaarjBerserker.TakeDamage`, logged no
+`SkaarjBerserker.TakeDamage` warning. In them `SkaarjBerserker2` took traced
+`TakeDamage` calls from `SkaarjInfantry0` (never a None instigator) in the
+states `Charging`, `Hunting`, `RangedAttack`, `MeleeAttack`, `TakeHit`,
 `FallingState` and `Dying`. Only `Charging` is one of the seven, and its
 unguarded read is in the weave branch:
 
@@ -455,7 +456,8 @@ stays in the `unreal` table until the next sweep replaces it.
 
 ### UnrealCTFScoreboard.DrawTrailer
 
-Verdict `faithful`. Lines per map, `ut`: CTF-Tutorial 3234; `ut-bots`: CTF-Tutorial 3245.
+Verdict `faithful`. Lines per map, `ut`: CTF-Tutorial 3234; `ut-bots`:
+CTF-Tutorial 3245.
 
 Stock `BotPack.TournamentScoreBoard`, function `DrawTrailer`, which
 `UnrealCTFScoreBoard` inherits through `TeamScoreBoard`:
@@ -511,16 +513,17 @@ they log neither this site nor `UTConsole.AddMessage` in either sweep.
 
 The sweep names only the function, and the function has other dereferences, so
 that `RatedGameLadderObj` is the None operand is inferred, not observed. The
-training game's rated-game flag is what sends `DrawTrailer` into the branch
-that reads the ladder object, and the function's other dereferences are not
-specific to this map's situation (read from the script text; no traced run
-discriminates them); that is why the row stays `faithful`, with the
-residual. The same warning on `CTF-Tutorial` in `ut` and `ut-bots` is one site in two sweeps.
-Residual: the original's startup for a direct launch of this map is unread.
+training game's rated-game flag is what sends `DrawTrailer` into the branch that
+reads the ladder object, and the function's other dereferences are not specific
+to this map's situation (read from the script text; no traced run discriminates
+them); that is why the row stays `faithful`, with the residual. The same warning
+on `CTF-Tutorial` in `ut` and `ut-bots` is one site in two sweeps. Residual: the
+original's startup for a direct launch of this map is unread.
 
 ### UTConsole.AddMessage
 
-Verdict `faithful`, with a residual. Lines per map, `ut`: CTF-Tutorial 8; `ut-bots`: CTF-Tutorial 8.
+Verdict `faithful`, with a residual. Lines per map, `ut`: CTF-Tutorial 8;
+`ut-bots`: CTF-Tutorial 8.
 
 Stock `UTMenu.UTConsole`, function `AddMessage`, and the only function that
 creates the window it uses, `CreateMessage`:
@@ -547,7 +550,8 @@ root at startup on a direct launch of `CTF-Tutorial` is unread.
 
 ### TeamCannon.SeePlayer
 
-Verdict `undecided`. Lines per map, `ut`: AS-HiSpeed 1, AS-Mazon 1, AS-OceanFloor 2; `ut-bots`: AS-HiSpeed 1, AS-Mazon 3, AS-OceanFloor 2.
+Verdict `undecided`. Lines per map, `ut`: AS-HiSpeed 1, AS-Mazon 1,
+AS-OceanFloor 2; `ut-bots`: AS-HiSpeed 1, AS-Mazon 3, AS-OceanFloor 2.
 
 Stock `BotPack.TeamCannon`, state `Idle`, function `SeePlayer`:
 
@@ -667,9 +671,9 @@ count says little.
 
 Verdict `faithful`. Lines per map, `ut-bots`: CTF-Command 18.
 
-The warning names the state: the statement is in the state code (the labels)
-of `BotPack.Bot`'s `Roaming`, shared by the four classes of the `ut-bots` table. Stock
-`BotPack.Bot`, state `Roaming`, label `LongCamp`:
+The warning names the state: the statement is in the state code (the labels) of
+`BotPack.Bot`'s `Roaming`, shared by the four classes of the `ut-bots` table.
+Stock `BotPack.Bot`, state `Roaming`, label `LongCamp`:
 
 ```
 LongCamp:
@@ -751,12 +755,12 @@ class TFemale1Bot extends FemaleBotPlus;
 ```
 
 The same `Bot` `Roaming` body as `TMale2Bot.Roaming`. Its labels also
-dereference `MoveTarget`, `OrderObject` and `InventorySpot(MoveTarget).markedItem`,
-some of which natives assign, so the
+dereference `MoveTarget`, `OrderObject` and
+`InventorySpot(MoveTarget).markedItem`, some of which natives assign, so the
 verdict of one statement does not carry to the others. The traced CTF-Command
-run, which holds this class on the same map, logged only `TMale2Bot`
-warnings. What would decide it: a run that logs this class's warning, whose
-callstack names the statement.
+run, which holds this class on the same map, logged only `TMale2Bot` warnings.
+What would decide it: a run that logs this class's warning, whose callstack
+names the statement.
 
 ### TMale1Bot.Roaming
 
@@ -850,14 +854,14 @@ auto simulated state Flying
 When the LAM's owner is not a `DeusExPlayer` the cast gives None and the next
 statements dereference it: `player.Location` and then, in whichever branch is
 taken, `player.ClientFlash`, so the script would log two lines for one
-explosion; the sweep's two lines are consistent with one explosion, not shown
-to be. The map `02_NYC_Warehouse` places four LAMs (`LAM0`, `LAM1`, `LAM3` and
+explosion; the sweep's two lines are consistent with one explosion, not shown to
+be. The map `02_NYC_Warehouse` places four LAMs (`LAM0`, `LAM1`, `LAM3` and
 `LAM5`), and none carries a saved owner. A LAM with no owner is set off by the
-player coming within its proximity radius, or by damage. No traced run was
-made for this site; which of the four exploded in the sweep, and why, is not recorded.
-The site is not in the Deus Ex summary committed as f0bce687 and first appears
-in the re-run committed as 28f08a4c, so a sweep need not set a LAM off; whether
-the original sets off the same LAM in the same situation was not read.
+player coming within its proximity radius, or by damage. No traced run was made
+for this site; which of the four exploded in the sweep, and why, is not
+recorded. The site is not in the Deus Ex summary committed as f0bce687 and first
+appears in the re-run committed as 28f08a4c, so a sweep need not set a LAM off;
+whether the original sets off the same LAM in the same situation was not read.
 
 ### LaserEmitter.CalcTrace
 
@@ -906,8 +910,9 @@ none.
 The quoted log lines come from single runs of the engine built from commit
 b1b35617, one per row of the table below (two for the Berserker). The two
 ExtremeDGen runs are the exception: they ran on the branch builds before and
-after commit 14090e6d, which b1b35617 later merged. The logs are not committed, and the runs are not deterministic, so a run that
-repeats one need not log the same lines. Each traced run used
+after commit 14090e6d, which b1b35617 later merged. The logs are not committed,
+and the runs are not deterministic, so a run that repeats one need not log the
+same lines. Each traced run used
 
 ```
 SurrealEngine --autostart --exit-after=90 --smoke-log=<log> --user-dir=<dir> '--url=<map><options>' [--exec=5:Fire] --trace-script=<entries> "<game folder>"
@@ -933,9 +938,9 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
   verdict also rests on reading which stock routes can leave `AmbushSpot` None.
 - The verdicts of `BabyCow.PickDestination`, `UnrealCTFScoreboard.DrawTrailer`,
   `UTConsole.AddMessage`, `TriggerLight.Trigger`, `ShakeTrigger.Trigger` and
-  `LAM.Explode` rest on the stock scripts and, for the first, the two
-  Unreal Tournament tutorial sites and the Deus Ex sites, the saved map data; no traced run was made for them (the sweeps
-  logged them, but only the lines).
+  `LAM.Explode` rest on the stock scripts and, for the first, the two Unreal
+  Tournament tutorial sites and the Deus Ex sites, the saved map data; no traced
+  run was made for them (the sweeps logged them, but only the lines).
 - Whether the original keeps running state code after `Destroy()` is not
   known, which is the question that decides `HorseFly.meander`; that the
   original clears a destroyed swarm's flies' `Owner` the way `UActor::Destroy`
@@ -956,10 +961,10 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
   run, two start from a `FellOutOfWorld` event the engine raises at the first
   tick and one from the engine's `PainTimer` event (drowning); the same
   `PainTimer` path gives one of the `SinglePlayer.Killed` lines, and the other
-  three Bluff `Killed` lines start from an animation notify (`ThrowDamageTarget`,
-  `PoundDamageTarget`, `ClawDamageTarget`), as does a Chizra one, or from a
-  `Touch` of a projectile. Whether the original raises any of these events in
-  the same situation was not read.
+  three Bluff `Killed` lines start from an animation notify
+  (`ThrowDamageTarget`, `PoundDamageTarget`, `ClawDamageTarget`), as does a
+  Chizra one, or from a `Touch` of a projectile. Whether the original raises any
+  of these events in the same situation was not read.
 - The `TMale2Bot.Roaming` warnings follow the bot's `Acquisition` entries
   (36 of the 38 gaps between its 39 `TurnTo` calls there are under 1 s); what
   raised those entries was not traced, and whether the original bounces at that

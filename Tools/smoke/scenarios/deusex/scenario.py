@@ -85,4 +85,6 @@ DEUSEX = Scenario(
     errors_in_section=True,
     summary_counts_line=True,
     stubs_md_count=True,
+    warning_register="../WARNINGS.md",
+    register_heading="deusex",
 )

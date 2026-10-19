@@ -78,4 +78,6 @@ UTBOTS = Scenario(
     maps_loaded_equal=True,
     verdict_line_equal=True,
     map_match_case_insensitive=True,
+    warning_register="../WARNINGS.md",
+    register_heading="ut-bots",
 )
