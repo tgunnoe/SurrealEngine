@@ -2201,6 +2201,11 @@ void GLRenderDevice::DrawBatches(bool nextBuffer)
 
 	ThrowIfGLError("DrawBatches failed (after draw)");
 
+	// glMapBufferRange rejects a zero-length range, and a buffer filled to its last element has no
+	// range left to map. Everything queued has just been drawn, so continue in a fresh buffer.
+	if (GLSceneVertexPos >= (size_t)SceneVertexBufferSize || SceneIndexPos >= (size_t)SceneIndexBufferSize)
+		nextBuffer = true;
+
 	MapVertices(nextBuffer);
 
 	Batch.SceneIndexStart = SceneIndexPos;
