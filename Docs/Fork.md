@@ -104,8 +104,11 @@ bash Tools/merge-upstream.sh --base <integration tip> --ref <node branch> --clea
 The node branch descends from the tip, so the gate's scratch merge is a
 fast-forward. The gate makes no merge commit of its own and builds, tests and
 runs exactly the tree that was reviewed, so its verdict is about the node
-branch's tip, and that tip is what lands, with `git merge --ff-only <node branch>`
-on the integration branch. `--cleanup` removes the worktree and the scratch
+branch's tip. After a GREEN verdict and the maintainer's consent, the node branch
+is merged into the integration branch with `git merge --no-ff <node branch>`, so
+the landing is a merge commit. Because the node branch descends from the tip, that
+merge's tree equals the node tip's tree, and the gate's fast-forward and the merge
+commit describe the same tree. `--cleanup` removes the worktree and the scratch
 branch but leaves the run's `logs/` directory.
 
 Two checks tie the verdict to the merge:
