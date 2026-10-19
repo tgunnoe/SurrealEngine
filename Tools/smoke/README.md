@@ -522,6 +522,9 @@ entry has no `warning_sites` field says nothing about its sites, so when any
 row lacks it the table ends with an `unknown (<k> rows without a site
 breakdown)` row: those rows' `script_warnings` summed (`not recorded` unless
 every one has a count) and `<k>`. `TRIAGE.md` sections keep only the count.
+[`scenarios/WARNINGS.md`](scenarios/WARNINGS.md) is the register of the sites
+the sweeps have logged, with a read verdict for each; a site a table lists and
+the register lacks has not been read.
 
 The `## Failure signatures` table has one row per distinct reason a map is
 non-clean. A crash (verdict `crash`) has exactly one signature, derived from
