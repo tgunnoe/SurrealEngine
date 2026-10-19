@@ -313,7 +313,10 @@
 
 std::string DeusExSaveFolderName(int slot)
 {
-	// The minus sign of the quick-save slot (-1) takes one of the four characters: Save00-1
+	// The original game keeps the scripts' quick save (slot -1) in a folder of its own
+	if (slot == -1)
+		return "QuickSave";
+
 	std::string digits = std::to_string(slot);
 	if (digits.size() < 4)
 		digits.insert(0, 4 - digits.size(), '0');
@@ -326,6 +329,14 @@ fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const s
 		return saveFolder / DeusExSaveFolderName(slot);
 
 	return saveFolder / ("Save" + std::to_string(slot) + "." + saveExtension);
+}
+
+std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot)
+{
+	if (slot < -1 || (!deusEx && slot < 0))
+		return "slot " + std::to_string(slot) + " is not allowed";
+
+	return std::nullopt;
 }
 
 int NextFreeDeusExSaveIndex(const fs::path& saveFolder)

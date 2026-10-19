@@ -286,11 +286,11 @@ void Engine::Run()
 			quit = true;
 
 		// Save the game if there is a request for it
-		if (SaveGameInfo.SaveGameSlot != DONT_SAVE_GAME)
+		if (SaveGameInfo.SaveGameSlot)
 		{
-			SaveGameToSlot(SaveGameInfo.SaveGameSlot, SaveGameInfo.SaveGameDescription);
+			SaveGameToSlot(*SaveGameInfo.SaveGameSlot, SaveGameInfo.SaveGameDescription);
 
-			SaveGameInfo.SaveGameSlot = DONT_SAVE_GAME;
+			SaveGameInfo.SaveGameSlot.reset();
 			SaveGameInfo.SaveGameDescription.clear();
 		}
 
@@ -959,12 +959,20 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		return;
 	}
 
-	if (slotNum < -1 || (!packages->IsDeusEx() && slotNum < 0))
-		Exception::Throw("Invalid save slot: " + std::to_string(slotNum));
+	// A slot the game has no use for is the script's or the console's mistake, not the engine's
+	if (const std::optional<std::string> refusal = SaveSlotRefusal(packages->IsDeusEx(), slotNum))
+	{
+		LogSkipped("Save game skipped: " + *refusal);
+		return;
+	}
 
 	// First and foremost ensure the Save folder exists
 	const auto saveFolderPath = packages->GetSaveFolderPath();
 	Directory::create(saveFolderPath.string());
+
+	// After a load the level's package is the save package, which Unreal and Unreal Tournament name after
+	// the slot, so the map name comes from the level's URL
+	const std::string mapName = MapNameOf(LevelInfo->URL, packages->GetMapExtension());
 
 	fs::path savedFile;
 
@@ -989,15 +997,15 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		const auto saveSlotFolder = SaveSlotPath(true, slotNum, saveFolderPath, packages->GetSaveExtension());
 		Directory::create(saveSlotFolder.string());
 
-		const std::string mapName = Level->package->GetPackageName().ToString();
 		savedFile = saveSlotFolder / (mapName + "." + packages->GetSaveExtension());
 		const auto saveInfoFile = saveSlotFolder / ("SaveInfo." + packages->GetSaveExtension());
 		LevelPackage->Save(Level, savedFile.string());
 
 		// The save info is made in the level's package, the one the writer is saving: it refuses an object
 		// of another package, and it exports the class of an object of the package it saves, so a save info
-		// from the DeusEx package would write the whole DeusExSaveInfo class into the file
-		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage->NewObject("DeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
+		// from the DeusEx package would write the whole DeusExSaveInfo class into the file. The object is named
+		// as the original game names it, which is the name the game directory's reader looks it up by.
+		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage->NewObject("MyDeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
 		saveInfo->DirectoryIndex() = slotNum;
 		saveInfo->Description() = saveDescription;
 		saveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
@@ -1012,7 +1020,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 
 		// The save package is later reloaded by its slot filename ("SaveN"), not by the original
 		// map name, so record the real map name here for LoadFromSaveFile() to recover.
-		packages->SetIniValue("user", "SaveGame", "MapName" + std::to_string(slotNum), Level->package->GetPackageName().ToString());
+		packages->SetIniValue("user", "SaveGame", "MapName" + std::to_string(slotNum), mapName);
 	}
 
 	// The data folder is one game's subdirectory of the user directory, so this names the game too
