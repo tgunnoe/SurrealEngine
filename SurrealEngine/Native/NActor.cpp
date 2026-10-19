@@ -863,7 +863,7 @@ void NActor::TraceTexture(UObject* Self, UObject* BaseClass, UObject*& Actor, Na
 	vec3 realStart = Start ? *Start : SelfActor->Location();
 	vec3 realExtent = Extent ? *Extent : vec3(0, 0, 0);
 
-	Frame::CreatedIterator = std::make_unique<TraceTextureIterator>(BaseClass, &Actor, &texName, &texGroup, &flags, HitLoc, HitNorm, End, &realStart, &realExtent);
+	Frame::CreatedIterator = std::make_unique<TraceTextureIterator>(BaseClass, &Actor, &texName, &texGroup, &flags, &HitLoc, &HitNorm, End, realStart, realExtent);
 }
 
 void NActor::TraceVisibleActors(UObject* Self, UObject* BaseClass, UObject*& Actor, vec3& HitLoc, vec3& HitNorm, const vec3& End, std::optional<vec3> Start, std::optional<vec3> Extent)
@@ -873,7 +873,7 @@ void NActor::TraceVisibleActors(UObject* Self, UObject* BaseClass, UObject*& Act
 	vec3 realStart = Start ? *Start : SelfActor->Location();
 	vec3 realExtent = Extent ? *Extent : vec3(0, 0, 0);
 
-	Frame::CreatedIterator = std::make_unique<TraceVisibleActorsIterator>(BaseClass, &Actor, HitLoc, HitNorm, End, &realStart, &realExtent);
+	Frame::CreatedIterator = std::make_unique<TraceVisibleActorsIterator>(BaseClass, &Actor, &HitLoc, &HitNorm, End, realStart, realExtent);
 }
 
 void NActor::TraceSurfHitInfo_U227(UObject* Self, vec3& Start, vec3& End, vec3* HitLocation, vec3* HitNormal, UObject* HitTex, int* HitFlags, BitfieldBool& ReturnValue)
