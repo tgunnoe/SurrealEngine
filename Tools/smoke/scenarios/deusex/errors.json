@@ -32,11 +32,8 @@
  "01_NYC_UNATCOIsland": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 14565,
-   "Accessed None in LaserEmitter.CalcTrace": 74980
-  },
-  "warnings": 89545
+  "warning_sites": {},
+  "warnings": 0
  },
  "02_NYC_Bar": {
   "errors": [],
@@ -47,10 +44,8 @@
  "02_NYC_BatteryPark": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 32295
-  },
-  "warnings": 32295
+  "warning_sites": {},
+  "warnings": 0
  },
  "02_NYC_FreeClinic": {
   "errors": [],
@@ -67,35 +62,28 @@
  "02_NYC_Smug": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 5472
-  },
-  "warnings": 5472
+  "warning_sites": {},
+  "warnings": 0
  },
  "02_NYC_Street": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 35700
-  },
-  "warnings": 35700
+  "warning_sites": {},
+  "warnings": 0
  },
  "02_NYC_Underground": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 67906
-  },
-  "warnings": 67906
+  "warning_sites": {},
+  "warnings": 0
  },
  "02_NYC_Warehouse": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 7709,
-   "Accessed None in LaserEmitter.CalcTrace": 235686
+   "Accessed None in LAM.Explode": 2
   },
-  "warnings": 243395
+  "warnings": 2
  },
  "03_NYC_747": {
   "errors": [],
@@ -106,18 +94,14 @@
  "03_NYC_Airfield": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 20158
-  },
-  "warnings": 20158
+  "warning_sites": {},
+  "warnings": 0
  },
  "03_NYC_AirfieldHeliBase": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 46423
-  },
-  "warnings": 46423
+  "warning_sites": {},
+  "warnings": 0
  },
  "03_NYC_BatteryPark": {
   "errors": [],
@@ -176,18 +160,14 @@
  "04_NYC_NSFHQ": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 214140
-  },
-  "warnings": 214140
+  "warning_sites": {},
+  "warnings": 0
  },
  "04_NYC_Smug": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 10719
-  },
-  "warnings": 10719
+  "warning_sites": {},
+  "warnings": 0
  },
  "04_NYC_Street": {
   "errors": [],
@@ -210,10 +190,8 @@
  "04_NYC_Underground": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 22705
-  },
-  "warnings": 22705
+  "warning_sites": {},
+  "warnings": 0
  },
  "05_NYC_UNATCOHQ": {
   "errors": [],
@@ -236,27 +214,20 @@
  "06_HongKong_Helibase": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 2043
-  },
-  "warnings": 2043
+  "warning_sites": {},
+  "warnings": 0
  },
  "06_HongKong_MJ12lab": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 10609
-  },
-  "warnings": 10609
+  "warning_sites": {},
+  "warnings": 0
  },
  "06_HongKong_Storage": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 2679,
-   "Accessed None in LaserEmitter.CalcTrace": 2170
-  },
-  "warnings": 4849
+  "warning_sites": {},
+  "warnings": 0
  },
  "06_HongKong_TongBase": {
   "errors": [],
@@ -291,10 +262,8 @@
  "06_HongKong_WanChai_Street": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 309024
-  },
-  "warnings": 309024
+  "warning_sites": {},
+  "warnings": 0
  },
  "06_HongKong_WanChai_Underworld": {
   "errors": [],
@@ -323,10 +292,8 @@
  "08_NYC_Smug": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 10731
-  },
-  "warnings": 10731
+  "warning_sites": {},
+  "warnings": 0
  },
  "08_NYC_Street": {
   "errors": [],
@@ -337,18 +304,14 @@
  "08_NYC_Underground": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 75117
-  },
-  "warnings": 75117
+  "warning_sites": {},
+  "warnings": 0
  },
  "09_NYC_Dockyard": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 203319
-  },
-  "warnings": 203319
+  "warning_sites": {},
+  "warnings": 0
  },
  "09_NYC_Graveyard": {
   "errors": [],
@@ -365,19 +328,14 @@
  "09_NYC_ShipBelow": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 81851,
-   "Accessed None in LaserEmitter.CalcTrace": 10716
-  },
-  "warnings": 92567
+  "warning_sites": {},
+  "warnings": 0
  },
  "09_NYC_ShipFan": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 7
-  },
-  "warnings": 7
+  "warning_sites": {},
+  "warnings": 0
  },
  "10_Paris_Catacombs": {
   "errors": [],
@@ -388,11 +346,8 @@
  "10_Paris_Catacombs_Tunnels": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 16047,
-   "Accessed None in LaserEmitter.CalcTrace": 39252
-  },
-  "warnings": 55299
+  "warning_sites": {},
+  "warnings": 0
  },
  "10_Paris_Chateau": {
   "errors": [],
@@ -415,10 +370,8 @@
  "11_Paris_Cathedral": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 17840
-  },
-  "warnings": 17840
+  "warning_sites": {},
+  "warnings": 0
  },
  "11_Paris_Everett": {
   "errors": [],
@@ -427,40 +380,22 @@
   "warnings": 0
  },
  "11_Paris_Underground": {
-  "errors": [
-   {
-    "kind": "FATAL",
-    "map_section": "11_Paris_Underground",
-    "text": "signal 11"
-   }
-  ],
+  "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {},
   "warnings": 0
  },
  "12_Vandenberg_Cmd": {
-  "errors": [
-   {
-    "kind": "FATAL",
-    "map_section": "12_Vandenberg_Cmd",
-    "text": "signal 11"
-   }
-  ],
+  "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 394,
-   "Accessed None in LaserEmitter.CalcTrace": 21780
-  },
-  "warnings": 22174
+  "warning_sites": {},
+  "warnings": 0
  },
  "12_Vandenberg_Computer": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 212736,
-   "Accessed None in LaserEmitter.CalcTrace": 35730
-  },
-  "warnings": 248466
+  "warning_sites": {},
+  "warnings": 0
  },
  "12_Vandenberg_Gas": {
   "errors": [],
@@ -471,96 +406,71 @@
  "12_Vandenberg_Tunnels": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 1259,
-   "Accessed None in LaserEmitter.CalcTrace": 103675
-  },
-  "warnings": 104934
+  "warning_sites": {},
+  "warnings": 0
  },
  "14_OceanLab_Lab": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 2792
-  },
-  "warnings": 2792
+  "warning_sites": {},
+  "warnings": 0
  },
  "14_OceanLab_UC": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 10695,
-   "Accessed None in LaserEmitter.CalcTrace": 54080
-  },
-  "warnings": 64775
+  "warning_sites": {},
+  "warnings": 0
  },
  "14_Oceanlab_Silo": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 13,
-   "Accessed None in LaserEmitter.CalcTrace": 681
-  },
-  "warnings": 694
+  "warning_sites": {},
+  "warnings": 0
  },
  "14_Vandenberg_Sub": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 246
-  },
-  "warnings": 246
+  "warning_sites": {},
+  "warnings": 0
  },
  "15_Area51_Bunker": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 6,
-   "Accessed None in LaserEmitter.CalcTrace": 452
-  },
-  "warnings": 458
+  "warning_sites": {},
+  "warnings": 0
  },
  "15_Area51_Entrance": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 3276
-  },
-  "warnings": 3276
+  "warning_sites": {},
+  "warnings": 0
  },
  "15_Area51_Final": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 91
-  },
-  "warnings": 91
+  "warning_sites": {},
+  "warnings": 0
  },
  "15_Area51_Page": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 6
-  },
-  "warnings": 6
+  "warning_sites": {},
+  "warnings": 0
  },
  "99_Endgame1": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 45335
-  },
-  "warnings": 45335
+  "warning_sites": {},
+  "warnings": 0
  },
  "99_Endgame2": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 2687,
    "Accessed None in ShakeTrigger.Trigger": 1,
    "Accessed None in TriggerLight.Trigger": 3
   },
-  "warnings": 2691
+  "warnings": 4
  },
  "99_Endgame3": {
   "errors": [],
@@ -571,18 +481,14 @@
  "99_Endgame4": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LaserEmitter.CalcTrace": 14312
-  },
-  "warnings": 14312
+  "warning_sites": {},
+  "warnings": 0
  },
  "DX": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 2085
-  },
-  "warnings": 2085
+  "warning_sites": {},
+  "warnings": 0
  },
  "DXMP_Area51Bunker": {
   "errors": [],
@@ -617,10 +523,8 @@
  "DXOnly": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in ElectricityEmitter.CalcTrace": 1811
-  },
-  "warnings": 1811
+  "warning_sites": {},
+  "warnings": 0
  },
  "Entry": {
   "errors": [],

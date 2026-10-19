@@ -1,14 +1,1 @@
-{
- "11_Paris_Underground": {
-  "exit_code": 0,
-  "first_line_run1": "FATAL signal 11",
-  "first_line_run2": null,
-  "reproduced": "no"
- },
- "12_Vandenberg_Cmd": {
-  "exit_code": 0,
-  "first_line_run1": "FATAL signal 11",
-  "first_line_run2": null,
-  "reproduced": "no"
- }
-}
+{}
