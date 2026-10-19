@@ -11,4 +11,3 @@ little chance to log an error or a stub.
 
 Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 warnings line (sweep.json, errors.json) and its stub list (stubs.json).
-

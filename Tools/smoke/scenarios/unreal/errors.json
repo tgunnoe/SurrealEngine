@@ -2,146 +2,199 @@
  "Bluff": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 16,
+   "Accessed None in SinglePlayer.Killed": 4,
+   "Accessed None in SinglePlayer.ScoreKill": 3
+  },
   "warnings": 23
  },
  "Ceremony": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 8,
+   "Accessed None in SinglePlayer.Killed": 5,
+   "Accessed None in SinglePlayer.ScoreKill": 1
+  },
   "warnings": 14
  },
  "Chizra": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 12,
+   "Accessed None in SinglePlayer.Killed": 2,
+   "Accessed None in Slith.TakeDamage": 2
+  },
   "warnings": 16
  },
  "DCrater": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DKNightOp": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Dark": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DasaCellars": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 6
+  },
   "warnings": 6
  },
  "DasaPass": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Dig": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 12,
+   "Accessed None in SinglePlayer.Killed": 1
+  },
   "warnings": 13
  },
  "DmAriza": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DmCurse": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DmDeathFan": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DmDeck16": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DmElsinore": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DmFith": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DmHealPod": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DmMorbias": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DmRadikus": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "DmTundra": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Dug": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in SinglePlayer.ScoreKill": 1
+  },
   "warnings": 1
  },
  "Endgame": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Entry": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Entry_MP": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "ExtremeBeg": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "ExtremeCore": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "ExtremeDGen": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in PlayerStart.PlayTeleportEffect": 1
+  },
   "warnings": 1
  },
  "ExtremeDark": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 10,
+   "Accessed None in SkaarjBerserker.TakeDamage": 1
+  },
   "warnings": 11
  },
  "ExtremeEnd": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "ExtremeGen": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "ExtremeLab": {
@@ -153,131 +206,171 @@
    }
   ],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Gateway": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Harobed": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 8
+  },
   "warnings": 8
  },
  "IsvDeck1": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "IsvKran32": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "IsvKran4": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "NaliBoat": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "NaliC": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "NaliLord": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Noork": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "NyLeve": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Passage": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "QueenEnd": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Ruins": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in BabyCow.PickDestination": 1
+  },
   "warnings": 1
  },
  "SkyBase": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "SkyCaves": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in SinglePlayer.Killed": 2,
+   "Accessed None in SinglePlayer.ScoreKill": 3
+  },
   "warnings": 5
  },
  "SkyTown": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 14,
+   "Accessed None in SinglePlayer.Killed": 3
+  },
   "warnings": 17
  },
  "SpireVillage": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in SinglePlayer.Killed": 1
+  },
   "warnings": 1
  },
  "TerraLift": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Terraniux": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "TheSunspire": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 8
+  },
   "warnings": 8
  },
  "Trench": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "UGCredits": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Unreal": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "VeloraEnd": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  },
  "Vortex2": {
   "errors": [],
   "fatal_after_summary": false,
+  "warning_sites": {},
   "warnings": 0
  }
 }

@@ -37,7 +37,7 @@ Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 - match_started: true
 - gameplay stubs: none
 - repro: `SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/repro-ut-bots/DM-Tutorial.log '--url=DM-Tutorial?NumBots=4' --exec=5:Fire "<game folder>"`
-- owner: unattributed (FATAL: signal 6)
+- owner: unattributed (crash: FATAL signal 6)
 - Status.md: none applies
 - reproduced: yes (second run exit code -6; run1 first line `FATAL signal 6; match_started:true`; run2 first line `FATAL signal 6; match_started:true`)
 

@@ -2,15 +2,27 @@
 
 Maps: 55. clean: 54 of 55. fail: 0. crash: 1. timeout: 0. pass-verdict but non-clean: 0. warnings: 125.
 
-Check: the verdict counts are recomputed from sweep.json by check_triage.py,
-which exits 0 only if they equal the line above.
+Check: the verdict counts are recomputed from sweep.json by the `check`
+command of the triage module, which exits 0 only if they equal the line
+above.
+
+## Warning sites
+
+| Site | Lines | Maps |
+| :--- | ---: | ---: |
+| Accessed None in HorseFly.meander | 94 | 9 |
+| Accessed None in SinglePlayer.Killed | 18 | 7 |
+| Accessed None in SinglePlayer.ScoreKill | 8 | 4 |
+| Accessed None in Slith.TakeDamage | 2 | 1 |
+| Accessed None in BabyCow.PickDestination | 1 | 1 |
+| Accessed None in PlayerStart.PlayTeleportEffect | 1 | 1 |
+| Accessed None in SkaarjBerserker.TakeDamage | 1 | 1 |
 
 ## Failure signatures
 
 | Signature | Maps | Affected |
 | :--- | ---: | :--- |
 | crash: FATAL signal 6 | 1 | ExtremeLab |
-| verdict crash | 1 | ExtremeLab |
 
 ## Ranked fix candidates
 
@@ -19,7 +31,6 @@ candidate. Partial means the map loses one reason but keeps others.
 
 | Rank | Candidate | Fully unblocks | Partial |
 | ---: | :--- | ---: | ---: |
-| 1 | fix signature: crash: FATAL signal 6 | 0 | 1 |
-| 2 | fix signature: verdict crash | 0 | 1 |
+| 1 | fix signature: crash: FATAL signal 6 | 1 | 0 |
 
 A map becomes clean only when every signature that lists it above is fixed.

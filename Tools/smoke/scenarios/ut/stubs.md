@@ -6,6 +6,6 @@ Distinct stub lines in the logs: 0. Rows below: 0.
 | :--- | ---: | :--- | :--- |
 
 A stub is gameplay when its owner descends from one of the gameplay roots
-listed in scenarios/ut/scenario.py. An owner missing from that
+listed in scenarios/ut436_tables.py. An owner missing from that
 table is unclassified and counts as gameplay until the table is
 extended.
