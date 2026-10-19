@@ -2257,6 +2257,12 @@ namespace
 	}
 }
 
+UObject* ResolveCallObject(const std::string& kind, const std::string& value, const Array<CallActorRecord>& actors, bool isDeusEx, std::string& error, std::string& resolution)
+{
+	error = "not implemented";
+	return nullptr;
+}
+
 CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, UObject* self, const CallObjectResolver& resolve)
 {
 	CallArgsResult result;
