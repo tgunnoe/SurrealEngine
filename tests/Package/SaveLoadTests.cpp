@@ -5,6 +5,9 @@
 #include <chrono>
 #include <climits>
 #include <fstream>
+#include <initializer_list>
+#include <utility>
+#include <vector>
 
 // These cover the rules that turn a load option or a console argument into a slot, and a slot into
 // the files a save lives in. Reading the package and rebuilding the level need a running engine and are
@@ -45,6 +48,21 @@ namespace
 	std::string TextOf(const std::optional<std::string>& text)
 	{
 		return text ? *text : std::string("<nothing>");
+	}
+
+	void MakeFolders(const SaveSandbox& sandbox, std::initializer_list<const char*> names)
+	{
+		for (const char* name : names)
+			fs::create_directories(sandbox.Base / name);
+	}
+
+	// "1:Save0001 2:Save0002": the whole listing in one text, so that one comparison fails on any slot or name
+	std::string SlotsText(const std::vector<std::pair<int, std::string>>& slots)
+	{
+		std::string text;
+		for (const auto& slot : slots)
+			text += (text.empty() ? "" : " ") + std::to_string(slot.first) + ":" + slot.second;
+		return text;
 	}
 }
 
@@ -274,4 +292,114 @@ TEST(SaveLoadNewestLevelIsNothingWithoutALevelFile)
 	sandbox.Touch("Save0005/SaveInfo.dxs");
 	sandbox.Touch("Save0005/01_NYC_UNATCOIsland.dxs.old");
 	CHECK(!NewestDeusExSaveLevel(sandbox.Base / "Save0005", "dxs").has_value());
+}
+
+TEST(SaveDirectoryListsTheSlotFoldersInSlotOrder)
+{
+	SaveSandbox sandbox("listorder");
+	MakeFolders(sandbox, { "Save0001", "Save0003", "Save0002" });
+
+	CHECK_EQ(SlotsText(ListDeusExSaveSlots(sandbox.Base)), "1:Save0001 2:Save0002 3:Save0003");
+}
+
+TEST(SaveDirectoryLeavesOutWhatIsNotASlotFolder)
+{
+	SaveSandbox sandbox("listexcludes");
+	MakeFolders(sandbox, { "Save0002", "QuickSave", "Save00-1", "Save0000", "Save1", "Save0002x", "Save99999999999", "save0005", "Sav", "ab" });
+	sandbox.Touch("notes.txt");
+	// A file with a slot's name is not a slot
+	sandbox.Touch("Save0004");
+
+	CHECK_EQ(SlotsText(ListDeusExSaveSlots(sandbox.Base)), "2:Save0002");
+}
+
+TEST(SaveDirectoryOfAFolderThatIsNotThereIsEmpty)
+{
+	SaveSandbox sandbox("listabsent");
+	MakeFolders(sandbox, { "Save0001" });
+
+	CHECK(ListDeusExSaveSlots(sandbox.Base / "Save").empty());
+
+	// The control: a listing that is always empty would pass the check above
+	CHECK_EQ(SlotsText(ListDeusExSaveSlots(sandbox.Base)), "1:Save0001");
+}
+
+TEST(SaveDeleteRefusesTheQuickSaveAndEverySlotBelowIt)
+{
+	for (int slot : { -2, -1, 0 })
+		CHECK_EQ(TextOf(SaveSlotDeleteRefusal(slot)), "slot " + std::to_string(slot) + " is not allowed");
+
+	CHECK(!SaveSlotDeleteRefusal(1).has_value());
+	CHECK(!SaveSlotDeleteRefusal(9999).has_value());
+
+	// The folder of the quick save is the one a careless remover would take for slot -1
+	SaveSandbox sandbox("deletequick");
+	MakeFolders(sandbox, { "QuickSave", "Save0001" });
+	CHECK_EQ(TextOf(RemoveSaveSlot(true, -1, sandbox.Base, "dxs")), "slot -1 is not allowed");
+	CHECK(fs::is_directory(sandbox.Base / "QuickSave"));
+	CHECK_EQ(TextOf(RemoveSaveSlot(true, 0, sandbox.Base, "dxs")), "slot 0 is not allowed");
+	CHECK(fs::is_directory(sandbox.Base / "Save0001"));
+}
+
+TEST(SaveDeleteRemovesTheSlotFolderAndNothingElse)
+{
+	SaveSandbox sandbox("deletefolder");
+	MakeFolders(sandbox, { "Save0001", "Save0003", "QuickSave" });
+	sandbox.Touch("Save0002/SaveInfo.dxs");
+	sandbox.Touch("Save0002/01_NYC_UNATCOIsland.dxs");
+
+	CHECK_EQ(TextOf(RemoveSaveSlot(true, 2, sandbox.Base, "dxs")), "<nothing>");
+
+	CHECK(!fs::exists(sandbox.Base / "Save0002"));
+	CHECK(fs::is_directory(sandbox.Base / "Save0001"));
+	CHECK(fs::is_directory(sandbox.Base / "Save0003"));
+	CHECK(fs::is_directory(sandbox.Base / "QuickSave"));
+}
+
+TEST(SaveDeleteReportsASlotThatHasNoSave)
+{
+	SaveSandbox sandbox("deleteabsent");
+	MakeFolders(sandbox, { "Save0001" });
+	// Not a slot: a Deus Ex slot is a folder
+	sandbox.Touch("Save0004");
+
+	CHECK_EQ(TextOf(RemoveSaveSlot(true, 5, sandbox.Base, "dxs")), "no save in slot 5");
+	CHECK_EQ(TextOf(RemoveSaveSlot(true, 4, sandbox.Base, "dxs")), "no save in slot 4");
+	CHECK(fs::is_regular_file(sandbox.Base / "Save0004"));
+	CHECK_EQ(TextOf(RemoveSaveSlot(true, 1, sandbox.Base / "NotThere", "dxs")), "no save in slot 1");
+	CHECK(fs::is_directory(sandbox.Base / "Save0001"));
+}
+
+TEST(SaveDeleteRemovesTheSaveFileInTheOtherGames)
+{
+	SaveSandbox sandbox("deletefile");
+	sandbox.Touch("Save3.usa");
+	sandbox.Touch("Save4.usa");
+
+	CHECK_EQ(TextOf(RemoveSaveSlot(false, 3, sandbox.Base, "usa")), "<nothing>");
+
+	CHECK(!fs::exists(sandbox.Base / "Save3.usa"));
+	CHECK(fs::exists(sandbox.Base / "Save4.usa"));
+	CHECK_EQ(TextOf(RemoveSaveSlot(false, 3, sandbox.Base, "usa")), "no save in slot 3");
+}
+
+TEST(SaveDeleteRefusesASlotThatResolvesOutsideTheSaveFolder)
+{
+	SaveSandbox sandbox("deleteoutside");
+	sandbox.Touch("elsewhere/keep.txt");
+	fs::create_directories(sandbox.Base / "Save");
+
+	std::error_code error;
+	fs::create_directory_symlink(sandbox.Base / "elsewhere", sandbox.Base / "Save" / "Save0007", error);
+	if (error)
+		return; // A platform that does not let this user make links has no such slot to refuse
+
+	CHECK_EQ(TextOf(RemoveSaveSlot(true, 7, sandbox.Base / "Save", "dxs")), "slot 7 is outside the save folder");
+	CHECK(fs::exists(sandbox.Base / "elsewhere" / "keep.txt"));
+	CHECK(fs::is_symlink(sandbox.Base / "Save" / "Save0007"));
+
+	// A slot that is the save folder itself would take every other slot with it
+	fs::create_directory_symlink(sandbox.Base / "Save", sandbox.Base / "Save" / "Save0008", error);
+	CHECK_EQ(TextOf(RemoveSaveSlot(true, 8, sandbox.Base / "Save", "dxs")), "slot 8 is outside the save folder");
+	CHECK(fs::is_symlink(sandbox.Base / "Save" / "Save0007"));
 }

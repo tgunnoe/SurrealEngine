@@ -11,7 +11,19 @@
 Package::Package(PackageManager* packageManager, const NameString& name, const std::string& filepath) : Packages(packageManager), Name(name), FilePath(filepath)
 {
 	if (!filepath.empty())
-		ReadTables();
+	{
+		// GC::Alloc frees this package when the read throws, and its address can go to another package
+		// that would then be handed the stream cached for this one
+		try
+		{
+			ReadTables();
+		}
+		catch (...)
+		{
+			Packages->ForgetStreams(this);
+			throw;
+		}
+	}
 
 	FileName = fs::path(FilePath).filename().string();
 	FileExtension = fs::path(FilePath).extension().string();

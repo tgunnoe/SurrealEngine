@@ -1018,6 +1018,9 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		saveInfo->MapName() = mapName;
 		saveInfo->UpdateTimeStamp();
 		LevelPackage->Save(saveInfo, saveInfoFile.string());
+
+		// The package manager read the save infos once at startup, so the game directory would not list this one
+		packages->RegisterSaveInfo(DeusExSaveFolderName(slotNum));
 	}
 	else
 	{
@@ -1544,6 +1547,41 @@ std::string Engine::ConsoleCommand(UObject* context, const std::string& commandl
 		if (args.size() == 3)
 			SaveGameInfo.SaveGameDescription = args[2];
 
+		return {};
+	}
+	else if (command == "deletegame" && args.size() == 2)
+	{
+		// The Deus Ex load screen's delete button sends this with the row's slot
+		const std::optional<int> slotNum = ParseSaveSlot(args[1]);
+		if (!slotNum)
+		{
+			LogSkipped("Delete game skipped: slot '" + args[1] + "' is not a number");
+			return {};
+		}
+
+		if (const std::optional<std::string> refusal = SaveSlotDeleteRefusal(*slotNum))
+		{
+			LogSkipped("Delete game skipped: " + *refusal);
+			return {};
+		}
+
+		if (!LaunchInfo.CanWriteUserFiles())
+		{
+			LogSkipped("Delete game skipped: --autostart without --user-dir does not change saves");
+			return {};
+		}
+
+		if (const std::optional<std::string> skipped = RemoveSaveSlot(packages->IsDeusEx(), *slotNum, packages->GetSaveFolderPath(), packages->GetSaveExtension()))
+		{
+			LogSkipped("Delete game skipped: " + *skipped);
+			return {};
+		}
+
+		// The save info is of the save that is gone, and the game directory would still offer it
+		if (packages->IsDeusEx())
+			packages->RemoveSaveInfoPackage(DeusExSaveFolderName(*slotNum));
+
+		LogMessage("Deleted save slot " + std::to_string(*slotNum));
 		return {};
 	}
 	else if (command == "get" && args.size() == 3)
@@ -2497,10 +2535,74 @@ namespace
 	}
 }
 
+CallTarget SplitCallTarget(const std::string& text)
+{
+	CallTarget target;
+	const size_t dot = text.find('.');
+	if (dot == std::string::npos)
+	{
+		target.function = text;
+		return target;
+	}
+
+	// A third part would need a property of a property, which the call command does not walk
+	if (text.find('.', dot + 1) != std::string::npos)
+		target.error = "a qualified name has one '.', as <Property>.<Function>";
+	else if (dot == 0)
+		target.error = "no property name before the '.'";
+	else if (dot + 1 == text.size())
+		target.error = "no function name after the '.'";
+
+	if (!target.error.empty())
+	{
+		target.kind = CallTarget::Kind::Malformed;
+		return target;
+	}
+
+	target.kind = CallTarget::Kind::Qualified;
+	target.property = text.substr(0, dot);
+	target.function = text.substr(dot + 1);
+	return target;
+}
+
+namespace
+{
+	// The object that a property of the player holds, for the call command's qualified names. Returns
+	// null and sets error when the player has no such property, it is not an object property, or it
+	// holds no object.
+	UObject* PlayerHeldObject(UPlayerPawn* player, const std::string& propertyName, std::string& error)
+	{
+		if (!player)
+		{
+			error = "no player";
+			return nullptr;
+		}
+
+		if (!player->HasProperty(propertyName))
+		{
+			error = "the player has no property " + propertyName;
+			return nullptr;
+		}
+
+		UProperty* property = player->GetMemberProperty(propertyName);
+		if (property->ValueType != ExpressionValueType::ValueObject)
+		{
+			error = propertyName + " is not an object property";
+			return nullptr;
+		}
+
+		UObject* held = *static_cast<UObject**>(player->GetProperty(property));
+		if (!held)
+			error = propertyName + " is None";
+		return held;
+	}
+}
+
 // "call <Function> [arg ...]": runs a function of the player, then of the console, whatever its
-// flags, so a scripted run can start game logic that no exec function exposes. Every refusal
-// returns false, which the --exec runner logs as EXEC_FAILED, and the console then adds its
-// "Unknown command" line.
+// flags, so a scripted run can start game logic that no exec function exposes. "call
+// <Property>.<Function>" runs a function of the object that a property of the player holds instead,
+// which reaches the Deus Ex root window and so its menus. Every refusal returns false, which the
+// --exec runner logs as EXEC_FAILED, and the console then adds its "Unknown command" line.
 bool Engine::CallFunction(const Array<std::string>& args)
 {
 	if (args.size() < 2)
@@ -2509,17 +2611,46 @@ bool Engine::CallFunction(const Array<std::string>& args)
 		return false;
 	}
 
+	const CallTarget callTarget = SplitCallTarget(args[1]);
+	if (callTarget.kind == CallTarget::Kind::Malformed)
+	{
+		LogMessage("call " + args[1] + " refused: " + callTarget.error);
+		return false;
+	}
+
 	UPlayerPawn* player = viewport->Actor();
-	for (UObject* target : { static_cast<UObject*>(player), static_cast<UObject*>(console) })
+	const bool qualified = callTarget.kind == CallTarget::Kind::Qualified;
+
+	// A qualified name is for the held object alone: the console is not tried for it
+	Array<UObject*> targets;
+	if (qualified)
+	{
+		std::string error;
+		UObject* held = PlayerHeldObject(player, callTarget.property, error);
+		if (!held)
+		{
+			LogMessage("call " + args[1] + " refused: " + error);
+			return false;
+		}
+		targets.push_back(held);
+	}
+	else
+	{
+		targets.push_back(player);
+		targets.push_back(console);
+	}
+
+	for (UObject* target : targets)
 	{
 		if (!target)
 			continue;
 
-		UFunction* func = FindEventFunction(target, args[1]);
+		UFunction* func = FindEventFunction(target, callTarget.function);
 		if (!func)
 			continue;
 
-		const std::string funcName = func->Name.ToString();
+		// The log names a plain call by the function as the script declares it, a qualified one as typed
+		const std::string funcName = qualified ? args[1] : func->Name.ToString();
 
 		// What CallEvent would silently skip is reported instead
 		std::string skipReason;
@@ -2589,7 +2720,10 @@ bool Engine::CallFunction(const Array<std::string>& args)
 		return true;
 	}
 
-	LogMessage("call " + args[1] + " refused: neither the player nor the console has a function of that name");
+	if (qualified)
+		LogMessage("call " + args[1] + " refused: the " + UObject::GetUClassName(targets[0]).ToString() + " in " + callTarget.property + " has no function " + callTarget.function);
+	else
+		LogMessage("call " + args[1] + " refused: neither the player nor the console has a function of that name");
 	return false;
 }
 

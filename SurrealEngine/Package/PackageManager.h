@@ -7,6 +7,8 @@
 #include <list>
 #include <filesystem>
 #include <optional>
+#include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -22,8 +24,22 @@ fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const s
 // game, and a slot below 0 outside Deus Ex.
 std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot);
 
+// Why a save slot cannot be deleted, or nothing when it can: only slots from 1 can, so the quick save
+// and the slots below it never are.
+std::optional<std::string> SaveSlotDeleteRefusal(int slot);
+
+// Removes the save a slot names under the save folder (the slot's folder on Deus Ex, its
+// Save<slot>.<extension> file in the other games), and only when that path, with symbolic links
+// resolved, lies inside the save folder. Returns why nothing was removed, or nothing when the save is gone.
+std::optional<std::string> RemoveSaveSlot(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension);
+
 // The lowest slot from 1 whose folder does not exist yet, or 0 when all 9999 are taken.
 int NextFreeDeusExSaveIndex(const fs::path& saveFolder);
+
+// The slot folders a Deus Ex save folder holds, as (slot, folder name) in ascending slot order: a
+// directory named exactly as DeusExSaveFolderName names a slot of 1 or more. The quick save, slot 0,
+// files and every other name are left out, and a folder that is not there lists nothing.
+std::vector<std::pair<int, std::string>> ListDeusExSaveSlots(const fs::path& saveFolder);
 
 // The level package of a Deus Ex save folder: its newest file with the save extension other than
 // SaveInfo. Nothing when the folder holds none.
@@ -76,10 +92,15 @@ public:
 	Array<NameString> GetPackageNames() const;
 	Package* GetSaveInfoPackage(const NameString& saveFolderName);
 	void RemoveSaveInfoPackage(const NameString& saveFolderName);
+	void RegisterSaveInfo(const std::string& saveFolderName);
 	std::map<NameString, Package*> GetSaveInfoPackages() const { return saveInfos; };
 
 	Package* LoadMap(const std::string& path);
 	void UnloadPackage(Package* package);
+
+	// Drops the cached streams of a package: the cache is keyed by the package's address alone, so
+	// one left behind would be handed to whatever package is later allocated there
+	void ForgetStreams(Package* package);
 
 	void CloseStreams();
 

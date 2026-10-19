@@ -6,8 +6,10 @@
 #include "IniFile.h"
 #include "PackageWriter.h"
 #include "Utils/File.h"
+#include "Utils/Logger.h"
 #include "Utils/StrTools.h"
 #include "Utils/UserDirs.h"
+#include "UnrealURL.h"
 #include "VM/NativeFunc.h"
 #include "Packages/ConSys/UConAudioList.h"
 #include "Packages/ConSys/UConCamera.h"
@@ -310,6 +312,7 @@
 #include "Native/NWebRequest.h"
 #include "Native/NWebResponse.h"
 #include "Native/NWindow.h"
+#include <algorithm>
 
 std::string DeusExSaveFolderName(int slot)
 {
@@ -339,6 +342,62 @@ std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot)
 	return std::nullopt;
 }
 
+std::optional<std::string> SaveSlotDeleteRefusal(int slot)
+{
+	if (slot < 1)
+		return "slot " + std::to_string(slot) + " is not allowed";
+
+	return std::nullopt;
+}
+
+std::optional<std::string> RemoveSaveSlot(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension)
+{
+	if (const std::optional<std::string> refusal = SaveSlotDeleteRefusal(slot))
+		return refusal;
+
+	const fs::path path = SaveSlotPath(deusEx, slot, saveFolder, saveExtension);
+
+	// Only what a save is: a Deus Ex slot is a folder and the other games' slots are files
+	std::error_code error;
+	const bool isSave = deusEx ? fs::is_directory(path, error) : fs::is_regular_file(path, error);
+	if (!isSave)
+		return "no save in slot " + std::to_string(slot);
+
+	// A link in the save folder may lead anywhere, and so may a save folder that is itself a link; the
+	// slot goes only when it lies inside the folder once both are resolved. A path that cannot be
+	// resolved is not shown to lie inside.
+	const auto resolve = [](const fs::path& unresolved) -> std::optional<fs::path>
+	{
+		std::error_code resolveError;
+		const fs::path absolute = fs::absolute(unresolved, resolveError);
+		if (resolveError)
+			return std::nullopt;
+
+		fs::path resolved = fs::weakly_canonical(absolute, resolveError);
+		if (resolveError)
+			return std::nullopt;
+
+		return resolved;
+	};
+
+	const std::optional<fs::path> root = resolve(saveFolder);
+	const std::optional<fs::path> target = resolve(path);
+	const fs::path relative = root && target ? target->lexically_relative(*root) : fs::path();
+	if (relative.empty() || relative == "." || relative.begin()->string() == "..")
+		return "slot " + std::to_string(slot) + " is outside the save folder";
+
+	try
+	{
+		Directory::remove_all(path.string());
+	}
+	catch (const std::runtime_error& e)
+	{
+		return std::string(e.what());
+	}
+
+	return std::nullopt;
+}
+
 int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
 {
 	// Save folders being formatted like Save0001 implies that the number can go up to 9999
@@ -350,6 +409,35 @@ int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
 	}
 
 	return 0;
+}
+
+std::vector<std::pair<int, std::string>> ListDeusExSaveSlots(const fs::path& saveFolder)
+{
+	std::vector<std::pair<int, std::string>> slots;
+
+	// The save folder does not exist until the first save, and a listing is no place to fail
+	std::error_code error;
+	for (fs::directory_iterator it{ saveFolder, error }, end; !error && it != end; it.increment(error))
+	{
+		std::error_code entryError;
+		if (!it->is_directory(entryError))
+			continue;
+
+		// Only the exact spelling of a slot's folder is a slot, so that a folder of the player's own
+		// (or the quick save, which the scripts ask for separately) never reaches the menus
+		const std::string name = it->path().filename().string();
+		if (name.compare(0, 4, "Save") != 0)
+			continue;
+
+		const std::optional<int> slot = ParseSaveSlot(name.substr(4));
+		if (!slot || *slot < 1 || name != DeusExSaveFolderName(*slot))
+			continue;
+
+		slots.emplace_back(*slot, name);
+	}
+
+	std::sort(slots.begin(), slots.end());
+	return slots;
 }
 
 std::optional<fs::path> NewestDeusExSaveLevel(const fs::path& slotFolder, const std::string& saveExtension)
@@ -477,7 +565,11 @@ Package* PackageManager::LoadMap(const std::string& path)
 
 void PackageManager::UnloadPackage(Package* package)
 {
-	// Remove package from open streams cache:
+	ForgetStreams(package);
+}
+
+void PackageManager::ForgetStreams(Package* package)
+{
 	auto streamit = openStreams.begin();
 	while (streamit != openStreams.end())
 	{
@@ -682,6 +774,23 @@ Package* PackageManager::GetSaveInfoPackage(const NameString& saveFolderName)
 		return idx->second;
 
 	return nullptr;
+}
+
+void PackageManager::RegisterSaveInfo(const std::string& saveFolderName)
+{
+	const auto save = gameSaveFolderPath / saveFolderName / ("SaveInfo." + saveExtension);
+
+	// Runs from the main loop, which has no handler: a save info that cannot be read is the slot's loss,
+	// not the run's. The entry it would replace describes a save that is no longer there.
+	try
+	{
+		saveInfos[saveFolderName] = GC::Alloc<Package>(this, saveFolderName, save.string());
+	}
+	catch (const std::exception&)
+	{
+		LogMessage("Save info unreadable: " + saveFolderName);
+		saveInfos.erase(saveFolderName);
+	}
 }
 
 void PackageManager::RemoveSaveInfoPackage(const NameString& saveFolderName)
