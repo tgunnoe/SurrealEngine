@@ -65,6 +65,21 @@ bool NameStringToEventName(const NameString& name, EventName& eventName)
 	return true;
 }
 
+ScriptCallSkip ScriptCallSkipReason(bool eventEnabled, bool isActor, bool begunPlay, bool deleted, bool allowDeleted)
+{
+	return ScriptCallSkip::None;
+}
+
+ScriptCallSkip SkipReasonFor(UObject* context, bool eventEnabled, bool allowDeleted)
+{
+	return ScriptCallSkip::None;
+}
+
+ScriptCallSkip SkipReasonFor(UObject* context, const NameString& name)
+{
+	return ScriptCallSkip::None;
+}
+
 ExpressionValue CallEvent(UObject* Context, EventName eventname, Array<ExpressionValue> args)
 {
 	if (!Context->IsEventEnabled(eventname))
