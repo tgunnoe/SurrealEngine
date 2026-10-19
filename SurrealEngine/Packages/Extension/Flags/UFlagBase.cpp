@@ -257,7 +257,9 @@ T* UFlagBase::GetOrCreateFlag(const NameString& FlagName, std::optional<bool> bA
 		}
 
 		int hashIndex = BucketOf(FlagName);
-		auto flag = UObject::Cast<T>(engine->packages->GetTransientPackage()->NewObject(FlagName, cls, ObjectFlags::Transient));
+		// A flag belongs to its flag base's package, so a save that exports the flag base exports its flags
+		auto flag = UObject::Cast<T>(package->NewObject(FlagName, cls, ObjectFlags::NoFlags));
+		flag->Outer() = this;
 		flag->FlagBase() = this;
 		flag->flagType() = (uint8_t)flagType;
 		flag->FlagName() = FlagName;
