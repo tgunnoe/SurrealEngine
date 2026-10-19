@@ -8,8 +8,10 @@ DEUSEX = Scenario(
     triage_intro=(
         "Non-clean maps: {nonclean} of {total}. A map is clean only when it passes, loaded\n"
         "the requested map, rendered, and logged no error line and no\n"
-        "gameplay-class stub. Every non-clean map has a section. Other engine\n"
-        "runs shared the display during this sweep, so `fps_avg` is not evidence.\n\n"),
+        "gameplay-class stub. Every non-clean map has a section. This run was made\n"
+        "with no other engine, build or sweep on the host; `fps_avg` is recorded per\n"
+        "row in sweep.json, and a row below 50 is weak evidence of absence: a map\n"
+        "that rendered few frames had little chance to log an error or a stub.\n\n"),
     triage_evidence=(
         "Evidence for a stub-only row is its stub list (stubs.json) and its\n"
         "exit code and SUMMARY-bearing pass verdict (sweep.json).\n\n"),
@@ -52,7 +54,7 @@ DEUSEX = Scenario(
     ),
     error_owner={
         "login: Failed to spawn player actor": (
-            "SurrealEngine/Engine.cpp (login path, throws at line 1004) and the "
+            "SurrealEngine/Engine.cpp (login path, throws at line 1035) and the "
             "DeusEx GameInfo.Login script that spawns the player; the exception "
             "text carries no script cause, so the failing spawn step is not yet "
             "identified",
@@ -60,15 +62,9 @@ DEUSEX = Scenario(
         "script: Iterator statement without an iterator (ReachablePathnodes)": (
             "SurrealEngine/Native/NPawn.cpp NPawn::ReachablePathnodes (line 332) "
             "is a LogUnimplemented stub that never sets up the iterator, so "
-            "SurrealEngine/VM/Frame.cpp line 569 throws; this log also holds "
+            "SurrealEngine/VM/Frame.cpp line 646 throws; this log also holds "
             "'STUB Pawn.ReachablePathnodes'",
             _STATUS_NATIVES),
-        "crash: FATAL signal 11": (
-            "unknown native or VM subsystem: the logs show SIGSEGV after LOGIN "
-            "with no SCRIPT_ERROR, MISSING_NATIVE or EXCEPTION line before it, "
-            "and the map did not crash when re-run alone, so the faulting frame "
-            "is not identified",
-            "none applies"),
     },
     status_natives=_STATUS_NATIVES,
     bullet="- ",
