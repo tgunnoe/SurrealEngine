@@ -2398,7 +2398,7 @@ namespace
 		}
 		case ExpressionValueType::ValueString: return value.ToString();
 		case ExpressionValueType::ValueName: return value.ToName().ToString();
-		case ExpressionValueType::ValueObject: return value.ToObject() ? value.ToObject()->Name.ToString() : "None";
+		case ExpressionValueType::ValueObject: return ObjectLabel(value.ToObject());
 		default: return "<unprinted type>";
 		}
 	}
