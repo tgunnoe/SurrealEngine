@@ -1046,6 +1046,11 @@ std::string TravelRecordName(const std::string& urlName, const std::string& iniN
 	return replicationName;
 }
 
+std::string LevelInfoName(bool firstActorIsLevelInfo, const std::string& firstActorName, const std::vector<std::string>& levelInfoNames, int ue1Version)
+{
+	return "stub";
+}
+
 std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems, const UnrealURL& destination)
 {
 	// The login of the destination looks the record up by the URL's name, else the ini's. A game may have

@@ -190,6 +190,13 @@ CallTarget SplitCallTarget(const std::string& text);
 // too is what lets that lookup find it when a game renames the player at login.
 std::string TravelRecordName(const std::string& urlName, const std::string& iniName, const std::string& replicationName);
 
+// The name of the level info object a map's game binds to, empty when there is none. The level's first
+// actor is the level info in the original engine, and every loaded actor reads the level info the map
+// saved, so the first actor wins when the caller found it to be a level info (firstActorName is then
+// its name). Otherwise the name search stands: LevelInfo0, else below game version 300 the
+// lowest-numbered of LevelInfo1 to LevelInfo19, among levelInfoNames, the names of the map's level infos.
+std::string LevelInfoName(bool firstActorIsLevelInfo, const std::string& firstActorName, const std::vector<std::string>& levelInfoNames, int ue1Version);
+
 class Engine : public GameWindowHost
 {
 public:
