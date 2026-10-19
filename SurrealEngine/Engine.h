@@ -10,12 +10,15 @@
 #include "Packages/Engine/Actors/UActor.h"
 #include "UnrealURL.h"
 #include "GameFolder.h"
+#include "VM/ExpressionValue.h"
+#include <functional>
 #include <set>
 #include <list>
 
 class RenderSubsystem;
 class PackageManager;
 class UObject;
+class UFunction;
 class ULevel;
 class UModel;
 class GameWindow;
@@ -115,6 +118,29 @@ HoldParseResult ParseHoldCommand(const Array<std::string>& args, double now);
 // the held value for good.
 std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string& name, ExpressionValueType type, PropertyFlags flags);
 
+struct CallArgsResult
+{
+	Array<ExpressionValue> values;	// Valid only when the arguments were accepted; one per parameter, in order
+	std::string error;				// Names the parameter, prefix or function at fault; empty when accepted
+
+	bool ok() const { return error.empty(); }
+};
+
+// Finds the level actor for a "name:", "class:" or "bind:" argument of the call command. kind is
+// "name", "class" or "bind" and value is the text after the prefix. Returns null and sets error
+// when there is no such actor.
+using CallObjectResolver = std::function<UObject*(const std::string& kind, const std::string& value, std::string& error)>;
+
+// Turns the arguments of "call <Function> [arg ...]" (the words after the function name) into the
+// values the script function takes, one per parameter declared in func, by the parameter's type:
+// byte (0 to 255), int and float (numeric text), bool (0, 1, true, false), string and name
+// (verbatim) and object ("self" is the object passed as self, "none" is None, and the "name:",
+// "class:" and "bind:" prefixes go to resolve). A missing argument is Nothing for an optional
+// parameter and a refusal for a required one. Anything else is refused: extra arguments, an
+// out parameter, a parameter of any other type, text that does not parse, an object argument in
+// no accepted form. Keywords and prefixes are matched without regard to case.
+CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, UObject* self, const CallObjectResolver& resolve);
+
 class Engine : public GameWindowHost
 {
 public:
@@ -146,6 +172,7 @@ public:
 	void UnlockCursor();
 
 	bool ExecCommand(const Array<std::string>& args);
+	bool CallFunction(const Array<std::string>& args);
 	Array<std::string> GetArgs(const std::string& commandline);
 	Array<std::string> GetSubcommands(const std::string& commandline);
 

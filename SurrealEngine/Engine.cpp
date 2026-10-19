@@ -60,6 +60,8 @@
 #include "VM/ScriptCall.h"
 #include "Video/VideoPlayer.h"
 #include "Utils/Convert.h"
+#include <cctype>
+#include <cerrno>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
@@ -2163,6 +2165,10 @@ bool Engine::ExecCommand(const Array<std::string>& args)
 		ReleaseHolds(inputHolds.TakeAll());
 		return true;
 	}
+	else if (command == "call")
+	{
+		return CallFunction(args);
+	}
 
 	for (UObject* target : { static_cast<UObject*>(viewport->Actor()), static_cast<UObject*>(console) })
 	{
@@ -2227,6 +2233,285 @@ bool Engine::ExecCommand(const Array<std::string>& args)
 		}
 	}
 
+	return false;
+}
+
+namespace
+{
+	// The whole text as a decimal integer: strtoll alone would take a prefix
+	bool ParseInteger(const std::string& text, long long& value)
+	{
+		if (text.empty() || std::isspace((unsigned char)text[0]))
+			return false;
+		errno = 0;
+		char* end = nullptr;
+		value = std::strtoll(text.c_str(), &end, 10);
+		return errno == 0 && end == text.c_str() + text.size();
+	}
+
+	std::string LowerCase(std::string text)
+	{
+		for (char& c : text)
+			c = (char)std::tolower((unsigned char)c);
+		return text;
+	}
+}
+
+CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, UObject* self, const CallObjectResolver& resolve)
+{
+	CallArgsResult result;
+	auto refuse = [&](const std::string& name, const std::string& reason) -> CallArgsResult
+	{
+		return { {}, "parameter '" + name + "': " + reason };
+	};
+
+	size_t paramCount = 0;
+	for (UField* field = func->Children; field != nullptr; field = field->Next)
+	{
+		// The same walk, in the same order, as the console's exec functions
+		UProperty* prop = UObject::TryCast<UProperty>(field);
+		if (!prop || !AllFlags(prop->PropFlags, PropertyFlags::Parm) || AllFlags(prop->PropFlags, PropertyFlags::ReturnParm))
+			continue;
+
+		const std::string name = prop->Name.ToString();
+		if (AllFlags(prop->PropFlags, PropertyFlags::OutParm))
+			return refuse(name, "it is an out parameter, which a call cannot return");
+
+		switch (prop->ValueType)
+		{
+		case ExpressionValueType::ValueByte:
+		case ExpressionValueType::ValueInt:
+		case ExpressionValueType::ValueBool:
+		case ExpressionValueType::ValueFloat:
+		case ExpressionValueType::ValueString:
+		case ExpressionValueType::ValueName:
+		case ExpressionValueType::ValueObject:
+			break;
+		default:
+			return refuse(name, "its type is not one a call can pass (byte, int, bool, float, string, name or object)");
+		}
+
+		if (paramCount >= args.size())
+		{
+			if (!AllFlags(prop->PropFlags, PropertyFlags::OptionalParm))
+				return refuse(name, "no argument was given for this required parameter");
+			result.values.push_back(ExpressionValue::NothingValue());
+			paramCount++;
+			continue;
+		}
+
+		const std::string& arg = args[paramCount++];
+		long long number = 0;
+		switch (prop->ValueType)
+		{
+		case ExpressionValueType::ValueByte:
+			if (!ParseInteger(arg, number) || number < 0 || number > 255)
+				return refuse(name, "'" + arg + "' is not a byte (an integer from 0 to 255)");
+			result.values.push_back(ExpressionValue::ByteValue((uint8_t)number));
+			break;
+		case ExpressionValueType::ValueInt:
+			if (!ParseInteger(arg, number) || number < INT32_MIN || number > INT32_MAX)
+				return refuse(name, "'" + arg + "' is not an int");
+			result.values.push_back(ExpressionValue::IntValue((int32_t)number));
+			break;
+		case ExpressionValueType::ValueBool:
+		{
+			const std::string word = LowerCase(arg);
+			if (word != "0" && word != "1" && word != "true" && word != "false")
+				return refuse(name, "'" + arg + "' is not a bool (0, 1, true or false)");
+			result.values.push_back(ExpressionValue::BoolValue(word == "1" || word == "true"));
+			break;
+		}
+		case ExpressionValueType::ValueFloat:
+		{
+			double value = 0.0;
+			if (!ParseFiniteNumber(arg, value) || !std::isfinite((float)value))
+				return refuse(name, "'" + arg + "' is not a float");
+			result.values.push_back(ExpressionValue::FloatValue((float)value));
+			break;
+		}
+		case ExpressionValueType::ValueString:
+			result.values.push_back(ExpressionValue::StringValue(arg));
+			break;
+		case ExpressionValueType::ValueName:
+			result.values.push_back(ExpressionValue::NameValue(arg));
+			break;
+		default: // ValueObject, the one other type the switch above let through
+		{
+			const std::string word = LowerCase(arg);
+			if (word == "self")
+			{
+				if (!self)
+					return refuse(name, "'self' has no object to stand for");
+				result.values.push_back(ExpressionValue::ObjectValue(self));
+			}
+			else if (word == "none")
+			{
+				result.values.push_back(ExpressionValue::ObjectValue(nullptr));
+			}
+			else
+			{
+				const size_t colon = arg.find(':');
+				const std::string kind = colon == std::string::npos ? std::string() : LowerCase(arg.substr(0, colon));
+				if (kind != "name" && kind != "class" && kind != "bind")
+				{
+					const std::string what = colon == std::string::npos ? "'" + arg + "'" : "the prefix '" + arg.substr(0, colon + 1) + "'";
+					return refuse(name, what + " is not an object form (self, none, name:<ObjectName>, class:<ClassName> or bind:<BindName>)");
+				}
+
+				const std::string value = arg.substr(colon + 1);
+				if (value.empty())
+					return refuse(name, "'" + arg + "' has nothing after the prefix");
+
+				std::string error;
+				UObject* object = resolve(kind, value, error);
+				if (!object)
+					return refuse(name, error.empty() ? "'" + arg + "' resolved to no object" : error);
+				result.values.push_back(ExpressionValue::ObjectValue(object));
+			}
+			break;
+		}
+		}
+	}
+
+	if (args.size() > paramCount)
+		return { {}, func->Name.ToString() + " takes " + std::to_string(paramCount) + " argument(s) but " + std::to_string(args.size()) + " were given" };
+
+	return result;
+}
+
+namespace
+{
+	std::string FormatCallResult(const ExpressionValue& value)
+	{
+		switch (value.GetType())
+		{
+		case ExpressionValueType::Nothing: return "nothing";
+		case ExpressionValueType::ValueBool: return value.ToBool() ? "True" : "False";
+		case ExpressionValueType::ValueByte: return std::to_string((int)value.ToByte());
+		case ExpressionValueType::ValueInt: return std::to_string(value.ToInt());
+		case ExpressionValueType::ValueFloat:
+		{
+			char text[48];
+			std::snprintf(text, sizeof(text), "%g", value.ToFloat());
+			return text;
+		}
+		case ExpressionValueType::ValueString: return value.ToString();
+		case ExpressionValueType::ValueName: return value.ToName().ToString();
+		case ExpressionValueType::ValueObject: return value.ToObject() ? value.ToObject()->Name.ToString() : "None";
+		default: return "<unprinted type>";
+		}
+	}
+}
+
+// "call <Function> [arg ...]": runs a function of the player, then of the console, whatever its
+// flags, so a scripted run can start game logic that no exec function exposes. Every refusal
+// returns false, which the --exec runner logs as EXEC_FAILED, and the console then adds its
+// "Unknown command" line.
+bool Engine::CallFunction(const Array<std::string>& args)
+{
+	if (args.size() < 2)
+	{
+		LogMessage("call refused: no function name was given");
+		return false;
+	}
+
+	UPlayerPawn* player = viewport->Actor();
+	for (UObject* target : { static_cast<UObject*>(player), static_cast<UObject*>(console) })
+	{
+		if (!target)
+			continue;
+
+		UFunction* func = FindEventFunction(target, args[1]);
+		if (!func)
+			continue;
+
+		const std::string funcName = func->Name.ToString();
+
+		// What CallEvent would silently skip is reported instead
+		std::string skipReason;
+		if (!target->IsEventEnabled(func->Name))
+			skipReason = "the " + UObject::GetUClassName(target).ToString() + " ignores it in its state " + target->GetStateName().ToString();
+		else if (auto actor = UObject::TryCast<UActor>(target))
+		{
+			if (!actor->Level()->bBegunPlay())
+				skipReason = "the level has not begun play";
+			else if (actor->bDeleteMe())
+				skipReason = "the " + UObject::GetUClassName(target).ToString() + " is being deleted";
+		}
+		if (!skipReason.empty())
+		{
+			LogMessage("call " + funcName + " skipped: " + skipReason);
+			return false;
+		}
+
+		CallObjectResolver resolve = [this](const std::string& kind, const std::string& value, std::string& error) -> UObject*
+		{
+			const char* label = kind == "name" ? "actor name" : kind == "class" ? "class name" : "BindName";
+			if (!Level)
+			{
+				error = "no level is loaded to look for the " + std::string(label) + " '" + value + "' in";
+				return nullptr;
+			}
+			if (kind == "bind" && !LaunchInfo.IsDeusEx())
+			{
+				error = "bind: needs a Deus Ex game";
+				return nullptr;
+			}
+
+			const std::string wanted = LowerCase(value);
+			Array<std::string> offered;
+			std::set<std::string> offeredLower;
+			for (UActor* actor : Level->Actors)
+			{
+				if (!actor)
+					continue;
+
+				std::string have;
+				if (kind == "name")
+					have = actor->Name.ToString();
+				else if (kind == "class")
+					have = UObject::GetUClassName(actor).ToString();
+				else
+					have = actor->BindName();
+
+				const std::string haveLower = LowerCase(have);
+				if (haveLower == wanted)
+				{
+					const vec3& at = actor->Location();
+					char where[96];
+					std::snprintf(where, sizeof(where), "(%.1f, %.1f, %.1f)", at.x, at.y, at.z);
+					LogMessage("call: " + kind + ":" + value + " resolved to " + actor->Name.ToString() + " at " + where);
+					return actor;
+				}
+				if (!have.empty() && offeredLower.insert(haveLower).second)
+					offered.push_back(have);
+			}
+
+			constexpr size_t maxOffered = 20;
+			std::string list;
+			for (size_t i = 0; i < offered.size() && i < maxOffered; i++)
+				list += (i ? ", " : "") + offered[i];
+			if (offered.size() > maxOffered)
+				list += ", ... (" + std::to_string(offered.size() - maxOffered) + " more)";
+			error = "no actor in the level has the " + std::string(label) + " '" + value + "'; the level offers: " + (list.empty() ? "none" : list);
+			return nullptr;
+		};
+
+		Array<std::string> callArgs(args.begin() + 2, args.end());
+		CallArgsResult marshalled = MarshalCallArgs(func, callArgs, player, resolve);
+		if (!marshalled.ok())
+		{
+			LogMessage("call " + funcName + " refused: " + marshalled.error);
+			return false;
+		}
+
+		ExpressionValue result = CallEvent(target, func->Name, marshalled.values);
+		LogMessage("call " + funcName + " returned " + FormatCallResult(result));
+		return true;
+	}
+
+	LogMessage("call " + args[1] + " refused: neither the player nor the console has a function of that name");
 	return false;
 }
 
