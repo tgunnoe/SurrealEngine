@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -115,6 +116,25 @@ class MatchStartedTests(unittest.TestCase):
 
     def test_press_without_walking_means_no_match(self):
         self.assertFalse(self.started(WAITING + "EXEC 5 Fire\nSTATE 9.0 PlayerSpectating\n"))
+
+
+class SharedMatchRuleTests(unittest.TestCase):
+    """The start rule lives in the triage package, so a re-run and a sweep row
+    cannot disagree on what a start is."""
+
+    def test_parse_log_takes_the_verdict_from_the_shared_rule(self):
+        from triage import matchrule
+        self.assertIs(sweep.match_started, matchrule.match_started)
+        with mock.patch.object(sweep, "match_started", return_value=True) as rule:
+            self.assertIs(parse("GAME x 1\nMAP A\nLOGIN\n")["match_started"], True)
+        rule.assert_called_once()
+
+    def test_runs_as_a_file_under_isolated_mode(self):
+        # Isolated mode puts no directory on sys.path; the script finds the package itself.
+        done = subprocess.run([sys.executable, "-I", "-B", sweep.__file__, "--help"],
+                              capture_output=True, text=True)
+        self.assertEqual((done.returncode, done.stderr), (0, ""))
+        self.assertIn("usage:", done.stdout)
 
 
 FAKE_ENGINE = """#!{python}

@@ -1,5 +1,13 @@
 """The Unreal Tournament 436 botmatch sweep scenario: every game-specific literal."""
+import os
+import sys
+
 from triage.scenario import Scenario
+
+# The tables module sits beside the scenario directories; put its directory on the
+# path here so this file imports under the entry point and under the tests alike.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from ut436_tables import BARE_OWNERS, GAMEPLAY_ROOTS, HIERARCHY, STUB_OWNER_FILE  # noqa: E402
 
 _STATUS = ("Docs/Status.md line 70 (Unreal Tournament: '436 version of the game launches. Menu options "
            "will work and botmatches can be played. Bots will behave more or less like they do in "
@@ -23,92 +31,17 @@ UTBOTS = Scenario(
         "(stubs.json).\n\n"),
     stubs_footer=(
         "\nA stub is gameplay when its owner descends from one of the gameplay roots\n"
-        "listed in scenarios/ut-bots/scenario.py. An owner missing from that\n"
+        "listed in scenarios/ut436_tables.py. An owner missing from that\n"
         "table is unclassified and counts as gameplay until the table is\n"
         "extended.\n"),
     summary_footer=(
         "\nCandidates are ranked by the maps they fully unblock. The\n"
         "`match did not start` signature is an observation about the run, not a\n"
         "located defect.\n"),
-    # Owner class -> superclass chain, read from the export tables of the UT 436
-    # packages in System/ (each class export carries its super class). A class
-    # counts as gameplay when its chain meets a gameplay root. Owners the
-    # no-bots UT triage listed as non-gameplay by name but that descend from
-    # Actor (StatLog, StatLogFile, UdpLink, TcpLink, InternetLink) are left out
-    # on purpose: this rule would call them gameplay, and a stub in one is
-    # better shown as unclassified than counted silently.
-    hierarchy={
-        "Actor": ["Actor", "Object"],
-        "Pawn": ["Pawn", "Actor", "Object"],
-        "PlayerPawn": ["PlayerPawn", "Pawn", "Actor", "Object"],
-        "Inventory": ["Inventory", "Actor", "Object"],
-        "Weapon": ["Weapon", "Inventory", "Actor", "Object"],
-        "Projectile": ["Projectile", "Actor", "Object"],
-        "Decoration": ["Decoration", "Actor", "Object"],
-        "Mover": ["Mover", "Brush", "Actor", "Object"],
-        "Trigger": ["Trigger", "Triggers", "Actor", "Object"],
-        "NavigationPoint": ["NavigationPoint", "Actor", "Object"],
-        "GameInfo": ["GameInfo", "Info", "Actor", "Object"],
-        "LevelInfo": ["LevelInfo", "ZoneInfo", "Info", "Actor", "Object"],
-        "ZoneInfo": ["ZoneInfo", "Info", "Actor", "Object"],
-        "Canvas": ["Canvas", "Object"],
-        "HUD": ["HUD", "Actor", "Object"],
-        "Brush": ["Brush", "Actor", "Object"],
-        "Light": ["Light", "Actor", "Object"],
-        "Pickup": ["Pickup", "Inventory", "Actor", "Object"],
-        "Ammo": ["Ammo", "Pickup", "Inventory", "Actor", "Object"],
-        "Bot": ["Bot", "Pawn", "Actor", "Object"],
-        "Scout": ["Scout", "Pawn", "Actor", "Object"],
-        "Spawnpoint": ["Spawnpoint", "NavigationPoint", "Actor", "Object"],
-        "PlayerStart": ["PlayerStart", "NavigationPoint", "Actor", "Object"],
-        "Triggers": ["Triggers", "Actor", "Object"],
-        "Effects": ["Effects", "Actor", "Object"],
-        "Carcass": ["Carcass", "Decoration", "Actor", "Object"],
-        "Teleporter": ["Teleporter", "NavigationPoint", "Actor", "Object"],
-        "Keypoint": ["Keypoint", "Actor", "Object"],
-        "Info": ["Info", "Actor", "Object"],
-        "Decal": ["Decal", "Actor", "Object"],
-        "Console": ["Console", "Object"],
-        "PlayerReplicationInfo": ["PlayerReplicationInfo", "ReplicationInfo", "Info", "Actor", "Object"],
-        "ReplicationInfo": ["ReplicationInfo", "Info", "Actor", "Object"],
-        "GameReplicationInfo": ["GameReplicationInfo", "ReplicationInfo", "Info", "Actor", "Object"],
-        "Spectator": ["Spectator", "PlayerPawn", "Pawn", "Actor", "Object"],
-        "Mutator": ["Mutator", "Info", "Actor", "Object"],
-        "ScriptedPawn": ["ScriptedPawn", "Pawn", "Actor", "Object"],
-        "Commandlet": ["Commandlet", "Object"],
-        "Engine": ["Engine", "Subsystem", "Object"],
-        "Object": ["Object"],
-        "Subsystem": ["Subsystem", "Object"],
-        "Player": ["Player", "Object"],
-        "Palette": ["Palette", "Object"],
-        "Texture": ["Texture", "Bitmap", "Object"],
-        "Time": ["Time", "Object"],
-    },
-    gameplay_roots=frozenset({
-        "Actor", "Pawn", "PlayerPawn", "Inventory", "Weapon", "Projectile",
-        "Decoration", "Mover", "Trigger", "NavigationPoint", "GameInfo",
-        "LevelInfo", "ZoneInfo", "Canvas", "HUD", "Brush", "Light", "Pickup",
-        "Ammo", "Bot", "Scout", "Spawnpoint", "PlayerStart", "Triggers",
-        "Effects", "Carcass", "Teleporter", "Keypoint", "Info", "Decal",
-        "Console", "PlayerReplicationInfo", "ReplicationInfo",
-        "GameReplicationInfo", "Spectator", "Mutator", "Projector",
-        "ScriptedPawn", "Weapons", "ParticleIterator",
-    }),
-    bare_owners={"GetNetworkNumber": "GameInfo"},
-    stub_owner_file={
-        "Actor": "SurrealEngine/Native/NActor.cpp",
-        "Canvas": "SurrealEngine/Native/NCanvas.cpp",
-        "Commandlet": "SurrealEngine/Native/NCommandlet.cpp",
-        "Console": "SurrealEngine/Native/NConsole.cpp",
-        "Decal": "SurrealEngine/Native/NDecal.cpp",
-        "GameInfo": "SurrealEngine/Native/NGameInfo.cpp",
-        "LevelInfo": "SurrealEngine/Native/NLevelInfo.cpp",
-        "NavigationPoint": "SurrealEngine/Native/NNavigationPoint.cpp",
-        "Object": "SurrealEngine/Native/NObject.cpp",
-        "Pawn": "SurrealEngine/Native/NPawn.cpp",
-        "PlayerPawn": "SurrealEngine/Native/NPlayerPawn.cpp",
-        "ZoneInfo": "SurrealEngine/Native/NZoneInfo.cpp",
-    },
+    hierarchy=HIERARCHY,
+    gameplay_roots=GAMEPLAY_ROOTS,
+    bare_owners=BARE_OWNERS,
+    stub_owner_file=STUB_OWNER_FILE,
     error_owner={
         "match did not start": (
             "cause: the map's DefaultGameType is UTIntro, whose Login hides the player "
