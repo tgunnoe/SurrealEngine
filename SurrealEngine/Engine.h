@@ -368,7 +368,12 @@ public:
 	bool getDXWindowDebugMode() const { return m_DrawDebugDXWindowHierarchy; }
 
 private:
-	std::map<std::string, std::string> CreateTravelInfo(bool transferItems);
+	// The records of the players travelling to the map that destination names, keyed as TravelRecordName
+	// says so that the login of that map finds them
+	std::map<std::string, std::string> CreateTravelInfo(bool transferItems, const UnrealURL& destination);
+
+	// The name the player's replication info holds (the default name up to version 219): the last
+	// source of TravelRecordName, since a game may rename a player at login
 	std::string TravelPlayerName(UPlayerPawn* pawn) const;
 
 	void LogGamePackageSHA1Sums() const;
