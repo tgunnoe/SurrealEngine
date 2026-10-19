@@ -15,6 +15,8 @@ TEST(LevelInfoNameIsTheFirstActorWhenItIsALevelInfo)
 	CHECK_EQ(LevelInfoName(true, "LevelInfo5", { "LevelInfo1", "LevelInfo3", "LevelInfo5", "LevelInfo6" }, 226), "LevelInfo5");
 	CHECK_EQ(LevelInfoName(true, "LevelInfo0", { "LevelInfo0", "LevelInfo1", "LevelInfo2" }, 226), "LevelInfo0");
 	CHECK_EQ(LevelInfoName(true, "LevelInfo0", { "LevelInfo0" }, 436), "LevelInfo0");
+	// Even a LevelInfo0 that the map holds does not outrank the first actor
+	CHECK_EQ(LevelInfoName(true, "LevelInfo2", { "LevelInfo0", "LevelInfo2" }, 226), "LevelInfo2");
 }
 
 TEST(LevelInfoNameIgnoresTheFirstActorNameWhenItIsNotALevelInfo)
