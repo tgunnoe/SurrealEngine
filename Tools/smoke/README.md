@@ -40,7 +40,8 @@ to travel to another map ten seconds after login.
 `--exec='10:savegame <n>'` saves the game to slot `<n>` and needs `--user-dir`,
 because `--autostart` writes no save without it. The engine log names the file as
 `Saved game to <path>`, relative to `--user-dir`. On Deus Ex, `savegame 0` takes the
-next free slot.
+next free slot and `savegame -1` writes the `QuickSave` folder, the one the original
+game's quick save uses.
 
 A later run on the same `--user-dir` loads the slot: `--exec='5:QuickLoad'` loads
 the slot `savegame 9` wrote (the quick-save slot of Unreal Gold),

@@ -10,7 +10,8 @@
 
 namespace fs = std::filesystem;
 
-// The folder a Deus Ex save slot lives in: "Save" and the slot padded with zeros to four digits.
+// The folder a Deus Ex save slot lives in: "Save" and the slot padded with zeros to four digits, and
+// "QuickSave" for the quick-save slot (-1), as in the original game.
 std::string DeusExSaveFolderName(int slot);
 
 // Where a save slot lives under the Save folder: Deus Ex keeps one folder per slot, the other games

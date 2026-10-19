@@ -313,7 +313,10 @@
 
 std::string DeusExSaveFolderName(int slot)
 {
-	// The minus sign of the quick-save slot (-1) takes one of the four characters: Save00-1
+	// The original game keeps the scripts' quick save (slot -1) in a folder of its own
+	if (slot == -1)
+		return "QuickSave";
+
 	std::string digits = std::to_string(slot);
 	if (digits.size() < 4)
 		digits.insert(0, 4 - digits.size(), '0');

@@ -999,8 +999,9 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 
 		// The save info is made in the level's package, the one the writer is saving: it refuses an object
 		// of another package, and it exports the class of an object of the package it saves, so a save info
-		// from the DeusEx package would write the whole DeusExSaveInfo class into the file
-		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage->NewObject("DeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
+		// from the DeusEx package would write the whole DeusExSaveInfo class into the file. The object is named
+		// as the original game names it, which is the name the game directory's reader looks it up by.
+		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage->NewObject("MyDeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
 		saveInfo->DirectoryIndex() = slotNum;
 		saveInfo->Description() = saveDescription;
 		saveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
