@@ -218,8 +218,57 @@ TEST(UserDirsGameDirsAreTheUserDirWhenOneWasGiven)
 	info.userDir = "/u/run1";
 	const UserDirs::GameDirs dirs = UserDirs::gameDirs(info, Env({ { "XDG_CONFIG_HOME", "/c" }, { "XDG_DATA_HOME", "/d" } }));
 
-	CHECK_EQ(dirs.config.string(), std::string("/u/run1"));
-	CHECK_EQ(dirs.data.string(), std::string("/u/run1"));
+	// One subdirectory per game, named like the default per-game directories
+	CHECK_EQ(dirs.config.string(), std::string("/u/run1/DeusEx-1112fm-GMDX"));
+	CHECK_EQ(dirs.data.string(), std::string("/u/run1/DeusEx-1112fm-GMDX"));
+}
+
+TEST(UserDirsGameDirsGiveEachGameItsOwnDirectoryUnderOneUserDir)
+{
+	GameLaunchInfo unreal = Install("Unreal", "226b", "/g/Unreal Gold");
+	GameLaunchInfo tournament = Install("UnrealTournament", "436", "/g/Unreal Tournament GOTY");
+	unreal.userDir = "/u/shared";
+	tournament.userDir = "/u/shared";
+	const UserDirs::EnvLookup env = Env({ { "XDG_CONFIG_HOME", "/c" }, { "XDG_DATA_HOME", "/d" } });
+
+	const UserDirs::GameDirs a = UserDirs::gameDirs(unreal, env);
+	const UserDirs::GameDirs b = UserDirs::gameDirs(tournament, env);
+
+	CHECK(a.config != b.config);
+	CHECK(a.data != b.data);
+	for (const std::filesystem::path& dir : { a.config, a.data, b.config, b.data })
+		CHECK_EQ(dir.parent_path().string(), std::string("/u/shared"));
+	// A game still keeps its ini files and its saves in one place
+	CHECK_EQ(a.config.string(), a.data.string());
+	CHECK_EQ(b.config.string(), b.data.string());
+}
+
+TEST(UserDirsGameDirsKeyAUserDirLikeTheDefaultRoots)
+{
+	GameLaunchInfo info = Install("Unreal", "226b", "/g/Unreal Gold");
+	const UserDirs::EnvLookup env = Env({ { "XDG_CONFIG_HOME", "/c" }, { "XDG_DATA_HOME", "/d" } });
+	const UserDirs::GameDirs byDefault = UserDirs::gameDirs(info, env);
+
+	info.userDir = "/u/run1";
+	const UserDirs::GameDirs given = UserDirs::gameDirs(info, env);
+
+	CHECK_EQ(given.config.filename().string(), byDefault.config.filename().string());
+	CHECK_EQ(given.data.filename().string(), byDefault.data.filename().string());
+	CHECK_EQ(given.config.filename().string(), UserDirs::gameKey(info));
+}
+
+TEST(UserDirsGameDirsKeyAUserDirByTheAbsoluteInstallFolder)
+{
+	const std::filesystem::path cwd = std::filesystem::current_path();
+	GameLaunchInfo here = Install("Unreal", "226b", ".");
+	GameLaunchInfo named = Install("Unreal", "226b", cwd.string());
+	here.userDir = "/u/run1";
+	named.userDir = "/u/run1";
+	const UserDirs::EnvLookup env = Env({ { "XDG_CONFIG_HOME", "/c" }, { "XDG_DATA_HOME", "/d" } });
+
+	CHECK(!UserDirs::gameKey(named).empty());
+	CHECK_EQ(UserDirs::gameDirs(here, env).config.string(), "/u/run1/" + UserDirs::gameKey(named));
+	CHECK_EQ(UserDirs::gameDirs(named, env).data.string(), "/u/run1/" + UserDirs::gameKey(named));
 }
 
 TEST(UserDirsGameDirsResolveARelativeInstallFolderAgainstTheCurrentDirectory)
