@@ -330,7 +330,7 @@ class BuildExecTests(unittest.TestCase):
             times = [float(t) for t, _, _ in items]
             self.assertEqual(times, sorted(times))
             total = 0.0
-            for (gap, _), t in zip(plan, times):
+            for (gap, _), t in zip(plan, times, strict=True):
                 total += gap
                 self.assertAlmostEqual(t, total)
 
@@ -388,7 +388,7 @@ class ChainTests(unittest.TestCase):
                     "deusex": ("01_NYC_UNATCOHQ", "02_NYC_BatteryPark")}
         for name, targets in expected.items():
             chain = self.chain(name)
-            for index, target in zip((1, 2), targets):
+            for index, target in zip((1, 2), targets, strict=True):
                 commands = [c for _, c in schedule(chain, index)]
                 self.assertIn(f"call ClientTravel {target} 2 1", commands)
                 self.assertEqual(commands[-1], f"savegame {index + 1}")
@@ -487,13 +487,13 @@ def make_steps(with_checks=None):
     """Four steps whose checks are given as {(step, where): (map, classes, calls)}."""
     spec = with_checks or {}
     steps = []
-    for index, (name, wheres) in enumerate(zip(NAMES, WHERES)):
+    for index, (name, wheres) in enumerate(zip(NAMES, WHERES, strict=True)):
         checks = [check(w, *spec[(name, w)]) for w in wheres if (name, w) in spec]
         steps.append({"step": name, "exit_code": 0, "verdict": "pass", "maps_loaded": [],
                       "loaded_slot": index if index else None,
                       "saved_to": f"Game/Save/Save{index + 1}" if index < 3 else None,
                       "checks": checks, "offered": [], "travel_skipped": False,
-                      "exec_failed": [], "exec_skipped": []})
+                      "exec_failed": [], "exec_skipped": [], "engine_log_missing": False})
     return steps
 
 
@@ -567,10 +567,12 @@ class BuildHopsTests(unittest.TestCase):
         self.assertNotIn("offered", hops[0])
 
 
-def full_report(game, spec, **step_overrides):
+def full_report(game, spec, offered=(), skipped=False):
+    """A report whose two travelling steps offered `offered` and skipped the transfer or not."""
     steps = make_steps(spec)
-    for step in steps:
-        step.update(step_overrides)
+    for step in steps[1:3]:
+        step["offered"] = list(offered)
+        step["travel_skipped"] = skipped
     return {"game": "<game folder>", "chain": game, "seconds": 60, "steps": steps,
             "hops": saveload.build_hops(steps)}
 
@@ -615,7 +617,8 @@ class RenderTests(unittest.TestCase):
     def test_a_complete_chain_with_nothing_lost_says_state_and_inventory_survive_three_maps(self):
         sentence = saveload.verdict_sentence(full_report("unreal", UG_CHECKS))
         self.assertIn("state and inventory survive three maps", sentence)
-        self.assertIn("state and inventory survive three maps", saveload.render_markdown(full_report("unreal", UG_CHECKS)))
+        markdown = saveload.render_markdown(full_report("unreal", UG_CHECKS))
+        self.assertIn("state and inventory survive three maps", markdown)
 
     def test_deus_ex_adds_the_goal_and_note_to_the_survival_sentence(self):
         sentence = saveload.verdict_sentence(full_report("deusex", DX_CHECKS))
@@ -629,6 +632,15 @@ class RenderTests(unittest.TestCase):
         self.assertNotIn("survive three maps", sentence)
         self.assertIn("load2-travel/after-load to load2-travel/after-travel", sentence)
         self.assertIn("Stinger", sentence)
+
+    def test_a_goal_missing_from_the_first_check_withholds_the_claim(self):
+        spec = dict(DX_CHECKS)
+        spec[("save1", "after-state")] = ("01_NYC_UNATCOIsland", ["NanoKeyRing"],
+                                          [("FindGoal", "None"), ("GetNote", "<unnamed DeusExNote>")])
+        sentence = saveload.verdict_sentence(full_report("deusex", spec))
+        self.assertNotIn("survive three maps", sentence)
+        self.assertIn("save1/after-state", sentence)
+        self.assertIn("goal", sentence)
 
     def test_a_lost_goal_is_named_with_its_hop_and_the_survival_claim_is_withheld(self):
         spec = dict(DX_CHECKS)
@@ -654,8 +666,28 @@ class RenderTests(unittest.TestCase):
         sentence = saveload.verdict_sentence(full_report("unreal", spec))
         self.assertIn("state and inventory survive three maps", sentence)
 
+    def test_a_skipped_travel_transfer_withholds_the_claim_and_names_the_hop(self):
+        sentence = saveload.verdict_sentence(full_report("unreal", UG_CHECKS, skipped=True))
+        self.assertNotIn("survive three maps", sentence)
+        self.assertIn("load1-travel/after-load to load1-travel/after-travel", sentence)
+        self.assertIn("skipped", sentence)
+
+    def test_ut_travels_whose_transfer_was_skipped_carry_nothing_and_never_reach_the_game_rule(self):
+        sentence = saveload.verdict_sentence(full_report("ut", UT_CHECKS, skipped=True))
+        self.assertIn("loads restore what was saved", sentence)
+        self.assertIn("carry nothing", sentence)
+        self.assertIn("skipped", sentence)
+        self.assertIn("load1-travel/after-load to load1-travel/after-travel", sentence)
+        self.assertIn("load2-travel/after-load to load2-travel/after-travel", sentence)
+        self.assertNotIn("by game rule", sentence)
+
+    def test_ut_travels_that_offered_nothing_are_not_called_a_game_rule_discard(self):
+        sentence = saveload.verdict_sentence(full_report("ut", UT_CHECKS, offered=[]))
+        self.assertIn("carry nothing", sentence)
+        self.assertNotIn("by game rule", sentence)
+
     def test_ut_loads_restore_and_travels_discard_by_game_rule(self):
-        report = full_report("ut", UT_CHECKS)
+        report = full_report("ut", UT_CHECKS, offered=["enforcer0", "Miniammo0"])
         sentence = saveload.verdict_sentence(report)
         self.assertIn("loads restore what was saved", sentence)
         self.assertIn("by game rule", sentence)
@@ -717,6 +749,18 @@ class StepProblemTests(unittest.TestCase):
         problem = saveload.step_problem(steps[1], 1)
         self.assertIn("load1-travel", problem)
         self.assertIn("crash", problem)
+
+    def test_a_step_that_left_no_engine_log_is_reported_as_dead_before_writing_one(self):
+        steps = self.steps()
+        steps[0]["engine_log_missing"] = True
+        problem = saveload.step_problem(steps[0], 0)
+        self.assertIn("save1", problem)
+        self.assertIn("no engine log", problem)
+        steps[1]["engine_log_missing"] = True
+        steps[1]["verdict"] = "crash"
+        problem = saveload.step_problem(steps[1], 1)
+        self.assertIn("crash", problem)
+        self.assertIn("no engine log", problem)
 
     def test_a_failed_or_skipped_command_is_a_problem(self):
         steps = self.steps()
