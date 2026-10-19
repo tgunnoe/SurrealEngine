@@ -12,6 +12,11 @@
 #include "Packages/Extension/Flags/UFlagRotator.h"
 #include "Packages/Extension/Flags/UFlagVector.h"
 
+int UFlagBase::BucketOf(const NameString& flagName)
+{
+	return 0;
+}
+
 UFlag* UFlagBase::GetFlag(const NameString& flagName, uint8_t flagType)
 {
 	int hashIndex = flagName.GetCompareIndex() % HashTableSize;

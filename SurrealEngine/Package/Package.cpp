@@ -78,6 +78,11 @@ GCAllocation* Package::Mark(GCAllocation* marklist)
 	return marklist;
 }
 
+Package* NewObjectPackage(UObject* outer, Package* transientPackage)
+{
+	return nullptr;
+}
+
 UObject* Package::NewObject(const NameString& objname, UClass* objclass, ObjectFlags flags, bool initProperties)
 {
 	if (!objclass)
