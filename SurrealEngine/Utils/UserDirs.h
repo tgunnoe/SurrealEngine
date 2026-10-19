@@ -39,8 +39,9 @@ namespace UserDirs
 		std::filesystem::path data;   // Save/ and Export/
 	};
 
-	// <configRoot>/SurrealEngine/<key> and <dataRoot>/SurrealEngine/<key>, or info.userDir for both when
-	// the run was given one. A relative install folder is taken relative to the current directory.
+	// <configRoot>/SurrealEngine/<key> and <dataRoot>/SurrealEngine/<key>, or <info.userDir>/<key> for both
+	// when the run was given one, so that one user directory holds one subdirectory per game. A relative
+	// install folder is taken relative to the current directory.
 	GameDirs gameDirs(const GameLaunchInfo& info, const EnvLookup& env);
 
 	// Turns the value of --user-dir into an absolute path (relative to the current directory).
