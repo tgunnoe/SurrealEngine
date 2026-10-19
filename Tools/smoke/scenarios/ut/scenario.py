@@ -8,11 +8,10 @@ UT = Scenario(
         "the requested map, rendered, and logged no error line and no\n"
         "gameplay-class stub. Every non-clean map has a section. `SCRIPT_WARNING`\n"
         "lines are counted in each section and do not by themselves make a map\n"
-        "non-clean. Every map ran for 60 seconds with no bots and no fire press,\n"
-        "in the game type the map itself selects, so `match_started` is not\n"
-        "counted. `fps_avg` is recorded per row in sweep.json, and a row below 50\n"
-        "is weak evidence of absence: a map that rendered few frames had little\n"
-        "chance to log an error or a stub.\n\n"),
+        "non-clean. The sweep used no bots and no fire press, so `match_started`\n"
+        "is not counted. `fps_avg` is recorded per row in sweep.json, and a row\n"
+        "below 50 is weak evidence of absence: a map that rendered few frames had\n"
+        "little chance to log an error or a stub.\n\n"),
     triage_evidence=(
         "Evidence for a row is its verdict line, `maps_loaded`, failing lines and\n"
         "warnings line (sweep.json, errors.json) and its stub list (stubs.json).\n\n"),
