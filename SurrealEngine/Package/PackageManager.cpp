@@ -333,6 +333,9 @@ fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const s
 
 std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot)
 {
+	if (slot < -1 || (!deusEx && slot < 0))
+		return "slot " + std::to_string(slot) + " is not allowed";
+
 	return std::nullopt;
 }
 

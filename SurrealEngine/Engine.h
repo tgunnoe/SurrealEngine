@@ -14,6 +14,7 @@
 #include <functional>
 #include <set>
 #include <list>
+#include <optional>
 
 class RenderSubsystem;
 class PackageManager;
@@ -65,8 +66,6 @@ struct TextureInfo;
 struct SceneNode;
 struct SurfaceFacet;
 struct MeshFace;
-
-static constexpr int32_t DONT_SAVE_GAME = -2; // Since -1 might be used as the autosave slot in some UE1 games...
 
 // The buttons and axes the harness holds down for a fixed time (the "hold" console command). The
 // clock is the --exec one, seconds since the first login. Plain values only, so the bookkeeping
@@ -272,7 +271,7 @@ public:
 
 	struct
 	{
-		int32_t SaveGameSlot = DONT_SAVE_GAME;
+		std::optional<int32_t> SaveGameSlot; // Any slot can be asked for, so "no save pending" is not a slot value
 		std::string SaveGameDescription;
 	} SaveGameInfo;
 

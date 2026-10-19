@@ -286,11 +286,11 @@ void Engine::Run()
 			quit = true;
 
 		// Save the game if there is a request for it
-		if (SaveGameInfo.SaveGameSlot != DONT_SAVE_GAME)
+		if (SaveGameInfo.SaveGameSlot)
 		{
-			SaveGameToSlot(SaveGameInfo.SaveGameSlot, SaveGameInfo.SaveGameDescription);
+			SaveGameToSlot(*SaveGameInfo.SaveGameSlot, SaveGameInfo.SaveGameDescription);
 
-			SaveGameInfo.SaveGameSlot = DONT_SAVE_GAME;
+			SaveGameInfo.SaveGameSlot.reset();
 			SaveGameInfo.SaveGameDescription.clear();
 		}
 
@@ -959,8 +959,12 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		return;
 	}
 
-	if (slotNum < -1 || (!packages->IsDeusEx() && slotNum < 0))
-		Exception::Throw("Invalid save slot: " + std::to_string(slotNum));
+	// A slot the game has no use for is the script's or the console's mistake, not the engine's
+	if (const std::optional<std::string> refusal = SaveSlotRefusal(packages->IsDeusEx(), slotNum))
+	{
+		LogSkipped("Save game skipped: " + *refusal);
+		return;
+	}
 
 	// First and foremost ensure the Save folder exists
 	const auto saveFolderPath = packages->GetSaveFolderPath();
