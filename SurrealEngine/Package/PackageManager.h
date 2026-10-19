@@ -7,6 +7,8 @@
 #include <list>
 #include <filesystem>
 #include <optional>
+#include <utility>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -24,6 +26,11 @@ std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot);
 
 // The lowest slot from 1 whose folder does not exist yet, or 0 when all 9999 are taken.
 int NextFreeDeusExSaveIndex(const fs::path& saveFolder);
+
+// The slot folders a Deus Ex save folder holds, as (slot, folder name) in ascending slot order: a
+// directory named exactly as DeusExSaveFolderName names a slot of 1 or more. The quick save, slot 0,
+// files and every other name are left out, and a folder that is not there lists nothing.
+std::vector<std::pair<int, std::string>> ListDeusExSaveSlots(const fs::path& saveFolder);
 
 // The level package of a Deus Ex save folder: its newest file with the save extension other than
 // SaveInfo. Nothing when the folder holds none.

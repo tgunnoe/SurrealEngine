@@ -5,6 +5,9 @@
 #include <chrono>
 #include <climits>
 #include <fstream>
+#include <initializer_list>
+#include <utility>
+#include <vector>
 
 // These cover the rules that turn a load option or a console argument into a slot, and a slot into
 // the files a save lives in. Reading the package and rebuilding the level need a running engine and are
@@ -45,6 +48,21 @@ namespace
 	std::string TextOf(const std::optional<std::string>& text)
 	{
 		return text ? *text : std::string("<nothing>");
+	}
+
+	void MakeFolders(const SaveSandbox& sandbox, std::initializer_list<const char*> names)
+	{
+		for (const char* name : names)
+			fs::create_directories(sandbox.Base / name);
+	}
+
+	// "1:Save0001 2:Save0002": the whole listing in one text, so that one comparison fails on any slot or name
+	std::string SlotsText(const std::vector<std::pair<int, std::string>>& slots)
+	{
+		std::string text;
+		for (const auto& slot : slots)
+			text += (text.empty() ? "" : " ") + std::to_string(slot.first) + ":" + slot.second;
+		return text;
 	}
 }
 
@@ -274,4 +292,34 @@ TEST(SaveLoadNewestLevelIsNothingWithoutALevelFile)
 	sandbox.Touch("Save0005/SaveInfo.dxs");
 	sandbox.Touch("Save0005/01_NYC_UNATCOIsland.dxs.old");
 	CHECK(!NewestDeusExSaveLevel(sandbox.Base / "Save0005", "dxs").has_value());
+}
+
+TEST(SaveDirectoryListsTheSlotFoldersInSlotOrder)
+{
+	SaveSandbox sandbox("listorder");
+	MakeFolders(sandbox, { "Save0001", "Save0003", "Save0002" });
+
+	CHECK_EQ(SlotsText(ListDeusExSaveSlots(sandbox.Base)), "1:Save0001 2:Save0002 3:Save0003");
+}
+
+TEST(SaveDirectoryLeavesOutWhatIsNotASlotFolder)
+{
+	SaveSandbox sandbox("listexcludes");
+	MakeFolders(sandbox, { "Save0002", "QuickSave", "Save00-1", "Save0000", "Save1", "Save0002x", "Save99999999999", "save0005" });
+	sandbox.Touch("notes.txt");
+	// A file with a slot's name is not a slot
+	sandbox.Touch("Save0004");
+
+	CHECK_EQ(SlotsText(ListDeusExSaveSlots(sandbox.Base)), "2:Save0002");
+}
+
+TEST(SaveDirectoryOfAFolderThatIsNotThereIsEmpty)
+{
+	SaveSandbox sandbox("listabsent");
+	MakeFolders(sandbox, { "Save0001" });
+
+	CHECK(ListDeusExSaveSlots(sandbox.Base / "Save").empty());
+
+	// The control: a listing that is always empty would pass the check above
+	CHECK_EQ(SlotsText(ListDeusExSaveSlots(sandbox.Base)), "1:Save0001");
 }

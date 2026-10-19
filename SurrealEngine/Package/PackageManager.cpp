@@ -352,6 +352,15 @@ int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
 	return 0;
 }
 
+std::vector<std::pair<int, std::string>> ListDeusExSaveSlots(const fs::path& saveFolder)
+{
+	std::vector<std::pair<int, std::string>> slots;
+	std::error_code error;
+	for (const auto& entry : fs::directory_iterator{ saveFolder, error })
+		slots.emplace_back(0, entry.path().filename().string());
+	return slots;
+}
+
 std::optional<fs::path> NewestDeusExSaveLevel(const fs::path& slotFolder, const std::string& saveExtension)
 {
 	std::error_code error;

@@ -2497,6 +2497,13 @@ namespace
 	}
 }
 
+CallTarget SplitCallTarget(const std::string& text)
+{
+	CallTarget target;
+	target.function = text;
+	return target;
+}
+
 // "call <Function> [arg ...]": runs a function of the player, then of the console, whatever its
 // flags, so a scripted run can start game logic that no exec function exposes. Every refusal
 // returns false, which the --exec runner logs as EXEC_FAILED, and the console then adds its
