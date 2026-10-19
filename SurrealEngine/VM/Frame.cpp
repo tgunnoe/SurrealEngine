@@ -483,6 +483,11 @@ namespace
 	}
 }
 
+std::string ObjectLabel(UObject* obj)
+{
+	return obj ? obj->Name.ToString() : "None";
+}
+
 std::string Frame::FormatTraceArgs(const ArrayView<ExpressionValue>& args)
 {
 	std::string text;

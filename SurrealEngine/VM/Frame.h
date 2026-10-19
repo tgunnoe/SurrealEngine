@@ -53,6 +53,10 @@ struct TraceFilter
 	NameString Function;
 };
 
+// How a log line names an object: "None" for null, its name, or "<unnamed ClassName>" for an
+// object with no name, which is what `new` makes when the script gives none.
+std::string ObjectLabel(UObject* obj);
+
 class Frame
 {
 public:
