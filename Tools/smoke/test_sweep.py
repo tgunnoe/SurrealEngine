@@ -83,6 +83,14 @@ class ParseLogTests(unittest.TestCase):
         self.assertTrue(parse("GAME x 1\nMAP A\nLOGIN\n")["login"])
         self.assertFalse(parse("GAME x 1\nMAP A\nSCRIPT_ERROR x\n")["login"])
 
+    def test_the_log_is_read_as_utf8_like_the_rerun_comparison(self):
+        # The locale default decodes UTF-8 on most hosts, so no byte-level
+        # input separates the readers there; the call itself is what is pinned.
+        with mock.patch.object(Path, "read_text", autospec=True, return_value="") as read:
+            sweep.parse_log(Path("a.log"))
+        read.assert_called_once()
+        self.assertEqual(read.call_args.kwargs, {"encoding": "utf-8", "errors": "replace"})
+
     def test_unreadable_log_has_no_login_and_no_match(self):
         info, _ = sweep.parse_log(Path(tempfile.gettempdir()) / "no-such-sweep-log.log")
         self.assertFalse(info["login"])

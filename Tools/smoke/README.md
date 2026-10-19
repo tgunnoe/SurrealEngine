@@ -222,22 +222,31 @@ whitespace collapsed and addresses masked, and the number of lines that
 carry it. `SUMMARY.md` lists them in a `## Warning sites` table between the
 counts line and the failure signatures: one row per site over all maps, with
 its line count and the number of maps it appears in, most lines first and
-then by name, so a site nobody has read is visible. `TRIAGE.md` sections keep
-only the count.
+then by name, so a site nobody has read is visible. A row whose `errors.json`
+entry has no `warning_sites` field says nothing about its sites, so when any
+row lacks it the table ends with an `unknown (<k> rows without a site
+breakdown)` row: those rows' `script_warnings` summed (`not recorded` unless
+every one has a count) and `<k>`. `TRIAGE.md` sections keep only the count.
 
 The `## Failure signatures` table has one row per distinct reason a map is
 non-clean. A crash (verdict `crash`) has exactly one signature, derived from
-its sweep row and spelled the same in every scenario: `crash: FATAL signal
-<n>` when the exit code is `-<n>`, else `crash: FATAL <text>` from its first
-recorded `FATAL` line, else `crash: exit <code>`. A `FATAL` line in any other
-row reads `FATAL: <text>`; a scenario's `signature_rules` never apply to
-`FATAL` lines, but its `error_owner` can key on a crash signature. A table
-with no rows has one `none` row, and every document ends with exactly one
-newline.
+its sweep row and spelled the same in every scenario: when the exit code is
+`-<n>`, `crash: FATAL signal <n>`, followed by ` (terminate: <text>)` when
+the row records a `FATAL terminate: <text>` line (the first such line, its
+text address-masked and cut to 80 characters, so aborts with different
+causes are different signatures); else `crash: FATAL <text>` from its first
+recorded `FATAL` line, else `crash: exit <code>`. `extract` records only
+the first five distinct error lines per map, so a terminate line beyond
+them is not seen and the row reads as a bare signal. A `FATAL` line in any
+other row reads `FATAL: <text>`; a scenario's `signature_rules` never apply
+to `FATAL` lines, but its `error_owner` can key on a crash signature. A
+table with no rows has one `none` row (for the Warning sites table, that
+means every row carries `warning_sites` and none has a site), and every
+document ends with exactly one newline.
 
 `scenarios/deusex/` is the reference: `scenario.py` holds its literals.
-`scenarios/ut-bots/` is the Unreal Tournament botmatch sweep (four bots in
-each map's own game type, fire pressed five seconds after login): a map is
+`scenarios/ut-bots/` is the Unreal Tournament botmatch sweep (every map
+launched with `?NumBots=4`, fire pressed five seconds after login): a map is
 clean only if it is clean by the rules above and its match started
 (`require_match_start`). `scenarios/ut/` is the same game without bots, and
 `scenarios/unreal/` is Unreal Gold.

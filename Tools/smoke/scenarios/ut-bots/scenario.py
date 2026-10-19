@@ -20,11 +20,10 @@ UTBOTS = Scenario(
         "the requested map, rendered, logged no error line and no gameplay-class\n"
         "stub, and its match started: the player's state was `PlayerWalking` when\n"
         "the fire press ran five seconds after login, or became `PlayerWalking`\n"
-        "afterwards. Every map ran with four bots (`?NumBots=4`) in the game type\n"
-        "the map itself selects, including maps that are not matches. `fps_avg` is\n"
-        "recorded per row in sweep.json, and a row below 50 is weak evidence of\n"
-        "absence: a map that rendered few frames had little chance to log an error\n"
-        "or a stub.\n\n"),
+        "afterwards. Every map was launched with `?NumBots=4`, including maps that\n"
+        "are not matches, whose game types may ignore it. `fps_avg` is recorded\n"
+        "per row in sweep.json, and a row below 50 is weak evidence of absence: a\n"
+        "map that rendered few frames had little chance to log an error or a stub.\n\n"),
     triage_evidence=(
         "Evidence for a row is its verdict line, `maps_loaded`, failing lines and\n"
         "`match_started` line (sweep.json, errors.json) and its stub list\n"

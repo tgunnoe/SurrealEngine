@@ -29,13 +29,23 @@ def error_signature(scn, e):
     return "%s: %s" % (e["kind"], HEX.sub("0x?", t)[:80])
 
 
+TERMINATE = "terminate: "
+
+
 def crash_signature(m, e):
     """The one signature of a crash row, taken from the sweep row: the signal
-    that killed the run, else its first recorded FATAL line, else its exit
-    code. The extractor keeps only five error lines, so the FATAL line itself
-    may be missing from the recorded ones."""
+    that killed the run, followed by the text of the first recorded
+    `FATAL terminate:` line in parentheses when the row has one; else its
+    first recorded FATAL line, else its exit code. The extractor keeps only
+    five error lines, so a FATAL line may be missing from the recorded ones;
+    a terminate line that fell outside them cannot be seen, and the row then
+    reads as a bare signal."""
     code = m["exit_code"]
     if isinstance(code, int) and code < 0:
+        for x in e["errors"]:
+            if x["kind"] == "FATAL" and x["text"].startswith(TERMINATE):
+                text = HEX.sub("0x?", x["text"][len(TERMINATE):])[:80]
+                return "crash: FATAL signal %d (terminate: %s)" % (-code, text)
         return "crash: FATAL signal %d" % -code
     for x in e["errors"]:
         if x["kind"] == "FATAL":
@@ -227,8 +237,13 @@ def build(scn, datadir, outdir, repro_path):
         stubfile_of[m["map"]] = {"stub " + s["text"]: owner_file.get(s["owner"], "unknown") for s in gp}
 
     warning_lines, warning_maps = Counter(), Counter()
+    unsited = []
     for m in sweep:
-        for site, n in errs[m["map"]].get("warning_sites", {}).items():
+        sites = errs[m["map"]].get("warning_sites")
+        if sites is None:
+            unsited.append(m)
+            continue
+        for site, n in sites.items():
             warning_lines[site] += n
             warning_maps[site] += 1
 
@@ -246,7 +261,12 @@ def build(scn, datadir, outdir, repro_path):
         f.write("## Warning sites\n\n| Site | Lines | Maps |\n| :--- | ---: | ---: |\n")
         for site, n in sorted(warning_lines.items(), key=lambda kv: (-kv[1], kv[0])):
             f.write("| %s | %d | %d |\n" % (site.replace("|", "\\|"), n, warning_maps[site]))
-        if not warning_lines:
+        if unsited:
+            # An errors.json written before the field existed says nothing
+            # about its sites; "none" would assert there were no sites.
+            f.write("| unknown (%d rows without a site breakdown) | %s | %d |\n"
+                    % (len(unsited), show_count(warnings_total(unsited)), len(unsited)))
+        elif not warning_lines:
             f.write("| none | | |\n")
         f.write("\n## Failure signatures\n\n| Signature | Maps | Affected |\n| :--- | ---: | :--- |\n")
         for s, ms in sorted(sig_maps.items(), key=lambda kv: (-len(kv[1]), kv[0])):
