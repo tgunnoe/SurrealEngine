@@ -137,7 +137,7 @@ using CallObjectResolver = std::function<UObject*(const std::string& kind, const
 // (verbatim) and object ("self" is the object passed as self, "none" is None, and the "name:",
 // "class:" and "bind:" prefixes go to resolve). A missing argument is Nothing for an optional
 // parameter and a refusal for a required one. Anything else is refused: extra arguments, an
-// out parameter, a parameter of any other type, text that does not parse, an object argument in
+// out parameter, an argument for a parameter of any other type, text that does not parse, an object argument in
 // no accepted form. Keywords and prefixes are matched without regard to case.
 CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, UObject* self, const CallObjectResolver& resolve);
 

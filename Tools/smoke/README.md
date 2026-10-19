@@ -91,8 +91,9 @@ refusal.
 A call that cannot be made is refused, and nothing runs. The causes are an
 argument that does not parse as its parameter's type, a required parameter
 with no argument, more arguments than parameters, an out parameter other than
-the return value, a parameter of any other type (a vector, a struct, an array),
-an object argument in none of the five forms, and a lookup that finds no
+the return value, an argument for a parameter of any other type (a vector, a
+struct, an array: such a parameter can only be left out, and then only when it is
+optional), an object argument in none of the five forms, and a lookup that finds no
 actor. The refusal writes `call <Function> refused: <reason>` to the engine
 log, naming the parameter, prefix or function at fault; a lookup that finds
 nothing also lists up to 20 distinct values the level has for that form, so a

@@ -2277,6 +2277,16 @@ CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, 
 		if (AllFlags(prop->PropFlags, PropertyFlags::OutParm))
 			return refuse(name, "it is an out parameter, which a call cannot return");
 
+		if (paramCount >= args.size())
+		{
+			if (!AllFlags(prop->PropFlags, PropertyFlags::OptionalParm))
+				return refuse(name, "no argument was given for this required parameter");
+			result.values.push_back(ExpressionValue::NothingValue());
+			paramCount++;
+			continue;
+		}
+
+		// Only an argument has to be passable: an omitted optional is Nothing whatever its type
 		switch (prop->ValueType)
 		{
 		case ExpressionValueType::ValueByte:
@@ -2289,15 +2299,6 @@ CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, 
 			break;
 		default:
 			return refuse(name, "its type is not one a call can pass (byte, int, bool, float, string, name or object)");
-		}
-
-		if (paramCount >= args.size())
-		{
-			if (!AllFlags(prop->PropFlags, PropertyFlags::OptionalParm))
-				return refuse(name, "no argument was given for this required parameter");
-			result.values.push_back(ExpressionValue::NothingValue());
-			paramCount++;
-			continue;
 		}
 
 		const std::string& arg = args[paramCount++];
