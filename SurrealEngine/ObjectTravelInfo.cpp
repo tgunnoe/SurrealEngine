@@ -164,7 +164,10 @@ Array<UObject*> ActorTravelInfo::Accept(UPlayerPawn* pawn, const std::string& tr
 			}
 			else if (cls)
 			{
-				object = engine->packages->GetTransientPackage()->NewObject({}, cls, ObjectFlags::Transient);
+				// Not an actor, so not spawned into the level: it belongs to the pawn's package with the pawn as its
+				// outer, where a save that exports the pawn exports it
+				object = pawn->package->NewObject({}, cls, ObjectFlags::NoFlags);
+				object->Outer() = pawn;
 			}
 			else
 			{

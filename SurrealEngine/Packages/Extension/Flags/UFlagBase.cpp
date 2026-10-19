@@ -12,9 +12,25 @@
 #include "Packages/Extension/Flags/UFlagRotator.h"
 #include "Packages/Extension/Flags/UFlagVector.h"
 
+int UFlagBase::BucketOf(const NameString& flagName)
+{
+	// The bucket is stored in a save with the flag and recomputed by the process that loads it, so it
+	// must come from the name's text. The name's compare index is the order in which a process first
+	// met names, and differs between processes. FNV-1a over the upper-cased text; the case folding
+	// matches how names compare equal.
+	uint32_t hash = 2166136261u;
+	for (unsigned char c : flagName.ToString())
+	{
+		if (c >= 'a' && c <= 'z')
+			c -= 'a' - 'A';
+		hash = (hash ^ c) * 16777619u;
+	}
+	return (int)(hash % HashTableSize);
+}
+
 UFlag* UFlagBase::GetFlag(const NameString& flagName, uint8_t flagType)
 {
-	int hashIndex = flagName.GetCompareIndex() % HashTableSize;
+	int hashIndex = BucketOf(flagName);
 	UFlag* flag = hashTable()[hashIndex];
 	while (flag)
 	{
@@ -27,7 +43,7 @@ UFlag* UFlagBase::GetFlag(const NameString& flagName, uint8_t flagType)
 
 bool UFlagBase::DeleteFlag(const NameString& FlagName, uint8_t flagType)
 {
-	int hashIndex = FlagName.GetCompareIndex() % HashTableSize;
+	int hashIndex = BucketOf(FlagName);
 	UFlag* flag = hashTable()[hashIndex];
 	if (!flag)
 		return false;
@@ -240,8 +256,10 @@ T* UFlagBase::GetOrCreateFlag(const NameString& FlagName, std::optional<bool> bA
 				throw std::runtime_error(std::string("Could not find class ") + flagClassName);
 		}
 
-		int hashIndex = FlagName.GetCompareIndex() % HashTableSize;
-		auto flag = UObject::Cast<T>(engine->packages->GetTransientPackage()->NewObject(FlagName, cls, ObjectFlags::Transient));
+		int hashIndex = BucketOf(FlagName);
+		// A flag belongs to its flag base's package, so a save that exports the flag base exports its flags
+		auto flag = UObject::Cast<T>(package->NewObject(FlagName, cls, ObjectFlags::NoFlags));
+		flag->Outer() = this;
 		flag->FlagBase() = this;
 		flag->flagType() = (uint8_t)flagType;
 		flag->FlagName() = FlagName;
