@@ -84,7 +84,9 @@ The five object forms are `self` (the player), `none`, and three lookups in the
 loaded level: `name:<ObjectName>` finds the actor with that object name,
 `class:<ClassName>` the first actor of exactly that class, and
 `bind:<BindName>` the first actor whose `BindName` property has that value
-(Deus Ex only). The values are compared without regard to case. An optional
+(Deus Ex only). The values are compared without regard to case. An actor that
+is being deleted is skipped by all three lookups and is not offered in the
+list of a lookup that fails. An optional
 parameter left out takes its default value, and a required one left out is a
 refusal.
 
