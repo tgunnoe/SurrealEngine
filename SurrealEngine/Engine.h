@@ -354,6 +354,7 @@ private:
 	void GetLevelInfoObject();
 	void GetLevelObject();
 	void LinkActorsToLevel();
+	void RebindConversations();
 
 	bool m_EditorMode = false; // Set this to true to allow rendering of invisible polys.
 	bool m_GamePaused = false;
