@@ -349,6 +349,7 @@ public:
 
 private:
 	std::map<std::string, std::string> CreateTravelInfo(bool transferItems);
+	std::string TravelPlayerName(UPlayerPawn* pawn) const;
 
 	void LogGamePackageSHA1Sums() const;
 	void GetLevelInfoObject();

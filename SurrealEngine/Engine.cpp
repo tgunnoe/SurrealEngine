@@ -941,6 +941,12 @@ void Engine::PossessSavedPlayer()
 	render->OnMapLoaded();
 	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
 	NotePlayerLogin();
+
+	// A load never runs a login, so the level holds no travel info and its URL no player name. A restart
+	// hands LoadMap the level's travel info and looks the player up in it by the URL's name, so give it the
+	// loaded player and items under the name they are stored by
+	LevelInfo->URL.AddOrReplaceOption("Name=" + TravelPlayerName(pawn));
+	Level->TravelInfo = CreateTravelInfo(true);
 }
 
 void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const
@@ -1020,12 +1026,14 @@ std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems)
 	{
 		UPlayerPawn* pawn = UObject::TryCast<UPlayerPawn>(actor);
 		if (pawn && pawn->Player())
-		{
-			std::string playerName = engine->LaunchInfo.ue1Version > 219 ? pawn->PlayerReplicationInfo()->PlayerName() : std::string("Player"); // To do: how to get the travel player name?
-			travelInfo[playerName] = ActorTravelInfo::Create(pawn, transferItems);
-		}
+			travelInfo[TravelPlayerName(pawn)] = ActorTravelInfo::Create(pawn, transferItems);
 	}
 	return travelInfo;
+}
+
+std::string Engine::TravelPlayerName(UPlayerPawn* pawn) const
+{
+	return LaunchInfo.ue1Version > 219 ? pawn->PlayerReplicationInfo()->PlayerName() : std::string("Player"); // To do: how to get the travel player name?
 }
 
 void Engine::LoginPlayer()
