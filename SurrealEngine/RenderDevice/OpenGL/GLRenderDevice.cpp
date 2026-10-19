@@ -3,6 +3,7 @@
 #include "GLRenderDevice.h"
 #include "GLCachedTexture.h"
 #include "GLFileResource.h"
+#include "GLShutdownStep.h"
 #include "Utils/UTF16.h"
 #include "Utils/Logger.h"
 #include "Math/halffloat.h"
@@ -97,14 +98,17 @@ void GLRenderDevice::Exit()
 {
 	LogMessage("GLDrv: exit called");
 
-	UnmapVertices();
-
-	Uploads.reset();
-	Textures.reset();
-	ReleasePresentPass();
-	ReleaseBloomPass();
-	ReleaseScenePass();
-	ReleaseSceneBuffers();
+	// The destructor runs this while a failed frame's exception may still be unwinding, and a
+	// second exception from here would end the process before the first one is reported. Each
+	// step is therefore guarded on its own, so one failing step does not skip the ones after it.
+	auto log = [](const std::string& message) { LogMessage("GLDrv: shutdown step failed: " + message); };
+	GLShutdownStep("UnmapVertices", [&] { UnmapVertices(); }, log);
+	GLShutdownStep("Uploads.reset", [&] { Uploads.reset(); }, log);
+	GLShutdownStep("Textures.reset", [&] { Textures.reset(); }, log);
+	GLShutdownStep("ReleasePresentPass", [&] { ReleasePresentPass(); }, log);
+	GLShutdownStep("ReleaseBloomPass", [&] { ReleaseBloomPass(); }, log);
+	GLShutdownStep("ReleaseScenePass", [&] { ReleaseScenePass(); }, log);
+	GLShutdownStep("ReleaseSceneBuffers", [&] { ReleaseSceneBuffers(); }, log);
 }
 
 void GLRenderDevice::ResizeSceneBuffers(int width, int height, int multisample)
