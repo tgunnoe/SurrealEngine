@@ -463,6 +463,13 @@ void NActor::IsOverlapping(UObject* Self, UObject* checkActor, BitfieldBool& Ret
 	ReturnValue = selfActor && otherActor && selfActor->IsOverlapping(otherActor); 
 }
 
+// Only Deus Ex's Actor declares LastRenderTime. PropertyOffsets leaves the offset unset for the
+// other games, and reading through an unset offset throws.
+static bool HasRenderStamp()
+{
+	return PropOffsets_Actor.LastRenderTime.DataOffset != ~(size_t)0;
+}
+
 void NActor::LastRendered(UObject *Self, float &ReturnValue)
 {
 	if (UDecal* decal = UObject::TryCast<UDecal>(Self))  
@@ -471,7 +478,18 @@ void NActor::LastRendered(UObject *Self, float &ReturnValue)
 	}  
 	else  
 	{  
-		ReturnValue = 0.0f; // UActor no tiene LastRenderedTime  
+		if (HasRenderStamp())
+		{
+			// Map-placed actors serialize the editor session's stamp, which is ahead of the level clock
+			// until VisibleActor first collects them; that counts as never rendered.
+			float now = engine->LevelInfo->TimeSeconds();
+			float stamp = UObject::Cast<UActor>(Self)->LastRenderTime();
+			ReturnValue = stamp > now ? now : now - stamp;
+		}
+		else
+		{
+			ReturnValue = 0.0f; // This game's Actor has no LastRenderTime
+		}
 	}  
 }
 
