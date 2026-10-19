@@ -49,7 +49,6 @@ DEUSEX = Scenario(
          "login: Failed to spawn player actor"),
         (None, "contains", "Iterator statement without an iterator",
          "script: Iterator statement without an iterator (ReachablePathnodes)"),
-        ("FATAL", "startswith", "signal", "crash: FATAL signal {last}"),
     ),
     error_owner={
         "login: Failed to spawn player actor": (

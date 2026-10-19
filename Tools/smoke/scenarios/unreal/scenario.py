@@ -1,6 +1,10 @@
 """The Unreal Gold 226b sweep scenario: every game-specific literal."""
 from triage.scenario import Scenario
 
+_STATUS = ("Docs/Status.md line 55 (Unreal (Gold): '226 version of the game launches. Menu options works "
+           "most of the time. Single player maps can be played, as well as botmatches. Bots can "
+           "sometimes move around and attack.')")
+
 UNREAL = Scenario(
     label="Unreal Gold 226b",
     triage_intro=(
@@ -25,10 +29,10 @@ UNREAL = Scenario(
     # Gold 226b packages Core.u, Engine.u, UnrealShare.u and UnrealI.u in System/:
     # each class export (class index 0) carries its super class, an index into the
     # same package's exports or imports, and the first package to export a name
-    # decides it. The chains were printed by a throwaway script kept outside the
-    # repository, run as `chains.py "<Unreal Gold folder>/System" <ClassName>...`.
-    # A class counts as gameplay when its chain meets a gameplay root. Decal, a
-    # root in the shared set, is not exported by any of the four packages, so it
+    # decides it. Each chain was read by following a class export's super-class
+    # reference through those export tables up to Object.
+    # A class counts as gameplay when its chain meets a gameplay root. Decal, one
+    # of the roots below, is not exported by any of the four packages, so it
     # has no row.
     hierarchy={
         "Actor": ["Actor", "Object"],
@@ -88,7 +92,6 @@ UNREAL = Scenario(
          "login: Failed to spawn player actor"),
         (None, "contains", "Unsupported expression value property type",
          "script: Unsupported expression value property type"),
-        ("FATAL", "startswith", "signal", "crash: FATAL signal {last}"),
     ),
     error_owner={
         "crash: FATAL signal 6": (
@@ -97,6 +100,7 @@ UNREAL = Scenario(
             "aborting frame is not identified",
             "none applies"),
     },
+    status_natives=_STATUS,
     bullet="- ",
     status_label="Status.md",
     verdict_template="verdict: {verdict}, exit code {exit_code}",
