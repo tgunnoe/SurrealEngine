@@ -6,6 +6,7 @@
 #include "GameApp.h"
 #include "GameFolder.h"
 #include "Engine.h"
+#include "VM/Frame.h"
 #include "UI/WidgetResourceData.h"
 #include "UI/ErrorWindow/ErrorWindow.h"
 #include "UI/Launcher/LauncherWindow.h"
@@ -91,6 +92,9 @@ int GameApp::main(Array<std::string> args)
 				"  --exit-after=<secs>  Quit the main loop this many seconds after process start\n"
 				"  --exec=<secs>:<command>[;<secs>:<command>...]\n"
 				"                       Run console commands this many seconds after the first login\n"
+				"  --trace-script=<Class>[.<Function>][,...]\n"
+				"                       Log each script call made on objects of these classes or their\n"
+				"                       subclasses, or only the named function of such objects\n"
 				"  --smoke-log=<path>   Write a structured, flushed event log for unattended runs\n";
 			return 0;
 		}
@@ -103,6 +107,18 @@ int GameApp::main(Array<std::string> args)
 			if (!execSchedule.ok())
 			{
 				std::cerr << "SurrealEngine: invalid --exec: " << execSchedule.error << "\n";
+				return 2;
+			}
+		}
+
+		// Likewise a malformed --trace-script
+		TraceScriptResult traceScript;
+		if (commandline->HasArg("", "--trace-script"))
+		{
+			traceScript = ParseTraceScript(commandline->GetArg("", "--trace-script"));
+			if (!traceScript.ok())
+			{
+				std::cerr << "SurrealEngine: invalid --trace-script: " << traceScript.error << "\n";
 				return 2;
 			}
 		}
@@ -153,6 +169,9 @@ int GameApp::main(Array<std::string> args)
 					return 2;
 				}
 			}
+
+			for (const TraceScriptEntry& entry : traceScript.entries)
+				Frame::TraceEntries.push_back({ NameString(entry.cls), NameString(entry.function) });
 
 			Engine engine(info);
 			engine.Run();

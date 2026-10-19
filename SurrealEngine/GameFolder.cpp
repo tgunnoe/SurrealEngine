@@ -604,5 +604,42 @@ std::string FormatExecItem(const ExecItem& item)
 
 TraceScriptResult ParseTraceScript(const std::string& text)
 {
-	return { {}, "not implemented" };
+	if (Trim(text).empty())
+		return { {}, "empty value" };
+
+	TraceScriptResult result;
+	size_t begin = 0;
+	while (true)
+	{
+		size_t comma = text.find(',', begin);
+		const std::string entry = Trim(text.substr(begin, comma == std::string::npos ? std::string::npos : comma - begin));
+		if (entry.empty())
+			return { {}, "empty entry in '" + text + "'" };
+
+		TraceScriptEntry parsed;
+		size_t dot = entry.find('.');
+		if (dot == std::string::npos)
+		{
+			parsed.cls = entry;
+		}
+		else
+		{
+			const std::string badEntry = "bad entry '" + entry + "': ";
+			if (entry.find('.', dot + 1) != std::string::npos)
+				return { {}, badEntry + "more than one dot" };
+
+			parsed.cls = Trim(entry.substr(0, dot));
+			parsed.function = Trim(entry.substr(dot + 1));
+			if (parsed.cls.empty())
+				return { {}, badEntry + "empty class" };
+			if (parsed.function.empty())
+				return { {}, badEntry + "empty function" };
+		}
+		result.entries.push_back(std::move(parsed));
+
+		if (comma == std::string::npos)
+			break;
+		begin = comma + 1;
+	}
+	return result;
 }

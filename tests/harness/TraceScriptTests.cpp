@@ -73,6 +73,17 @@ TEST(HarnessTraceParseTrimsWhitespace)
 	CHECK_EQ(Describe(r.entries), std::string("[ConPlay|][DeusExPlayer|AddNote][Actor|]"));
 }
 
+TEST(HarnessTraceParseTrimsAroundTheDot)
+{
+	// A class or function name never holds whitespace, so a gap beside the dot cannot be part of one
+	TraceScriptResult r = ParseTraceScript("DeusExPlayer . AddGoal,Actor\t.Tick");
+	CHECK_MSG(r.ok(), r.error);
+	CHECK_EQ(Describe(r.entries), std::string("[DeusExPlayer|AddGoal][Actor|Tick]"));
+
+	CheckRejected("DeusExPlayer. ", "bad entry 'DeusExPlayer.': empty function");
+	CheckRejected(" .AddGoal", "bad entry '.AddGoal': empty class");
+}
+
 TEST(HarnessTraceParseKeepsSpellingAsWritten)
 {
 	// Matching is without regard to case, but that happens in the VM through NameString; the parser reports what was typed

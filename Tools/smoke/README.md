@@ -14,6 +14,7 @@ All flags are opt-in; without them the engine behaves as before.
 | `--smoke-log=<path>` | Write the structured event log described below. Each line is written and flushed immediately. With `--autostart`, fatal signals (SIGSEGV, SIGABRT, SIGBUS, SIGFPE, SIGILL) append `FATAL signal <n>`, then re-raise with the default action so the process dies from that signal (exit status `128+n` in a shell) and still dumps core. A terminate handler is installed with the signal handlers (see `FATAL terminate` below). Without `--autostart` the crash reporter owns the signal handlers and no `FATAL signal` or `FATAL terminate` line is written. |
 | `--exec=<seconds>:<command>[;<seconds>:<command>...]` | Run each console command this many seconds after the first `LOGIN`, through the engine's own console. The time is a non-negative decimal; the command is everything after the item's first colon, trimmed, and cannot contain `;`. Items run in time order (equal times keep their written order). The log records `EXEC`, `EXEC_FAILED` or `EXEC_SKIPPED` for each. A malformed item (no colon, empty command, bad time) stops the run before the game starts with a message on stderr and exit code 2. |
 | `--url=<mapname>` | Existing flag; selects the map to load. |
+| `--trace-script=<entry>[,<entry>...]` | Write one engine-log line for every script or native function call made on an object whose class, or any ancestor class, is named. An entry is `<Class>` (every function of such objects) or `<Class>.<Function>` (only that function); entries are trimmed and names are matched without regard to case. Operators (`==`, `+`, `!` and the like) are skipped. A traced call writes `trace: <ObjectName> <ClassName> <StateName>: <Function>(<args>)`, the state being `None` for an object with no state. A string argument is in double quotes, cut to its first 80 characters, with newlines, quotes and backslashes escaped; a name is in single quotes; a bool is `true` or `false`; a byte, int or float is its number; an object is its name, or `None`; an absent argument is `None`; anything else, such as a vector or a struct, is `?`. Only the entry of a call is traced, never its return value. The hook runs where the VM begins a call, before the check that skips a call the object's state ignores, so a traced call may still have done nothing. After 20000 traced calls the single line `trace: stopped after 20000 calls` is written and nothing more. The smoke log is untouched. The lines go to the engine log, which is written when the engine exits, so a run killed by a signal loses the trace. A malformed value stops the run before the game starts with `SurrealEngine: invalid --trace-script: <reason>` on stderr and exit code 2; the reasons are `empty value`, `empty entry in '<value>'`, `bad entry '<entry>': empty class`, `bad entry '<entry>': empty function` and `bad entry '<entry>': more than one dot`. |
 
 Example:
 
@@ -111,6 +112,24 @@ logs `call: <form> resolved to <Name> at (x, y, z)`. The smoke log shows only
 the engine log too. That is the plaintext `SE-Log-LastRun.txt` in the per-user
 configuration directory, written when the engine exits, so a run killed by a
 signal leaves none.
+
+`--trace-script` and `call` work together to watch what a started function does:
+
+```
+SurrealEngine --autostart --exit-after=40 --smoke-log=/tmp/dx.log --url=01_NYC_UNATCOIsland '--exec=5:call StartConversationByName MeetPaul bind:PaulDenton 0 1' --trace-script=ConPlayBase,DeusExPlayer.StartConversationByName "<game folder>"
+```
+
+The call itself is the first traced line, then every function of the conversation
+object that it set going. Name the classes narrowly. Window classes, and the
+functions the player calls on a running conversation on every frame
+(`GetForcePlay`, a window's `DrawWindow`), make hundreds of lines a second, and
+the 20000-call cap, which counts them too, is spent within seconds of the call:
+the stop line's own time in the log says when. Name the class of an object a
+script creates (`DeusExGoal`, for one) to see the calls made on it. Such an
+object has no name, because `new` gives it none, so it shows in the trace as
+`None`, and a `call` that returns it logs `returned None`, just as it does for
+no object at all; the traced calls made on the object are what tell the two
+apart.
 
 To make a deterministic fatal exception, request a map that does not exist
 (`--url=NoSuchMap`): the log ends with `EXCEPTION` and `FATAL` lines and the
