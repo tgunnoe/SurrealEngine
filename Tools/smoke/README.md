@@ -53,6 +53,14 @@ is the quick save and stays allowed). A load of a slot that is not a number or h
 save is skipped, with a `WARNING` in the log, and the level keeps running; so is a
 refused save.
 
+`--exec='5:deletegame <n>'` deletes the save that `savegame <n>` wrote from
+`--user-dir` (the `Save<n>` folder on Deus Ex, the `Save<n>` file in the other
+games), as the Deus Ex load screen's delete button does, and logs
+`Deleted save slot <n>`. Only slots from 1 are deleted, so the quick save is
+never touched. A slot that is not a number, is below 1 or holds no save is
+skipped, as is every slot under `--autostart` without `--user-dir`, each with a
+`WARNING` in the log (`Delete game skipped: ...`).
+
 Two commands let a run move the player and act without a keyboard:
 `hold button <name> <seconds>` keeps a player button down (for example
 `--exec='8:hold button bDuck 3'`) and `hold axis <name> <speed> <seconds>` keeps a
@@ -194,7 +202,7 @@ each. The entry-map preload is not logged.
 | `GAME <name> <version>` | First line. |
 | `MAP <name>` | A map was entered. |
 | `LOGIN` | The player logged in to that map. |
-| `WARNING <text>` | The harness could not install a signal handler, a requested save was skipped under `--autostart` or because its slot is not a number or is not allowed (`Save game skipped: ...`, for example `slot -2 is not allowed`), or a requested load was skipped because its slot is not a number or holds no save (`Load game skipped: ...`). |
+| `WARNING <text>` | The harness could not install a signal handler, a requested save was skipped under `--autostart` or because its slot is not a number or is not allowed (`Save game skipped: ...`, for example `slot -2 is not allowed`), a requested load was skipped because its slot is not a number or holds no save (`Load game skipped: ...`), or a requested delete was skipped (`Delete game skipped: ...`). |
 | `SCRIPT_ERROR <text>` | A native raised an error that the VM logged. |
 | `SCRIPT_WARNING <text>` | A script accessed None; the original games log this as a warning and continue. A native whose non-optional out parameter receives a nothing-value is skipped, and the access is reported once, by the statement path. A None in-parameter still reaches the native; if that native type-checks the argument, the same access is also logged as `SCRIPT_ERROR`. |
 | `STUB <text>` | A distinct unimplemented-function message. |
