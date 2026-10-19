@@ -1,8 +1,12 @@
+import contextlib
 import dataclasses
 import filecmp
 import importlib.util
+import io
 import json
 import os
+import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -11,20 +15,22 @@ from unittest import mock
 
 SMOKE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SMOKE))
-import sweep  # noqa: E402
 from triage import build, check, extract, repro  # noqa: E402
 from triage.scenario import Scenario  # noqa: E402
 
-DEUSEX_DIR = SMOKE / "scenarios" / "deusex"
+SCENARIOS = SMOKE / "scenarios"
 
 
-def load_deusex():
+def load_scenario(name):
     # Loaded by path: discovery puts this directory on sys.path, where a bare
     # "scenario" would be the package's own module.
-    spec = importlib.util.spec_from_file_location("deusex_scenario", DEUSEX_DIR / "scenario.py")
+    spec = importlib.util.spec_from_file_location(
+        "scenario_" + name.replace("-", "_"), SCENARIOS / name / "scenario.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    return mod.DEUSEX
+    found = [v for v in vars(mod).values() if isinstance(v, Scenario)]
+    assert len(found) == 1, (name, found)
+    return found[0]
 
 
 TOY = Scenario(
@@ -38,8 +44,7 @@ TOY = Scenario(
     gameplay_roots=frozenset({"Actor"}),
     bare_owners={"Bare": "Util"},
     stub_owner_file={"Actor": "native/Actor.cpp"},
-    signature_rules=((None, "contains", "boom", "script: boom"),
-                     ("FATAL", "startswith", "signal", "crash: signal {last}")),
+    signature_rules=((None, "contains", "boom", "script: boom"),),
     error_owner={"script: boom": ("the boom owner", "none applies")},
     status_natives="status cite",
     bullet="- ",
@@ -104,6 +109,13 @@ class Fixture(unittest.TestCase):
 
     def generate(self, scn):
         build.build(scn, self.data, self.docs, os.path.join(self.data, "repro.json"))
+
+    def read(self, name):
+        with open(os.path.join(self.docs, name)) as f:
+            return f.read()
+
+    def section(self, name):
+        return self.read("TRIAGE.md").split("## %s\n" % name, 1)[1].split("\n## ", 1)[0]
 
     def edit_doc(self, name, old, new):
         p = os.path.join(self.docs, name)
@@ -193,6 +205,27 @@ class TestExtract(unittest.TestCase):
         self.assertEqual(errs["M2"].get("warnings"), 0)
         self.assertEqual(errs["M1"]["errors"], [])
 
+    def test_extract_records_warning_sites(self):
+        with tempfile.TemporaryDirectory() as logs, tempfile.TemporaryDirectory() as out:
+            with open(os.path.join(logs, "M1.log"), "w") as f:
+                f.write("MAP M1\nSCRIPT_WARNING Accessed None in A.b\n"
+                        "SCRIPT_WARNING  Accessed   None in A.b\n"
+                        "SCRIPT_WARNING Accessed None in C.d at 0xDEAD\n"
+                        "SCRIPT_WARNING Accessed None in C.d at 0xbeef\nSUMMARY done\n")
+            with open(os.path.join(logs, "M2.log"), "w") as f:
+                f.write("MAP M2\nSUMMARY done\n")
+            extract.extract(TOY, logs, out)
+            with open(os.path.join(out, "errors.json")) as f:
+                errs = json.load(f)
+        # One site per text once whitespace is collapsed and addresses are masked.
+        sites = {"Accessed None in A.b": 2, "Accessed None in C.d at 0x?": 2}
+        self.assertEqual(errs["M1"]["warning_sites"], sites)
+        self.assertEqual(list(errs["M1"]["warning_sites"]), sorted(sites))
+        self.assertEqual(errs["M2"]["warning_sites"], {})
+        # Every warning line lands on exactly one site.
+        for rec in errs.values():
+            self.assertEqual(rec["warnings"], sum(rec["warning_sites"].values()))
+
     def test_strip_native_stack(self):
         self.assertEqual(extract.strip_native_stack("a b at /x(f+0x1) [0x2] at /y(g+0x3) [0x4]"), "a b")
 
@@ -221,6 +254,20 @@ class TestReproCompare(unittest.TestCase):
 
     def test_error_only_in_second_run_is_flaky(self):
         self.assertEqual(repro.compare(TOY, *self.logs("MAP M\n", "SCRIPT_ERROR x\n"))[0], "flaky")
+
+    def test_stub_only_first_run_whose_stub_vanishes_is_no(self):
+        # A gameplay stub makes a run non-clean in the checker, so losing it is a "no".
+        self.assertEqual(repro.compare(TOY, *self.logs("STUB Actor.A\n", "MAP M\n")),
+                         ("no", "stubs:Actor.A", "stubs:"))
+        started = self.STARTED
+        self.assertEqual(repro.compare(self.MATCH, *self.logs(started + "STUB Actor.A\n", started))[0], "no")
+
+    def test_stub_only_in_second_run_is_flaky(self):
+        self.assertEqual(repro.compare(TOY, *self.logs("MAP M\n", "STUB Actor.A\n"))[0], "flaky")
+
+    def test_non_start_with_a_stub_then_start_without_is_no(self):
+        v, a, b = repro.compare(self.MATCH, *self.logs(self.UNSTARTED + "STUB Actor.A\n", self.STARTED))
+        self.assertEqual((v, a, b), ("no", "stubs:Actor.A; match_started:false", "stubs:; match_started:true"))
 
     def test_stub_set_fallback(self):
         same = repro.compare(TOY, *self.logs("STUB Actor.B\nSTUB Actor.A\nSTUB Util.Z\n",
@@ -273,7 +320,7 @@ class TestReproCompare(unittest.TestCase):
                     self.assertTrue(str(a).endswith("; match_started:" + str(old[1]).lower()), a)
                     self.assertTrue(str(b).endswith("; match_started:" + str(new[1]).lower()), b)
 
-    def test_start_is_the_sweeps_rule(self):
+    def test_start_follows_the_rule(self):
         bodies = [
             ("STATE 0.0 PlayerWalking at (1.0, 2.0, 3.0)\nEXEC 5 Fire\n", True),
             ("STATE 0.0 PlayerWaiting\nEXEC 5 Fire\nSTATE 6.0 PlayerWalking\n", True),
@@ -284,7 +331,6 @@ class TestReproCompare(unittest.TestCase):
         for text, want in bodies:
             old, new = self.logs(text, text)
             with self.subTest(text=text):
-                self.assertIs(sweep.parse_log(old)[0]["match_started"], want)
                 _, a, b = repro.compare(self.MATCH, old, new)
                 self.assertTrue(str(a).endswith("; match_started:" + str(want).lower()), a)
 
@@ -377,10 +423,6 @@ class TestWarningsPolicy(Fixture):
         # raising from dataclasses.replace.
         self.assertIn("warnings_fail_clean", {f.name for f in dataclasses.fields(Scenario)})
         return self.only(warnings_fail_clean=True, **opts)
-
-    def section(self, name):
-        with open(os.path.join(self.docs, "TRIAGE.md")) as f:
-            return f.read().split("## %s\n" % name, 1)[1].split("\n## ", 1)[0]
 
     def test_option_defaults_off(self):
         self.assertIs(getattr(Scenario(), "warnings_fail_clean", None), False)
@@ -497,14 +539,6 @@ class TestRequireMatchStart(Fixture):
     def matching(self, **opts):
         return self.only(require_match_start=True, error_owner={**TOY.error_owner, **self.OWNER}, **opts)
 
-    def section(self, name):
-        with open(os.path.join(self.docs, "TRIAGE.md")) as f:
-            return f.read().split("## %s\n" % name, 1)[1].split("\n## ", 1)[0]
-
-    def read(self, name):
-        with open(os.path.join(self.docs, name)) as f:
-            return f.read()
-
     def test_options_default_off(self):
         self.assertIs(Scenario().require_match_start, False)
         self.assertEqual(Scenario().exec, "")
@@ -598,16 +632,336 @@ class TestReproLine(Fixture):
         self.assertTrue(any("M1: missing repro command" in p for p in self.problems(scn)))
 
 
-class TestDeusExByteIdentity(unittest.TestCase):
-    def test_regenerates_committed_documents(self):
-        scn = load_deusex()
-        with tempfile.TemporaryDirectory() as out:
-            build.build(scn, str(DEUSEX_DIR), out, str(DEUSEX_DIR / "repro.json"))
-            for name in ("TRIAGE.md", "stubs.md", "SUMMARY.md"):
-                self.assertTrue(filecmp.cmp(os.path.join(out, name), DEUSEX_DIR / name, shallow=False), name)
-            _, _, problems = check.check(scn, str(DEUSEX_DIR), out)
-        self.assertEqual(problems, [])
+def table_rows(text, heading):
+    """The cells of each row of the table under `## heading`, header and rule dropped."""
+    body = text.split("## %s\n" % heading, 1)[1].split("\n## ", 1)[0]
+    rows = [line for line in body.splitlines() if line.startswith("|")]
+    return [[c.strip() for c in re.split(r"(?<!\\)\|", line.strip()[1:-1])] for line in rows[2:]]
 
+
+def fatal(text):
+    return {"kind": "FATAL", "text": text, "map_section": "M1"}
+
+
+def boom():
+    return {"kind": "SCRIPT_ERROR", "text": "boom here", "map_section": "M1"}
+
+
+class TestRendering(Fixture):
+    DOCS = ("TRIAGE.md", "stubs.md", "SUMMARY.md")
+
+    def make_clean(self):
+        self.edit_data("stubs.json", lambda o: o["maps"].update({n: [] for n in o["maps"]}))
+        self.edit_data("errors.json", lambda o: [r.update(errors=[]) for r in o.values()])
+
+    def crash(self, exit_code, errors, verdict="crash"):
+        self.edit_data("sweep.json", lambda o: o["maps"][0].update(verdict=verdict, exit_code=exit_code))
+        self.edit_data("errors.json", lambda o: o["M1"].update(errors=errors))
+
+    def signatures(self, scn=None):
+        self.generate(scn or self.only())
+        return {r[0]: r for r in table_rows(self.read("SUMMARY.md"), "Failure signatures")}
+
+    def assert_one_newline(self, scn):
+        self.generate(scn)
+        for name in self.DOCS:
+            text = self.read(name)
+            self.assertTrue(text.endswith("\n") and text.rstrip("\n") + "\n" == text, (name, text[-20:]))
+
+    def test_every_document_ends_with_exactly_one_newline(self):
+        padded = dict(stubs_footer="\nFoot.\n\n\n", summary_footer="\nFoot.\n\n\n")
+        bare = dict(stubs_footer="", summary_footer="")
+        for label, opts, clean in (("default", {}, False), ("padded footers", padded, False),
+                                   ("no footers", bare, False), ("no sections", {}, True),
+                                   ("no sections, no evidence", dict(triage_evidence="", **bare), True)):
+            with self.subTest(label):
+                if clean:
+                    self.make_clean()
+                self.assert_one_newline(self.only(**opts))
+
+    def test_empty_signature_and_candidate_tables_render_a_none_row(self):
+        self.make_clean()
+        self.generate(self.only())
+        summary = self.read("SUMMARY.md")
+        self.assertIn("| Signature | Maps | Affected |\n| :--- | ---: | :--- |\n| none | | |\n", summary)
+        self.assertIn("| Rank | Candidate | Fully unblocks | Partial |\n"
+                      "| ---: | :--- | ---: | ---: |\n| none | | | |\n", summary)
+
+    def test_non_empty_tables_have_no_none_row(self):
+        self.generate(self.only())
+        summary = self.read("SUMMARY.md")
+        for heading in ("Failure signatures", "Ranked fix candidates"):
+            self.assertNotIn("none", [r[0] for r in table_rows(summary, heading)], heading)
+
+    def test_summary_check_sentence_names_the_check_command(self):
+        self.generate(self.only())
+        paragraph = self.read("SUMMARY.md").split("Check:", 1)[1].split("\n\n", 1)[0]
+        self.assertIn("`check`", paragraph)
+        self.assertNotIn("check_triage", paragraph)
+
+    def test_a_crash_row_yields_one_crash_signature(self):
+        long_text = "out of memory at 0xDEADBEEF " + "y" * 100
+        cases = [
+            ("signal exit code", -11, [boom(), fatal("signal 11")], "crash: FATAL signal 11"),
+            ("signal beats an earlier fatal line", -6, [fatal("terminate: bad"), fatal("signal 6")],
+             "crash: FATAL signal 6"),
+            ("signal with no recorded fatal line", -6, [boom()], "crash: FATAL signal 6"),
+            ("other fatal line, masked and cut", 1, [fatal(long_text)],
+             "crash: FATAL " + ("out of memory at 0x? " + "y" * 100)[:80]),
+            ("no fatal line and no signal", 3, [boom()], "crash: exit 3"),
+        ]
+        for label, exit_code, errors, want in cases:
+            with self.subTest(label):
+                self.crash(exit_code, errors)
+                sigs = self.signatures()
+                self.assertEqual([s for s in sigs if "crash" in s or "FATAL" in s], [want])
+                self.assertEqual(sigs[want][1:], ["1", "M1"])
+                # The recorded lines that are not fatal keep their own signatures.
+                self.assertEqual("script: boom" in sigs, boom() in errors)
+
+    def test_a_fatal_line_in_a_non_crash_row_keeps_the_default_form(self):
+        # signature_rules do not apply to FATAL lines, even a rule that would match.
+        rule = ("FATAL", "startswith", "signal", "crash: signal {last}")
+        scn = self.only(signature_rules=TOY.signature_rules + (rule,))
+        for text, want in (("signal 11 at 0xAB", "FATAL: signal 11 at 0x?"),
+                           ("boom in terminate", "FATAL: boom in terminate")):
+            with self.subTest(text):
+                self.crash(1, [fatal(text)], verdict="fail")
+                sigs = self.signatures(scn)
+                self.assertEqual([s for s in sigs if "FATAL" in s or "crash" in s or "boom" in s], [want])
+
+    def test_crash_owner_and_candidate_use_the_derived_signature(self):
+        scn = self.only(error_owner={"crash: FATAL signal 11": ("the crash owner", "none applies")})
+        self.crash(-11, [fatal("signal 11")])
+        self.generate(scn)
+        section = self.section("M1")
+        self.assertIn("- owner: the crash owner", section)
+        self.assertNotIn("unattributed", section)
+        candidates = [r[1] for r in table_rows(self.read("SUMMARY.md"), "Ranked fix candidates")]
+        self.assertIn("fix signature: crash: FATAL signal 11", candidates)
+        self.assertFalse([c for c in candidates if "verdict crash" in c])
+
+
+class TestWarningSites(Fixture):
+    def set_sites(self, **sites):
+        def apply(o):
+            for name, counts in sites.items():
+                o[name]["warning_sites"] = counts
+        self.edit_data("errors.json", apply)
+
+    def test_table_lists_every_site_by_lines_then_name(self):
+        # Cove is a clean row: the table covers every row, not only the sections.
+        self.set_sites(M1={"B site": 3, "A site": 3, "C|pipe": 1}, M2={"B site": 2, "D site": 5},
+                       Cove={"A site": 1})
+        self.generate(self.only())
+        summary = self.read("SUMMARY.md")
+        self.assertEqual(table_rows(summary, "Warning sites"),
+                         [["B site", "5", "2"], ["D site", "5", "1"], ["A site", "4", "2"],
+                          ["C\\|pipe", "1", "1"]])
+        self.assertIn("| Site | Lines | Maps |\n| :--- | ---: | ---: |\n| B site | 5 | 2 |\n", summary)
+        self.assertIn("| C\\|pipe | 1 | 1 |\n", summary)
+
+    def test_table_sits_between_the_check_paragraph_and_the_signatures(self):
+        self.generate(self.only())
+        summary = self.read("SUMMARY.md")
+        self.assertLess(summary.index("Check:"), summary.index("## Warning sites"))
+        self.assertLess(summary.index("## Warning sites"), summary.index("## Failure signatures"))
+
+    def test_rows_without_sites_render_a_none_row(self):
+        self.generate(self.only())
+        self.assertIn("| Site | Lines | Maps |\n| :--- | ---: | ---: |\n| none | | |\n", self.read("SUMMARY.md"))
+
+    def test_sections_keep_the_warnings_count(self):
+        self.set_sites(M1={"A site": 4})
+        self.edit_data("sweep.json", lambda o: o["maps"][0].update(script_warnings=4))
+        self.generate(self.only())
+        self.assertIn("- warnings: 4\n", self.section("M1"))
+        self.assertNotIn("A site", self.read("TRIAGE.md"))
+
+
+class TestEntryPoint(unittest.TestCase):
+    """The module's command line: a scenario directory, a command, its arguments."""
+
+    SCENARIO = (
+        "from triage.scenario import Scenario\n"
+        "LABEL = 'Entry'\n"
+        "ENTRY = Scenario(label=LABEL, exe='Engine', game_placeholder='<game>', bullet='- ',\n"
+        "                 status_label='Status',\n"
+        "                 exit_after_seconds=7, repro_timeout_seconds=20, repro_logdir=REPRO_LOGDIR,\n"
+        "                 triage_intro='Non-clean: {nonclean} of {total}.\\n\\n',\n"
+        "                 verdict_template='verdict: {verdict}, exit code {exit_code}',\n"
+        "                 reproduced_template='reproduced: {reproduced}')\n")
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.scn_dir = self.root / "scn"
+        self.logs = self.root / "logs"
+        self.cwd = self.root / "cwd"
+        for d in (self.scn_dir, self.logs, self.cwd):
+            d.mkdir()
+        self.write_scenario(self.SCENARIO)
+        (self.logs / "M1.log").write_text("MAP M1\nSCRIPT_ERROR boom\nSUMMARY done\n")
+        (self.logs / "M2.log").write_text("MAP M2\nSUMMARY done\n")
+        rows = [{"map": "M1", "verdict": "fail", "exit_code": 1, "fps_avg": 30.0, "maps_loaded": ["M1"]},
+                {"map": "M2", "verdict": "pass", "exit_code": 0, "fps_avg": 30.0, "maps_loaded": ["M2"]}]
+        (self.scn_dir / "sweep.json").write_text(json.dumps({"maps": rows}))
+        (self.scn_dir / "repro.json").write_text("{}")
+        old = os.getcwd()
+        os.chdir(self.cwd)
+        self.addCleanup(os.chdir, old)
+
+    def write_scenario(self, source):
+        (self.scn_dir / "scenario.py").write_text(
+            source.replace("REPRO_LOGDIR", repr(str(self.root / "rerun"))))
+
+    def run_cli(self, *argv):
+        from triage import cli
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = cli.main([str(a) for a in argv])
+        return code, out.getvalue(), err.getvalue()
+
+    def extract_and_build(self):
+        self.assertEqual(self.run_cli(self.scn_dir, "extract", os.path.relpath(self.logs))[0], 0)
+        self.assertEqual(self.run_cli(self.scn_dir, "build", "repro.json")[0], 0)
+
+    def test_extract_resolves_the_log_dir_against_the_working_dir(self):
+        code, _, err = self.run_cli(self.scn_dir, "extract", os.path.relpath(self.logs))
+        self.assertEqual((code, err), (0, ""))
+        for name in ("stubs.json", "errors.json"):
+            self.assertTrue((self.scn_dir / name).is_file(), name)
+        self.assertEqual(os.listdir(self.cwd), [])
+
+    def test_build_resolves_the_repro_file_against_the_scenario_dir(self):
+        self.extract_and_build()
+        for name in ("TRIAGE.md", "stubs.md", "SUMMARY.md"):
+            self.assertTrue((self.scn_dir / name).is_file(), name)
+        self.assertEqual(os.listdir(self.cwd), [])
+        self.assertIn("- reproduced: not-run\n", (self.scn_dir / "TRIAGE.md").read_text())
+        other = self.root / "other.json"
+        other.write_text(json.dumps({"M1": {"reproduced": "no", "exit_code": 0,
+                                            "first_line_run1": "a", "first_line_run2": "b"}}))
+        self.assertEqual(self.run_cli(self.scn_dir, "build", other)[0], 0)
+        self.assertIn("- reproduced: no\n", (self.scn_dir / "TRIAGE.md").read_text())
+
+    def test_check_exits_zero_on_good_documents_and_one_on_a_problem(self):
+        self.extract_and_build()
+        self.assertEqual(self.run_cli(self.scn_dir, "check"), (0, "sections=1 nonclean=1 problems=0\n", ""))
+        triage = self.scn_dir / "TRIAGE.md"
+        triage.write_text(triage.read_text().replace("- owner:", "- own:"))
+        code, out, _ = self.run_cli(self.scn_dir, "check")
+        self.assertEqual(code, 1)
+        self.assertIn("FAIL M1: missing owner line", out)
+
+    def test_repro_resolves_the_output_file_against_the_scenario_dir(self):
+        def fake_run(cmd, **kwargs):
+            open(next(a for a in cmd if a.startswith("--smoke-log=")).split("=", 1)[1], "w").close()
+            return mock.Mock(returncode=0)
+
+        with mock.patch.object(repro.subprocess, "run", side_effect=fake_run) as run:
+            code, out, _ = self.run_cli(self.scn_dir, "repro", "Engine", "<game>", self.logs, "out.json", "M1")
+        self.assertEqual(code, 0)
+        self.assertEqual(out, "M1 no 0\n")
+        self.assertEqual(run.call_args.args[0][-1], "<game>")
+        self.assertEqual(list(json.loads((self.scn_dir / "out.json").read_text())), ["M1"])
+        self.assertEqual(os.listdir(self.cwd), [])
+
+    def test_a_scenario_may_import_a_sibling_module(self):
+        (self.scn_dir / "entry_sibling_tables.py").write_text("SIBLING_LABEL = 'From sibling'\n")
+        self.write_scenario("from entry_sibling_tables import SIBLING_LABEL\n"
+                            + self.SCENARIO.replace("LABEL = 'Entry'", "LABEL = SIBLING_LABEL"))
+        self.addCleanup(sys.modules.pop, "entry_sibling_tables", None)
+        self.addCleanup(setattr, sys, "path", list(sys.path))
+        self.extract_and_build()
+        self.assertTrue((self.scn_dir / "SUMMARY.md").read_text().startswith("# From sibling sweep summary\n"))
+
+    def test_a_scenario_dir_must_define_exactly_one_scenario(self):
+        scenario_file = str(self.scn_dir / "scenario.py")
+        two = self.SCENARIO + "import dataclasses\nSECOND = dataclasses.replace(ENTRY, label='Second')\n"
+        for label, source in (("none", "LABEL = 'Entry'\n"), ("two", two)):
+            with self.subTest(label):
+                self.write_scenario(source)
+                code, out, err = self.run_cli(self.scn_dir, "check")
+                self.assertNotEqual(code, 0)
+                self.assertEqual(out, "")
+                self.assertIn(scenario_file, err)
+        os.remove(scenario_file)
+        code, _, err = self.run_cli(self.scn_dir, "check")
+        self.assertNotEqual(code, 0)
+        self.assertIn(scenario_file, err)
+
+    def test_usage_errors_exit_nonzero_with_the_usage(self):
+        for argv in ([], [self.scn_dir], [self.scn_dir, "frobnicate"], [self.scn_dir, "extract"],
+                     [self.scn_dir, "build"], [self.scn_dir, "check", "extra"],
+                     [self.scn_dir, "repro", "exe", "game", self.logs, "out.json"]):
+            with self.subTest(argv=argv):
+                code, out, err = self.run_cli(*argv)
+                self.assertNotEqual(code, 0)
+                self.assertEqual(out, "")
+                self.assertIn("usage:", err)
+
+    def test_runs_as_a_file_under_isolated_mode(self):
+        entry = SMOKE / "triage" / "__main__.py"
+        done = subprocess.run([sys.executable, "-I", "-B", str(entry), str(SCENARIOS / "deusex"), "check"],
+                              cwd=self.cwd, capture_output=True, text=True)
+        self.assertEqual((done.returncode, done.stderr), (0, ""))
+        self.assertIn("problems=0", done.stdout)
+
+
+class TestReproStandsAlone(unittest.TestCase):
+    def test_importing_repro_does_not_load_the_sweep(self):
+        code = ("import sys; sys.path.insert(0, %r); from triage import repro; print('sweep' in sys.modules)"
+                % str(SMOKE))
+        done = subprocess.run([sys.executable, "-I", "-B", "-c", code], capture_output=True, text=True)
+        self.assertEqual((done.returncode, done.stdout.strip()), (0, "False"), done.stderr)
+
+
+class TestUtScenariosShareTables(unittest.TestCase):
+    def test_botmatch_and_no_bots_hold_the_same_blocks(self):
+        bots, plain = load_scenario("ut-bots"), load_scenario("ut")
+        for block in ("hierarchy", "gameplay_roots", "bare_owners", "stub_owner_file"):
+            with self.subTest(block):
+                self.assertTrue(getattr(bots, block))
+                self.assertIs(getattr(bots, block), getattr(plain, block))
+
+
+class TestCommittedScenarios(unittest.TestCase):
+    """The committed documents of each scenario are what the module builds from
+    its committed sidecars, and its checker finds nothing to report."""
+
+    def assert_regenerates(self, name):
+        scn = load_scenario(name)
+        data = SCENARIOS / name
+        with tempfile.TemporaryDirectory() as out:
+            build.build(scn, str(data), out, str(data / "repro.json"))
+            for doc in ("TRIAGE.md", "stubs.md", "SUMMARY.md"):
+                self.assertTrue(filecmp.cmp(os.path.join(out, doc), data / doc, shallow=False),
+                                "%s/%s" % (name, doc))
+            _, _, problems = check.check(scn, str(data), out)
+            with open(os.path.join(out, "SUMMARY.md")) as f:
+                summary = f.read()
+        self.assertEqual(problems, [])
+        # An owner keyed by a crash signature must use the module's spelling, or it never applies.
+        for key in scn.error_owner:
+            if key.startswith("crash:"):
+                self.assertIn("| %s |" % key, summary)
+
+    def test_deusex(self):
+        self.assert_regenerates("deusex")
+
+    def test_ut_bots(self):
+        self.assert_regenerates("ut-bots")
+
+    def test_unreal(self):
+        self.assert_regenerates("unreal")
+
+    def test_ut(self):
+        self.assert_regenerates("ut")
+
+
+class TestScenarioDefaults(unittest.TestCase):
     def test_scenario_has_no_defaults_naming_a_game(self):
         for f in dataclasses.fields(Scenario):
             if f.default is not dataclasses.MISSING:
