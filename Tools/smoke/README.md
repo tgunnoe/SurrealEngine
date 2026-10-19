@@ -61,6 +61,57 @@ and about 4 at one frame per second. The `FPS` lines of the log show that rate.
 A run whose `FPS` falls to about 1 during the hold is therefore not evidence
 that the held input had no effect.
 
+`call <Function> [arg ...]` runs a function of the player, or failing that of
+the console, whatever its flags, so a run can start game logic that no `exec`
+function exposes (a Deus Ex conversation, for example):
+`--exec='5:call StartConversationByName MeetPaul bind:PaulDenton 0 1'`.
+The function name and the keywords below are matched without regard to case.
+Each argument is read as the type its parameter declares, one per parameter
+in declaration order (the return value takes none), and the call is made with
+no further check of the function's flags:
+
+| Parameter | Argument |
+| :--- | :--- |
+| byte | an integer from 0 to 255 |
+| int, float | numeric text |
+| bool | `0`, `1`, `true` or `false` |
+| string, name | the word as written |
+| object | one of the five object forms below |
+
+The five object forms are `self` (the player), `none`, and three lookups in the
+loaded level: `name:<ObjectName>` finds the actor with that object name,
+`class:<ClassName>` the first actor of exactly that class, and
+`bind:<BindName>` the first actor whose `BindName` property has that value
+(Deus Ex only). The values are compared without regard to case. An optional
+parameter left out takes its default value, and a required one left out is a
+refusal.
+
+A call that cannot be made is refused, and nothing runs. The causes are an
+argument that does not parse as its parameter's type, a required parameter
+with no argument, more arguments than parameters, an out parameter other than
+the return value, a parameter of any other type (a vector, a struct, an array),
+an object argument in none of the five forms, and a lookup that finds no
+actor. The refusal writes `call <Function> refused: <reason>` to the engine
+log, naming the parameter, prefix or function at fault; a lookup that finds
+nothing also lists up to 20 distinct values the level has for that form, so a
+wrong name can be read off the log. The smoke log gets `EXEC_FAILED`, and the
+console's own `Unknown command: ...` line follows the refusal line in the
+engine log, because the console reports every command that was not made as
+unknown.
+
+A call the VM would skip silently is refused the same way, with
+`call <Function> skipped: <reason>`: the player's state ignores the function,
+the level has not begun play, or the player is being deleted.
+
+A call that is made logs `call <Function> returned <value>` to the engine log
+(`True` or `False`, the number, the text, the object's name or `None`, and
+`nothing` for a function that returns no value), and each lookup that succeeds
+logs `call: <form> resolved to <Name> at (x, y, z)`. The smoke log shows only
+`EXEC`: it does not say what the function did. Whatever the script logs goes to
+the engine log too. That is the plaintext `SE-Log-LastRun.txt` in the per-user
+configuration directory, written when the engine exits, so a run killed by a
+signal leaves none.
+
 To make a deterministic fatal exception, request a map that does not exist
 (`--url=NoSuchMap`): the log ends with `EXCEPTION` and `FATAL` lines and the
 exit code is 1.
@@ -97,7 +148,7 @@ each. The entry-map preload is not logged.
 | `MISSING_NATIVE <text>` | An unknown native function. Either it aborted the run (followed by `FATAL`), or the VM caught it inside another native's callback and logged it as a script error, in which case the run continues and it is counted here, not as `SCRIPT_ERROR`. |
 | `EXCEPTION <text>` | An exception reached the top level; always followed by `FATAL`. |
 | `EXEC <seconds> <command>` | An `--exec` command ran; `<seconds>` is the scheduled time, not the time the command ran. Written after `LOGIN`, once per command, in schedule order. |
-| `EXEC_FAILED <seconds> <command>` | An `--exec` command ran, but the console found neither a built-in command nor an `exec` function of that name, or a `hold` command was refused (a duration that is not positive, a speed that is not a number, or a name that is not an input button or axis of the player; the engine log says which). A script `exec` function that rejects its arguments still counts as `EXEC`. |
+| `EXEC_FAILED <seconds> <command>` | An `--exec` command ran, but the console found neither a built-in command nor an `exec` function of that name, or a `hold` command was refused (a duration that is not positive, a speed that is not a number, or a name that is not an input button or axis of the player; the engine log says which), or a `call` command was refused or skipped (an argument or a lookup that failed, or a call the VM would not make; the engine log says which). A script `exec` function that rejects its arguments still counts as `EXEC`. |
 | `EXEC_SKIPPED <seconds> <command>` | An `--exec` command never ran because the run ended first (or no login happened). Written just before `SUMMARY`; absent after a fatal run. |
 | `STATE <seconds> <state>` | The player's state name, as seen once per frame after the first `LOGIN`; `None` means the player has no state. `<seconds>` counts from that first `LOGIN` with one decimal and keeps counting across maps. A line is written when the state changes and when a new map's player is first seen, even if its state name is unchanged. The first line for each player carries ` at (x, y, z)`, the player's location with one decimal per coordinate. A state entered and left between two frames is not seen. |
 | `FPS <value>` | Frames per second, sampled about once per second. |
