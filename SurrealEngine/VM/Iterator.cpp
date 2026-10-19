@@ -8,6 +8,7 @@
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
+#include "Packages/Engine/Actors/Brush/UMover.h"
 
 #include <algorithm>
 
@@ -437,6 +438,7 @@ bool TraceTextureIterator::Next()
 	while (m_Iterator != m_CollList.end())
 	{
 		UTexture* foundTexture = nullptr;
+		uint32_t foundFlags = 0;
 
 		UActor* actor = m_Iterator->Actor;
 		if (!actor)
@@ -449,10 +451,36 @@ bool TraceTextureIterator::Next()
 
 		*HitNorm = m_Iterator->Normal;
 
-		if (node)
-			foundTexture = engine->Level->Model->Surfaces[node->Surf].Material;
-		else if (*OutActor && (*OutActor)->IsA(BaseClass->Name))
+		if (node && node->Surf >= 0)
+		{
+			// A mover hit's node indexes the mover's own brush, not the level model
+			UModel* model = engine->Level->Model;
+			UMover* mover = UObject::TryCast<UMover>(actor);
+			if (mover && mover->Brush())
+				model = mover->Brush();
+
+			// The texture and flags VisibleFrame uses for a level surface (PF_Mirrored lives on the
+			// surface, not the texture). It draws a mover from its brush polys, so for a mover this
+			// is the brush surface's equivalent rather than exactly what is drawn.
+			const BspSurface& surface = model->Surfaces[node->Surf];
+			foundTexture = surface.Material ? surface.Material : engine->LevelInfo->DefaultTexture();
+			foundFlags = surface.PolyFlags;
+			if (surface.Material)
+				foundFlags |= surface.Material->PolyFlags();
+		}
+		else if (node)
+		{
+			// Surf is negative: the node has no surface. Collision still reports it as a solid hit
+			// (only VisibleFrame skips drawing it), so report it with the default texture and no
+			// flags, as a surface with no material, rather than let the trace see through it.
+			foundTexture = engine->LevelInfo->DefaultTexture();
+		}
+		else if (!node && *OutActor && (*OutActor)->IsA(BaseClass->Name))
+		{
 			foundTexture = UObject::Cast<UActor>(*OutActor)->Skin();
+			if (foundTexture)
+				foundFlags = foundTexture->PolyFlags();
+		}
 
 		++m_Iterator;
 
@@ -460,7 +488,7 @@ bool TraceTextureIterator::Next()
 		{
 			*TexName = foundTexture->Name;
 			*TexGroup = foundTexture->Outer() ? foundTexture->Outer()->Name : "";
-			*flags = foundTexture->PolyFlags();
+			*flags = (int)foundFlags;
 			return true;
 		}
 	}
