@@ -318,6 +318,11 @@ void SmokeLog::Summary()
 	finished = true;
 }
 
+std::string SmokeLog::TerminateMessage(std::exception_ptr current)
+{
+	return {};
+}
+
 #ifndef WIN32
 namespace
 {

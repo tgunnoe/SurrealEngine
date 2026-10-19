@@ -4,6 +4,7 @@
 #include <list>
 #include <functional>
 #include <chrono>
+#include <exception>
 
 void LogMessage(const std::string& message);
 void LogUnimplemented(const std::string& message);
@@ -45,6 +46,10 @@ public:
 	bool IsFinished() const { return finished; }
 
 	void InstallSignalHandlers();
+
+	// The text written when std::terminate is reached: what() of the exception in flight, or a
+	// fixed phrase for a non-standard exception or none at all.
+	static std::string TerminateMessage(std::exception_ptr current);
 
 	// Measured from the first Get() call, which GameApp::main makes at process start.
 	double SecondsSinceStart() const { return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count(); }
