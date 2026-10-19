@@ -281,6 +281,152 @@ screenshot. `verdict` is one of:
 - `pass`: exit code 0, a `SUMMARY` line, the requested map loaded, a sampled `fps_avg`, and zero script errors, missing natives and exceptions. `script_warnings` does not affect the verdict.
 - `fail`: anything else.
 
+## Three-map save and load
+
+`saveload.py` checks that a save, quit and load keeps what the player holds
+across three consecutive maps. It runs one game's chain as four separate
+engine processes on one user directory and writes a JSON report and a markdown
+table that say, per hop, which items a load restored, which a travel carried,
+which were lost and which were gained.
+
+```
+export SURREALWIDGETS_DISPLAY_BACKEND=X11
+export LD_LIBRARY_PATH="$(nix-build '<nixpkgs>' -A vulkan-loader --no-out-link)/lib:$(nix-build '<nixpkgs>' -A sdl3.lib --no-out-link)/lib:/run/opengl-driver/lib:$LD_LIBRARY_PATH"
+python3 -I Tools/smoke/saveload.py --game "<game folder>" --chain unreal \
+    --user-dir /tmp/chain/userdir --config-root /tmp/chain/config \
+    --out /tmp/chain/saveload.json --markdown /tmp/chain/SAVELOAD.md --portable
+```
+
+`--game`, `--chain` (`unreal`, `ut` or `deusex`), `--user-dir`, `--config-root`
+and `--out` are required. `--markdown` writes the table; `--seconds` is the run
+time per step (default 60); `--exe` (default `build/SurrealEngine`), `--logdir`
+(default `<out>.d`) and `--portable` are the sweep runner's. The driver imports
+`parse_log` and `classify` from `sweep.py`.
+
+Two directories are required, so that the driver never touches the caller's
+files:
+
+- `--user-dir` holds the engine's game files and the saves (`--autostart` writes
+  no save without it). A chain needs a fresh one: the driver refuses a
+  directory that already holds files, so a stale slot can never stand in for a
+  save that was not made.
+- `--config-root` becomes the engine's `XDG_CONFIG_HOME`. The engine writes its
+  plaintext log, `SE-Log-LastRun.txt`, there, not under `--user-dir`, and only
+  when it exits, so the driver removes it before every step and copies it to
+  `<logdir>/<step>.engine.txt` after. The path is made absolute, because the
+  engine ignores a relative `XDG_CONFIG_HOME`. The driver copies the host's
+  `~/.config/SurrealEngine/Settings.json` into it when it holds none, so the run
+  picks the same renderer.
+
+### Chains
+
+Each chain is data in `saveload.py`. A time is seconds after the first login, and
+`<s>` below is a step's slot.
+
+| Chain | Maps | State set in the first map | Load | Checks (each reads) |
+| :--- | :--- | :--- | :--- | :--- |
+| `unreal` | `Vortex2`, `Nyleve`, `Dig` | `summon UnrealShare.Stinger`, then a 1.5 second walk forward | `call ClientTravel ?load=<s> 0 0` | `ShowInventory` |
+| `ut` | `DM-Deck16][`, `DM-Turbine`, `DM-Codex`, each with `?NumBots=0` | `Fire` (starts the match), `IAmTheOne` (cheats on, which `summon` needs), `summon Botpack.ShockRifle`, a walk forward | `call ClientTravel ?load=<s> 0 0` | `ShowInventory`; a `Fire` five seconds after every travel, so the new map's player is ready |
+| `deusex` | `01_NYC_UNATCOIsland`, `01_NYC_UNATCOHQ`, `02_NYC_BatteryPark` | `call AddGoal T3Goal 1` (primary, so the mission change keeps it), `NoteAdd T3Note`, `call SetBoolFlagFromString T3Flag 1` | `LoadGame <s>` | `ShowInventory`, `call FindGoal T3Goal`, `call GetNote None` |
+
+A travel is `call ClientTravel <map><options> 2 1`, the way a map exit travels
+(relative, with items). A Deus Ex flag's value cannot be read from the harness,
+so its survival is witnessed through the goal and the note, which travel the
+same way. A Deus Ex player holds a key ring and nothing more that the harness
+can give, so the key ring is that game's inventory witness.
+
+### Steps
+
+Every step starts the first map, so a load step loads a save made on another
+map.
+
+| Step | Does |
+| :--- | :--- |
+| `save1` | sets the state, checks, `savegame 1` |
+| `load1-travel` | loads slot 1 (made on map 1), checks, travels to map 2, checks, `savegame 2` |
+| `load2-travel` | loads slot 2 (made on map 2), checks, travels to map 3, checks, `savegame 3` |
+| `load3` | loads slot 3 (made on map 3), checks |
+
+Five seconds separate a load or a travel from the next command, and ten seconds
+the last check from a save. A step's `--exec` text is in its `exec`
+field. The Unreal Tournament travelling steps also run with
+`--trace-script=Inventory.TravelPreAccept`, which logs each item the engine
+offers to the acceptance of a travel.
+
+The chain stops at the first step with a problem and the report keeps the steps
+made; the exit code is 0 only when all four steps are free of problems. A step
+has a problem when its verdict (`sweep.py`'s, with the last expected map matched
+without case) is not `pass`, when its process left no engine log, when a
+scheduled command was refused or never ran (`EXEC_FAILED`, `EXEC_SKIPPED`), when
+a load step did not log `Loaded game from slot <s>`, when a check it owes is
+missing, or when a save it owes was not made.
+
+### Reading the engine log
+
+The engine log's timestamps are level time, which restarts on a load or a
+travel, so a line is placed only by its position in the file. The log is split
+into check windows at the lines the engine itself writes: `Loaded game from
+slot <n>: <map>`, `Client travel to <url>` and `Saved game to <path>`. The
+window before the first of these is the check after the state commands, the
+one after a load line is the check after the load, and the one after a travel
+line the check after the travel. In a window, each `ShowInventory` line
+`Inv: <Package>.<Object>` (UT adds ` state <State>`) is one item, kept as the
+package, the instance name and the class, which is the instance name without
+its trailing digits. A `call <Function> returned <value>` line is a call
+result (`None` for no object, `<unnamed Class>` for a script-made object), and a
+`trace:` line of `TravelPreAccept` names an offered item. A `Skipping travel
+transfer` line in a travel's window means the travel carried nothing.
+
+### Report schema
+
+```
+{ "game": "<folder>", "chain": "unreal", "seconds": 60,
+  "steps": [ { "step", "exit_code", "verdict", "maps_loaded", "loaded_slot", "loaded_map",
+               "saved_to",
+               "checks": [ { "where", "map", "items": [ { "package", "instance", "class" } ],
+                             "calls": [ { "function", "value" } ], "weapon" } ],
+               "offered", "travel_skipped", "skip_lines", "summoned",
+               "exec_failed", "exec_skipped", "engine_log_missing",
+               "exec", "trace", "log", "stdout", "engine_log", "problem" } ],
+  "hops": [ { "from", "to", "map_from", "map_to", "by", "kept", "lost", "gained",
+              "goal", "note", "offered", "travel_skipped" } ] }
+```
+
+`where` is `after-state`, `after-load` or `after-travel`; `map` is the map the
+check ran on (the first map for the state check, the map a load line names, the
+map of a travel's URL). `loaded_slot`, `loaded_map` and `saved_to` come from the
+load and save lines and are `null` when the line is absent; `saved_to` is
+relative to `--user-dir`. `calls` keeps only the functions the chain checks.
+`offered` lists the items the travel's trace named, once each, and
+`travel_skipped` is true when the travel's window holds a skip line;
+`skip_lines` lists every such line. `summoned` lists the classes a `summon` logged
+(`Summon: fabricated a <Class>` on Unreal Gold, `Summon: Fabricate <Class>` on
+Unreal Tournament). `problem` is the reason a step stopped the chain, or `null`.
+`log`, `stdout` and `engine_log` are the step's smoke log, captured output and
+engine log, as basenames under `--portable`.
+
+A hop joins two consecutive checks that were both made: five hops for a full
+chain (state to load, load to travel, travel to load, load to travel, travel to
+load). `by` is `load` or `travel`. Items compare by class name without case,
+because the package (`Save<n>` after a load on Unreal Gold and Unreal Tournament,
+the map's package after a travel, and after a load on Deus Ex) and the instance
+number change. `kept` reads as restored for a load and carried for a travel,
+`lost` is what the earlier check held and the later one does not, and `gained`
+the reverse. `goal` and `note` are `found` or `lost` from the last `FindGoal` and
+`GetNote` call of the later check, absent where no such call was made;
+`offered` and `travel_skipped` appear on travel hops. A load whose map differs
+from the one saved, a skipped travel, or a lost item is named in the markdown's
+verdict sentence in place of "survive three maps".
+
+A class listed as kept on an Unreal Tournament travel is a default the game
+type gives again, not a carried item: a deathmatch destroys travelled items
+(`DeathMatchPlus.AcceptInventory`) and then adds the defaults once the player
+is ready. The offered list is what shows whether the engine carried the items
+to that rule at all.
+
+The committed reports are `scenarios/<game>/saveload.json` and
+`SAVELOAD.md`, each from one `--portable` run of this host.
+
 ## Triage module
 ## Triage module
 
@@ -370,11 +516,13 @@ failing line, a gameplay stub, or under `require_match_start` a match that
 did not start) and the second did not. `triage/matchrule.py` holds the
 match-start rule, which `sweep.py` and the comparison both import.
 
-Tests, from the repository root (the second is the sweep unittest):
+Tests, from the repository root (the second is the sweep unittest, the third the
+three-map save and load one):
 
 ```
 python3 -I -B -m unittest discover -s Tools/smoke/triage -p 'test_*.py'
 python3 -I -B -m unittest discover -s Tools/smoke -p test_sweep.py
+python3 -I -B -m unittest discover -s Tools/smoke -p test_saveload.py
 ```
 
 The first includes one identity test per scenario that rebuilds the
