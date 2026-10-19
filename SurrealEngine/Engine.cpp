@@ -1549,6 +1549,41 @@ std::string Engine::ConsoleCommand(UObject* context, const std::string& commandl
 
 		return {};
 	}
+	else if (command == "deletegame" && args.size() == 2)
+	{
+		// The Deus Ex load screen's delete button sends this with the row's slot
+		const std::optional<int> slotNum = ParseSaveSlot(args[1]);
+		if (!slotNum)
+		{
+			LogSkipped("Delete game skipped: slot '" + args[1] + "' is not a number");
+			return {};
+		}
+
+		if (const std::optional<std::string> refusal = SaveSlotDeleteRefusal(*slotNum))
+		{
+			LogSkipped("Delete game skipped: " + *refusal);
+			return {};
+		}
+
+		if (!LaunchInfo.CanWriteUserFiles())
+		{
+			LogSkipped("Delete game skipped: --autostart without --user-dir does not change saves");
+			return {};
+		}
+
+		if (const std::optional<std::string> skipped = RemoveSaveSlot(packages->IsDeusEx(), *slotNum, packages->GetSaveFolderPath(), packages->GetSaveExtension()))
+		{
+			LogSkipped("Delete game skipped: " + *skipped);
+			return {};
+		}
+
+		// The save info is of the save that is gone, and the game directory would still offer it
+		if (packages->IsDeusEx())
+			packages->RemoveSaveInfoPackage(DeusExSaveFolderName(*slotNum));
+
+		LogMessage("Deleted save slot " + std::to_string(*slotNum));
+		return {};
+	}
 	else if (command == "get" && args.size() == 3)
 	{
 		NameString className = ParseClassName(args[1]);

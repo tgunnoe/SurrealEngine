@@ -397,4 +397,9 @@ TEST(SaveDeleteRefusesASlotThatResolvesOutsideTheSaveFolder)
 	CHECK_EQ(TextOf(RemoveSaveSlot(true, 7, sandbox.Base / "Save", "dxs")), "slot 7 is outside the save folder");
 	CHECK(fs::exists(sandbox.Base / "elsewhere" / "keep.txt"));
 	CHECK(fs::is_symlink(sandbox.Base / "Save" / "Save0007"));
+
+	// A slot that is the save folder itself would take every other slot with it
+	fs::create_directory_symlink(sandbox.Base / "Save", sandbox.Base / "Save" / "Save0008", error);
+	CHECK_EQ(TextOf(RemoveSaveSlot(true, 8, sandbox.Base / "Save", "dxs")), "slot 8 is outside the save folder");
+	CHECK(fs::is_symlink(sandbox.Base / "Save" / "Save0007"));
 }

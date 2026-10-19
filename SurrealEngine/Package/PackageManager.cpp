@@ -344,12 +344,43 @@ std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot)
 
 std::optional<std::string> SaveSlotDeleteRefusal(int slot)
 {
+	if (slot < 1)
+		return "slot " + std::to_string(slot) + " is not allowed";
+
 	return std::nullopt;
 }
 
 std::optional<std::string> RemoveSaveSlot(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension)
 {
-	return "nothing was removed";
+	if (const std::optional<std::string> refusal = SaveSlotDeleteRefusal(slot))
+		return refusal;
+
+	const fs::path path = SaveSlotPath(deusEx, slot, saveFolder, saveExtension);
+
+	// Only what a save is: a Deus Ex slot is a folder and the other games' slots are files
+	std::error_code error;
+	const bool isSave = deusEx ? fs::is_directory(path, error) : fs::is_regular_file(path, error);
+	if (!isSave)
+		return "no save in slot " + std::to_string(slot);
+
+	// A link in the save folder may lead anywhere, and so may a save folder that is itself a link; the
+	// slot goes only when it lies inside the folder once both are resolved
+	const fs::path root = fs::weakly_canonical(fs::absolute(saveFolder, error), error);
+	const fs::path target = error ? fs::path() : fs::weakly_canonical(fs::absolute(path, error), error);
+	const fs::path relative = error ? fs::path() : target.lexically_relative(root);
+	if (relative.empty() || relative == "." || relative.begin()->string() == "..")
+		return "slot " + std::to_string(slot) + " is outside the save folder";
+
+	try
+	{
+		Directory::remove_all(path.string());
+	}
+	catch (const std::runtime_error& e)
+	{
+		return std::string(e.what());
+	}
+
+	return std::nullopt;
 }
 
 int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
