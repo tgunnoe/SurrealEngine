@@ -83,6 +83,7 @@ public:
 	Array<NameString> GetPackageNames() const;
 	Package* GetSaveInfoPackage(const NameString& saveFolderName);
 	void RemoveSaveInfoPackage(const NameString& saveFolderName);
+	void RegisterSaveInfo(const std::string& saveFolderName);
 	std::map<NameString, Package*> GetSaveInfoPackages() const { return saveInfos; };
 
 	Package* LoadMap(const std::string& path);

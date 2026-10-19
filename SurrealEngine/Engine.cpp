@@ -1018,6 +1018,9 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		saveInfo->MapName() = mapName;
 		saveInfo->UpdateTimeStamp();
 		LevelPackage->Save(saveInfo, saveInfoFile.string());
+
+		// The package manager read the save infos once at startup, so the game directory would not list this one
+		packages->RegisterSaveInfo(DeusExSaveFolderName(slotNum));
 	}
 	else
 	{

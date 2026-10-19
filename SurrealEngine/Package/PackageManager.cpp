@@ -6,6 +6,7 @@
 #include "IniFile.h"
 #include "PackageWriter.h"
 #include "Utils/File.h"
+#include "Utils/Logger.h"
 #include "Utils/StrTools.h"
 #include "Utils/UserDirs.h"
 #include "UnrealURL.h"
@@ -713,6 +714,23 @@ Package* PackageManager::GetSaveInfoPackage(const NameString& saveFolderName)
 		return idx->second;
 
 	return nullptr;
+}
+
+void PackageManager::RegisterSaveInfo(const std::string& saveFolderName)
+{
+	const auto save = gameSaveFolderPath / saveFolderName / ("SaveInfo." + saveExtension);
+
+	// Runs from the main loop, which has no handler: a save info that cannot be read is the slot's loss,
+	// not the run's. The entry it would replace describes a save that is no longer there.
+	try
+	{
+		saveInfos[saveFolderName] = GC::Alloc<Package>(this, saveFolderName, save.string());
+	}
+	catch (const std::exception&)
+	{
+		LogMessage("Save info unreadable: " + saveFolderName);
+		saveInfos.erase(saveFolderName);
+	}
 }
 
 void PackageManager::RemoveSaveInfoPackage(const NameString& saveFolderName)
