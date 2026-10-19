@@ -42,16 +42,6 @@ namespace
 		fs::path Base;
 	};
 
-	// A URL with several options, built option by option: the string parser drops the last option when it
-	// is given more than one, so such a URL cannot be written as one string here.
-	UnrealURL UrlWith(const std::string& map, std::initializer_list<const char*> options)
-	{
-		UnrealURL url(map);
-		for (const char* option : options)
-			url.AddOrReplaceOption(option);
-		return url;
-	}
-
 	std::string TextOf(const std::optional<std::string>& text)
 	{
 		return text ? *text : std::string("<nothing>");
@@ -101,18 +91,18 @@ TEST(SaveLoadParseSlotRejectsANumberOutsideIntRange)
 TEST(SaveLoadOptionReadsLoad)
 {
 	CHECK_EQ(TextOf(LoadOptionText(UnrealURL("?load=9"))), std::string("9"));
-	CHECK_EQ(TextOf(LoadOptionText(UrlWith("Vortex2", { "Name=Player", "load=12" }))), std::string("12"));
+	CHECK_EQ(TextOf(LoadOptionText(UnrealURL("Vortex2?Name=Player?load=12"))), std::string("12"));
 }
 
 TEST(SaveLoadOptionReadsLoadgame)
 {
 	CHECK_EQ(TextOf(LoadOptionText(UnrealURL("?loadgame=3"))), std::string("3"));
-	CHECK_EQ(TextOf(LoadOptionText(UrlWith("", { "Name=JC", "LoadGame=-1" }))), std::string("-1"));
+	CHECK_EQ(TextOf(LoadOptionText(UnrealURL("?Name=JC?LoadGame=-1"))), std::string("-1"));
 }
 
 TEST(SaveLoadOptionPrefersLoadOverLoadgame)
 {
-	CHECK_EQ(TextOf(LoadOptionText(UrlWith("", { "loadgame=2", "load=1" }))), std::string("1"));
+	CHECK_EQ(TextOf(LoadOptionText(UnrealURL("?loadgame=2?load=1"))), std::string("1"));
 }
 
 TEST(SaveLoadOptionIsAbsentWithoutEitherName)

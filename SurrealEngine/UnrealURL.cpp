@@ -40,34 +40,22 @@ UnrealURL::UnrealURL(std::string urlString)
 	urlString.erase(urlString.find_last_not_of(' ') + 1);
 	urlString.erase(0, urlString.find_first_not_of(' '));
 
-	size_t mapNamePos = StrTools::find_first_of_any(urlString, "?/#");
+	size_t separatorPos = StrTools::find_first_of_any(urlString, "?/#");
 
-	Map = urlString.substr(0, mapNamePos);
+	Map = urlString.substr(0, separatorPos);
 
-	if (mapNamePos != std::string::npos)
+	// Every separator opens a part that runs up to the next one, the last part to the end of the string
+	while (separatorPos != std::string::npos)
 	{
-		// We need to parse all options individually
-		char paramType = urlString[mapNamePos]; // Can be '/', '#' or '?'
-		std::string allParams = urlString.substr(mapNamePos + 1);
+		const char separator = urlString[separatorPos]; // Can be '/', '#' or '?'
+		urlString.erase(0, separatorPos + 1);
+		separatorPos = StrTools::find_first_of_any(urlString, "?/#");
+		const std::string part = urlString.substr(0, separatorPos);
 
-		auto nextParamPos = StrTools::find_first_of_any(allParams, "?/#");
-
-		do
-		{
-			if (paramType == '#' || paramType == '/')
-				Portal = allParams.substr(0, nextParamPos);
-			else if (paramType == '?')
-			{
-				auto optionStr = allParams.substr(0, nextParamPos);
-				AddOrReplaceOption(optionStr);
-			}
-
-			if (nextParamPos != std::string::npos)
-				paramType = allParams[nextParamPos];
-
-			allParams = allParams.substr(nextParamPos + 1);
-			nextParamPos = StrTools::find_first_of_any(allParams, "?/#");
-		} while (nextParamPos != std::string::npos);
+		if (separator == '?')
+			AddOrReplaceOption(part);
+		else
+			Portal = part;
 	}
 }
 
@@ -114,8 +102,10 @@ void UnrealURL::AddOrReplaceOption(const std::string& newvalue)
 	}
 }
 
-bool UnrealURL::HasOption(const std::string& name) const
+bool UnrealURL::HasOption(std::string name) const
 {
+	for (char& c : name) c = std::tolower(c);
+
 	for (const std::string& option : Options)
 	{
 		if ((option.size() >= name.size() + 1 && option[name.size()] == '=') || option.size() == name.size())
