@@ -451,7 +451,8 @@ bool TraceTextureIterator::Next()
 
 		*HitNorm = m_Iterator->Normal;
 
-		if (node)
+		// Surf is negative for a node that has no surface; VisibleFrame and the collision code skip it
+		if (node && node->Surf >= 0)
 		{
 			// A mover hit's node indexes the mover's own brush, not the level model
 			UModel* model = engine->Level->Model;
@@ -459,15 +460,16 @@ bool TraceTextureIterator::Next()
 			if (mover && mover->Brush())
 				model = mover->Brush();
 
-			// Same surface-to-texture and flags rules as VisibleFrame, so scripts see
-			// what the renderer draws (PF_Mirrored lives on the surface, not the texture)
+			// The texture and flags VisibleFrame uses for a level surface (PF_Mirrored lives on the
+			// surface, not the texture). It draws a mover from its brush polys, so for a mover this
+			// is the brush surface's equivalent rather than exactly what is drawn.
 			const BspSurface& surface = model->Surfaces[node->Surf];
 			foundTexture = surface.Material ? surface.Material : engine->LevelInfo->DefaultTexture();
 			foundFlags = surface.PolyFlags;
 			if (surface.Material)
 				foundFlags |= surface.Material->PolyFlags();
 		}
-		else if (*OutActor && (*OutActor)->IsA(BaseClass->Name))
+		else if (!node && *OutActor && (*OutActor)->IsA(BaseClass->Name))
 		{
 			foundTexture = UObject::Cast<UActor>(*OutActor)->Skin();
 			if (foundTexture)
