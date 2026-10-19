@@ -45,14 +45,25 @@ struct Breakpoint
 	bool Enabled = true;
 };
 
+// An entry of the script-call trace: calls on objects of this class or a subclass are traced,
+// only those of Function when it is not None.
+struct TraceFilter
+{
+	NameString Class;
+	NameString Function;
+};
+
 class Frame
 {
 public:
 	static ExpressionValue Call(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args);
 	static std::string GetCallstack();
 	static std::string GetDisassembly(Expression* statement);
+	static std::string FormatTraceArgs(const ArrayView<ExpressionValue>& args);
 
 	static bool AddBreakpoint(const NameString& cls, const NameString& func, const NameString& state = {}, int statementIndex = 0);
+
+	static Array<TraceFilter> TraceEntries;
 
 	static std::function<void()> RunDebugger;
 	static Array<Breakpoint> Breakpoints;

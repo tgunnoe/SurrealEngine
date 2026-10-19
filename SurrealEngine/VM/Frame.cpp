@@ -13,6 +13,7 @@
 #include "Commandlet/VM/DisassemblyCommandlet.h"
 #include <cassert>
 
+Array<TraceFilter> Frame::TraceEntries;
 std::function<void()> Frame::RunDebugger;
 Array<Breakpoint> Frame::Breakpoints;
 Array<Frame*> Frame::Callstack;
@@ -440,58 +441,120 @@ ExpressionValue Frame::CallNative(UFunction* func, UObject* instance, const Arra
 	return result;
 }
 
-void Frame::TraceCall(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args)
+namespace
 {
-#if 0 // To do: create a commandlet that lets us do this
-	static NameString TraceActorClass = "CTFGame";
-	static NameString TraceActorFunc = "PostBeginPlay";
-	if (instance->Class->Name == TraceActorClass && func->Name == TraceActorFunc)
+	// A flooding class must not fill the disk, so a run traces this many calls and then stops
+	constexpr int MaxTracedCalls = 20000;
+	constexpr size_t MaxTracedStringLength = 80;
+	int TracedCalls = 0;
+
+	std::string QuoteTraceString(const std::string& text)
 	{
-		LogMessage("RemainingBots=" + std::to_string(instance->GetInt("RemainingBots")));
-		LogMessage("InitialBots=" + std::to_string(instance->GetInt("InitialBots")));
-		std::string traceMessage = "Called " + func->Name.ToString() + "(";
-		bool first = true;
-		for (auto& arg : args)
+		std::string quoted = "\"";
+		for (size_t i = 0; i < text.size() && i < MaxTracedStringLength; i++)
 		{
-			if (first)
-				first = false;
-			else
-				traceMessage += ", ";
-			if (arg.GetType() == ExpressionValueType::ValueString)
+			switch (text[i])
 			{
-				traceMessage += "\"";
-				traceMessage += arg.ToString();
-				traceMessage += "\"";
-			}
-			else if (arg.GetType() == ExpressionValueType::ValueName)
-			{
-				traceMessage += "'";
-				traceMessage += arg.ToName().ToString();
-				traceMessage += "'";
-			}
-			else if (arg.GetType() == ExpressionValueType::ValueBool)
-			{
-				traceMessage += "'";
-				traceMessage += arg.ToBool() ? "true" : "false";
-				traceMessage += "'";
-			}
-			else if (arg.GetType() == ExpressionValueType::ValueObject)
-			{
-				traceMessage += arg.ToObject() ? UObject::GetUClassName(arg.ToObject()).ToString() : "null";
-			}
-			else if (arg.GetType() == ExpressionValueType::Nothing)
-			{
-				traceMessage += "None";
-			}
-			else
-			{
-				traceMessage += "?";
+			case '\n': quoted += "\\n"; break;
+			case '\r': quoted += "\\r"; break;
+			case '"': quoted += "\\\""; break;
+			case '\\': quoted += "\\\\"; break;
+			default: quoted += text[i]; break;
 			}
 		}
-		traceMessage += ")";
-		LogMessage(traceMessage);
+		quoted += "\"";
+		return quoted;
 	}
-#endif
+
+	bool IsTraced(UFunction* func, UObject* instance)
+	{
+		for (const TraceFilter& entry : Frame::TraceEntries)
+		{
+			if (!entry.Function.IsNone() && entry.Function != func->Name)
+				continue;
+
+			for (UClass* cls = instance->Class; cls != nullptr; cls = static_cast<UClass*>(cls->BaseStruct))
+			{
+				if (cls->Name == entry.Class)
+					return true;
+			}
+		}
+		return false;
+	}
+}
+
+std::string Frame::FormatTraceArgs(const ArrayView<ExpressionValue>& args)
+{
+	std::string text;
+	bool first = true;
+	for (const ExpressionValue& arg : args)
+	{
+		if (!first)
+			text += ", ";
+		first = false;
+
+		switch (arg.GetType())
+		{
+		case ExpressionValueType::ValueString:
+			text += QuoteTraceString(arg.ToString());
+			break;
+		case ExpressionValueType::ValueName:
+			text += "'" + arg.ToName().ToString() + "'";
+			break;
+		case ExpressionValueType::ValueBool:
+			text += arg.ToBool() ? "true" : "false";
+			break;
+		case ExpressionValueType::ValueByte:
+			text += std::to_string((int)arg.ToByte());
+			break;
+		case ExpressionValueType::ValueInt:
+			text += std::to_string(arg.ToInt());
+			break;
+		case ExpressionValueType::ValueFloat:
+		{
+			char number[32];
+			std::snprintf(number, sizeof(number), "%g", arg.ToFloat());
+			text += number;
+			break;
+		}
+		case ExpressionValueType::ValueObject:
+			text += arg.ToObject() ? arg.ToObject()->Name.ToString() : "None";
+			break;
+		case ExpressionValueType::Nothing:
+			text += "None";
+			break;
+		default:
+			text += "?";
+			break;
+		}
+	}
+	return text;
+}
+
+void Frame::TraceCall(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args)
+{
+	if (TraceEntries.empty())
+		return;
+
+	// Operators are most of a script's calls and say nothing about what it does
+	if (AnyFlags(func->FuncFlags, FunctionFlags::Operator | FunctionFlags::PreOperator))
+		return;
+
+	if (!IsTraced(func, instance))
+		return;
+
+	if (TracedCalls >= MaxTracedCalls)
+	{
+		if (TracedCalls == MaxTracedCalls)
+		{
+			TracedCalls++;
+			LogMessage("trace: stopped after " + std::to_string(MaxTracedCalls) + " calls");
+		}
+		return;
+	}
+	TracedCalls++;
+
+	LogMessage("trace: " + instance->Name.ToString() + " " + instance->Class->Name.ToString() + " " + instance->GetStateName().ToString() + ": " + func->Name.ToString() + "(" + FormatTraceArgs(args) + ")");
 }
 
 void Frame::GotoLabel(const NameString& label)
