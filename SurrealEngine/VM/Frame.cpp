@@ -483,6 +483,18 @@ namespace
 	}
 }
 
+std::string ObjectLabel(UObject* obj)
+{
+	if (!obj)
+		return "None";
+
+	// ToString renders an empty name as "None", which would read as a null result
+	if (!obj->Name.IsNone())
+		return obj->Name.ToString();
+
+	return "<unnamed " + UObject::GetUClassName(obj).ToString() + ">";
+}
+
 std::string Frame::FormatTraceArgs(const ArrayView<ExpressionValue>& args)
 {
 	std::string text;
@@ -518,7 +530,7 @@ std::string Frame::FormatTraceArgs(const ArrayView<ExpressionValue>& args)
 			break;
 		}
 		case ExpressionValueType::ValueObject:
-			text += arg.ToObject() ? arg.ToObject()->Name.ToString() : "None";
+			text += ObjectLabel(arg.ToObject());
 			break;
 		case ExpressionValueType::Nothing:
 			text += "None";
@@ -554,7 +566,7 @@ void Frame::TraceCall(UFunction* func, UObject* instance, const ArrayView<Expres
 	}
 	TracedCalls++;
 
-	LogMessage("trace: " + instance->Name.ToString() + " " + instance->Class->Name.ToString() + " " + instance->GetStateName().ToString() + ": " + func->Name.ToString() + "(" + FormatTraceArgs(args) + ")");
+	LogMessage("trace: " + ObjectLabel(instance) + " " + instance->Class->Name.ToString() + " " + instance->GetStateName().ToString() + ": " + func->Name.ToString() + "(" + FormatTraceArgs(args) + ")");
 }
 
 void Frame::GotoLabel(const NameString& label)

@@ -432,6 +432,47 @@ TEST(HarnessCallRefusesAnUnmarshalableTypeEvenWhenItsArgumentIsOptionalAndOmitte
 
 	bool reached = false;
 	CallArgsResult r = MarshalCallArgs(f.Func, Args({ "1" }), f.Self, NoResolver(reached));
+	CHECK_MSG(r.ok(), r.error);
+	CHECK_EQ(r.values.size(), (size_t)2);
+	CHECK_EQ(r.values[0].ToInt(), 1);
+	CHECK(r.values[1].GetType() == ExpressionValueType::Nothing);
+}
+
+TEST(HarnessCallAcceptsEveryOmittedOptionalWhateverItsType)
+{
+	CallFixture f;
+	f.Optional<UIntProperty>("Where")->ValueType = ExpressionValueType::ValueVector;
+	f.Optional<UIntProperty>("Facing")->ValueType = ExpressionValueType::ValueRotator;
+	f.Optional<UIntProperty>("Count");
+
+	bool reached = false;
+	CallArgsResult r = MarshalCallArgs(f.Func, Args({}), f.Self, NoResolver(reached));
+	CHECK_MSG(r.ok(), r.error);
+	CHECK_EQ(r.values.size(), (size_t)3);
+	for (const ExpressionValue& value : r.values)
+		CHECK(value.GetType() == ExpressionValueType::Nothing);
+}
+
+TEST(HarnessCallRefusesASuppliedArgumentForAnOptionalOfAnUnmarshalableType)
+{
+	CallFixture f;
+	f.Param<UIntProperty>("Count");
+	f.Optional<UIntProperty>("Where")->ValueType = ExpressionValueType::ValueRotator;
+
+	bool reached = false;
+	CallArgsResult r = MarshalCallArgs(f.Func, Args({ "1", "0" }), f.Self, NoResolver(reached));
+	CHECK(!r.ok());
+	CHECK_MSG(Mentions(r.error, "Where"), "the refusal does not name the parameter: " + r.error);
+}
+
+TEST(HarnessCallRefusesARequiredParameterOfAnUnmarshalableTypeWithNoArgument)
+{
+	CallFixture f;
+	f.Param<UIntProperty>("Count");
+	f.Param<UIntProperty>("Where")->ValueType = ExpressionValueType::ValueVector;
+
+	bool reached = false;
+	CallArgsResult r = MarshalCallArgs(f.Func, Args({ "1" }), f.Self, NoResolver(reached));
 	CHECK(!r.ok());
 	CHECK_MSG(Mentions(r.error, "Where"), "the refusal does not name the parameter: " + r.error);
 }

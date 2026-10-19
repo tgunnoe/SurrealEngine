@@ -64,11 +64,17 @@ folder stay where they are; copy a save into the new `Save` folder to use it.
 
 ## Choosing the directory: --user-dir
 
-`--user-dir=<path>` replaces both the config and the data directory of the game
-with `<path>`, so the files above become `<path>/SE-<Game>.ini`,
-`<path>/Save/` and `<path>/Export/`. A relative path is taken from the current
-directory. The launcher settings, crash reports and last-run log stay under the
-config root.
+`--user-dir=<path>` replaces both the config root and the data root of the games
+with `<path>`. Each game keeps to its own subdirectory of it, named by the
+[game key](#the-game-key), so the files above become
+`<path>/<key>/SE-<Game>.ini`, `<path>/<key>/Save/` and `<path>/<key>/Export/`,
+and one directory can serve several games without their ini files or saves
+meeting. A relative path is taken from the current directory. The launcher
+settings, crash reports and last-run log stay under the config root.
+
+A directory written by an earlier build keeps its files at its top level
+(`<path>/SE-User.ini`, `<path>/Save/`), where they are no longer read. Move them
+into the game's subdirectory to use them again.
 
 A `--user-dir` or `--smoke-log` inside a game folder named on the command line is
 refused: the engine prints `refusing to write inside the game folder: <path>` and
@@ -91,6 +97,8 @@ and reload without touching a real profile:
 ```
 SurrealEngine --autostart --user-dir=/tmp/run1 '--exec=10:savegame 1' <game folder>
 ```
+
+The save then goes to `/tmp/run1/<key>/Save/`.
 
 ## The guard
 

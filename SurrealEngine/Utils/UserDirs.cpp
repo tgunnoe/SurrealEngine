@@ -196,9 +196,6 @@ std::string UserDirs::gameKey(const GameLaunchInfo& info)
 
 UserDirs::GameDirs UserDirs::gameDirs(const GameLaunchInfo& info, const EnvLookup& env)
 {
-	if (!info.userDir.empty())
-		return { fs::path(info.userDir), fs::path(info.userDir) };
-
 	// "." and "folder" must name the same install as its full path does
 	GameLaunchInfo keyed = info;
 	if (!keyed.gameRootFolder.empty() && fs::path(keyed.gameRootFolder).is_relative())
@@ -210,6 +207,11 @@ UserDirs::GameDirs UserDirs::gameDirs(const GameLaunchInfo& info, const EnvLooku
 	}
 
 	const std::string key = gameKey(keyed);
+
+	// One user directory may serve several games, so each keeps to its own subdirectory of it
+	if (!info.userDir.empty())
+		return { fs::path(info.userDir) / key, fs::path(info.userDir) / key };
+
 	return { configRoot(env) / AppDirName / key, dataRoot(env) / AppDirName / key };
 }
 

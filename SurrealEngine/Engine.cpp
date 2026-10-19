@@ -2255,6 +2255,51 @@ namespace
 			c = (char)std::tolower((unsigned char)c);
 		return text;
 	}
+
+	const char* CallObjectLabel(const std::string& kind)
+	{
+		return kind == "name" ? "actor name" : kind == "class" ? "class name" : "BindName";
+	}
+}
+
+UObject* ResolveCallObject(const std::string& kind, const std::string& value, const Array<CallActorRecord>& actors, bool isDeusEx, std::string& error, std::string& resolution)
+{
+	if (kind == "bind" && !isDeusEx)
+	{
+		error = "bind: needs a Deus Ex game";
+		return nullptr;
+	}
+
+	const std::string wanted = LowerCase(value);
+	Array<std::string> offered;
+	std::set<std::string> offeredLower;
+	for (const CallActorRecord& actor : actors)
+	{
+		// A script call to an actor being deleted is skipped, so it is not what anyone is looking for
+		if (actor.deleted)
+			continue;
+
+		const std::string& have = kind == "name" ? actor.name : kind == "class" ? actor.className : actor.bindName;
+		const std::string haveLower = LowerCase(have);
+		if (haveLower == wanted)
+		{
+			char where[96];
+			std::snprintf(where, sizeof(where), "(%.1f, %.1f, %.1f)", actor.location.x, actor.location.y, actor.location.z);
+			resolution = "call: " + kind + ":" + value + " resolved to " + actor.name + " at " + where;
+			return actor.object;
+		}
+		if (!have.empty() && offeredLower.insert(haveLower).second)
+			offered.push_back(have);
+	}
+
+	constexpr size_t maxOffered = 20;
+	std::string list;
+	for (size_t i = 0; i < offered.size() && i < maxOffered; i++)
+		list += (i ? ", " : "") + offered[i];
+	if (offered.size() > maxOffered)
+		list += ", ... (" + std::to_string(offered.size() - maxOffered) + " more)";
+	error = "no actor in the level has the " + std::string(CallObjectLabel(kind)) + " '" + value + "'; the level offers: " + (list.empty() ? "none" : list);
+	return nullptr;
 }
 
 CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, UObject* self, const CallObjectResolver& resolve)
@@ -2277,6 +2322,16 @@ CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, 
 		if (AllFlags(prop->PropFlags, PropertyFlags::OutParm))
 			return refuse(name, "it is an out parameter, which a call cannot return");
 
+		if (paramCount >= args.size())
+		{
+			if (!AllFlags(prop->PropFlags, PropertyFlags::OptionalParm))
+				return refuse(name, "no argument was given for this required parameter");
+			result.values.push_back(ExpressionValue::NothingValue());
+			paramCount++;
+			continue;
+		}
+
+		// Only an argument has to be passable: an omitted optional is Nothing whatever its type
 		switch (prop->ValueType)
 		{
 		case ExpressionValueType::ValueByte:
@@ -2289,15 +2344,6 @@ CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, 
 			break;
 		default:
 			return refuse(name, "its type is not one a call can pass (byte, int, bool, float, string, name or object)");
-		}
-
-		if (paramCount >= args.size())
-		{
-			if (!AllFlags(prop->PropFlags, PropertyFlags::OptionalParm))
-				return refuse(name, "no argument was given for this required parameter");
-			result.values.push_back(ExpressionValue::NothingValue());
-			paramCount++;
-			continue;
 		}
 
 		const std::string& arg = args[paramCount++];
@@ -2398,7 +2444,7 @@ namespace
 		}
 		case ExpressionValueType::ValueString: return value.ToString();
 		case ExpressionValueType::ValueName: return value.ToName().ToString();
-		case ExpressionValueType::ValueObject: return value.ToObject() ? value.ToObject()->Name.ToString() : "None";
+		case ExpressionValueType::ValueObject: return ObjectLabel(value.ToObject());
 		default: return "<unprinted type>";
 		}
 	}
@@ -2430,14 +2476,19 @@ bool Engine::CallFunction(const Array<std::string>& args)
 
 		// What CallEvent would silently skip is reported instead
 		std::string skipReason;
-		if (!target->IsEventEnabled(func->Name))
-			skipReason = "the " + UObject::GetUClassName(target).ToString() + " ignores it in its state " + target->GetStateName().ToString();
-		else if (auto actor = UObject::TryCast<UActor>(target))
+		switch (SkipReasonFor(target, func->Name))
 		{
-			if (!actor->Level()->bBegunPlay())
-				skipReason = "the level has not begun play";
-			else if (actor->bDeleteMe())
-				skipReason = "the " + UObject::GetUClassName(target).ToString() + " is being deleted";
+		case ScriptCallSkip::EventDisabled:
+			skipReason = "the " + UObject::GetUClassName(target).ToString() + " ignores it in its state " + target->GetStateName().ToString();
+			break;
+		case ScriptCallSkip::LevelNotBegun:
+			skipReason = "the level has not begun play";
+			break;
+		case ScriptCallSkip::Deleting:
+			skipReason = "the " + UObject::GetUClassName(target).ToString() + " is being deleted";
+			break;
+		case ScriptCallSkip::None:
+			break;
 		}
 		if (!skipReason.empty())
 		{
@@ -2447,55 +2498,35 @@ bool Engine::CallFunction(const Array<std::string>& args)
 
 		CallObjectResolver resolve = [this](const std::string& kind, const std::string& value, std::string& error) -> UObject*
 		{
-			const char* label = kind == "name" ? "actor name" : kind == "class" ? "class name" : "BindName";
 			if (!Level)
 			{
-				error = "no level is loaded to look for the " + std::string(label) + " '" + value + "' in";
-				return nullptr;
-			}
-			if (kind == "bind" && !LaunchInfo.IsDeusEx())
-			{
-				error = "bind: needs a Deus Ex game";
+				error = "no level is loaded to look for the " + std::string(CallObjectLabel(kind)) + " '" + value + "' in";
 				return nullptr;
 			}
 
-			const std::string wanted = LowerCase(value);
-			Array<std::string> offered;
-			std::set<std::string> offeredLower;
+			const bool isDeusEx = LaunchInfo.IsDeusEx();
+			Array<CallActorRecord> records;
 			for (UActor* actor : Level->Actors)
 			{
 				if (!actor)
 					continue;
 
-				std::string have;
-				if (kind == "name")
-					have = actor->Name.ToString();
-				else if (kind == "class")
-					have = UObject::GetUClassName(actor).ToString();
-				else
-					have = actor->BindName();
-
-				const std::string haveLower = LowerCase(have);
-				if (haveLower == wanted)
-				{
-					const vec3& at = actor->Location();
-					char where[96];
-					std::snprintf(where, sizeof(where), "(%.1f, %.1f, %.1f)", at.x, at.y, at.z);
-					LogMessage("call: " + kind + ":" + value + " resolved to " + actor->Name.ToString() + " at " + where);
-					return actor;
-				}
-				if (!have.empty() && offeredLower.insert(haveLower).second)
-					offered.push_back(have);
+				CallActorRecord record;
+				record.object = actor;
+				record.name = actor->Name.ToString();
+				record.className = UObject::GetUClassName(actor).ToString();
+				if (kind == "bind" && isDeusEx)
+					record.bindName = actor->BindName();
+				record.location = actor->Location();
+				record.deleted = actor->bDeleteMe();
+				records.push_back(std::move(record));
 			}
 
-			constexpr size_t maxOffered = 20;
-			std::string list;
-			for (size_t i = 0; i < offered.size() && i < maxOffered; i++)
-				list += (i ? ", " : "") + offered[i];
-			if (offered.size() > maxOffered)
-				list += ", ... (" + std::to_string(offered.size() - maxOffered) + " more)";
-			error = "no actor in the level has the " + std::string(label) + " '" + value + "'; the level offers: " + (list.empty() ? "none" : list);
-			return nullptr;
+			std::string resolution;
+			UObject* object = ResolveCallObject(kind, value, records, isDeusEx, error, resolution);
+			if (!resolution.empty())
+				LogMessage(resolution);
+			return object;
 		};
 
 		Array<std::string> callArgs(args.begin() + 2, args.end());

@@ -2,6 +2,9 @@
 #include "TestRunner.h"
 #include "GameFolder.h"
 #include "VM/Frame.h"
+#include "Packages/Core/UClass.h"
+#include "Packages/Core/UFunction.h"
+#include "Utils/Logger.h"
 
 namespace
 {
@@ -237,4 +240,74 @@ TEST(HarnessTraceFormatCutsStringsAtEightyCharacters)
 		expected += "\\n";
 	expected += "\"";
 	CHECK_EQ(Format(newlines), expected);
+}
+
+namespace
+{
+	// An object as `new` makes one when the script gives no name: the empty name is None
+	UObject* Nameless(UClass* cls)
+	{
+		return GC::Alloc<UObject>(NameString(), cls, ObjectFlags::NoFlags);
+	}
+}
+
+TEST(HarnessObjectLabelIsNoneForNoObject)
+{
+	CHECK_EQ(ObjectLabel(nullptr), std::string("None"));
+}
+
+TEST(HarnessObjectLabelIsTheNameOfANamedObject)
+{
+	UClass* cls = GC::Alloc<UClass>("TestClass", nullptr, ObjectFlags::NoFlags);
+	UObject* named = GC::Alloc<UObject>("Goal1", cls, ObjectFlags::NoFlags);
+	CHECK_EQ(ObjectLabel(named), std::string("Goal1"));
+}
+
+TEST(HarnessObjectLabelNamesTheClassOfANamelessObject)
+{
+	UClass* cls = GC::Alloc<UClass>("TestClass", nullptr, ObjectFlags::NoFlags);
+	CHECK_EQ(ObjectLabel(Nameless(cls)), std::string("<unnamed TestClass>"));
+
+	// The class is the object's own, whatever its base
+	UClass* derived = GC::Alloc<UClass>("DerivedClass", cls, ObjectFlags::NoFlags);
+	CHECK_EQ(ObjectLabel(Nameless(derived)), std::string("<unnamed DerivedClass>"));
+}
+
+TEST(HarnessTraceFormatPrintsAnObjectByNameOrByClassWhenNameless)
+{
+	UClass* cls = GC::Alloc<UClass>("TestClass", nullptr, ObjectFlags::NoFlags);
+	UObject* named = GC::Alloc<UObject>("Goal1", cls, ObjectFlags::NoFlags);
+	Array<ExpressionValue> args = {
+		ExpressionValue::ObjectValue(named),
+		ExpressionValue::ObjectValue(Nameless(cls)),
+		ExpressionValue::ObjectValue(nullptr),
+	};
+	CHECK_EQ(Format(args), std::string("Goal1, <unnamed TestClass>, None"));
+}
+
+TEST(HarnessTraceCallPrintsANamelessObjectByItsClassAsInstanceAndAsArgument)
+{
+	UClass* cls = GC::Alloc<UClass>("TestClass", nullptr, ObjectFlags::NoFlags);
+	UFunction* func = GC::Alloc<UFunction>("TestFunc", cls, ObjectFlags::NoFlags);
+	UObject* named = GC::Alloc<UObject>("Goal1", cls, ObjectFlags::NoFlags);
+	UObject* nameless = Nameless(cls);
+
+	// The hook runs before the check that skips a call the object ignores, so a function the
+	// instance has disabled is traced without any script running
+	named->DisableEvent("TestFunc");
+	nameless->DisableEvent("TestFunc");
+
+	Array<ExpressionValue> args = { ExpressionValue::ObjectValue(nameless) };
+	const Array<TraceFilter> saved = Frame::TraceEntries;
+	Frame::TraceEntries = { { NameString("TestClass"), NameString() } };
+	Frame::Call(func, nameless, ArrayView<ExpressionValue>(args.data(), args.size()));
+	Frame::Call(func, named, ArrayView<ExpressionValue>(args.data(), args.size()));
+	Frame::TraceEntries = saved;
+
+	const std::list<LogMessageLine>& log = Logger::Get()->GetLog();
+	CHECK_MSG(log.size() >= 2, "the two traced calls wrote fewer than two log lines");
+	auto last = log.rbegin();
+	CHECK_EQ(last->Text, std::string("trace: Goal1 TestClass None: TestFunc(<unnamed TestClass>)"));
+	++last;
+	CHECK_EQ(last->Text, std::string("trace: <unnamed TestClass> TestClass None: TestFunc(<unnamed TestClass>)"));
 }

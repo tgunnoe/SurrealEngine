@@ -131,13 +131,32 @@ struct CallArgsResult
 // when there is no such actor.
 using CallObjectResolver = std::function<UObject*(const std::string& kind, const std::string& value, std::string& error)>;
 
+// What the call command knows of one actor of the level when it looks for the object a "name:",
+// "class:" or "bind:" argument stands for.
+struct CallActorRecord
+{
+	UObject* object = nullptr;
+	std::string name;
+	std::string className;
+	std::string bindName;	// Read from Deus Ex actors only
+	vec3 location;
+	bool deleted = false;	// Being deleted: never matched and never offered
+};
+
+// Finds the first actor of the list that a "name:", "class:" or "bind:" argument stands for (kind
+// is "name", "class" or "bind", value the text after the prefix), comparing without regard to case.
+// An actor being deleted is neither matched nor offered, and "bind:" needs a Deus Ex game. Returns
+// null and sets error when there is no such actor, listing up to twenty distinct values the
+// actors have for that form. When it finds one it also sets resolution to the line to log.
+UObject* ResolveCallObject(const std::string& kind, const std::string& value, const Array<CallActorRecord>& actors, bool isDeusEx, std::string& error, std::string& resolution);
+
 // Turns the arguments of "call <Function> [arg ...]" (the words after the function name) into the
 // values the script function takes, one per parameter declared in func, by the parameter's type:
 // byte (0 to 255), int and float (numeric text), bool (0, 1, true, false), string and name
 // (verbatim) and object ("self" is the object passed as self, "none" is None, and the "name:",
 // "class:" and "bind:" prefixes go to resolve). A missing argument is Nothing for an optional
 // parameter and a refusal for a required one. Anything else is refused: extra arguments, an
-// out parameter, a parameter of any other type, text that does not parse, an object argument in
+// out parameter, an argument for a parameter of any other type, text that does not parse, an object argument in
 // no accepted form. Keywords and prefixes are matched without regard to case.
 CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, UObject* self, const CallObjectResolver& resolve);
 
