@@ -925,12 +925,13 @@ void Engine::PossessSavedPlayer()
 
 	if (auto pawnExt = UObject::TryCast<UPlayerPawnExt>(pawn))
 	{
-		// FlagBase is Transient (not saved), so it needs the same reconstruction LoginPlayer
-		// does for a fresh spawn.
+		// The flag base is saved with the level, so a loaded pawn normally has one. A save made without
+		// one (older, or before any flag existed) gets the same fresh base LoginPlayer gives a new spawn.
 		if (!pawnExt->FlagBase())
 		{
 			auto flagBaseCls = packages->FindClass("Extension.FlagBase");
-			pawnExt->FlagBase() = UObject::Cast<UFlagBase>(packages->GetTransientPackage()->NewObject("FlagBase", flagBaseCls, ObjectFlags::Transient));
+			pawnExt->FlagBase() = UObject::Cast<UFlagBase>(pawn->package->NewObject("FlagBase", flagBaseCls, ObjectFlags::NoFlags));
+			pawnExt->FlagBase()->Outer() = pawn;
 		}
 	}
 
@@ -1087,11 +1088,13 @@ void Engine::LoginPlayer()
 
 	if (auto pawnExt = UObject::TryCast<UPlayerPawnExt>(pawn))
 	{
-		// Unclear if this is how DeusEx spawned this object
+		// Unclear if this is how DeusEx spawned this object. It belongs to the pawn's package with the pawn
+		// as its outer, so a save exports it with the pawn.
 		if (!pawnExt->FlagBase())
 		{
 			auto flagBaseCls = packages->FindClass("Extension.FlagBase");
-			pawnExt->FlagBase() = UObject::Cast<UFlagBase>(packages->GetTransientPackage()->NewObject("FlagBase", flagBaseCls, ObjectFlags::Transient));
+			pawnExt->FlagBase() = UObject::Cast<UFlagBase>(pawn->package->NewObject("FlagBase", flagBaseCls, ObjectFlags::NoFlags));
+			pawnExt->FlagBase()->Outer() = pawn;
 		}
 	}
 
