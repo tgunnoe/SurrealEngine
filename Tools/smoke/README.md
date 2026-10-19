@@ -132,19 +132,50 @@ A call the VM would skip silently is refused the same way, with
 `call <Function> skipped: <reason>`: the player's state ignores the function,
 the level has not begun play, or the player is being deleted.
 
-`call <Property>.<Function> [arg ...]` runs the function on the object that one
-of the player's object properties holds, instead of on the player or the
-console. The Deus Ex menus are functions of the root window, which the player
+`call <Property>[.<Property>...].<Function> [arg ...]` runs the function on the
+object that a path of properties leads to from the player, instead of on the
+player or the console. Each hop of the path is `<Name>`, or `<Name>[<index>]`
+to take one element of a static array; an index is one to nine decimal digits
+counted from 0, with no sign and no spaces, and an array needs one. Every hop
+must be an object property of the object before it (a property of a struct or
+a dynamic array is not walked), and the text after the last `.` is the
+function. The Deus Ex menus are functions of the root window, which the player
 keeps in `rootWindow`, so `--exec='10:call rootWindow.InvokeLoadScreen'` opens
 the load screen and `call rootWindow.InvokeSaveScreen` the save screen. The
-property name is matched without regard to case, the arguments are read as
-above (`self` is still the player), and the console is not tried for such a
-name. The refusal is written as `call <Property>.<Function> refused: <reason>`,
-the reason being one of: the name has more than one `.` or nothing on one side
-of its `.`; `no player`; `the player has no property <Property>`;
-`<Property> is not an object property`; `<Property> is None`; or `the <Class>
-in <Property> has no function <Function>`. A call that is made logs
-`call <Property>.<Function> returned <value>`, the name as it was typed.
+choices of a Deus Ex conversation are buttons in a static array of the choice
+window, which the player's conversation object keeps, so once a conversation
+has shown its choices a run picks the first with
+`--exec='5:call StartConversationByName MeetPaul bind:PaulDenton 0 1;65:call conPlay.conWinThird.conChoices[0].PressButton'`
+(the press is timed after the choices appear). No script function picks a
+choice by index, and the button's own `PressButton` is the game's way of doing
+it: it offers the button to the `ButtonActivated` of its windows, the choice
+window's among them, which plays the choice as a mouse click does. The names
+are matched without regard to case, the arguments are read as above (`self` is
+still the player), and the console is not tried for a path.
+
+A malformed name is refused before any property is read: an empty hop or
+function, a bracket out of place, an index that is not digits or has more than
+nine, or a bracket in a plain name or in the function. The refusal is written
+as `call <name> refused: <reason>`, the name as it was typed, the reason being
+one of the above or one of these, where `<path>` is the hops up to and
+including the one at fault and `<owner>` the hops that lead to the object that
+lacks the property or function (an index is written as a plain number):
+
+| Reason | Cause |
+| :--- | :--- |
+| `no player` | the run has no player |
+| `the player has no property <Name>` | the first hop names no property of the player |
+| `the <Class> in <owner> has no property <Name>` | a later hop names no property of the object before it |
+| `<path> is not an object property` | the hop's property holds anything but an object |
+| `<path> is not an array` | the hop has an index and its property is not a static array |
+| `<path> is an array of <N>; give an index` | the hop has no index and its property is a static array |
+| `<path> has <N> elements; <index> is out of range` | the index is not below the array's size |
+| `<path> is None` | the hop's property, or element, holds no object |
+| `the <Class> in <owner> has no function <Function>` | the object the whole path leads to has no such function |
+
+A call that is made logs `call <name> returned <value>`, the name as it was
+typed (`call conPlay.conWinThird.conChoices[0].PressButton returned nothing`
+for the choice above).
 
 A call that is made logs `call <Function> returned <value>` to the engine log
 (`True` or `False`, the number, the text, the object's name, `<unnamed ClassName>`
