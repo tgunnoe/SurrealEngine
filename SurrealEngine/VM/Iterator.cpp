@@ -305,7 +305,7 @@ TraceActorsIterator::TraceActorsIterator(UActor* SelfActor, UObject* BaseClass, 
 		{
 			vec3 hitNormal = hit.Normal;
 			vec3 hitLocation = traceStart + (traceEnd - traceStart) * hit.Fraction;
-			tracedActors.push_back({ hit.Actor, *HitLoc, *HitNorm });
+			tracedActors.push_back({ hit.Actor, hitLocation, hitNormal });
 		}
 	}
 
