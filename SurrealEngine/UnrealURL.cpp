@@ -220,5 +220,8 @@ std::optional<std::string> LoadOptionText(const UnrealURL& url)
 
 std::string MapNameOf(const UnrealURL& url, const std::string& mapExtension)
 {
+	const std::string suffix = "." + mapExtension;
+	if (url.Map.size() >= suffix.size() && StrTools::equals_ignore_case(url.Map.substr(url.Map.size() - suffix.size()), suffix))
+		return url.Map.substr(0, url.Map.size() - suffix.size());
 	return url.Map;
 }

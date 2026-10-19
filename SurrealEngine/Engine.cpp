@@ -966,6 +966,10 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 	const auto saveFolderPath = packages->GetSaveFolderPath();
 	Directory::create(saveFolderPath.string());
 
+	// After a load the level's package is the save package, which Unreal and Unreal Tournament name after
+	// the slot, so the map name comes from the level's URL
+	const std::string mapName = MapNameOf(LevelInfo->URL, packages->GetMapExtension());
+
 	fs::path savedFile;
 
 	if (packages->IsDeusEx())
@@ -989,7 +993,6 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		const auto saveSlotFolder = SaveSlotPath(true, slotNum, saveFolderPath, packages->GetSaveExtension());
 		Directory::create(saveSlotFolder.string());
 
-		const std::string mapName = Level->package->GetPackageName().ToString();
 		savedFile = saveSlotFolder / (mapName + "." + packages->GetSaveExtension());
 		const auto saveInfoFile = saveSlotFolder / ("SaveInfo." + packages->GetSaveExtension());
 		LevelPackage->Save(Level, savedFile.string());
@@ -1012,7 +1015,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 
 		// The save package is later reloaded by its slot filename ("SaveN"), not by the original
 		// map name, so record the real map name here for LoadFromSaveFile() to recover.
-		packages->SetIniValue("user", "SaveGame", "MapName" + std::to_string(slotNum), Level->package->GetPackageName().ToString());
+		packages->SetIniValue("user", "SaveGame", "MapName" + std::to_string(slotNum), mapName);
 	}
 
 	// The data folder is one game's subdirectory of the user directory, so this names the game too
