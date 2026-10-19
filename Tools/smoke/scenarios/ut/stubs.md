@@ -1,11 +1,11 @@
-# Distinct STUB messages
+# Distinct STUB messages, UT 436 sweep
 
-Distinct `STUB` lines across all 83 logs: 1. Rows below: 1.
+Distinct stub lines in the logs: 0. Rows below: 0.
 
-| Maps | Message | Class | Reason |
-| ---: | :--- | :--- | :--- |
-| 72 | `GetNetworkNumber` | gameplay | Registered as `GameInfo.GetNetworkNumber` (`SurrealEngine/Native/NGameInfo.cpp:12`); `GameInfo` is a gameplay class. The bare text has no owner prefix, so the owner is resolved from the registration and recorded in `bare_owners.json`. |
+| Stub | Maps | Class | Reason |
+| :--- | ---: | :--- | :--- |
 
-The other 11 maps (CTF-Tutorial, CityIntro, EOL_Assault, EOL_CTF,
-EOL_Challenge, EOL_Deathmatch, EOL_Domination, EOL_Statues, Entry,
-UT-Logo-Map, UTCredits) log no `STUB` line; why the call does not occur there was not investigated.
+A stub is gameplay when its owner descends from one of the gameplay roots
+listed in scenarios/ut/scenario.py. An owner missing from that
+table is unclassified and counts as gameplay until the table is
+extended.
