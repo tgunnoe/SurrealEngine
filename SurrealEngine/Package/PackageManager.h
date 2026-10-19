@@ -24,6 +24,15 @@ fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const s
 // game, and a slot below 0 outside Deus Ex.
 std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot);
 
+// Why a save slot cannot be deleted, or nothing when it can: only slots from 1 can, so the quick save
+// and the slots below it never are.
+std::optional<std::string> SaveSlotDeleteRefusal(int slot);
+
+// Removes the save a slot names under the save folder (the slot's folder on Deus Ex, its
+// Save<slot>.<extension> file in the other games), and only when that path, with symbolic links
+// resolved, lies inside the save folder. Returns why nothing was removed, or nothing when the save is gone.
+std::optional<std::string> RemoveSaveSlot(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension);
+
 // The lowest slot from 1 whose folder does not exist yet, or 0 when all 9999 are taken.
 int NextFreeDeusExSaveIndex(const fs::path& saveFolder);
 

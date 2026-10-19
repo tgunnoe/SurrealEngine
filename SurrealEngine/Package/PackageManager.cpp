@@ -342,6 +342,16 @@ std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot)
 	return std::nullopt;
 }
 
+std::optional<std::string> SaveSlotDeleteRefusal(int slot)
+{
+	return std::nullopt;
+}
+
+std::optional<std::string> RemoveSaveSlot(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension)
+{
+	return "nothing was removed";
+}
+
 int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
 {
 	// Save folders being formatted like Save0001 implies that the number can go up to 9999
