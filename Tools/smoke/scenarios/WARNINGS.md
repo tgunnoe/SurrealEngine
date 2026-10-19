@@ -15,22 +15,18 @@ site is read once by a reviewer and its verdict entered here, so that a new
 site is seen and read rather than absorbed into a total.
 
 A site that a sweep table lists and this register lacks is unread: nothing is
-known yet about whether the original engine would warn the same way. The bash
-command below compares, for each sweep, the rows of its table with the
-register's rows under the heading of the same name (site, lines and maps) and
-prints each row that one has and the other lacks, so a new site, a row missing
-from one sweep, or a count that changed since the verdict was entered shows up;
-it prints nothing when they agree. It reads only the rows of the form `Accessed
-None in <site>`; a table row of another form (`Accessed None when calling ...`,
-or an `unknown` row) needs a reader. A verdict is entered by adding the row and
-its section.
-
-```
-for s in unreal ut ut-bots deusex; do
-  diff <(grep '^| Accessed None in' Tools/smoke/scenarios/$s/SUMMARY.md | sed 's/Accessed None in //' | sort) \
-       <(sed -n "/^### $s\$/,/^##/p" Tools/smoke/scenarios/WARNINGS.md | grep -E '^\| [^|]+ \| [0-9]+ \| [0-9]+ \| (faithful|engine-side|undecided) \|' | cut -d'|' -f1-4 | sed 's/$/|/' | sort)
-done
-```
+known yet about whether the original engine would warn the same way.
+The check command of each scenario, `python3 -I -B
+Tools/smoke/triage/__main__.py Tools/smoke/scenarios/<name> check` fails for
+every site that the sweep's `errors.json` records and that has no row under the
+`###` heading of the same name as the scenario, so a new site fails the check
+until it is read. It compares the site alone: the lines and maps columns are the
+counts at the time the verdict was entered, are not compared, and are refreshed
+when the register is next touched. A warning of another form than `Accessed None
+in <site>` (`Accessed None when calling ...`) needs a row whose site cell is its
+whole text. A map whose `errors.json` entry has no `warning_sites` contributes
+nothing, so an `unknown` row in a sweep table needs a reader. A verdict is
+entered by adding the row and its section.
 
 ## Verdicts
 

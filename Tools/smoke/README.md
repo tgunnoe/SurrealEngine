@@ -496,7 +496,10 @@ python3 -I -B Tools/smoke/triage/__main__.py <scenario dir> check
   and writes the three documents into the scenario directory.
 - `check` compares the documents with the sidecars, prints
   `sections=<n> nonclean=<n> problems=<n>` and a `FAIL` line per problem, and
-  exits 0 only when there is none.
+  exits 0 only when there is none. When the scenario sets `warning_register`
+  and `register_heading` it also fails for every site `errors.json` records
+  that has no row under that heading of `scenarios/WARNINGS.md`; only the site
+  is compared, not the register's counts.
 
 `<repro.json>` and `<out.json>` are relative to the scenario directory unless
 absolute; `<logdir>`, `<exe>` and `<game folder>` are relative to the working
@@ -523,8 +526,9 @@ row lacks it the table ends with an `unknown (<k> rows without a site
 breakdown)` row: those rows' `script_warnings` summed (`not recorded` unless
 every one has a count) and `<k>`. `TRIAGE.md` sections keep only the count.
 [`scenarios/WARNINGS.md`](scenarios/WARNINGS.md) is the register of the sites
-the sweeps have logged, with a read verdict for each; a site a table lists and
-the register lacks has not been read.
+the sweeps have logged, with a read verdict for each; `check` fails on a site
+that `errors.json` records and the register lacks under the scenario's heading,
+so a new site is read and entered before a sweep passes.
 
 The `## Failure signatures` table has one row per distinct reason a map is
 non-clean. A crash (verdict `crash`) has exactly one signature, derived from
