@@ -159,16 +159,26 @@ UObject* ResolveCallObject(const std::string& kind, const std::string& value, co
 // no accepted form. Keywords and prefixes are matched without regard to case.
 CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, UObject* self, const CallObjectResolver& resolve);
 
+// One hop of the path in a qualified call name: the name of an object property and, for a static
+// array, the index of the element the hop follows.
+struct CallHop
+{
+	std::string property;
+	std::optional<int> index;
+};
+
 // What the function name of "call <Name> [arg ...]" asks for: a plain function name, or
-// "<Property>.<Function>", a function of the object that one of the player's object properties holds.
-// A name with more than one '.', or with nothing on one side of its '.', is malformed.
+// "<Property>[.<Property>...].<Function>", a function of the object that a path of properties leads
+// to from the player, each hop "<Name>" or "<Name>[<index>]" with one to nine digits. A name with an
+// empty hop or function, a bracket out of place, an index that is not digits or has more than nine,
+// or a bracket in a plain name or in the function, is malformed.
 struct CallTarget
 {
 	enum class Kind { Plain, Qualified, Malformed };
 
 	Kind kind = Kind::Plain;
-	std::string property;	// Qualified: the text before the '.'
-	std::string function;	// Plain: the whole name; qualified: the text after the '.'
+	std::vector<CallHop> path;	// Qualified: the hops before the last '.', from the player outward
+	std::string function;	// Plain: the whole name; qualified: the text after the last '.'
 	std::string error;		// Malformed: what is wrong with the name
 };
 

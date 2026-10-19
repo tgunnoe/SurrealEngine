@@ -2551,42 +2551,131 @@ namespace
 	}
 }
 
+namespace
+{
+	CallTarget MalformedCallTarget(const char* error)
+	{
+		CallTarget target;
+		target.kind = CallTarget::Kind::Malformed;
+		target.error = error;
+		return target;
+	}
+
+	// Reads one hop of a path, "<Name>" or "<Name>[<index>]". Sets error and returns false when the hop
+	// has no name, an index that is not one to nine digits (more would not fit an int), or a bracket
+	// out of place. Each fault has its own text, and none names the hop: the log line that carries the
+	// error already holds the whole name as typed.
+	bool ParseCallHop(const std::string& text, CallHop& hop, const char*& error)
+	{
+		const size_t open = text.find('[');
+		const size_t close = text.find(']');
+		if (close != std::string::npos && (open == std::string::npos || close < open))
+		{
+			error = "a ']' has no '[' before it";
+			return false;
+		}
+
+		hop.property = text.substr(0, open);
+		if (hop.property.empty())
+		{
+			error = "no property name before a '.' or '['";
+			return false;
+		}
+		if (open == std::string::npos)
+			return true;
+
+		if (close == std::string::npos)
+		{
+			error = "a '[' has no closing ']'";
+			return false;
+		}
+
+		const std::string digits = text.substr(open + 1, close - open - 1);
+		if (digits.empty() || digits.find_first_not_of("0123456789") != std::string::npos)
+		{
+			error = "an index is digits only, as [0]";
+			return false;
+		}
+		if (digits.size() > 9)
+		{
+			error = "an index has at most nine digits";
+			return false;
+		}
+		if (close + 1 != text.size())
+		{
+			error = "a property name and its index end at the ']', as <Property>[<index>]";
+			return false;
+		}
+
+		int index = 0;
+		for (char digit : digits)
+			index = index * 10 + (digit - '0');
+		hop.index = index;
+		return true;
+	}
+}
+
 CallTarget SplitCallTarget(const std::string& text)
 {
-	CallTarget target;
-	const size_t dot = text.find('.');
-	if (dot == std::string::npos)
+	const size_t lastDot = text.rfind('.');
+	if (lastDot == std::string::npos)
 	{
+		if (text.find_first_of("[]") != std::string::npos)
+			return MalformedCallTarget("an index needs a path to its property: <Property>[<index>].<Function>");
+
+		CallTarget target;
 		target.function = text;
 		return target;
 	}
 
-	// A third part would need a property of a property, which the call command does not walk
-	if (text.find('.', dot + 1) != std::string::npos)
-		target.error = "a qualified name has one '.', as <Property>.<Function>";
-	else if (dot == 0)
-		target.error = "no property name before the '.'";
-	else if (dot + 1 == text.size())
-		target.error = "no function name after the '.'";
-
-	if (!target.error.empty())
+	// Everything before the last '.' is the path, one hop to each '.'
+	CallTarget target;
+	target.kind = CallTarget::Kind::Qualified;
+	const std::string pathText = text.substr(0, lastDot);
+	for (size_t start = 0;;)
 	{
-		target.kind = CallTarget::Kind::Malformed;
-		return target;
+		const size_t dot = pathText.find('.', start);
+		CallHop hop;
+		const char* error = nullptr;
+		if (!ParseCallHop(pathText.substr(start, dot == std::string::npos ? dot : dot - start), hop, error))
+			return MalformedCallTarget(error);
+		target.path.push_back(std::move(hop));
+
+		if (dot == std::string::npos)
+			break;
+		start = dot + 1;
 	}
 
-	target.kind = CallTarget::Kind::Qualified;
-	target.property = text.substr(0, dot);
-	target.function = text.substr(dot + 1);
+	target.function = text.substr(lastDot + 1);
+	if (target.function.empty())
+		return MalformedCallTarget("no function name after the '.'");
+	if (target.function.find_first_of("[]") != std::string::npos)
+		return MalformedCallTarget("a function name takes no index: put it on a property");
 	return target;
 }
 
 namespace
 {
-	// The object that a property of the player holds, for the call command's qualified names. Returns
-	// null and sets error when the player has no such property, it is not an object property, or it
-	// holds no object.
-	UObject* PlayerHeldObject(UPlayerPawn* player, const std::string& propertyName, std::string& error)
+	// The first count hops of a path as written in a call name
+	std::string CallPathText(const std::vector<CallHop>& path, size_t count)
+	{
+		std::string text;
+		for (size_t i = 0; i < count; i++)
+		{
+			if (i > 0)
+				text += '.';
+			text += path[i].property;
+			if (path[i].index)
+				text += "[" + std::to_string(*path[i].index) + "]";
+		}
+		return text;
+	}
+
+	// The object that a path of properties leads to from the player, for the call command's
+	// qualified names. Returns null and sets error when there is no player, a hop names a property
+	// its object lacks, holds no object, or takes the wrong form of index (a static array needs one
+	// and any other property refuses one), or the element it reaches is None.
+	UObject* ResolveCallPath(UPlayerPawn* player, const std::vector<CallHop>& path, std::string& error)
 	{
 		if (!player)
 		{
@@ -2594,31 +2683,66 @@ namespace
 			return nullptr;
 		}
 
-		if (!player->HasProperty(propertyName))
+		UObject* object = player;
+		for (size_t i = 0; i < path.size(); i++)
 		{
-			error = "the player has no property " + propertyName;
-			return nullptr;
-		}
+			const CallHop& hop = path[i];
+			const std::string through = CallPathText(path, i + 1);
 
-		UProperty* property = player->GetMemberProperty(propertyName);
-		if (property->ValueType != ExpressionValueType::ValueObject)
-		{
-			error = propertyName + " is not an object property";
-			return nullptr;
-		}
+			if (!object->HasProperty(hop.property))
+			{
+				const std::string owner = i == 0 ? "the player" : "the " + UObject::GetUClassName(object).ToString() + " in " + CallPathText(path, i);
+				error = owner + " has no property " + hop.property;
+				return nullptr;
+			}
 
-		UObject* held = *static_cast<UObject**>(player->GetProperty(property));
-		if (!held)
-			error = propertyName + " is None";
-		return held;
+			UProperty* property = object->GetMemberProperty(hop.property);
+			if (property->ValueType != ExpressionValueType::ValueObject)
+			{
+				error = through + " is not an object property";
+				return nullptr;
+			}
+
+			const int dimension = property->ArrayDimension;
+			size_t element = 0;
+			if (hop.index)
+			{
+				if (dimension <= 1)
+				{
+					error = through + " is not an array";
+					return nullptr;
+				}
+				if (*hop.index >= dimension)
+				{
+					error = through + " has " + std::to_string(dimension) + " elements; " + std::to_string(*hop.index) + " is out of range";
+					return nullptr;
+				}
+				element = static_cast<size_t>(*hop.index);
+			}
+			else if (dimension > 1)
+			{
+				error = through + " is an array of " + std::to_string(dimension) + "; give an index";
+				return nullptr;
+			}
+
+			object = *static_cast<UObject**>(property->GetElement(object->GetProperty(property), element));
+			if (!object)
+			{
+				error = through + " is None";
+				return nullptr;
+			}
+		}
+		return object;
 	}
 }
 
 // "call <Function> [arg ...]": runs a function of the player, then of the console, whatever its
 // flags, so a scripted run can start game logic that no exec function exposes. "call
-// <Property>.<Function>" runs a function of the object that a property of the player holds instead,
-// which reaches the Deus Ex root window and so its menus. Every refusal returns false, which the
-// --exec runner logs as EXEC_FAILED, and the console then adds its "Unknown command" line.
+// <Property>[.<Property>...].<Function>" runs a function of the object that a path of properties
+// leads to from the player instead, each hop a name or a name and an index into a static array,
+// which reaches the Deus Ex root window and its menus and the buttons of a conversation's choice
+// window. Every refusal returns false, which the --exec runner logs as EXEC_FAILED, and the console
+// then adds its "Unknown command" line.
 bool Engine::CallFunction(const Array<std::string>& args)
 {
 	if (args.size() < 2)
@@ -2637,12 +2761,12 @@ bool Engine::CallFunction(const Array<std::string>& args)
 	UPlayerPawn* player = viewport->Actor();
 	const bool qualified = callTarget.kind == CallTarget::Kind::Qualified;
 
-	// A qualified name is for the held object alone: the console is not tried for it
+	// A qualified name is for the object its path leads to alone: the console is not tried for it
 	Array<UObject*> targets;
 	if (qualified)
 	{
 		std::string error;
-		UObject* held = PlayerHeldObject(player, callTarget.property, error);
+		UObject* held = ResolveCallPath(player, callTarget.path, error);
 		if (!held)
 		{
 			LogMessage("call " + args[1] + " refused: " + error);
@@ -2737,7 +2861,7 @@ bool Engine::CallFunction(const Array<std::string>& args)
 	}
 
 	if (qualified)
-		LogMessage("call " + args[1] + " refused: the " + UObject::GetUClassName(targets[0]).ToString() + " in " + callTarget.property + " has no function " + callTarget.function);
+		LogMessage("call " + args[1] + " refused: the " + UObject::GetUClassName(targets[0]).ToString() + " in " + CallPathText(callTarget.path, callTarget.path.size()) + " has no function " + callTarget.function);
 	else
 		LogMessage("call " + args[1] + " refused: neither the player nor the console has a function of that name");
 	return false;
