@@ -326,22 +326,31 @@ void SmokeLog::Summary()
 	finished = true;
 }
 
-std::string SmokeLog::TerminateMessage(std::exception_ptr current)
+std::string SmokeLog::TerminateMessage(std::exception_ptr current, int unwinding)
 {
 	if (!current)
 		return "terminate: no exception";
+
+	std::string text;
 	try
 	{
 		std::rethrow_exception(current);
 	}
 	catch (const std::exception& e)
 	{
-		return std::string("terminate: ") + e.what();
+		text = std::string("terminate: ") + e.what();
 	}
 	catch (...)
 	{
-		return "terminate: unknown exception";
+		text = "terminate: unknown exception";
 	}
+
+	if (unwinding > 0)
+	{
+		text += " (thrown while " + std::to_string(unwinding) + (unwinding == 1 ? " other exception was" : " other exceptions were")
+			+ " still unwinding; this names the later throw)";
+	}
+	return text;
 }
 
 #ifndef WIN32
@@ -405,7 +414,7 @@ void SmokeLog::InstallSignalHandlers()
 		if (!terminateEntered)
 		{
 			terminateEntered = true;
-			SmokeLog::Get()->WriteUnconditional("FATAL " + SmokeLog::Flatten(SmokeLog::TerminateMessage(std::current_exception())));
+			SmokeLog::Get()->WriteUnconditional("FATAL " + SmokeLog::Flatten(SmokeLog::TerminateMessage(std::current_exception(), std::uncaught_exceptions())));
 		}
 		std::abort();
 	});
