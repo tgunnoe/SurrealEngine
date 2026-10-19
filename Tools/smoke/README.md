@@ -245,11 +245,11 @@ means every row carries `warning_sites` and none has a site), and every
 document ends with exactly one newline.
 
 `scenarios/deusex/` is the reference: `scenario.py` holds its literals.
-`scenarios/ut-bots/` is the Unreal Tournament botmatch sweep (four bots,
-fire pressed five seconds after login): a map is clean only if it is clean
-by the rules above and its match started (`require_match_start`).
-`scenarios/ut/` is the same game without bots, and `scenarios/unreal/` is
-Unreal Gold.
+`scenarios/ut-bots/` is the Unreal Tournament botmatch sweep (every map
+launched with `?NumBots=4`, fire pressed five seconds after login): a map is
+clean only if it is clean by the rules above and its match started
+(`require_match_start`). `scenarios/ut/` is the same game without bots, and
+`scenarios/unreal/` is Unreal Gold.
 
 A re-run is compared with the sweep's log by `repro`: the runs agree when
 their first failing lines match, or with none in either, when their
