@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "Package/PackageManager.h"
 #include "Packages/DeusEx/UGameDirectory.h"
+#include "Packages/Extension/Flags/UFlagBase.h"
 #include "Utils/Logger.h"
 
 void UDeusExPlayer::ConBindEvents()
@@ -79,9 +80,10 @@ void UDeusExPlayer::SaveGame(int saveIndex, std::optional<std::string> saveDesc)
 
 NameString UDeusExPlayer::SetBoolFlagFromString(const std::string& flagNameString, bool bValue)
 {
-	// Not called directly from script
-	LogUnimplemented("DeusExPlayer.SetBoolFlagFromString");
-	return {};
+	NameString flagName(flagNameString);
+	if (UFlagBase* flagBase = FlagBase())
+		flagBase->SetBool(flagName, bValue, {}, {});
+	return flagName;
 }
 
 void UDeusExPlayer::UnloadTexture(UObject* Texture)
