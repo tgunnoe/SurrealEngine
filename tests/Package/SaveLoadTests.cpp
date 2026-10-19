@@ -152,9 +152,9 @@ TEST(SaveLoadDeusExFolderNameKeepsAWiderSlotWhole)
 
 TEST(SaveLoadDeusExFolderNameOfTheQuickSaveSlot)
 {
-	// The scripts' quick-save slot. The minus sign takes one of the four characters, as it always has:
-	// a game saved under this name must still be found.
-	CHECK_EQ(DeusExSaveFolderName(-1), std::string("Save00-1"));
+	// The scripts' quick-save slot. The original game writes Save/QuickSave/ for it; the folder a previous
+	// build wrote under Save00-1 is no longer looked up.
+	CHECK_EQ(DeusExSaveFolderName(-1), std::string("QuickSave"));
 }
 
 TEST(SaveLoadSlotPathOfDeusExIsTheSlotFolder)
@@ -163,7 +163,7 @@ TEST(SaveLoadSlotPathOfDeusExIsTheSlotFolder)
 	CHECK_EQ(SaveSlotPath(true, 1, saves, "dxs"), saves / "Save0001");
 	CHECK_EQ(SaveSlotPath(true, 12, saves, "dxs"), saves / "Save0012");
 	CHECK_EQ(SaveSlotPath(true, 0, saves, "dxs"), saves / "Save0000");
-	CHECK_EQ(SaveSlotPath(true, -1, saves, "dxs"), saves / "Save00-1");
+	CHECK_EQ(SaveSlotPath(true, -1, saves, "dxs"), saves / "QuickSave");
 }
 
 TEST(SaveLoadSlotPathOfTheOtherGamesIsTheSaveFile)
@@ -175,6 +175,30 @@ TEST(SaveLoadSlotPathOfTheOtherGamesIsTheSaveFile)
 	CHECK_EQ(SaveSlotPath(false, -1, saves, "usa"), saves / "Save-1.usa");
 	// The extension is the game's: Unreal Tournament saves as usa too, other games differ
 	CHECK_EQ(SaveSlotPath(false, 9, saves, "uas"), saves / "Save9.uas");
+}
+
+TEST(SaveLoadSlotRefusalOfDeusExIsBelowTheQuickSaveSlot)
+{
+	CHECK_EQ(TextOf(SaveSlotRefusal(true, -2)), std::string("slot -2 is not allowed"));
+	CHECK_EQ(TextOf(SaveSlotRefusal(true, INT_MIN)), std::string("slot -2147483648 is not allowed"));
+
+	// The controls: the quick-save slot, the scripts' new-save slot and an ordinary slot are allowed
+	CHECK(!SaveSlotRefusal(true, -1));
+	CHECK(!SaveSlotRefusal(true, 0));
+	CHECK(!SaveSlotRefusal(true, 1));
+	CHECK(!SaveSlotRefusal(true, INT_MAX));
+}
+
+TEST(SaveLoadSlotRefusalOfTheOtherGamesIsBelowZero)
+{
+	CHECK_EQ(TextOf(SaveSlotRefusal(false, -1)), std::string("slot -1 is not allowed"));
+	CHECK_EQ(TextOf(SaveSlotRefusal(false, -2)), std::string("slot -2 is not allowed"));
+	CHECK_EQ(TextOf(SaveSlotRefusal(false, INT_MIN)), std::string("slot -2147483648 is not allowed"));
+
+	// The controls: slot 0 and the slots above it are allowed
+	CHECK(!SaveSlotRefusal(false, 0));
+	CHECK(!SaveSlotRefusal(false, 1));
+	CHECK(!SaveSlotRefusal(false, INT_MAX));
 }
 
 TEST(SaveLoadNextFreeIndexIsTheLowestMissingFolder)

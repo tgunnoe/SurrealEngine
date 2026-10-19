@@ -227,3 +227,8 @@ std::optional<std::string> LoadOptionText(const UnrealURL& url)
 	}
 	return std::nullopt;
 }
+
+std::string MapNameOf(const UnrealURL& url, const std::string& mapExtension)
+{
+	return url.Map;
+}

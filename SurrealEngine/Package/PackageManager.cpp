@@ -328,6 +328,11 @@ fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const s
 	return saveFolder / ("Save" + std::to_string(slot) + "." + saveExtension);
 }
 
+std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot)
+{
+	return std::nullopt;
+}
+
 int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
 {
 	// Save folders being formatted like Save0001 implies that the number can go up to 9999

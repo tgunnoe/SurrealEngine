@@ -17,6 +17,10 @@ std::string DeusExSaveFolderName(int slot);
 // one "Save<slot>.<extension>" file.
 fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension);
 
+// Why a game cannot be saved to a slot, or nothing when it can: a slot below -1 is refused in every
+// game, and a slot below 0 outside Deus Ex.
+std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot);
+
 // The lowest slot from 1 whose folder does not exist yet, or 0 when all 9999 are taken.
 int NextFreeDeusExSaveIndex(const fs::path& saveFolder);
 
