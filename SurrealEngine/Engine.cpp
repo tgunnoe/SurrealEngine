@@ -71,6 +71,14 @@
 
 Engine* engine = nullptr;
 
+// A skipped save or load goes to the engine log and, as a WARNING, to the smoke log, so an unattended
+// run shows that it did not happen.
+static void LogSkipped(const std::string& text)
+{
+	LogMessage(text);
+	SmokeLog::Get()->Event("WARNING", text);
+}
+
 // Runs from the destructor, where an exception would end the process: a log that cannot be written
 // is reported and the shutdown carries on.
 static void SaveLastRunLog() noexcept
@@ -333,8 +341,8 @@ void Engine::Run()
 		if (LoadOptionText(ClientTravelInfo.URL))
 		{
 			UnrealURL url(ClientTravelInfo.URL);
-			LoadFromSaveFile(url);
-			PossessSavedPlayer();
+			if (LoadFromSaveFile(url))
+				PossessSavedPlayer();
 		}
 
 		if (!ClientTravelInfo.URL.Map.empty())
@@ -832,28 +840,29 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 		CallEvent(LevelInfo->Game(), "DetailChange", {});
 }
 
-void Engine::LoadFromSaveFile(const UnrealURL& url)
+bool Engine::LoadFromSaveFile(const UnrealURL& url)
 {
+	// The request is consumed even when it cannot be met, or the main loop would ask again every frame
 	ClientTravelInfo.URL.Clear();
+
+	const std::string slotText = LoadOptionText(url).value_or("");
+	const std::optional<int> slot = ParseSaveSlot(slotText);
+	if (!slot)
+	{
+		LogSkipped("Load game skipped: slot '" + slotText + "' is not a number");
+		return false;
+	}
+
+	const int slotNum = *slot;
+	Package* savefilePackage = packages->LoadSaveSlot(slotNum);
+	if (!savefilePackage)
+	{
+		LogSkipped("Load game skipped: no save in slot " + std::to_string(slotNum));
+		return false;
+	}
 
 	if (Level)
 		CallEvent(console, EventName::NotifyLevelChange);
-
-	Package* savefilePackage = nullptr;
-	int slotNum = 0;
-
-	if (const std::optional<std::string> slotText = LoadOptionText(url))
-	{
-		const std::optional<int> slot = ParseSaveSlot(*slotText);
-		if (!slot)
-			Exception::Throw("Load game: slot '" + *slotText + "' is not a number");
-
-		slotNum = *slot;
-		savefilePackage = packages->LoadSaveSlot(slotNum);
-	}
-
-	if (!savefilePackage)
-		return;
 
 	audiodev->StopSounds();
 	UnloadMap();
@@ -890,6 +899,9 @@ void Engine::LoadFromSaveFile(const UnrealURL& url)
 	GameInfo = UObject::Cast<UGameInfo>(LevelInfo->Game());
 	if (!GameInfo)
 		Exception::Throw("Save file has no GameInfo actor for " + LevelPackage->GetPackageName().ToString() + "!");
+
+	LogMessage("Loaded game from slot " + std::to_string(slotNum) + ": " + realMapName);
+	return true;
 }
 
 void Engine::PossessSavedPlayer()
@@ -1477,26 +1489,19 @@ std::string Engine::ConsoleCommand(UObject* context, const std::string& commandl
 	}
 	else if (command == "savegame" && (args.size() == 2 || args.size() == 3))
 	{
-
-		int32_t slotNum;
-		// slotNum not being parsable shouldn't cause a crash
-		try
+		// The main loop saves once the frame is drawn
+		const std::optional<int> slotNum = ParseSaveSlot(args[1]);
+		if (!slotNum)
 		{
-			slotNum = Convert::to_int32(args[1]);
-		}
-		catch (...)
-		{
+			LogSkipped("Save game skipped: slot '" + args[1] + "' is not a number");
 			return {};
 		}
 
-		SaveGameInfo.SaveGameSlot = slotNum;
+		SaveGameInfo.SaveGameSlot = *slotNum;
 
 		if (args.size() == 3)
 			SaveGameInfo.SaveGameDescription = args[2];
 
-		// SaveGameToSlot(slotNum, "");
-
-		//LogMessage("SaveGame command not fully implemented yet!");
 		return {};
 	}
 	else if (command == "get" && args.size() == 3)
