@@ -311,6 +311,65 @@
 #include "Native/NWebResponse.h"
 #include "Native/NWindow.h"
 
+std::string DeusExSaveFolderName(int slot)
+{
+	// The minus sign of the quick-save slot (-1) takes one of the four characters: Save00-1
+	std::string digits = std::to_string(slot);
+	if (digits.size() < 4)
+		digits.insert(0, 4 - digits.size(), '0');
+	return "Save" + digits;
+}
+
+fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension)
+{
+	if (deusEx)
+		return saveFolder / DeusExSaveFolderName(slot);
+
+	return saveFolder / ("Save" + std::to_string(slot) + "." + saveExtension);
+}
+
+int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
+{
+	// Save folders being formatted like Save0001 implies that the number can go up to 9999
+	for (int i = 1; i < 10000; i++)
+	{
+		std::error_code error;
+		if (!fs::is_directory(saveFolder / DeusExSaveFolderName(i), error))
+			return i;
+	}
+
+	return 0;
+}
+
+std::optional<fs::path> NewestDeusExSaveLevel(const fs::path& slotFolder, const std::string& saveExtension)
+{
+	std::error_code error;
+	if (!fs::is_directory(slotFolder, error))
+		return std::nullopt;
+
+	const std::string levelExtension = "." + saveExtension;
+	const std::string saveInfoName = "SaveInfo" + levelExtension;
+
+	std::optional<fs::path> newest;
+	fs::file_time_type newestTime;
+	for (const auto& entry : fs::directory_iterator{ slotFolder })
+	{
+		const fs::path& path = entry.path();
+		if (!entry.is_regular_file() || path.extension() != levelExtension || path.filename() == saveInfoName)
+			continue;
+
+		// The name settles files written in the same instant, so the same folder always gives the same level
+		const fs::file_time_type time = entry.last_write_time();
+		if (!newest || time > newestTime || (time == newestTime && path > *newest))
+		{
+			newest = path;
+			newestTime = time;
+		}
+	}
+
+	return newest;
+}
+
 PackageManager::PackageManager(const GameLaunchInfo& launchInfo) : launchInfo(launchInfo)
 {
 	gameRootFolderPath = fs::path(launchInfo.gameRootFolder);
@@ -427,22 +486,23 @@ void PackageManager::CloseStreams()
 	openStreams.clear();
 }
 
-Package* PackageManager::LoadSaveFile(const std::string& path)
+Package* PackageManager::LoadSaveSlot(int slotNum)
 {
-	auto fullPath = gameSaveFolderPath / fs::path(path);
+	fs::path file = SaveSlotPath(IsDeusEx(), slotNum, gameSaveFolderPath, GetSaveExtension());
 
-	if (!fullPath.has_extension() || (fullPath.extension().string() != GetSaveExtension()))
-		fullPath.replace_extension(GetSaveExtension());
+	if (IsDeusEx())
+	{
+		// A Deus Ex slot is a folder: the level package beside SaveInfo
+		const std::optional<fs::path> level = NewestDeusExSaveLevel(file, GetSaveExtension());
+		if (!level)
+			return nullptr;
+		file = *level;
+	}
 
-	if (fs::exists(fullPath))
-		return GC::Alloc<Package>(this, fullPath.stem().string(), fullPath.string());
+	if (!fs::exists(file))
+		return nullptr;
 
-	return nullptr;
-}
-
-Package* PackageManager::LoadSaveSlot(const uint32_t slotNum)
-{
-	return LoadSaveFile("Save" + std::to_string(slotNum) + "." + GetSaveExtension());
+	return GC::Alloc<Package>(this, file.stem().string(), file.string());
 }
 
 void PackageManager::ScanForMaps()

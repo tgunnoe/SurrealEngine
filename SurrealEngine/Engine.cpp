@@ -71,6 +71,14 @@
 
 Engine* engine = nullptr;
 
+// A skipped save or load goes to the engine log and, as a WARNING, to the smoke log, so an unattended
+// run shows that it did not happen.
+static void LogSkipped(const std::string& text)
+{
+	LogMessage(text);
+	SmokeLog::Get()->Event("WARNING", text);
+}
+
 // Runs from the destructor, where an exception would end the process: a log that cannot be written
 // is reported and the shutdown carries on.
 static void SaveLastRunLog() noexcept
@@ -121,7 +129,6 @@ Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 		deusExPackage = packages->GetPackage("DeusEx");
 		dxgc = UObject::Cast<UGC>(transientpkg->NewObject("gc", extpkg->GetClass("GC"), ObjectFlags::Transient));
 		dxgc->Canvas() = canvas;
-		dxSaveInfo = UObject::Cast<UDXSaveInfo>(transientpkg->NewObject("DeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::Transient));
 		dxConMissionList = UObject::Cast<UConversationMissionList>(packages->GetPackage("DeusExConText")->GetUObject("ConversationMissionList", "ConMissionList"));
 	}
 
@@ -329,11 +336,12 @@ void Engine::Run()
 			LoginPlayer();
 		}
 
-		if (ClientTravelInfo.URL.HasOption("load"))
+		// Deus Ex scripts ask for "loadgame" where the others ask for "load"
+		if (LoadOptionText(ClientTravelInfo.URL))
 		{
 			UnrealURL url(ClientTravelInfo.URL);
-			LoadFromSaveFile(url);
-			PossessSavedPlayer();
+			if (LoadFromSaveFile(url))
+				PossessSavedPlayer();
 		}
 
 		if (!ClientTravelInfo.URL.Map.empty())
@@ -831,24 +839,29 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 		CallEvent(LevelInfo->Game(), "DetailChange", {});
 }
 
-void Engine::LoadFromSaveFile(const UnrealURL& url)
+bool Engine::LoadFromSaveFile(const UnrealURL& url)
 {
+	// The request is consumed even when it cannot be met, or the main loop would ask again every frame
 	ClientTravelInfo.URL.Clear();
+
+	const std::string slotText = LoadOptionText(url).value_or("");
+	const std::optional<int> slot = ParseSaveSlot(slotText);
+	if (!slot)
+	{
+		LogSkipped("Load game skipped: slot '" + slotText + "' is not a number");
+		return false;
+	}
+
+	const int slotNum = *slot;
+	Package* savefilePackage = packages->LoadSaveSlot(slotNum);
+	if (!savefilePackage)
+	{
+		LogSkipped("Load game skipped: no save in slot " + std::to_string(slotNum));
+		return false;
+	}
 
 	if (Level)
 		CallEvent(console, EventName::NotifyLevelChange);
-
-	Package* savefilePackage = nullptr;
-	uint32_t slotNum = 0;
-
-	if (url.HasOption("load"))
-	{
-		slotNum = Convert::to_uint32(url.GetOption("load"));
-		savefilePackage = packages->LoadSaveSlot(slotNum);
-	}
-
-	if (!savefilePackage)
-		return;
 
 	audiodev->StopSounds();
 	UnloadMap();
@@ -885,6 +898,9 @@ void Engine::LoadFromSaveFile(const UnrealURL& url)
 	GameInfo = UObject::Cast<UGameInfo>(LevelInfo->Game());
 	if (!GameInfo)
 		Exception::Throw("Save file has no GameInfo actor for " + LevelPackage->GetPackageName().ToString() + "!");
+
+	LogMessage("Loaded game from slot " + std::to_string(slotNum) + ": " + realMapName);
+	return true;
 }
 
 void Engine::PossessSavedPlayer()
@@ -925,6 +941,12 @@ void Engine::PossessSavedPlayer()
 	render->OnMapLoaded();
 	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
 	NotePlayerLogin();
+
+	// A load never runs a login, so the level holds no travel info and its URL no player name. A restart
+	// hands LoadMap the level's travel info and looks the player up in it by the URL's name, so give it the
+	// loaded player and items under the name they are stored by
+	LevelInfo->URL.AddOrReplaceOption("Name=" + TravelPlayerName(pawn));
+	Level->TravelInfo = CreateTravelInfo(true);
 }
 
 void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const
@@ -944,43 +966,57 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 	const auto saveFolderPath = packages->GetSaveFolderPath();
 	Directory::create(saveFolderPath.string());
 
+	fs::path savedFile;
+
 	if (packages->IsDeusEx())
 	{
+		// The scripts pass 0 for a new save and expect the next free slot, never Save0000
+		if (slotNum == 0)
+		{
+			slotNum = NextFreeDeusExSaveIndex(saveFolderPath);
+			if (slotNum == 0)
+			{
+				LogSkipped("Save game skipped: every save slot is taken");
+				return;
+			}
+		}
+
 		// Saving a game on Deus Ex does the following:
 		// - Create a folder using the slotNum (e.g. 1 -> "Save0001")
 		// - Save the level package using the name [MapName].dxs
 		// - Save the associated DeusExSaveInfo class as SaveInfo.dxs within that same folder,
 		// in which saveDescription parameter will be used in DeusExSaveInfo.Description
-		auto slotNumStr = std::to_string(slotNum);
-		slotNumStr.insert(0, 4 - slotNumStr.length(), '0'); // Pad it with 0s
-		auto saveFolder = "Save" + slotNumStr;
-
-		auto saveSlotFolder = saveFolderPath / saveFolder;
+		const auto saveSlotFolder = SaveSlotPath(true, slotNum, saveFolderPath, packages->GetSaveExtension());
 		Directory::create(saveSlotFolder.string());
 
-		auto levelName = Level->package->GetPackageName().ToString() + "." + packages->GetSaveExtension();
-		auto saveInfoName = "SaveInfo." + packages->GetSaveExtension();
-		auto saveFileFullPath = (saveSlotFolder / levelName).string();
-		auto saveInfoFullPath = (saveSlotFolder / saveInfoName).string();
-		LevelPackage->Save(Level, saveFileFullPath);
+		const std::string mapName = Level->package->GetPackageName().ToString();
+		savedFile = saveSlotFolder / (mapName + "." + packages->GetSaveExtension());
+		const auto saveInfoFile = saveSlotFolder / ("SaveInfo." + packages->GetSaveExtension());
+		LevelPackage->Save(Level, savedFile.string());
 
-		dxSaveInfo->DirectoryIndex() = slotNum;
-		dxSaveInfo->Description() = saveDescription;
-		dxSaveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
-		dxSaveInfo->MapName() = Level->package->GetPackageName().ToString();
-		dxSaveInfo->UpdateTimeStamp();
-		deusExPackage->Save(dxSaveInfo, saveInfoFullPath);
+		// The save info is made in the level's package, the one the writer is saving: it refuses an object
+		// of another package, and it exports the class of an object of the package it saves, so a save info
+		// from the DeusEx package would write the whole DeusExSaveInfo class into the file
+		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage->NewObject("DeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
+		saveInfo->DirectoryIndex() = slotNum;
+		saveInfo->Description() = saveDescription;
+		saveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
+		saveInfo->MapName() = mapName;
+		saveInfo->UpdateTimeStamp();
+		LevelPackage->Save(saveInfo, saveInfoFile.string());
 	}
 	else
 	{
-		const std::string saveFileName = "Save" + std::to_string(slotNum) + "." + packages->GetSaveExtension();
-		const std::string saveFileFullPath = (saveFolderPath / saveFileName).string();
-		LevelPackage->Save(Level, saveFileFullPath);
+		savedFile = SaveSlotPath(false, slotNum, saveFolderPath, packages->GetSaveExtension());
+		LevelPackage->Save(Level, savedFile.string());
 
 		// The save package is later reloaded by its slot filename ("SaveN"), not by the original
 		// map name, so record the real map name here for LoadFromSaveFile() to recover.
 		packages->SetIniValue("user", "SaveGame", "MapName" + std::to_string(slotNum), Level->package->GetPackageName().ToString());
 	}
+
+	// The data folder is one game's subdirectory of the user directory, so this names the game too
+	LogMessage("Saved game to " + savedFile.lexically_relative(packages->GetDataFolderPath().parent_path()).generic_string());
 }
 
 std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems)
@@ -990,12 +1026,14 @@ std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems)
 	{
 		UPlayerPawn* pawn = UObject::TryCast<UPlayerPawn>(actor);
 		if (pawn && pawn->Player())
-		{
-			std::string playerName = engine->LaunchInfo.ue1Version > 219 ? pawn->PlayerReplicationInfo()->PlayerName() : std::string("Player"); // To do: how to get the travel player name?
-			travelInfo[playerName] = ActorTravelInfo::Create(pawn, transferItems);
-		}
+			travelInfo[TravelPlayerName(pawn)] = ActorTravelInfo::Create(pawn, transferItems);
 	}
 	return travelInfo;
+}
+
+std::string Engine::TravelPlayerName(UPlayerPawn* pawn) const
+{
+	return LaunchInfo.ue1Version > 219 ? pawn->PlayerReplicationInfo()->PlayerName() : std::string("Player"); // To do: how to get the travel player name?
 }
 
 void Engine::LoginPlayer()
@@ -1477,26 +1515,19 @@ std::string Engine::ConsoleCommand(UObject* context, const std::string& commandl
 	}
 	else if (command == "savegame" && (args.size() == 2 || args.size() == 3))
 	{
-
-		int32_t slotNum;
-		// slotNum not being parsable shouldn't cause a crash
-		try
+		// The main loop saves once the frame is drawn
+		const std::optional<int> slotNum = ParseSaveSlot(args[1]);
+		if (!slotNum)
 		{
-			slotNum = Convert::to_int32(args[1]);
-		}
-		catch (...)
-		{
+			LogSkipped("Save game skipped: slot '" + args[1] + "' is not a number");
 			return {};
 		}
 
-		SaveGameInfo.SaveGameSlot = slotNum;
+		SaveGameInfo.SaveGameSlot = *slotNum;
 
 		if (args.size() == 3)
 			SaveGameInfo.SaveGameDescription = args[2];
 
-		// SaveGameToSlot(slotNum, "");
-
-		//LogMessage("SaveGame command not fully implemented yet!");
 		return {};
 	}
 	else if (command == "get" && args.size() == 3)

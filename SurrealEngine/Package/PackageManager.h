@@ -6,8 +6,23 @@
 #include "GameFolder.h"
 #include <list>
 #include <filesystem>
+#include <optional>
 
 namespace fs = std::filesystem;
+
+// The folder a Deus Ex save slot lives in: "Save" and the slot padded with zeros to four digits.
+std::string DeusExSaveFolderName(int slot);
+
+// Where a save slot lives under the Save folder: Deus Ex keeps one folder per slot, the other games
+// one "Save<slot>.<extension>" file.
+fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension);
+
+// The lowest slot from 1 whose folder does not exist yet, or 0 when all 9999 are taken.
+int NextFreeDeusExSaveIndex(const fs::path& saveFolder);
+
+// The level package of a Deus Ex save folder: its newest file with the save extension other than
+// SaveInfo. Nothing when the folder holds none.
+std::optional<fs::path> NewestDeusExSaveLevel(const fs::path& slotFolder, const std::string& saveExtension);
 
 class PackageStream;
 class UObject;
@@ -63,8 +78,7 @@ public:
 
 	void CloseStreams();
 
-	Package* LoadSaveFile(const std::string& path);
-	Package* LoadSaveSlot(const uint32_t slotNum);
+	Package* LoadSaveSlot(int slotNum);
 
 	std::shared_ptr<PackageStream> GetStream(Package* package);
 

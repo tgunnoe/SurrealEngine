@@ -98,7 +98,8 @@ and reload without touching a real profile:
 SurrealEngine --autostart --user-dir=/tmp/run1 '--exec=10:savegame 1' <game folder>
 ```
 
-The save then goes to `/tmp/run1/<key>/Save/`.
+The save then goes to `/tmp/run1/<key>/Save/`. A later run with the same `--user-dir`
+loads it again; the harness README says how.
 
 ## The guard
 

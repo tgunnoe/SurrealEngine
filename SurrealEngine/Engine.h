@@ -174,7 +174,8 @@ public:
 	UnrealURL GetDefaultURL(const std::string& map);
 	void LoadEntryMap();
 	void LoadMap(const UnrealURL& url, const std::map<std::string, std::string>& travelInfo = {});
-	void LoadFromSaveFile(const UnrealURL& url);
+	// Returns false, with the current level left running, when the request names no slot or a slot with no save
+	bool LoadFromSaveFile(const UnrealURL& url);
 	void SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const;
 	void UnloadMap();
 	void LoginPlayer();
@@ -239,7 +240,6 @@ public:
 	UViewport* viewport = nullptr;
 	UCanvas* canvas = nullptr;
 	UGC* dxgc = nullptr;
-	UDXSaveInfo* dxSaveInfo = nullptr;
 	UConversationMissionList* dxConMissionList = nullptr;
 	UConsole* console = nullptr;
 	URootWindow* dxRootWindow = nullptr;
@@ -349,6 +349,7 @@ public:
 
 private:
 	std::map<std::string, std::string> CreateTravelInfo(bool transferItems);
+	std::string TravelPlayerName(UPlayerPawn* pawn) const;
 
 	void LogGamePackageSHA1Sums() const;
 	void GetLevelInfoObject();

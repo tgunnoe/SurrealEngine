@@ -22,22 +22,12 @@ void UDXGameDirectory::GetGameDirectory()
 
 int UDXGameDirectory::GetNewSaveFileIndex()
 {
-	const auto saveFolder = engine->packages->GetSaveFolderPath();
-
-	// Save folders being formatted like Save0001 implies that the number can go up to 9999
-	for (int i = 1; i < 10000; i++)
-	{
-		auto folderPath = saveFolder / GetSaveIndexFolderName(i);
-		if (!fs::exists(folderPath) || (fs::exists(folderPath) && !fs::is_directory(folderPath)))
-			return i;
-	}
-
-	return 0;
+	return NextFreeDeusExSaveIndex(engine->packages->GetSaveFolderPath());
 }
 
 std::string UDXGameDirectory::GenerateSaveFilename(int saveIndex)
 {
-	return GetSaveIndexFolderName(saveIndex);
+	return DeusExSaveFolderName(saveIndex);
 }
 
 std::string UDXGameDirectory::GenerateNewSaveFileName(std::optional<int> newIndex)
@@ -81,7 +71,7 @@ UDXSaveInfo* UDXGameDirectory::GetSaveInfo(int fileIndex)
 		// We're not in the Save folder
 		return nullptr;
 
-	auto pkg = engine->packages->GetSaveInfoPackage(GetSaveIndexFolderName(fileIndex));
+	auto pkg = engine->packages->GetSaveInfoPackage(DeusExSaveFolderName(fileIndex));
 
 	if (!pkg)
 		return nullptr;
@@ -105,7 +95,7 @@ UDXSaveInfo* UDXGameDirectory::GetTempSaveInfo()
 
 void UDXGameDirectory::DeleteSaveInfo(UDXSaveInfo& saveInfo)
 {
-	const auto saveFolderName = GetSaveIndexFolderName(saveInfo.DirectoryIndex());
+	const auto saveFolderName = DeusExSaveFolderName(saveInfo.DirectoryIndex());
 
 #if 0
 	for (auto it = LoadedSaveInfoPointers().cbegin(); it != LoadedSaveInfoPointers().cend(); it++)
@@ -174,17 +164,10 @@ int UDXGameDirectory::GetSaveDirectorySize(int saveIndex)
 
 	int size = 0;
 
-	for (auto& p : fs::directory_iterator(currentDirectory / GetSaveIndexFolderName(saveIndex)))
+	for (auto& p : fs::directory_iterator(currentDirectory / DeusExSaveFolderName(saveIndex)))
 		size += (int)p.file_size();
 
 	return size;
-}
-
-std::string UDXGameDirectory::GetSaveIndexFolderName(int saveIndex)
-{
-	std::string folderName = std::to_string(saveIndex);
-	folderName.insert(0, 4 - folderName.length(), '0'); // Pad with 0s
-	return "Save" + folderName;
 }
 
 void UDXGameDirectory::PopulateDirectoryList()

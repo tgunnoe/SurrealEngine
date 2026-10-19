@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "Package/PackageManager.h"
 #include "Utils/StrTools.h"
+#include <charconv>
 
 UnrealURL::UnrealURL(const UnrealURL& baseURL, const UnrealURL& nextURL)
 {
@@ -205,3 +206,24 @@ void UnrealURL::Clear()
 	Options.clear();
 }
 
+std::optional<int> ParseSaveSlot(const std::string& text)
+{
+	// from_chars takes an optional '-' and digits, no '+' and no whitespace, and stops at the first
+	// other character, so the text is a whole number exactly when it consumes all of it
+	const char* end = text.data() + text.size();
+	int slot = 0;
+	const auto [stop, error] = std::from_chars(text.data(), end, slot);
+	if (error != std::errc() || stop != end)
+		return std::nullopt;
+	return slot;
+}
+
+std::optional<std::string> LoadOptionText(const UnrealURL& url)
+{
+	for (const char* name : { "load", "loadgame" })
+	{
+		if (url.HasOption(name))
+			return url.GetOption(name);
+	}
+	return std::nullopt;
+}
