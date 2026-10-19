@@ -487,11 +487,13 @@ def make_steps(with_checks=None):
     """Four steps whose checks are given as {(step, where): (map, classes, calls)}."""
     spec = with_checks or {}
     steps = []
-    for name, wheres in zip(NAMES, WHERES):
+    for index, (name, wheres) in enumerate(zip(NAMES, WHERES)):
         checks = [check(w, *spec[(name, w)]) for w in wheres if (name, w) in spec]
         steps.append({"step": name, "exit_code": 0, "verdict": "pass", "maps_loaded": [],
-                      "loaded_slot": None, "saved_to": None, "checks": checks,
-                      "offered": [], "travel_skipped": False})
+                      "loaded_slot": index if index else None,
+                      "saved_to": f"Game/Save/Save{index + 1}" if index < 3 else None,
+                      "checks": checks, "offered": [], "travel_skipped": False,
+                      "exec_failed": [], "exec_skipped": []})
     return steps
 
 
@@ -637,6 +639,21 @@ class RenderTests(unittest.TestCase):
         self.assertIn("goal", sentence)
         self.assertIn("load2-travel/after-load to load2-travel/after-travel", sentence)
 
+    def test_a_load_that_arrives_on_another_map_withholds_the_claim_and_names_the_hop(self):
+        spec = dict(UG_CHECKS)
+        spec[("load2-travel", "after-load")] = ("Dig", ["Stinger", "StingerAmmo", "DispersionPistol"], [])
+        sentence = saveload.verdict_sentence(full_report("unreal", spec))
+        self.assertNotIn("survive three maps", sentence)
+        self.assertIn("load1-travel/after-travel to load2-travel/after-load", sentence)
+        self.assertIn("Nyleve", sentence)
+        self.assertIn("Dig", sentence)
+
+    def test_the_same_map_in_another_case_is_not_a_mismatch(self):
+        spec = dict(UG_CHECKS)
+        spec[("load2-travel", "after-load")] = ("NyLeve", ["Stinger", "StingerAmmo", "DispersionPistol"], [])
+        sentence = saveload.verdict_sentence(full_report("unreal", spec))
+        self.assertIn("state and inventory survive three maps", sentence)
+
     def test_ut_loads_restore_and_travels_discard_by_game_rule(self):
         report = full_report("ut", UT_CHECKS)
         sentence = saveload.verdict_sentence(report)
@@ -684,6 +701,96 @@ class RenderTests(unittest.TestCase):
         self.assertIn("Goal", header)
         self.assertIn("Note", header)
         self.assertIn("found", dx)
+
+
+class StepProblemTests(unittest.TestCase):
+    def steps(self):
+        return make_steps(UG_CHECKS)
+
+    def test_a_clean_step_has_no_problem_at_any_position(self):
+        steps = self.steps()
+        self.assertEqual([saveload.step_problem(s, i) for i, s in enumerate(steps)], [None] * 4)
+
+    def test_a_verdict_other_than_pass_is_the_problem(self):
+        steps = self.steps()
+        steps[1]["verdict"] = "crash"
+        problem = saveload.step_problem(steps[1], 1)
+        self.assertIn("load1-travel", problem)
+        self.assertIn("crash", problem)
+
+    def test_a_failed_or_skipped_command_is_a_problem(self):
+        steps = self.steps()
+        steps[0]["exec_failed"] = ["7 call Nope 1"]
+        self.assertIn("failed", saveload.step_problem(steps[0], 0))
+        steps[2]["exec_skipped"] = ["40 savegame 3"]
+        self.assertIn("skipped", saveload.step_problem(steps[2], 2))
+
+    def test_a_load_that_was_not_made_is_a_problem_from_the_second_step_on(self):
+        steps = self.steps()
+        steps[2]["loaded_slot"] = None
+        self.assertIn("load", saveload.step_problem(steps[2], 2))
+        self.assertIsNone(saveload.step_problem(steps[0], 0))
+
+    def test_a_load_of_another_slot_is_a_problem(self):
+        steps = self.steps()
+        steps[1]["loaded_slot"] = 3
+        problem = saveload.step_problem(steps[1], 1)
+        self.assertIn("slot 1", problem)
+        self.assertIn("slot 3", problem)
+
+    def test_a_missing_check_window_is_named(self):
+        steps = self.steps()
+        steps[1]["checks"] = steps[1]["checks"][:1]
+        self.assertIn("after-travel", saveload.step_problem(steps[1], 1))
+
+    def test_a_save_that_was_not_made_is_a_problem_except_on_the_last_step(self):
+        steps = self.steps()
+        steps[0]["saved_to"] = None
+        self.assertIn("save", saveload.step_problem(steps[0], 0))
+        self.assertIsNone(saveload.step_problem(steps[3], 3))
+
+
+class AssembleChecksTests(unittest.TestCase):
+    def chain(self, name):
+        self.assertIn(name, saveload.CHAINS)
+        return saveload.CHAINS[name]
+
+    def test_the_first_step_keeps_the_state_window_and_names_the_start_map(self):
+        parsed = saveload.parse_engine_log(UG_SAVE)
+        got = saveload.assemble_checks(parsed, 0, self.chain("unreal"))
+        self.assertEqual([c["where"] for c in got["checks"]], ["after-state"])
+        self.assertEqual(got["checks"][0]["map"], "Vortex2")
+        self.assertEqual([i["class"] for i in got["checks"][0]["items"]], ["StingerAmmo", "Stinger"])
+        self.assertEqual(got["checks"][0]["weapon"], "UnrealShare.Stinger")
+
+    def test_a_travelling_step_keeps_the_load_and_travel_windows_only(self):
+        parsed = saveload.parse_engine_log(UG_LOAD_TRAVEL)
+        got = saveload.assemble_checks(parsed, 1, self.chain("unreal"))
+        self.assertEqual([(c["where"], c["map"]) for c in got["checks"]],
+                         [("after-load", "Vortex2"), ("after-travel", "Nyleve")])
+
+    def test_a_missing_load_line_leaves_no_after_load_check(self):
+        parsed = saveload.parse_engine_log(UG_SAVE)
+        got = saveload.assemble_checks(parsed, 1, self.chain("unreal"))
+        self.assertEqual(got["checks"], [])
+        self.assertEqual(got["offered"], [])
+
+    def test_calls_are_cut_to_the_chains_check_functions(self):
+        parsed = saveload.parse_engine_log(DX_LOAD)
+        got = saveload.assemble_checks(parsed, 1, self.chain("deusex"))
+        self.assertEqual([c["where"] for c in got["checks"]], ["after-load", "after-travel"])
+        self.assertEqual(got["checks"][0]["calls"],
+                         [{"function": "FindGoal", "value": "<unnamed DeusExGoal>"},
+                          {"function": "GetNote", "value": "<unnamed DeusExNote>"}])
+        self.assertEqual(got["checks"][1]["calls"][0], {"function": "FindGoal", "value": "None"})
+
+    def test_offered_names_and_the_skip_flag_come_from_the_travel_window(self):
+        ut = saveload.assemble_checks(saveload.parse_engine_log(UT_TRAVEL), 1, self.chain("ut"))
+        self.assertEqual(ut["offered"], ["ImpactHammer0", "enforcer0", "Miniammo0"])
+        self.assertFalse(ut["travel_skipped"])
+        dx = saveload.assemble_checks(saveload.parse_engine_log(DX_LOAD), 1, self.chain("deusex"))
+        self.assertTrue(dx["travel_skipped"])
+        self.assertEqual(dx["offered"], [])
 
 
 if __name__ == "__main__":

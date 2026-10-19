@@ -53,3 +53,11 @@ def verdict_sentence(report):
 
 def render_markdown(report):
     return ""
+
+
+def step_problem(step, index):
+    return "stub"
+
+
+def assemble_checks(parsed, index, chain):
+    return {"checks": [], "offered": [], "travel_skipped": True}
