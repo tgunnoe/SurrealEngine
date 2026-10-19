@@ -956,11 +956,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 		// - Save the level package using the name [MapName].dxs
 		// - Save the associated DeusExSaveInfo class as SaveInfo.dxs within that same folder,
 		// in which saveDescription parameter will be used in DeusExSaveInfo.Description
-		auto slotNumStr = std::to_string(slotNum);
-		slotNumStr.insert(0, 4 - slotNumStr.length(), '0'); // Pad it with 0s
-		auto saveFolder = "Save" + slotNumStr;
-
-		auto saveSlotFolder = saveFolderPath / saveFolder;
+		const auto saveSlotFolder = SaveSlotPath(true, slotNum, saveFolderPath, packages->GetSaveExtension());
 		Directory::create(saveSlotFolder.string());
 
 		auto levelName = Level->package->GetPackageName().ToString() + "." + packages->GetSaveExtension();
@@ -978,8 +974,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 	}
 	else
 	{
-		const std::string saveFileName = "Save" + std::to_string(slotNum) + "." + packages->GetSaveExtension();
-		const std::string saveFileFullPath = (saveFolderPath / saveFileName).string();
+		const std::string saveFileFullPath = SaveSlotPath(false, slotNum, saveFolderPath, packages->GetSaveExtension()).string();
 		LevelPackage->Save(Level, saveFileFullPath);
 
 		// The save package is later reloaded by its slot filename ("SaveN"), not by the original
