@@ -3,6 +3,11 @@
 #include "Utils/UTF16.h"
 #include "Utils/Exception.h"
 
+std::string narrow_utf16(const std::wstring& str)
+{
+	return "stub";
+}
+
 #ifdef WIN32
 
 std::string from_utf16(const std::wstring& str)
