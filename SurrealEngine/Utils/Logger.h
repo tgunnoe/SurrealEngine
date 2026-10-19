@@ -57,6 +57,8 @@ public:
 private:
 	static std::string Flatten(const std::string& text);
 	void WriteLine(const std::string& line);
+	// WriteLine without the finished check, for lines that must land even after SUMMARY or FATAL.
+	void WriteUnconditional(const std::string& line);
 
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 	int fd = -1;

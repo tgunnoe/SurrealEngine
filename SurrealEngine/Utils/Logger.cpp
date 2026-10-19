@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <csignal>
 #include <cerrno>
 #include <string_view>
@@ -193,7 +194,14 @@ std::string SmokeLog::Flatten(const std::string& text)
 
 void SmokeLog::WriteLine(const std::string& line)
 {
-	if (fd < 0 || finished)
+	if (finished)
+		return;
+	WriteUnconditional(line);
+}
+
+void SmokeLog::WriteUnconditional(const std::string& line)
+{
+	if (fd < 0)
 		return;
 	std::string data = line + "\n";
 	const char* p = data.data();
@@ -320,13 +328,27 @@ void SmokeLog::Summary()
 
 std::string SmokeLog::TerminateMessage(std::exception_ptr current)
 {
-	return {};
+	if (!current)
+		return "terminate: no exception";
+	try
+	{
+		std::rethrow_exception(current);
+	}
+	catch (const std::exception& e)
+	{
+		return std::string("terminate: ") + e.what();
+	}
+	catch (...)
+	{
+		return "terminate: unknown exception";
+	}
 }
 
 #ifndef WIN32
 namespace
 {
 	int fatalFd = -1;
+	bool terminateEntered = false;
 
 	// Only async-signal-safe calls: the process state is untrustworthy here.
 	void SmokeFatalSignal(int sig)
@@ -372,5 +394,20 @@ void SmokeLog::InstallSignalHandlers()
 		if (sigaction(sig, &sa, nullptr) != 0)
 			Event("WARNING", "sigaction failed for signal " + std::to_string(sig) + ": " + std::strerror(errno));
 	}
+
+	// The runtime reports an exception that reaches terminate on stderr, which unattended runs
+	// discard. The abort below still raises SIGABRT, so the signal line follows this one and the
+	// process still dies from the signal. Unlike Fatal this writes after SUMMARY too, as a
+	// terminate during teardown would.
+	std::set_terminate([]
+	{
+		// what() can allocate and throw, which re-enters terminate; the second entry only aborts.
+		if (!terminateEntered)
+		{
+			terminateEntered = true;
+			SmokeLog::Get()->WriteUnconditional("FATAL " + SmokeLog::Flatten(SmokeLog::TerminateMessage(std::current_exception())));
+		}
+		std::abort();
+	});
 #endif
 }
