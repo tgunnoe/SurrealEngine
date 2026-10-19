@@ -69,3 +69,9 @@ class Scenario:
     # A row whose sweep recorded match_started false is non-clean, reason
     # "match did not start". A row with no recorded flag is unknown, as with warnings.
     require_match_start: bool = False
+    # With warning_register set (a path relative to the scenario directory, where
+    # the sidecars are read from), the check fails for every site errors.json
+    # records that has no row under the register's `### <register_heading>`, so a
+    # site is read and entered before a sweep passes. Empty is off.
+    warning_register: str = ""
+    register_heading: str = ""

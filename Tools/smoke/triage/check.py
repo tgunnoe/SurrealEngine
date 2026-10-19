@@ -17,6 +17,11 @@ from .build import (is_loaded, match_unstarted, matches_started, show_count,
 FIRST_N = 5
 REPRO_VALUES = "yes|no|flaky|not-run"
 
+# A verdict row of the warning register: the site, the lines and maps cells
+# (counts at the time the verdict was entered, never compared), the verdict.
+REGISTER_ROW = re.compile(r"^\| (.+?) \| [^|]* \| [^|]* \| (?:faithful|engine-side|undecided) \|")
+SITE_PREFIX = "Accessed None in "
+
 
 def _load(d, name):
     with open(os.path.join(d, name)) as f:
@@ -46,6 +51,41 @@ def repro_regex(scn, name):
     return (r"^%srepro: `%s --autostart --exit-after=%d '?--smoke-log=\S+ '?--url=%s%s'? %s"
             % (re.escape(scn.bullet), re.escape(scn.exe), scn.exit_after_seconds, re.escape(name),
                re.escape("".join(scn.url_options)), exec_rx))
+
+
+def register_sites(lines, heading):
+    """The site cell of every verdict row under the register's `### <heading>`
+    (up to the next line that starts with `##`), or None when it has no such
+    heading."""
+    sites = set()
+    inside = found = False
+    for line in lines:
+        if line.startswith("##"):
+            inside = line == "### " + heading
+            found = found or inside
+        elif inside:
+            m = REGISTER_ROW.match(line)
+            if m:
+                sites.add(m.group(1))
+    return sites if found else None
+
+
+def register_problems(scn, datadir, errs):
+    """One problem per distinct site that errors.json records and the warning
+    register has no row for under the scenario's heading."""
+    if not scn.register_heading:
+        return ["warning register: register_heading is empty"]
+    path = os.path.join(datadir, scn.warning_register)
+    try:
+        text = _text(datadir, scn.warning_register)
+    except OSError as e:
+        return ["warning register: cannot read %s: %s" % (path, e.strerror)]
+    rows = register_sites(text.splitlines(), scn.register_heading)
+    if rows is None:
+        return ['warning register: no "### %s" heading in %s' % (scn.register_heading, path)]
+    logged = {key for e in errs.values() for key in e.get("warning_sites", {})}
+    return ["%s: no row in the warning register under %s" % (key, scn.register_heading)
+            for key in sorted(logged) if key.removeprefix(SITE_PREFIX) not in rows]
 
 
 def check(scn, datadir, docdir):
@@ -143,6 +183,9 @@ def check(scn, datadir, docdir):
             warnings=show_count(warnings_total(sweep)), matches_started=matches_started(sweep))
         if line not in _text(docdir, "SUMMARY.md"):
             bad.append("SUMMARY.md: counts line differs from: " + line)
+
+    if scn.warning_register:
+        bad.extend(register_problems(scn, datadir, errs))
 
     return len(sections), len(nonclean_set), bad
 
