@@ -74,7 +74,7 @@ def write_fixture(root):
     stubs = {n: [stub()] for n in names}
     stubs["Cove"] = []
     stubs["Cased"] = []
-    errors = {n: {"errors": [], "fatal_after_summary": False} for n in stubs}
+    errors = {n: {"errors": [], "fatal_after_summary": False, "warning_sites": {}} for n in stubs}
     errors["M1"]["errors"] = [{"kind": "SCRIPT_ERROR", "text": "boom here", "map_section": "M1"}]
     repro_rec = {"reproduced": "yes", "exit_code": 0, "first_line_run1": "a", "first_line_run2": "a"}
     repro_json = {n: repro_rec for n in names[:5]}
@@ -692,10 +692,20 @@ class TestRendering(Fixture):
 
     def test_a_crash_row_yields_one_crash_signature(self):
         long_text = "out of memory at 0xDEADBEEF " + "y" * 100
+        long_terminate = "terminate: bad alloc at 0xDEADBEEF " + "z" * 100
         cases = [
             ("signal exit code", -11, [boom(), fatal("signal 11")], "crash: FATAL signal 11"),
-            ("signal beats an earlier fatal line", -6, [fatal("terminate: bad"), fatal("signal 6")],
-             "crash: FATAL signal 6"),
+            ("a terminate line joins the signal", -6, [fatal("terminate: bad"), fatal("signal 6")],
+             "crash: FATAL signal 6 (terminate: bad)"),
+            ("a terminate line alone", -6, [fatal("terminate: bad")],
+             "crash: FATAL signal 6 (terminate: bad)"),
+            ("the first terminate line is used", -6,
+             [fatal("terminate: first"), fatal("terminate: second"), fatal("signal 6")],
+             "crash: FATAL signal 6 (terminate: first)"),
+            ("terminate text masked, then cut", -6, [fatal(long_terminate), fatal("signal 6")],
+             "crash: FATAL signal 6 (terminate: " + ("bad alloc at 0x? " + "z" * 100)[:80] + ")"),
+            ("terminate text without a signal exit keeps the other-fatal form", 1,
+             [fatal("terminate: bad")], "crash: FATAL terminate: bad"),
             ("signal with no recorded fatal line", -6, [boom()], "crash: FATAL signal 6"),
             ("other fatal line, masked and cut", 1, [fatal(long_text)],
              "crash: FATAL " + ("out of memory at 0x? " + "y" * 100)[:80]),
@@ -733,12 +743,48 @@ class TestRendering(Fixture):
         self.assertFalse([c for c in candidates if "verdict crash" in c])
 
 
+    def test_crash_rows_with_different_terminate_text_are_separate_candidates(self):
+        def sig(text):
+            return "crash: FATAL signal 6 (terminate: %s)" % text
+
+        def apply(o):
+            for i, text in enumerate(("bad", "worse")):
+                o["maps"][i].update(verdict="crash", exit_code=-6)
+        self.edit_data("sweep.json", apply)
+        self.edit_data("errors.json", lambda o: [
+            o[n].update(errors=[fatal("terminate: " + t), fatal("signal 6")])
+            for n, t in (("M1", "bad"), ("M2", "worse"))])
+        self.generate(self.only(error_owner={sig("bad"): ("the bad owner", "none applies")}))
+        self.assertIn("- owner: the bad owner", self.section("M1"))
+        self.assertIn("- owner: unattributed (%s)" % sig("worse"), self.section("M2"))
+        summary = self.read("SUMMARY.md")
+        self.assertEqual({r[0]: r[1:] for r in table_rows(summary, "Failure signatures")
+                          if r[0].startswith("crash")},
+                         {sig("bad"): ["1", "M1"], sig("worse"): ["1", "M2"]})
+        candidates = [r[1] for r in table_rows(summary, "Ranked fix candidates")]
+        self.assertIn("fix signature: " + sig("bad"), candidates)
+        self.assertIn("fix signature: " + sig("worse"), candidates)
+
+
 class TestWarningSites(Fixture):
     def set_sites(self, **sites):
         def apply(o):
             for name, counts in sites.items():
                 o[name]["warning_sites"] = counts
         self.edit_data("errors.json", apply)
+
+    def drop_sites(self, *names):
+        def apply(o):
+            for name in names:
+                del o[name]["warning_sites"]
+        self.edit_data("errors.json", apply)
+
+    def set_script_warnings(self, **counts):
+        def apply(o):
+            for m in o["maps"]:
+                if m["map"] in counts:
+                    m["script_warnings"] = counts[m["map"]]
+        self.edit_data("sweep.json", apply)
 
     def test_table_lists_every_site_by_lines_then_name(self):
         # Cove is a clean row: the table covers every row, not only the sections.
@@ -761,6 +807,28 @@ class TestWarningSites(Fixture):
     def test_rows_without_sites_render_a_none_row(self):
         self.generate(self.only())
         self.assertIn("| Site | Lines | Maps |\n| :--- | ---: | ---: |\n| none | | |\n", self.read("SUMMARY.md"))
+
+    def test_a_row_without_the_field_is_unknown_and_not_empty(self):
+        self.set_sites(M1={"A site": 2})
+        self.drop_sites("M2")
+        self.generate(self.only())
+        self.assertEqual(table_rows(self.read("SUMMARY.md"), "Warning sites"),
+                         [["A site", "2", "1"],
+                          ["unknown (1 rows without a site breakdown)", "not recorded", "1"]])
+
+    def test_the_unknown_row_sums_the_counts_of_the_rows_it_stands_for(self):
+        self.drop_sites("M2", "M3")
+        self.set_script_warnings(M2=3, M3=4, M1=9)
+        self.generate(self.only())
+        self.assertEqual(table_rows(self.read("SUMMARY.md"), "Warning sites"),
+                         [["unknown (2 rows without a site breakdown)", "7", "2"]])
+
+    def test_the_unknown_row_lines_are_not_recorded_when_one_row_has_no_count(self):
+        self.drop_sites("M2", "M3")
+        self.set_script_warnings(M2=3)
+        self.generate(self.only())
+        self.assertEqual(table_rows(self.read("SUMMARY.md"), "Warning sites"),
+                         [["unknown (2 rows without a site breakdown)", "not recorded", "2"]])
 
     def test_sections_keep_the_warnings_count(self):
         self.set_sites(M1={"A site": 4})
