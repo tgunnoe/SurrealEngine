@@ -115,3 +115,8 @@ FontGlyph UFont::FindGlyph(char c) const
 	}
 	return {};
 }
+
+FontGlyph FindFontGlyph(const Array<FontPage>& pages, unsigned char index)
+{
+	return {};
+}
