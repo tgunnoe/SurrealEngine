@@ -125,8 +125,8 @@ lines and maps are `-` because no current sweep table lists them.
 | :--- | ---: | ---: | :--- | :--- |
 | LaserEmitter.CalcTrace | - | - | engine-side | The stock script dereferences the actor a `TraceTexture` iterator yields, and the engine yielded a null actor for world hits where the script's own `target == Level` branch shows the original yields the level. Fixed by upstream commit 2c1a4f50; the re-run of the sweep (28f08a4c) no longer lists it. |
 | ElectricityEmitter.CalcTrace | - | - | engine-side | The same iterator and the same dereference in the stock script, fixed by the same commit; the re-run (28f08a4c) no longer lists it. |
-| PlayerStart.PlayTeleportEffect | - | - | engine-side | The engine bound ExtremeDGen's game to a level info the map saved as deleted, so the start spot's `Level.Game` was None. Fixed by commit 14090e6d, which takes the level's first actor as the level info; the re-run of the sweep no longer lists it. |
-| SkaarjBerserker.TakeDamage | - | - | undecided | Inherited from the same seven unguarded `ScriptedPawn` state bodies as `Slith.TakeDamage`, but it did not reproduce in two traced runs on ExtremeDark, so neither the state nor the damage source is known. The re-run of the sweep did not log it either, and no engine change is known to account for that; the runs are not deterministic. |
+| PlayerStart.PlayTeleportEffect | - | - | engine-side | The engine bound ExtremeDGen's game to a level info the map saved as deleted, so the start spot's `Level.Game` was None. Fixed by commit 14090e6d, which takes the level's first actor as the level info; the re-run of the sweep (f94c1ba6) no longer lists it. |
+| SkaarjBerserker.TakeDamage | - | - | undecided | Inherited from the same seven unguarded `ScriptedPawn` state bodies as `Slith.TakeDamage`, but it did not reproduce in two traced runs on ExtremeDark, so neither the state nor the damage source is known. The re-run of the sweep (f94c1ba6) did not log it either, and no engine change is known to account for that; the runs are not deterministic. |
 
 ## Sites
 
@@ -172,13 +172,12 @@ actor owns, so the flies of a destroyed swarm have no owner. The `wander` label
 tests `Owner == None` and calls `Destroy()` but does not leave the state code,
 and the next two statements dereference `Owner`.
 
-In the sweep before this one (94 lines on nine maps), six of the nine maps
+In the sweep committed as 8fcddbd6 (94 lines on nine maps), six of the nine maps
 (Bluff, Ceremony, Dig, ExtremeDark, SkyTown and TheSunspire) place no swarm, so
 their flies belong to carcass swarms; Chizra, DasaCellars and Harobed (26 of its
-94 lines, 28 of the current 166) place swarms of their own, and which swarm
-orphaned the flies there was not traced. The five maps the re-run added to the
-site (Crashsite2, DuskFalls, ExtremeLab, Nevec, SkyCaves) were not read for
-swarms.
+94 lines) place swarms of their own, and which swarm orphaned the flies there
+was not traced. The five maps the sweep of f94c1ba6 added to the site
+(Crashsite2, DuskFalls, ExtremeLab, Nevec, SkyCaves) were not read for swarms.
 
 Evidence: a run on Bluff, with `--trace-script` on `DeadBodySwarm.Destroyed`,
 `DeadBodySwarm.Destroy`, `HorseFly.Destroy`, `HorseFly.SetLocation` and
@@ -270,8 +269,8 @@ Verdict `undecided`. Lines per map, `unreal`: Abyss 3, Glacena 3.
 `UPakShieldEffect` is a class of `UPak.u` (Return to Na Pali), and no dump of
 that package exists on this host, so its script is unread. The sweep keeps no
 plaintext engine log, so the site has no callstack either; what there is, is the
-sweep's smoke log of each map (not committed). Both maps log the line three
-times, after `STATE 0.0` and before the first `FPS` line:
+smoke log of each map in the sweep of f94c1ba6 (not committed). Both maps log
+the line three times, after `STATE 0.0` and before the first `FPS` line:
 
 ```
 SCRIPT_WARNING Accessed None in UPakShieldEffect.Tick
@@ -415,8 +414,8 @@ Verdict `undecided`. Lines per map, `unreal`: Inter2 1.
 `UPakTransitionInfo` is a class of `UPak.u` (Return to Na Pali), and no dump of
 that package exists on this host, so its script is unread. The sweep keeps no
 plaintext engine log, so the site has no callstack either; what there is, is the
-sweep's smoke log of Inter2 (not committed), which holds the line once, after
-`STATE 0.0` and before the first `FPS` line:
+smoke log of Inter2 in the sweep of f94c1ba6 (not committed), which holds the
+line once, after `STATE 0.0` and before the first `FPS` line:
 
 ```
 SCRIPT_WARNING Accessed None in UPakTransitionInfo.ScoreKill
@@ -938,7 +937,7 @@ Evidence: the smoke log of ExtremeDGen from before the fix has
 and `LOGIN`, and the log after it has none, with the engine log reading
 `Level info: LevelInfo5 (the level's first actor) in ExtremeDGen`. The fix is
 commit 14090e6d ("fix(level): take the level's first actor as info"). The re-run
-of the sweep logged no warning on ExtremeDGen.
+of the sweep (f94c1ba6) logged no warning on ExtremeDGen.
 
 ### SkaarjBerserker.TakeDamage
 
