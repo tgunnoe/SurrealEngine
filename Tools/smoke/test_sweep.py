@@ -210,6 +210,75 @@ class SweepRunTests(unittest.TestCase):
         self.assertEqual(row["log"], "A.log")
         self.assertIsNone(row["screenshot"])
 
+    def add_maps(self, folder, *stems):
+        path = self.game / "Maps" / folder
+        path.mkdir(parents=True, exist_ok=True)
+        for stem in stems:
+            (path / f"{stem}.unr").write_bytes(b"")
+
+    def rows(self, report):
+        return [row["map"] for row in report["maps"]]
+
+    def refusal(self, *flags):
+        """The exit text of a sweep that must stop before it starts any engine."""
+        with self.assertRaises(SystemExit) as cm:
+            self.sweep(*flags)
+        self.assertEqual(list(self.logdir.glob("*.argv")), [])
+        return str(cm.exception.code)
+
+    def test_map_subdir_maps_run_after_the_top_level_by_bare_name(self):
+        self.add_maps("UPak", "0B")
+        report, _ = self.sweep("--map-subdir", "UPak")
+        self.assertEqual(self.rows(report), ["A", "0B"])
+        args = json.loads((self.logdir / "0B.log.argv").read_text())
+        self.assertIn("--url=0B", args)
+        self.assertIn(f"--smoke-log={self.logdir / '0B.log'}", args)
+        self.assertEqual(report["map_subdirs"], ["UPak"])
+
+    def test_map_subdir_absent_lists_the_top_level_only(self):
+        self.add_maps("UPak", "0B")
+        report, _ = self.sweep()
+        self.assertEqual(self.rows(report), ["A"])
+        self.assertIsNone(report["map_subdirs"])
+
+    def test_map_subdir_folders_run_in_the_order_given(self):
+        self.add_maps("Y", "0C")
+        self.add_maps("X", "0D")
+        report, _ = self.sweep("--map-subdir", "Y", "--map-subdir", "X")
+        self.assertEqual(self.rows(report), ["A", "0C", "0D"])
+        self.assertEqual(report["map_subdirs"], ["Y", "X"])
+
+    def test_map_subdir_stem_in_two_folders_is_refused(self):
+        self.add_maps("UPak", "A")
+        text = self.refusal("--map-subdir", "UPak")
+        self.assertIn("A", text)
+        self.assertIn("more than one folder", text)
+
+    def test_map_subdir_missing_folder_is_refused(self):
+        text = self.refusal("--map-subdir", "Nope")
+        self.assertIn("Maps/Nope", text)
+
+    def test_map_subdir_maps_count_toward_the_limit_after_the_top_level(self):
+        self.add_maps("UPak", "0B")
+        report, _ = self.sweep("--map-subdir", "UPak", "--limit", "1")
+        self.assertEqual(self.rows(report), ["A"])
+        self.assertFalse((self.logdir / "0B.log.argv").exists())
+
+    def test_a_repeated_subfolder_is_listed_once_in_first_mention_order(self):
+        self.add_maps("Y", "0C")
+        self.add_maps("X", "0D")
+        report, _ = self.sweep("--map-subdir", "Y", "--map-subdir", "X", "--map-subdir", "Y")
+        self.assertEqual(self.rows(report), ["A", "0C", "0D"])
+        self.assertEqual(report["map_subdirs"], ["Y", "X"])
+
+    def test_a_subfolder_name_must_be_a_bare_folder_name(self):
+        # A folder beside Maps with a map in it: "../Outside" would list it if it were let through.
+        (self.game / "Outside").mkdir()
+        (self.game / "Outside" / "Z.unr").write_bytes(b"")
+        for name in ["", ".", "..", "UPak/x", "../Outside", "a\\b"]:
+            with self.subTest(name=name):
+                self.assertIn("takes a folder name under Maps", self.refusal("--map-subdir", name))
+
 
 if __name__ == "__main__":
     unittest.main()
