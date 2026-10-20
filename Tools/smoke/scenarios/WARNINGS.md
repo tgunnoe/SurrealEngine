@@ -112,7 +112,6 @@ section.
 | Site | Lines | Maps | Verdict | Grounds |
 | :--- | ---: | ---: | :--- | :--- |
 | TriggerLight.Trigger | 3 | 1 | faithful | The stock `CameraPoint` command that triggers every actor of an event name calls `A.Trigger(None, None)`, and `TriggerLight`'s `TriggerToggle` state does `SavedTrigger = Other` and `SavedTrigger.BeginEvent()` with no check. |
-| LAM.Explode | 2 | 1 | faithful | The stock `ThrownProjectile` `Flying` `Explode`, which `LAM` inherits, casts its owner to `DeusExPlayer` and dereferences it without a check, so a LAM whose owner is not the player reaches None. No traced run was made for this site, and what set the LAM off is not recorded. |
 | ShakeTrigger.Trigger | 1 | 1 | faithful | The same `CameraPoint` call passes a None instigator, and the stock `ShakeTrigger.Trigger` does `Instigator.ShakeView(...)` with no check. |
 
 ### No longer logged
@@ -127,6 +126,7 @@ lines and maps are `-` because no current sweep table lists them.
 | PlayerStart.PlayTeleportEffect | - | - | engine-side | The engine bound ExtremeDGen's game to a level info the map saved as deleted, so the start spot's `Level.Game` was None. Fixed by commit 14090e6d, which takes the level's first actor as the level info; the re-run of the sweep (f94c1ba6) no longer lists it. |
 | SkaarjBerserker.TakeDamage | - | - | undecided | Inherited from the same seven unguarded `ScriptedPawn` state bodies as `Slith.TakeDamage`, but it did not reproduce in two traced runs on ExtremeDark, so neither the state nor the damage source is known. The re-run of the sweep (f94c1ba6) did not log it either, and no engine change is known to account for that; the runs are not deterministic. |
 | TFemale1Bot.Roaming | - | - | undecided | The same `Bot` `Roaming` body, which has several unguarded dereferences; no traced run logged this class's statement. The re-sweep (8d225ef3) did not log it, and no engine change is known to account for that; the runs are not deterministic. |
+| LAM.Explode | - | - | faithful | The stock `ThrownProjectile` `Flying` `Explode`, which `LAM` inherits, casts its owner to `DeusExPlayer` and dereferences it without a check, so a LAM whose owner is not the player reaches None. No traced run was made for this site, and what set the LAM off is not recorded. The re-sweep (f41c13db) did not log it, and a search of the engine commits' subjects since 28f08a4c found none naming the site; the runs are not deterministic. |
 
 ## Sites
 
@@ -829,35 +829,6 @@ function Trigger(Actor Other, Pawn Instigator)
 The same camera point triggers the one `ShakeTrigger` tagged `Lightshow` with a
 None instigator, and `Instigator.ShakeView(...)` has no check: the one line.
 
-### LAM.Explode
-
-Verdict `faithful`. Lines per map, `deusex`: 02_NYC_Warehouse 2.
-
-`DeusEx.LAM` defines no `Explode`; the body is stock `DeusEx.ThrownProjectile`,
-state `Flying`, function `Explode`:
-
-```
-auto simulated state Flying
-{
-    simulated function Explode(vector HitLocation, vector HitNormal)
-...
-        player = DeusExPlayer(Owner);
-
-        dist = Abs(VSize(player.Location - Location));
-```
-
-When the LAM's owner is not a `DeusExPlayer` the cast gives None and the next
-statements dereference it: `player.Location` and then, in whichever branch is
-taken, `player.ClientFlash`, so the script would log two lines for one
-explosion; the sweep's two lines are consistent with one explosion, not shown to
-be. The map `02_NYC_Warehouse` places four LAMs (`LAM0`, `LAM1`, `LAM3` and
-`LAM5`), and none carries a saved owner. A LAM with no owner is set off by the
-player coming within its proximity radius, or by damage. No traced run was made
-for this site; which of the four exploded in the sweep, and why, is not
-recorded. The site is not in the Deus Ex summary committed as f0bce687 and first
-appears in the re-run committed as 28f08a4c, so a sweep need not set a LAM off;
-whether the original sets off the same LAM in the same situation was not read.
-
 ### LaserEmitter.CalcTrace
 
 Verdict `engine-side`, fixed. No current sweep lists it. Stock
@@ -1002,6 +973,38 @@ The re-sweep (8d225ef3) did not, but logged the same `Roaming` body under
 No engine change is known to account for that, and the runs are not
 deterministic.
 
+### LAM.Explode
+
+Verdict `faithful`. No current sweep lists it.
+
+`DeusEx.LAM` defines no `Explode`; the body is stock `DeusEx.ThrownProjectile`,
+state `Flying`, function `Explode`:
+
+```
+auto simulated state Flying
+{
+    simulated function Explode(vector HitLocation, vector HitNormal)
+...
+        player = DeusExPlayer(Owner);
+
+        dist = Abs(VSize(player.Location - Location));
+```
+
+When the LAM's owner is not a `DeusExPlayer` the cast gives None and the next
+statements dereference it: `player.Location` and then, in whichever branch is
+taken, `player.ClientFlash`, so the script would log two lines for one
+explosion; the sweep's two lines are consistent with one explosion, not shown to
+be. The map `02_NYC_Warehouse` places four LAMs (`LAM0`, `LAM1`, `LAM3` and
+`LAM5`), and none carries a saved owner. A LAM with no owner is set off by the
+player coming within its proximity radius, or by damage. No traced run was made
+for this site; which of the four exploded in the sweep, and why, is not
+recorded. The site is not in the Deus Ex summary committed as f0bce687 and first
+appears in the re-run committed as 28f08a4c, so a sweep need not set a LAM off;
+whether the original sets off the same LAM in the same situation was not read.
+The re-sweep (f41c13db) did not log it, and a search of the engine commits'
+subjects since 28f08a4c found none naming the site; the runs are not
+deterministic.
+
 ## The runs
 
 The quoted log lines come from single runs of the engine built from commit
@@ -1076,3 +1079,8 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
   `Engine.u` 1742d16f49492a02391fa6a9ca25887f0cc4f30ec9964925226217d8858737da,
   `02_NYC_Warehouse.dx` 2333b0d8a137d0da1ae22ecc24942cd881f9bba7d1e95546e4451a7100b2892c,
   `99_Endgame2.dx` def25b54608fdd8b0bc493aca7f350b793e5e93621ea2a00eec64ef52159a74e.
+  The sweep of f41c13db ran on the vanilla GOTY folder, whose four files hash to
+  the same values; the earlier sweeps ran on the GMDX install, whose
+  `DeusEx.u`, `Engine.u` and maps are byte-identical to the vanilla
+  folder's and whose conversation packages (`System/DeusExConText.u` among
+  them) are the mod's.
