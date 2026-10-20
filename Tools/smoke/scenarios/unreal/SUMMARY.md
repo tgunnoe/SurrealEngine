@@ -1,6 +1,6 @@
 # Unreal Gold 226b sweep summary
 
-Maps: 55. clean: 54 of 55. fail: 0. crash: 1. timeout: 0. pass-verdict but non-clean: 0. warnings: 125.
+Maps: 98. clean: 97 of 98. fail: 0. crash: 0. timeout: 0. pass-verdict but non-clean: 1. warnings: 198.
 
 Check: the verdict counts are recomputed from sweep.json by the `check`
 command of the triage module, which exits 0 only if they equal the line
@@ -10,19 +10,21 @@ above.
 
 | Site | Lines | Maps |
 | :--- | ---: | ---: |
-| Accessed None in HorseFly.meander | 94 | 9 |
-| Accessed None in SinglePlayer.Killed | 18 | 7 |
-| Accessed None in SinglePlayer.ScoreKill | 8 | 4 |
-| Accessed None in Slith.TakeDamage | 2 | 1 |
-| Accessed None in BabyCow.PickDestination | 1 | 1 |
-| Accessed None in PlayerStart.PlayTeleportEffect | 1 | 1 |
-| Accessed None in SkaarjBerserker.TakeDamage | 1 | 1 |
+| Accessed None in HorseFly.meander | 166 | 14 |
+| Accessed None in SinglePlayer.Killed | 17 | 8 |
+| Accessed None in UPakShieldEffect.Tick | 6 | 2 |
+| Accessed None in SinglePlayer.ScoreKill | 5 | 2 |
+| Accessed None in BabyCow.PickDestination | 2 | 2 |
+| Accessed None in Slith.TakeDamage | 1 | 1 |
+| Accessed None in UPakTransitionInfo.ScoreKill | 1 | 1 |
 
 ## Failure signatures
 
 | Signature | Maps | Affected |
 | :--- | ---: | :--- |
-| crash: FATAL signal 6 | 1 | ExtremeLab |
+| stub PathNodeIterator.BuildPath() | 1 | Nevec |
+| stub PathNodeIterator.GetFirst() | 1 | Nevec |
+| stub PathNodeIterator.GetLast() | 1 | Nevec |
 
 ## Ranked fix candidates
 
@@ -31,6 +33,6 @@ candidate. Partial means the map loses one reason but keeps others.
 
 | Rank | Candidate | Fully unblocks | Partial |
 | ---: | :--- | ---: | ---: |
-| 1 | fix signature: crash: FATAL signal 6 | 1 | 0 |
+| 1 | implement every gameplay stub in SurrealEngine/Packages/UPak/UPathNodeIterator.cpp | 1 | 0 |
 
 A map becomes clean only when every signature that lists it above is fixed.

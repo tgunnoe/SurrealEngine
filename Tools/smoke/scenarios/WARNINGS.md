@@ -77,13 +77,13 @@ section.
 
 | Site | Lines | Maps | Verdict | Grounds |
 | :--- | ---: | ---: | :--- | :--- |
-| HorseFly.meander | 94 | 9 | undecided | On Bluff a fly lost its owner when the carcass swarm that spawned it was destroyed (inferred from the timing and the script); the stock `meander` state then calls `Destroy()` on the fly and the next two statements dereference `Owner`, and the engine runs them. Whether the original keeps running state code after `Destroy()` is not known. |
-| SinglePlayer.Killed | 18 | 7 | faithful | The stock `SinglePlayer.Killed` subtracts 2 from `killer.PlayerReplicationInfo.Score` when a Nali dies, with no check, and the killer of a Nali can be a monster, which has no replication info, or None. |
-| SinglePlayer.ScoreKill | 8 | 4 | faithful | The `ScoreKill` that `SinglePlayer` inherits from `GameInfo` subtracts 1 from `Other.PlayerReplicationInfo.Score` when the killer is None or the victim itself, and a monster victim has no replication info. |
-| Slith.TakeDamage | 2 | 1 | faithful | The callstack names `ScriptedPawn`'s `Patroling` state body, one of seven stock bodies that read `Enemy` unguarded; a Slith in `Patroling` has no enemy, and the call is a BiterFish's stock `Pawn.BaseChange` stomp of the Slith. The engine raises `BaseChange` from its own physics, the one part not read against the original. |
-| BabyCow.PickDestination | 1 | 1 | faithful | The stock Ruins map places a `BabyCow` with no `mom`, and the stock `Grazing` state's `PickDestination` has no `return` after its `Mom == None` branch, so it falls through to `mom.Destination`. |
-| PlayerStart.PlayTeleportEffect | 1 | 1 | engine-side | The engine bound ExtremeDGen's game to a level info the map saved as deleted, so the start spot's `Level.Game` was None. It now takes the level's first actor and the warning is gone; the row stays until the next sweep. |
-| SkaarjBerserker.TakeDamage | 1 | 1 | undecided | Inherited from the same seven unguarded `ScriptedPawn` state bodies as `Slith.TakeDamage`, but it did not reproduce in two traced runs on ExtremeDark, so neither the state nor the damage source is known. |
+| HorseFly.meander | 166 | 14 | undecided | On Bluff a fly lost its owner when the carcass swarm that spawned it was destroyed (inferred from the timing and the script); the stock `meander` state then calls `Destroy()` on the fly and the next two statements dereference `Owner`, and the engine runs them. Whether the original keeps running state code after `Destroy()` is not known. |
+| SinglePlayer.Killed | 17 | 8 | faithful | The stock `SinglePlayer.Killed` subtracts 2 from `killer.PlayerReplicationInfo.Score` when a Nali dies, with no check, and the killer of a Nali can be a monster, which has no replication info, or None. |
+| UPakShieldEffect.Tick | 6 | 2 | undecided | `UPakShieldEffect` is a class of `UPak.u` (Return to Na Pali), whose script is unread on this host: no dump of that package exists here. Its export table lists a `Tick` of its own, so the stock `ShieldBeltEffect.Tick`, which tests `Owner` for None, is not the body that ran. A dump of `UPak.u` would decide it. |
+| SinglePlayer.ScoreKill | 5 | 2 | faithful | The `ScoreKill` that `SinglePlayer` inherits from `GameInfo` subtracts 1 from `Other.PlayerReplicationInfo.Score` when the killer is None or the victim itself, and a monster victim has no replication info. |
+| BabyCow.PickDestination | 2 | 2 | faithful | The stock Ruins map places a `BabyCow` with no `mom`, and the stock `Grazing` state's `PickDestination` has no `return` after its `Mom == None` branch, so it falls through to `mom.Destination`. |
+| Slith.TakeDamage | 1 | 1 | faithful | The callstack names `ScriptedPawn`'s `Patroling` state body, one of seven stock bodies that read `Enemy` unguarded; a Slith in `Patroling` has no enemy, and the call is a BiterFish's stock `Pawn.BaseChange` stomp of the Slith. The engine raises `BaseChange` from its own physics, the one part not read against the original. |
+| UPakTransitionInfo.ScoreKill | 1 | 1 | undecided | `UPakTransitionInfo` is a class of `UPak.u` (Return to Na Pali), whose script is unread on this host. Its export table lists no `ScoreKill`, so the body is the stock `GameInfo.ScoreKill`, which reads two things that can be None (the victim and its replication info); the sweep keeps no callstack to say which statement or who died. A plaintext engine log of an Inter2 run would decide it. |
 
 ### ut
 
@@ -125,13 +125,16 @@ lines and maps are `-` because no current sweep table lists them.
 | :--- | ---: | ---: | :--- | :--- |
 | LaserEmitter.CalcTrace | - | - | engine-side | The stock script dereferences the actor a `TraceTexture` iterator yields, and the engine yielded a null actor for world hits where the script's own `target == Level` branch shows the original yields the level. Fixed by upstream commit 2c1a4f50; the re-run of the sweep (28f08a4c) no longer lists it. |
 | ElectricityEmitter.CalcTrace | - | - | engine-side | The same iterator and the same dereference in the stock script, fixed by the same commit; the re-run (28f08a4c) no longer lists it. |
+| PlayerStart.PlayTeleportEffect | - | - | engine-side | The engine bound ExtremeDGen's game to a level info the map saved as deleted, so the start spot's `Level.Game` was None. Fixed by commit 14090e6d, which takes the level's first actor as the level info; the re-run of the sweep (f94c1ba6) no longer lists it. |
+| SkaarjBerserker.TakeDamage | - | - | undecided | Inherited from the same seven unguarded `ScriptedPawn` state bodies as `Slith.TakeDamage`, but it did not reproduce in two traced runs on ExtremeDark, so neither the state nor the damage source is known. The re-run of the sweep (f94c1ba6) did not log it either, and no engine change is known to account for that; the runs are not deterministic. |
 
 ## Sites
 
 ### HorseFly.meander
 
-Verdict `undecided`. Lines per map, `unreal`: Bluff 16, Ceremony 8, Chizra 12,
-DasaCellars 6, Dig 12, ExtremeDark 10, Harobed 8, SkyTown 14, TheSunspire 8.
+Verdict `undecided`. Lines per map, `unreal`: Bluff 20, Ceremony 10, Chizra 14,
+Crashsite2 8, DasaCellars 8, Dig 14, DuskFalls 12, ExtremeDark 8, ExtremeLab 14,
+Harobed 6, Nevec 18, SkyCaves 10, SkyTown 14, TheSunspire 10.
 
 Stock `UnrealShare.HorseFly`, state `meander`, label `wander`:
 
@@ -169,10 +172,12 @@ actor owns, so the flies of a destroyed swarm have no owner. The `wander` label
 tests `Owner == None` and calls `Destroy()` but does not leave the state code,
 and the next two statements dereference `Owner`.
 
-Six of the nine maps (Bluff, Ceremony, Dig, ExtremeDark, SkyTown and
-TheSunspire) place no swarm, so their flies belong to carcass swarms. Chizra,
-DasaCellars and Harobed (26 of the 94 lines) place swarms of their own, and
-which swarm orphaned the flies there was not traced.
+In the sweep committed as 8fcddbd6 (94 lines on nine maps), six of the nine maps
+(Bluff, Ceremony, Dig, ExtremeDark, SkyTown and TheSunspire) place no swarm, so
+their flies belong to carcass swarms; Chizra, DasaCellars and Harobed (26 of its
+94 lines) place swarms of their own, and which swarm orphaned the flies there
+was not traced. The five maps the sweep of f94c1ba6 added to the site
+(Crashsite2, DuskFalls, ExtremeLab, Nevec, SkyCaves) were not read for swarms.
 
 Evidence: a run on Bluff, with `--trace-script` on `DeadBodySwarm.Destroyed`,
 `DeadBodySwarm.Destroy`, `HorseFly.Destroy`, `HorseFly.SetLocation` and
@@ -217,7 +222,7 @@ lines engine-side; the runs are not deterministic, so one run settles nothing.
 ### SinglePlayer.Killed
 
 Verdict `faithful`. Lines per map, `unreal`: Bluff 4, Ceremony 5, Chizra 2, Dig
-1, SkyCaves 2, SkyTown 3, SpireVillage 1.
+1, Dug 1, SkyCaves 1, SkyTown 2, SpireVillage 1.
 
 Stock `UnrealShare.SinglePlayer`, function `Killed`:
 
@@ -257,10 +262,36 @@ instigator kills one at 35.471638 (a None killer):
 [35.471638] Pawn.Died: at Pawn.PainTimer line 1512: TakeDamage(5, null, Location, { 0.000000, 0.000000, 0.000000 }, drowned)
 ```
 
+### UPakShieldEffect.Tick
+
+Verdict `undecided`. Lines per map, `unreal`: Abyss 3, Glacena 3.
+
+`UPakShieldEffect` is a class of `UPak.u` (Return to Na Pali), and no dump of
+that package exists on this host, so its script is unread. The sweep keeps no
+plaintext engine log, so the site has no callstack either; what there is, is the
+smoke log of each map in the sweep of f94c1ba6 (not committed). Both maps log
+the line three times, after `STATE 0.0` and before the first `FPS` line:
+
+```
+SCRIPT_WARNING Accessed None in UPakShieldEffect.Tick
+```
+
+The class chain, read from the export tables of `UPak.u`, `UnrealShare.u` and
+`Engine.u`, is `UPakShieldEffect`, `ShieldBeltEffect`, `Effects`, `Actor`. The
+export table of `UPak.u` lists a `Tick` function under `UPakShieldEffect`
+(beside `PostBeginPlay`, `Timer`, `Destroyed` and the state `OwnerFadeIn`), so
+the body that ran is the package's own, not the stock one. The nearest stock
+superclass with a dump, `UnrealShare.ShieldBeltEffect`, has a `Tick` that tests
+`Owner != None` before it reads `Owner.bHidden`; whether the Return to Na Pali
+one does is not known.
+
+What would decide it: a dump of `UPak.u`, which shows the statement that reads a
+None, or a plaintext engine log of an Abyss or Glacena run, whose callstack
+names it.
+
 ### SinglePlayer.ScoreKill
 
-Verdict `faithful`. Lines per map, `unreal`: Bluff 3, Ceremony 1, Dug 1,
-SkyCaves 3.
+Verdict `faithful`. Lines per map, `unreal`: Bluff 3, Ceremony 2.
 
 Stock `Engine.GameInfo`, function `ScoreKill`, which `SinglePlayer` inherits:
 
@@ -295,7 +326,7 @@ event for those pawns at the first tick was not read:
 
 ### Slith.TakeDamage
 
-Verdict `faithful`. Lines per map, `unreal`: Chizra 2.
+Verdict `faithful`. Lines per map, `unreal`: Chizra 1.
 
 `UnrealShare.Slith` defines no `TakeDamage`. Seven stock bodies in
 `UnrealShare.ScriptedPawn` read `Enemy` without a None check (some before and
@@ -349,54 +380,9 @@ patrolling has no enemy, and the stock body reads it before its own
 when a fish comes to rest on the Slith; whether the original's physics puts a
 BiterFish on a Slith in the same way was not read.
 
-### SkaarjBerserker.TakeDamage
-
-Verdict `undecided`. Lines per map, `unreal`: ExtremeDark 1.
-
-`UnrealI.SkaarjBerserker` defines `WhatToDoNext` and `AttitudeToCreature` but
-no `TakeDamage`, so the same seven unguarded `ScriptedPawn` state bodies as in
-`Slith.TakeDamage` are the candidates. The Berserker fights other monsters:
-
-```
-function eAttitude AttitudeToCreature(Pawn Other)
-{
-    if ( Other.IsA('ScriptedPawn') && !Other.IsA('Pupae') )
-        return ATTITUDE_Hate;
-    else
-        return ATTITUDE_Ignore;
-}
-```
-
-Two runs on ExtremeDark, 90 s each with
-`--trace-script=SkaarjBerserker.TakeDamage`, logged no
-`SkaarjBerserker.TakeDamage` warning. In them `SkaarjBerserker2` took traced
-`TakeDamage` calls from `SkaarjInfantry0` (never a None instigator) in the
-states `Charging`, `Hunting`, `RangedAttack`, `MeleeAttack`, `TakeHit`,
-`FallingState` and `Dying`. Only `Charging` is one of the seven, and its
-unguarded read is in the weave branch:
-
-```
-        else if ( bWasOnGround && (MoveTarget == Enemy) &&
-                    (Physics == PHYS_Falling) && (Intelligence == BRAINS_Human) ) //weave
-...
-            sideDir = Normal( Normal(Enemy.Location - Location) Cross vect(0,0,1) );
-```
-
-whose full condition also needs `bWasOnGround`, `Physics == PHYS_Falling` and
-`Intelligence == BRAINS_Human` (`MoveTarget == Enemy` is true when both are
-None); whether a Berserker's `Intelligence` is
-`BRAINS_Human` was not read, so `Charging` may not be a candidate for this
-site at all.
-
-What would decide it: a run in which the warning recurs, with the callstack,
-which names the state body and its caller. It is stock if the caller passes
-a None instigator (zone or drowning damage from `Pawn`'s pain timer) or the
-pawn is in one of the seven states with no enemy, and engine-side if the
-callstack shows an engine-supplied None.
-
 ### BabyCow.PickDestination
 
-Verdict `faithful`. Lines per map, `unreal`: Ruins 1.
+Verdict `faithful`. Lines per map, `unreal`: Nevec 1, Ruins 1.
 
 Stock `UnrealShare.BabyCow`, state `Grazing`, function `PickDestination`:
 
@@ -421,38 +407,60 @@ neither `mom` nor `bHasBaby`, so no saved actor sets either. The script has no
 `mom.Destination`. Residual: the map's saved data was read, not the loader, so
 "no mother" assumes the engine leaves an unsaved object property None.
 
-### PlayerStart.PlayTeleportEffect
+### UPakTransitionInfo.ScoreKill
 
-Verdict `engine-side`, fixed. Lines per map, `unreal`: ExtremeDGen 1.
+Verdict `undecided`. Lines per map, `unreal`: Inter2 1.
 
-Stock `Engine.PlayerStart`, function `PlayTeleportEffect`, called from the
-stock `Engine.GameInfo.Login`:
+`UPakTransitionInfo` is a class of `UPak.u` (Return to Na Pali), and no dump of
+that package exists on this host, so its script is unread. The sweep keeps no
+plaintext engine log, so the site has no callstack either; what there is, is the
+smoke log of Inter2 in the sweep of f94c1ba6 (not committed), which holds the
+line once, after `STATE 0.0` and before the first `FPS` line:
 
 ```
-function PlayTeleportEffect(actor Incoming, bool bOut)
+SCRIPT_WARNING Accessed None in UPakTransitionInfo.ScoreKill
+```
+
+The class chain, read from the export tables of `UPak.u`, `UnrealShare.u` and
+`Engine.u`, is `UPakTransitionInfo`, `UnrealGameInfo`, `GameInfo`, `Info`,
+`Actor`. The export table of `UPak.u` lists `Login`, `SwitchFromUnrealPlayer`,
+`AdjustVolume`, `RedirectorSearch` and `Timer` under the class, and no
+`ScoreKill` or `Killed`; the stock `UnrealShare.UnrealGameInfo` defines neither.
+So the `ScoreKill` that ran is the one `Engine.GameInfo` defines, which its
+`Killed` calls:
+
+```
+function ScoreKill(pawn Killer, pawn Other)
 {
-    Level.Game.PlayTeleportEffect(Incoming, bOut, Level.Game.bDeathMatch );
+    Other.DieCount++;
+    if( (killer == Other) || (killer == None) )
+        Other.PlayerReplicationInfo.Score -= 1;
+    else if ( killer != None )
+    {
+        killer.killCount++;
+        if ( killer.PlayerReplicationInfo != None )
+            killer.PlayerReplicationInfo.Score += 1;
+    }
 }
 ```
 
-```
-    // Teleport-in effect.
-    StartSpot.PlayTeleportEffect( NewPlayer, true );
-```
+Two statements can read a None: `Other.DieCount++` when the victim is None, and
+`Other.PlayerReplicationInfo.Score -= 1` when the killer is None or the victim
+itself and the victim has no replication info, the statement
+`SinglePlayer.ScoreKill` reaches for a monster victim. If the caller is the
+stock `GameInfo.Killed`, the victim cannot be None: `Killed` reads
+`Other.bIsPlayer` as its first statement (line 923 of the stock
+`Engine.GameInfo` text) and calls `ScoreKill` as its last (line 991), and the
+Inter2 smoke log above holds no `UPakTransitionInfo.Killed` warning, which a
+None victim would have logged at the first. Under that caller only the
+replication-info read remains, the `SinglePlayer.ScoreKill` pattern, and a None
+victim needs a caller inside `UPak.u`, which the decider below already asks
+about. The log line names neither a statement, a victim nor a killer, so the
+site is not read the way `SinglePlayer.ScoreKill` is.
 
-The only candidates for None are `Level` and `Level.Game` of the start spot.
-ExtremeDGen holds several level infos. The engine used the first it found by
-name, which the map saved as deleted, while the map's live actors reference
-another, so the engine set `Game` on an object no actor reads and
-`Level.Game` was None for the start spot. The engine now takes the level's
-first actor as the level info, and its `Level info:` line names the pick.
-
-Evidence: the smoke log of ExtremeDGen from before the fix has
-`SCRIPT_WARNING Accessed None in PlayerStart.PlayTeleportEffect` between `MAP`
-and `LOGIN`, and the log after it has none, with the engine log reading
-`Level info: LevelInfo5 (the level's first actor) in ExtremeDGen`. The fix is
-commit 14090e6d ("fix(level): take the level's first actor as info"). The row
-stays in the `unreal` table until the next sweep replaces it.
+What would decide it: a plaintext engine log of an Inter2 run, whose callstack
+names the statement and its caller, or a dump of `UPak.u`, whose functions would
+show whether `UPakTransitionInfo` itself kills a pawn.
 
 ### UnrealCTFScoreboard.DrawTrailer
 
@@ -904,6 +912,84 @@ class ElectricityEmitter extends LaserEmitter;
 The same engine fault and the same fix; the summary
 committed as f0bce687 lists 435578 lines on 22 maps and the re-run lists
 none.
+
+### PlayerStart.PlayTeleportEffect
+
+Verdict `engine-side`, fixed. No current sweep lists it.
+
+Stock `Engine.PlayerStart`, function `PlayTeleportEffect`, called from the
+stock `Engine.GameInfo.Login`:
+
+```
+function PlayTeleportEffect(actor Incoming, bool bOut)
+{
+    Level.Game.PlayTeleportEffect(Incoming, bOut, Level.Game.bDeathMatch );
+}
+```
+
+```
+    // Teleport-in effect.
+    StartSpot.PlayTeleportEffect( NewPlayer, true );
+```
+
+The only candidates for None are `Level` and `Level.Game` of the start spot.
+ExtremeDGen holds several level infos. The engine used the first it found by
+name, which the map saved as deleted, while the map's live actors reference
+another, so the engine set `Game` on an object no actor reads and
+`Level.Game` was None for the start spot. The engine now takes the level's
+first actor as the level info, and its `Level info:` line names the pick.
+
+Evidence: the smoke log of ExtremeDGen from before the fix has
+`SCRIPT_WARNING Accessed None in PlayerStart.PlayTeleportEffect` between `MAP`
+and `LOGIN`, and the log after it has none, with the engine log reading
+`Level info: LevelInfo5 (the level's first actor) in ExtremeDGen`. The fix is
+commit 14090e6d ("fix(level): take the level's first actor as info"). The re-run
+of the sweep (f94c1ba6) logged no warning on ExtremeDGen.
+
+### SkaarjBerserker.TakeDamage
+
+Verdict `undecided`. No current sweep lists it.
+
+`UnrealI.SkaarjBerserker` defines `WhatToDoNext` and `AttitudeToCreature` but
+no `TakeDamage`, so the same seven unguarded `ScriptedPawn` state bodies as in
+`Slith.TakeDamage` are the candidates. The Berserker fights other monsters:
+
+```
+function eAttitude AttitudeToCreature(Pawn Other)
+{
+    if ( Other.IsA('ScriptedPawn') && !Other.IsA('Pupae') )
+        return ATTITUDE_Hate;
+    else
+        return ATTITUDE_Ignore;
+}
+```
+
+Two runs on ExtremeDark, 90 s each with
+`--trace-script=SkaarjBerserker.TakeDamage`, logged no
+`SkaarjBerserker.TakeDamage` warning. In them `SkaarjBerserker2` took traced
+`TakeDamage` calls from `SkaarjInfantry0` (never a None instigator) in the
+states `Charging`, `Hunting`, `RangedAttack`, `MeleeAttack`, `TakeHit`,
+`FallingState` and `Dying`. Only `Charging` is one of the seven, and its
+unguarded read is in the weave branch:
+
+```
+        else if ( bWasOnGround && (MoveTarget == Enemy) &&
+                    (Physics == PHYS_Falling) && (Intelligence == BRAINS_Human) ) //weave
+...
+            sideDir = Normal( Normal(Enemy.Location - Location) Cross vect(0,0,1) );
+```
+
+whose full condition also needs `bWasOnGround`, `Physics == PHYS_Falling` and
+`Intelligence == BRAINS_Human` (`MoveTarget == Enemy` is true when both are
+None); whether a Berserker's `Intelligence` is
+`BRAINS_Human` was not read, so `Charging` may not be a candidate for this
+site at all.
+
+What would decide it: a run in which the warning recurs, with the callstack,
+which names the state body and its caller. It is stock if the caller passes
+a None instigator (zone or drowning damage from `Pawn`'s pain timer) or the
+pawn is in one of the seven states with no enemy, and engine-side if the
+callstack shows an engine-supplied None.
 
 ## The runs
 

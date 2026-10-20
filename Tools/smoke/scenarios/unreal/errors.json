@@ -1,33 +1,61 @@
 {
+ "Abyss": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in UPakShieldEffect.Tick": 3
+  },
+  "warnings": 3
+ },
  "Bluff": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 16,
+   "Accessed None in HorseFly.meander": 20,
    "Accessed None in SinglePlayer.Killed": 4,
    "Accessed None in SinglePlayer.ScoreKill": 3
   },
-  "warnings": 23
+  "warnings": 27
  },
  "Ceremony": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 8,
+   "Accessed None in HorseFly.meander": 10,
    "Accessed None in SinglePlayer.Killed": 5,
-   "Accessed None in SinglePlayer.ScoreKill": 1
+   "Accessed None in SinglePlayer.ScoreKill": 2
   },
-  "warnings": 14
+  "warnings": 17
  },
  "Chizra": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 12,
+   "Accessed None in HorseFly.meander": 14,
    "Accessed None in SinglePlayer.Killed": 2,
-   "Accessed None in Slith.TakeDamage": 2
+   "Accessed None in Slith.TakeDamage": 1
   },
-  "warnings": 16
+  "warnings": 17
+ },
+ "Crashsite": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Crashsite1": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Crashsite2": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 8
+  },
+  "warnings": 8
  },
  "DCrater": {
   "errors": [],
@@ -51,9 +79,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 6
+   "Accessed None in HorseFly.meander": 8
   },
-  "warnings": 6
+  "warnings": 8
  },
  "DasaPass": {
   "errors": [],
@@ -65,10 +93,10 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 12,
+   "Accessed None in HorseFly.meander": 14,
    "Accessed None in SinglePlayer.Killed": 1
   },
-  "warnings": 13
+  "warnings": 15
  },
  "DmAriza": {
   "errors": [],
@@ -76,7 +104,19 @@
   "warning_sites": {},
   "warnings": 0
  },
+ "DmAthena": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
  "DmCurse": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DmDaybreak": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {},
@@ -106,6 +146,12 @@
   "warning_sites": {},
   "warnings": 0
  },
+ "DmHazard": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
  "DmHealPod": {
   "errors": [],
   "fatal_after_summary": false,
@@ -124,6 +170,24 @@
   "warning_sites": {},
   "warnings": 0
  },
+ "DmStomp": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DmSunSpeak": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DmTerra": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
  "DmTundra": {
   "errors": [],
   "fatal_after_summary": false,
@@ -134,9 +198,29 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in SinglePlayer.ScoreKill": 1
+   "Accessed None in SinglePlayer.Killed": 1
   },
   "warnings": 1
+ },
+ "DuskFalls": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 12
+  },
+  "warnings": 12
+ },
+ "Eldora": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "End": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
  },
  "Endgame": {
   "errors": [],
@@ -171,19 +255,16 @@
  "ExtremeDGen": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in PlayerStart.PlayTeleportEffect": 1
-  },
-  "warnings": 1
+  "warning_sites": {},
+  "warnings": 0
  },
  "ExtremeDark": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 10,
-   "Accessed None in SkaarjBerserker.TakeDamage": 1
+   "Accessed None in HorseFly.meander": 8
   },
-  "warnings": 11
+  "warnings": 8
  },
  "ExtremeEnd": {
   "errors": [],
@@ -198,13 +279,15 @@
   "warnings": 0
  },
  "ExtremeLab": {
-  "errors": [
-   {
-    "kind": "FATAL",
-    "map_section": "ExtremeLab",
-    "text": "signal 6"
-   }
-  ],
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in HorseFly.meander": 14
+  },
+  "warnings": 14
+ },
+ "Foundry": {
+  "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {},
   "warnings": 0
@@ -215,13 +298,143 @@
   "warning_sites": {},
   "warnings": 0
  },
+ "Glacena": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in UPakShieldEffect.Tick": 3
+  },
+  "warnings": 3
+ },
+ "Glathriel1": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Glathriel2": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
  "Harobed": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 8
+   "Accessed None in HorseFly.meander": 6
   },
-  "warnings": 8
+  "warnings": 6
+ },
+ "Inter1": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter10": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter11": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter12": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter13": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter14": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter2": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in UPakTransitionInfo.ScoreKill": 1
+  },
+  "warnings": 1
+ },
+ "Inter3": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter4": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter5": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter6": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter7": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter8": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Inter9": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "InterCrashsite": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "InterIntro": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Intro1": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Intro2": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
  },
  "IsvDeck1": {
   "errors": [],
@@ -236,6 +449,18 @@
   "warnings": 0
  },
  "IsvKran4": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Nagomi": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "NagomiSun": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {},
@@ -258,6 +483,21 @@
   "fatal_after_summary": false,
   "warning_sites": {},
   "warnings": 0
+ },
+ "Nalic2": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Nevec": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in BabyCow.PickDestination": 1,
+   "Accessed None in HorseFly.meander": 18
+  },
+  "warnings": 19
  },
  "Noork": {
   "errors": [],
@@ -301,19 +541,25 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in SinglePlayer.Killed": 2,
-   "Accessed None in SinglePlayer.ScoreKill": 3
+   "Accessed None in HorseFly.meander": 10,
+   "Accessed None in SinglePlayer.Killed": 1
   },
-  "warnings": 5
+  "warnings": 11
  },
  "SkyTown": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
    "Accessed None in HorseFly.meander": 14,
-   "Accessed None in SinglePlayer.Killed": 3
+   "Accessed None in SinglePlayer.Killed": 2
   },
-  "warnings": 17
+  "warnings": 16
+ },
+ "SpireLand": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
  },
  "SpireVillage": {
   "errors": [],
@@ -339,9 +585,15 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 8
+   "Accessed None in HorseFly.meander": 10
   },
-  "warnings": 8
+  "warnings": 10
+ },
+ "Toxic": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
  },
  "Trench": {
   "errors": [],
@@ -356,6 +608,18 @@
   "warnings": 0
  },
  "Unreal": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Upack": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Velora": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {},
