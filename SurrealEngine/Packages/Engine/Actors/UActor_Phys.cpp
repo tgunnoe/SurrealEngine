@@ -5,10 +5,12 @@
 #include "VM/ScriptCall.h"
 #include "Engine.h"
 #include "Packages/Engine/Actors/UProjectile.h"
+#include "Packages/Engine/Actors/Brush/UMover.h"
 #include "Packages/Engine/Actors/Pawn/UPlayerPawn.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
+#include "Collision/TopLevel/Blocking.h"
 #include "Collision/TopLevel/Placement.h"
 #include <map>
 #include <set>
@@ -569,6 +571,32 @@ bool UActor::TraceThisActor(vec3& TraceEnd, vec3 TraceStart, vec3* HitLocation, 
 	return true;
 }
 
+// What the trace and the touch filter make of a hit: the level when there is no actor, a mover's brush
+// for a mover that has one, and an actor otherwise.
+static HitKind KindOfHit(UActor* actor)
+{
+	if (!actor)
+		return HitKind::Level;
+
+	UMover* mover = UObject::TryCast<UMover>(actor);
+	return mover && mover->Brush() ? HitKind::MoverBrush : HitKind::Actor;
+}
+
+static HitTarget TargetOf(UActor* actor, HitKind kind, bool isBaseOfMoving, bool isBasedOnMoving)
+{
+	HitTarget target;
+	target.kind = kind;
+	if (actor)
+	{
+		target.isPlayerOrProjectile = UObject::TryCast<UPlayerPawn>(actor) || UObject::TryCast<UProjectile>(actor);
+		target.blocksPlayers = actor->bBlockPlayers();
+		target.blocksActors = actor->bBlockActors();
+	}
+	target.isBaseOfMoving = isBaseOfMoving;
+	target.isBasedOnMoving = isBasedOnMoving;
+	return target;
+}
+
 CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlocking)
 {
 	// Static and non-movable objects can't move
@@ -585,6 +613,17 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 
 	// Analyze what we will hit if we move as requested and stop if it is the level or a blocking actor
 	bool useBlockPlayers = UObject::TryCast<UPlayerPawn>(this) || UObject::TryCast<UProjectile>(this);
+
+	// The events a move sends can change the flags of the moving actor, so each test reads them afresh.
+	auto movingActor = [&]() {
+		MovingActor moving;
+		moving.isPlayerOrProjectile = useBlockPlayers;
+		moving.collidesWorld = bCollideWorld();
+		moving.blocksPlayers = bBlockPlayers();
+		moving.blocksActors = bBlockActors();
+		return moving;
+	};
+
 	CollisionHit blockingHit;
 	CollisionHitList hits;
 	if (!Brush())
@@ -594,22 +633,10 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 		{
 			for (auto& hit : hits)
 			{
-				if (hit.Actor)
-				{
-					bool isBlocking;
-					if (useBlockPlayers || UObject::TryCast<UPlayerPawn>(hit.Actor) || UObject::TryCast<UProjectile>(hit.Actor))
-						isBlocking = hit.Actor->bBlockPlayers() && bBlockPlayers();
-					else
-						isBlocking = hit.Actor->bBlockActors() && bBlockActors();
-
-					// We never hit ourselves or anything moving along with us
-					if (isBlocking && (isOwnBaseBlocking || !hit.Actor->IsBasedOn(this)) && !IsBasedOn(hit.Actor))
-					{
-						blockingHit = hit;
-						break;
-					}
-				}
-				else
+				// We never hit ourselves or anything moving along with us
+				bool isBaseOfMoving = hit.Actor && hit.Actor->IsBasedOn(this);
+				bool isBasedOnMoving = hit.Actor && IsBasedOn(hit.Actor);
+				if (HitBlocks(movingActor(), TargetOf(hit.Actor, KindOfHit(hit.Actor), isBaseOfMoving, isBasedOnMoving), isOwnBaseBlocking))
 				{
 					blockingHit = hit;
 					break;
@@ -659,13 +686,7 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 			if (actor == this || actor->Brush())
 				continue;
 
-			bool isBlocking;
-			if (useBlockPlayers || UObject::TryCast<UPlayerPawn>(actor) || UObject::TryCast<UProjectile>(actor))
-				isBlocking = actor->bBlockPlayers() && bBlockPlayers();
-			else
-				isBlocking = actor->bBlockActors() && bBlockActors();
-
-			if (isBlocking)
+			if (HitBlocks(movingActor(), TargetOf(actor, HitKind::Actor, false, false), false))
 			{
 				bool stopMovement = CallEvent(this, EventName::EncroachingOn, { ExpressionValue::ObjectValue(actor) }).ToBool();
 				if (stopMovement)
@@ -693,13 +714,7 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 			if (actor == this)
 				continue;
 
-			bool isBlocking;
-			if (useBlockPlayers || UObject::TryCast<UPlayerPawn>(actor) || UObject::TryCast<UProjectile>(actor))
-				isBlocking = actor->bBlockPlayers() && bBlockPlayers();
-			else
-				isBlocking = actor->bBlockActors() && bBlockActors();
-
-			if (isBlocking)
+			if (HitBlocks(movingActor(), TargetOf(actor, HitKind::Actor, false, false), false))
 				CallEvent(actor, EventName::EncroachedBy, { ExpressionValue::ObjectValue(this) }).ToBool();
 		}
 	}
@@ -723,12 +738,7 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 		if (hit.Actor && !hit.Actor->IsBasedOn(this) && !IsBasedOn(hit.Actor) && bCollideActors() && hit.Actor->bCollideActors())
 		{
 			// We can't touch stuff we are blocked by
-			bool isBlocking;
-			if (useBlockPlayers || UObject::TryCast<UPlayerPawn>(hit.Actor) || UObject::TryCast<UProjectile>(hit.Actor))
-				isBlocking = hit.Actor->bBlockPlayers() && bBlockPlayers();
-			else
-				isBlocking = hit.Actor->bBlockActors() && bBlockActors();
-			if (!isBlocking)
+			if (!HitBlocks(movingActor(), TargetOf(hit.Actor, KindOfHit(hit.Actor), false, false), false))
 				Touch(hit.Actor);
 		}
 	}
