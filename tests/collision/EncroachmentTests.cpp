@@ -50,9 +50,8 @@ namespace
 		return result;
 	}
 
-	// The mover as the window function is given it: the same pose in the engine's terms, and the
-	// collision cylinder the mover carries beside its brush.
-	EncroachWindowSource SourceOf(const Pose& pose, float radius, float height)
+	// The mover as the window function is given it: the same pose in the engine's terms.
+	EncroachWindowSource SourceOf(const Pose& pose)
 	{
 		float c = (float)std::cos(pose.yaw);
 		float s = (float)std::sin(pose.yaw);
@@ -68,8 +67,6 @@ namespace
 		source.rotation = rotation;
 		source.mainScale = pose.scale;
 		source.prePivot = pose.prePivot;
-		source.radius = radius;
-		source.height = height;
 		return source;
 	}
 
@@ -161,14 +158,13 @@ namespace
 		return { id, false, false, { x, y, z }, radius, height };
 	}
 
-	// A door-sized brush: 200 units each way, centred on the mover, with a collision cylinder that
-	// is smaller than it.
+	// A door-sized brush: 200 units each way, centred on the mover.
 	Pose BlockPose()
 	{
 		return { BBox(vec3(-100.0f), vec3(100.0f)), vec3(0.0f) };
 	}
 
-	// A wall-like slab, 1400 units long, with a collision cylinder that covers a small part of it.
+	// A wall-like slab, 1400 units long, centred on the mover.
 	Pose SlabPose()
 	{
 		return { BBox(vec3(-700.0f, -20.0f, -100.0f), vec3(700.0f, 20.0f, 100.0f)), vec3(0.0f) };
@@ -178,7 +174,7 @@ namespace
 TEST(EncroachGathersEveryOverlappingCandidate)
 {
 	Pose pose = BlockPose();
-	EncroachWindowSource source = SourceOf(pose, 64.0f, 64.0f);
+	EncroachWindowSource source = SourceOf(pose);
 	WorldBox box = WorldBoxOf(pose);
 
 	std::vector<Placed> world = {
@@ -196,7 +192,7 @@ TEST(EncroachGathersEveryOverlappingCandidate)
 TEST(EncroachNeverReturnsTheMoverOrABrush)
 {
 	Pose pose = BlockPose();
-	EncroachWindowSource source = SourceOf(pose, 64.0f, 64.0f);
+	EncroachWindowSource source = SourceOf(pose);
 
 	// Both overlap, and the predicate accepts everything, so only their flags can keep them out.
 	std::vector<Placed> world = {
@@ -213,7 +209,7 @@ TEST(EncroachNeverReturnsTheMoverOrABrush)
 TEST(EncroachReturnsACandidateInTwoCellsOnce)
 {
 	Pose pose = BlockPose();
-	EncroachWindowSource source = SourceOf(pose, 64.0f, 64.0f);
+	EncroachWindowSource source = SourceOf(pose);
 	WorldBox box = WorldBoxOf(pose);
 
 	// Straddles the plane x = 0, so the grid lists it in the cell on each side.
@@ -230,13 +226,14 @@ TEST(EncroachReturnsACandidateInTwoCellsOnce)
 TEST(EncroachWindowReachesBrushBeyondTheCylinder)
 {
 	Pose pose = SlabPose();
-	EncroachWindowSource source = SourceOf(pose, 40.0f, 40.0f);
+	EncroachWindowSource source = SourceOf(pose);
 	WorldBox box = WorldBoxOf(pose);
 
-	// Well inside the slab, 500 units along it, where the cylinder of radius 40 does not reach.
+	// Well inside the slab, 500 units along it, where a collision cylinder of radius 40 does not reach.
+	const float cylinderRadius = 40.0f;
 	std::vector<Placed> world = { Actor(1, 500.0, 0.0, 0.0, 17.0, 40.0) };
 	CHECK(InsideWorldBox(box, world[0]));
-	CHECK(world[0].location[0] - world[0].radius > source.radius);
+	CHECK(world[0].location[0] - world[0].radius > cylinderRadius);
 
 	std::vector<int> hits = GatherEncroaching(CandidatesOf(source, world), [&](int id) { return InsideWorldBox(box, world[id - 1]); });
 
@@ -247,7 +244,7 @@ TEST(EncroachWindowReachesBrushBeyondTheCylinder)
 TEST(EncroachWindowExcludesCandidatesBeyondTheBrushBox)
 {
 	Pose pose = SlabPose();
-	EncroachWindowSource source = SourceOf(pose, 40.0f, 40.0f);
+	EncroachWindowSource source = SourceOf(pose);
 	WorldBox box = WorldBoxOf(pose);
 
 	// Each lies in a cell past one face of the world box (x past the long end, x past the near
@@ -279,9 +276,9 @@ TEST(EncroachWindowFollowsRotationAndScale)
 	// 283 units along x, into the next cell, where the upright brush ends at 100.
 	std::vector<Placed> world = { Actor(1, 270.0, 0.0, 0.0, 10.0, 40.0) };
 	CHECK(InsideWorldBox(WorldBoxOf(turned), world[0]) && !InsideWorldBox(WorldBoxOf(upright), world[0]));
-	CHECK(!WindowCoversCellOf(EncroachWindow(SourceOf(upright, 40.0f, 40.0f)), world[0]));
+	CHECK(!WindowCoversCellOf(EncroachWindow(SourceOf(upright)), world[0]));
 
-	EncroachWindowSource source = SourceOf(turned, 40.0f, 40.0f);
+	EncroachWindowSource source = SourceOf(turned);
 	WorldBox box = WorldBoxOf(turned);
 	std::vector<int> hits = GatherEncroaching(CandidatesOf(source, world), [&](int id) { return InsideWorldBox(box, world[id - 1]); });
 

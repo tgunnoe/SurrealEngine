@@ -3,9 +3,8 @@
 #include "Math/bbox.h"
 #include "Math/mat.h"
 #include "Math/vec.h"
-#include <algorithm>
 #include <cmath>
-#include <cstddef>
+#include <set>
 #include <vector>
 
 // The grid cells a window covers: start is the first cell on each axis, end is one past the last.
@@ -17,7 +16,7 @@ struct EncroachCellRange
 	ivec3 end;
 };
 
-// What the broad phase of a mover's encroachment test needs to know about the mover.
+// Where a mover's brush stands, as the broad phase of its encroachment test needs it.
 struct EncroachWindowSource
 {
 	BBox brushBox; // the brush's box in its own space
@@ -25,8 +24,6 @@ struct EncroachWindowSource
 	mat4 rotation; // the mover's rotation as a matrix, object space to world space
 	vec3 mainScale;
 	vec3 prePivot;
-	float radius = 0.0f;
-	float height = 0.0f;
 };
 
 inline int EncroachCellOf(float coordinate)
@@ -34,15 +31,15 @@ inline int EncroachCellOf(float coordinate)
 	return (int)std::floor(coordinate * (1.0f / 256.0f));
 }
 
-// The cells whose actors are tested against the mover's brush.
+// The cells whose actors are tested against the mover's brush: those the brush's world box covers,
+// placed the way the engine places that box when it draws and registers the mover.
 inline EncroachCellRange EncroachWindow(const EncroachWindowSource& source)
 {
-	vec3 extents = { source.radius, source.radius, source.height };
-	vec3 lo = source.location - extents;
-	vec3 hi = source.location + extents;
+	mat4 objectToWorld = mat4::translate(source.location) * source.rotation * mat4::scale(source.mainScale) * mat4::translate(-source.prePivot);
+	BBox box = source.brushBox.transform(objectToWorld);
 	return {
-		{ EncroachCellOf(lo.x), EncroachCellOf(lo.y), EncroachCellOf(lo.z) },
-		{ EncroachCellOf(hi.x) + 1, EncroachCellOf(hi.y) + 1, EncroachCellOf(hi.z) + 1 } };
+		{ EncroachCellOf(box.min.x), EncroachCellOf(box.min.y), EncroachCellOf(box.min.z) },
+		{ EncroachCellOf(box.max.x) + 1, EncroachCellOf(box.max.y) + 1, EncroachCellOf(box.max.z) + 1 } };
 }
 
 // One actor registered in a cell of the window. The identity is the caller's own handle for the actor,
@@ -56,22 +53,19 @@ struct EncroachCandidate
 };
 
 // The identities of the candidates that the mover encroaches on, each once, in the order first seen.
-// The candidates arrive in cell order; overlaps decides whether one touches the mover's brush.
+// The candidates arrive in cell order; overlaps decides whether one touches the mover's brush, and
+// is asked once per identity however many cells list it.
 template <typename Id, typename Overlaps>
 std::vector<Id> GatherEncroaching(const std::vector<EncroachCandidate<Id>>& candidates, Overlaps overlaps)
 {
 	std::vector<Id> hits;
-
-	// The gather this replaces marks the mover's check counter rather than each candidate's, so
-	// every record after the first is passed over.
-	size_t examined = std::min<size_t>(candidates.size(), 1);
-	for (size_t i = 0; i < examined; i++)
+	std::set<Id> examined;
+	for (const EncroachCandidate<Id>& candidate : candidates)
 	{
-		const EncroachCandidate<Id>& candidate = candidates[i];
 		if (candidate.isMover || candidate.isBrush)
 			continue;
 
-		if (overlaps(candidate.id) && std::find(hits.begin(), hits.end(), candidate.id) == hits.end())
+		if (examined.insert(candidate.id).second && overlaps(candidate.id))
 			hits.push_back(candidate.id);
 	}
 	return hits;

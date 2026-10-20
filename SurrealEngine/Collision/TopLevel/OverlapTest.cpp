@@ -203,11 +203,7 @@ Array<UActor*> OverlapTester::EncroachingActors(UActor* actor)
 	if (!brush)
 		return CollidingActors(actor->Location(), actor->CollisionHeight(), actor->CollisionRadius());
 
-	// To do: is radius and height correct for a mover? Should it use the brush bounding box?
-
 	vec3 origin = actor->Location();
-	float height = actor->CollisionHeight();
-	float radius = actor->CollisionRadius();
 
 	mat4 rotateObjToWorld = Coords::Rotation(actor->Rotation()).ToMatrix();
 	mat4 rotateWorldToObj = mat4::transpose(rotateObjToWorld);
@@ -219,7 +215,7 @@ Array<UActor*> OverlapTester::EncroachingActors(UActor* actor)
 		mainScale = mover->MainScale().Scale;
 	}
 
-	EncroachCellRange cells = EncroachWindow({ brush->BoundingBox, origin, rotateObjToWorld, mainScale, prePivot, radius, height });
+	EncroachCellRange cells = EncroachWindow({ brush->BoundingBox, origin, rotateObjToWorld, mainScale, prePivot });
 	if (!(cells.end.x - cells.start.x < 100 && cells.end.y - cells.start.y < 100 && cells.end.z - cells.start.z < 100))
 		return {};
 

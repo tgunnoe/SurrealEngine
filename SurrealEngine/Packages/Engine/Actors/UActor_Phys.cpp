@@ -628,17 +628,30 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 	Location() += actuallyMoved;
 	XLevel()->Collision.AddToCollision(this);
 
+	// A moving brush that the script stops has to take its passengers back with it, so what each one
+	// achieved is kept for as long as the encroach events can still send the brush back.
+	bool notifyEncroachment = Brush() && (bBlockPlayers() || bBlockActors() || bCollideActors());
+	struct PassengerStep
+	{
+		UActor* Actor;
+		vec3 Moved;
+	};
+	std::vector<PassengerStep> passengerSteps;
+
 	for (size_t i = 0; i < BasedActors.size(); )
 	{
 		UActor* basedActor = BasedActors[i];
+		vec3 passengerOldLocation = basedActor->Location();
 		basedActor->TryMove(actuallyMoved, false, false);
+		if (notifyEncroachment)
+			passengerSteps.push_back({ basedActor, basedActor->Location() - passengerOldLocation });
 		// UnrealScript events triggered in TryMove can call methods such as SetBase or Destroy, so need to guard while iterating.
 		if (i < BasedActors.size() && BasedActors[i] == basedActor)
 			i++;
 	}
 
 	// Notify actor of encroachment
-	if (Brush() && (bBlockPlayers() || bBlockActors() || bCollideActors()))
+	if (notifyEncroachment)
 	{
 		Array<UActor*> encroachingActors = XLevel()->Collision.EncroachingActors(this);
 		for (UActor* actor : encroachingActors)
@@ -660,6 +673,13 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 					XLevel()->Collision.RemoveFromCollision(this);
 					Location() = OldLocation;
 					XLevel()->Collision.AddToCollision(this);
+
+					// Actors that were deleted by the events are gone and stay where they are
+					for (const PassengerStep& step : passengerSteps)
+					{
+						if (!step.Actor->bDeleteMe())
+							step.Actor->TryMove(-step.Moved, false, false);
+					}
 
 					CollisionHit hit;
 					hit.Fraction = 0.0f;
