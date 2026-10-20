@@ -1,6 +1,6 @@
 # UT 436 sweep summary
 
-Maps: 83. clean: 83 of 83. fail: 0. crash: 0. timeout: 0. pass-verdict but non-clean: 0. warnings: 3250.
+Maps: 83. clean: 83 of 83. fail: 0. crash: 0. timeout: 0. pass-verdict but non-clean: 0. warnings: 4089.
 
 Check: the verdict counts are recomputed from sweep.json by the `check`
 command of the triage module, which exits 0 only if they equal the line
@@ -10,9 +10,9 @@ above.
 
 | Site | Lines | Maps |
 | :--- | ---: | ---: |
-| Accessed None in UnrealCTFScoreboard.DrawTrailer | 3234 | 1 |
+| Accessed None in UnrealCTFScoreboard.DrawTrailer | 3193 | 1 |
+| Accessed None in MinigunCannon.SeePlayer | 884 | 1 |
 | Accessed None in UTConsole.AddMessage | 8 | 1 |
-| Accessed None in MinigunCannon.SeePlayer | 4 | 1 |
 | Accessed None in TeamCannon.SeePlayer | 4 | 3 |
 
 ## Failure signatures

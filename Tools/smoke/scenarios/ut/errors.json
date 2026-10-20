@@ -117,9 +117,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in MinigunCannon.SeePlayer": 4
+   "Accessed None in MinigunCannon.SeePlayer": 884
   },
-  "warnings": 4
+  "warnings": 884
  },
  "CTF-Hydro16": {
   "errors": [],
@@ -174,9 +174,9 @@
   "fatal_after_summary": false,
   "warning_sites": {
    "Accessed None in UTConsole.AddMessage": 8,
-   "Accessed None in UnrealCTFScoreboard.DrawTrailer": 3234
+   "Accessed None in UnrealCTFScoreboard.DrawTrailer": 3193
   },
-  "warnings": 3242
+  "warnings": 3201
  },
  "CityIntro": {
   "errors": [],
