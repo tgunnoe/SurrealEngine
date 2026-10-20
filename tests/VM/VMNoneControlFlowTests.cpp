@@ -167,6 +167,11 @@ TEST(VMNoneContextInSwitchConditionIsLogged)
 	Array<LogMessageLine> added = fixture.Run();
 
 	CHECK_EQ(CountNoneLines(added), static_cast<size_t>(1));
+	// The callstack names the statement from StatementIndex, which ProcessSwitch moves on to
+	// the case statements. A log written after the switch is applied names the case instead.
+	CHECK_MSG(added.size() >= 2, "the warning is not followed by a callstack line");
+	CHECK_MSG(added[1].Text.ends_with(Frame::GetDisassembly(switchexpr)),
+		"the callstack does not name the switch statement: " + added[1].Text);
 }
 
 // The statement whose result is AccessedNone on its own already logged before the change;
