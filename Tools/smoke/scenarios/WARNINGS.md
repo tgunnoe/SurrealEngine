@@ -447,9 +447,16 @@ function ScoreKill(pawn Killer, pawn Other)
 Two statements can read a None: `Other.DieCount++` when the victim is None, and
 `Other.PlayerReplicationInfo.Score -= 1` when the killer is None or the victim
 itself and the victim has no replication info, the statement
-`SinglePlayer.ScoreKill` reaches for a monster victim. The log line names
-neither a statement, a victim nor a killer, so the site is not read the way that
-one is.
+`SinglePlayer.ScoreKill` reaches for a monster victim. If the caller is the
+stock `GameInfo.Killed`, the victim cannot be None: `Killed` reads
+`Other.bIsPlayer` as its first statement (line 923 of the stock
+`Engine.GameInfo` text) and calls `ScoreKill` as its last (line 991), and the
+Inter2 smoke log above holds no `UPakTransitionInfo.Killed` warning, which a
+None victim would have logged at the first. Under that caller only the
+replication-info read remains, the `SinglePlayer.ScoreKill` pattern, and a None
+victim needs a caller inside `UPak.u`, which the decider below already asks
+about. The log line names neither a statement, a victim nor a killer, so the
+site is not read the way `SinglePlayer.ScoreKill` is.
 
 What would decide it: a plaintext engine log of an Inter2 run, whose callstack
 names the statement and its caller, or a dump of `UPak.u`, whose functions would
