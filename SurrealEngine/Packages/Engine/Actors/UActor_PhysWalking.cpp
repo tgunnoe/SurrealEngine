@@ -217,23 +217,15 @@ void UActor::TickWalking(float elapsed)
 
 			if (hit.Fraction < 1.0f)
 			{
-				if (player && hit.Actor)
+				if (player && hit.Actor && UObject::IsType<UDecoration>(hit.Actor) && UObject::Cast<UDecoration>(hit.Actor)->bPushable() && dot(hit.Normal, moveDelta) < -0.9f)
 				{
-					if (UObject::IsType<UDecoration>(hit.Actor) && UObject::Cast<UDecoration>(hit.Actor)->bPushable() && dot(hit.Normal, moveDelta) < -0.9f)
-					{
-						// We hit a pushable decoration that is facing our movement direction
+					// We hit a pushable decoration that is facing our movement direction
 
-						//why does hitting a pushable decoration set the teleport flag?
-						bJustTeleported() = true;
-						vel = Velocity() = Velocity() * Mass() / (Mass() + hit.Actor->Mass());
-						FireHitWall(hit);
-						timeLeft = 0.0f;
-					}
-					else if (hit.Actor->bCollideActors() && hit.Actor->CollisionHeight() > 0.0f && hit.Actor->CollisionRadius() > 0.0f)
-					{
-						// TODO: We hit a non-movable actor
-
-					}
+					//why does hitting a pushable decoration set the teleport flag?
+					bJustTeleported() = true;
+					vel = Velocity() = Velocity() * Mass() / (Mass() + hit.Actor->Mass());
+					FireHitWall(hit);
+					timeLeft = 0.0f;
 				}
 				else if (hit.Normal.z < 0.2f && hit.Normal.z > -0.2f)
 				{
