@@ -1052,9 +1052,10 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
   of 73df9f26, 20 in the sweep of 8d225ef3, 996 in one traced run). All three
   counts were logged under the VM that dropped a None whose statement ended in
   a jump, where only one bot's hits reached the log, and their spread is the
-  runs' nondeterminism. The sweep of f93c4864 on the engine of 66ee08e7 logs
-  the Nones the VM dropped before, so its counts are not comparable with the
-  earlier sweeps'. The sweep of f93c4864 named each map's game by its prefix
+  runs' nondeterminism. The sweeps of f93c4864 and c30fcc04, on engines that
+  carry the VM's fuller None logging, log the Nones the VM dropped before, so
+  their counts are not comparable with the earlier sweeps'. The sweep of
+  f93c4864 named each map's game by its prefix
   (AS Assault, CTF CTFGame, DOM Domination; CTF-Tutorial exempted, since it
   stores TrainingCTF), and the `ut` sweep of c30fcc04 did the same; the
   earlier UT sweeps did not, and the traced runs the
