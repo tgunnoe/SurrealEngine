@@ -292,7 +292,7 @@ class SweepRunTests(unittest.TestCase):
 
     def sweep_by_prefix(self):
         """One sweep over assault, deathmatch and dashless maps with AS mapped to Assault."""
-        for stem in ["AS-One", "as-Two", "DM-Two"]:
+        for stem in ["AS-One", "as-Two", "AS-Hi-Speed", "DM-Two", "AS"]:
             (self.game / "Maps" / f"{stem}.unr").write_bytes(b"")
         report, _ = self.sweep("--game-by-prefix", "AS=Botpack.Assault", "--url-options", "?NumBots=4")
         return report
@@ -302,14 +302,18 @@ class SweepRunTests(unittest.TestCase):
         # The match folds ASCII case, and the game text comes before the url options.
         self.assertIn("--url=AS-One?game=Botpack.Assault?NumBots=4", self.argv_of("AS-One"))
         self.assertIn("--url=as-Two?game=Botpack.Assault?NumBots=4", self.argv_of("as-Two"))
+        # The prefix ends at the first dash.
+        self.assertIn("--url=AS-Hi-Speed?game=Botpack.Assault?NumBots=4", self.argv_of("AS-Hi-Speed"))
         self.assertEqual(report["game_by_prefix"], {"AS": "Botpack.Assault"})
 
     def test_game_by_prefix_leaves_other_prefixes_and_dashless_names_alone(self):
         self.sweep_by_prefix()
-        # A has no dash, so it has no prefix to match.
+        # A name with no dash has no prefix to match, not even one spelled like the mapped
+        # prefix.
         self.assertIn("--url=DM-Two?NumBots=4", self.argv_of("DM-Two"))
         self.assertIn("--url=A?NumBots=4", self.argv_of("A"))
-        for name in ["DM-Two", "A"]:
+        self.assertIn("--url=AS?NumBots=4", self.argv_of("AS"))
+        for name in ["DM-Two", "A", "AS"]:
             self.assertEqual([a for a in self.argv_of(name) if "game=" in a], [])
 
     def test_without_game_by_prefix_the_command_and_report_are_unchanged(self):

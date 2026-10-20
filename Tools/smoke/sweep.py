@@ -12,6 +12,7 @@ Each map runs in its own engine process with --autostart, --exit-after and
 import argparse
 import json
 import os
+import re
 import shutil
 import signal
 import string
@@ -23,6 +24,7 @@ from pathlib import Path
 # Isolated mode (python3 -I) puts no directory on sys.path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from triage.matchrule import match_started  # noqa: E402
+from triage.scenario import game_text  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MAP_SUFFIXES = {".unr", ".dx"}
@@ -32,6 +34,9 @@ PORTABLE_GAME = "<game folder>"
 # The engine folds only the ASCII letters when it compares names, so str.upper() would
 # refuse pairs it keeps apart.
 ASCII_UPPER = str.maketrans(string.ascii_lowercase, string.ascii_uppercase)
+# A prefix is one word and a class is Package.Class: nothing in either can add a url option.
+PREFIX_WORD = re.compile(r"[A-Za-z0-9_]+")
+GAME_CLASS = re.compile(r"[A-Za-z0-9_]+\.[A-Za-z0-9_]+")
 
 
 def map_subdir_names(names):
@@ -45,6 +50,27 @@ def map_subdir_names(names):
         if not name or name in (".", "..") or "/" in name or "\\" in name:
             sys.exit(f"sweep: --map-subdir takes a folder name under Maps, not {name}")
     return unique
+
+
+def game_by_prefix_entries(entries):
+    """The --game-by-prefix values as a {prefix: class} mapping in the order given.
+
+    Each entry is PREFIX=Package.Class. The class goes into the url as ?game=<class>, so it
+    must hold nothing that could add an option. Prefixes that differ only in ASCII case name
+    one prefix, so a repeat of either spelling is refused.
+    """
+    mapping = {}
+    seen = set()
+    for entry in entries:
+        prefix, equals, game = entry.partition("=")
+        if not (equals and PREFIX_WORD.fullmatch(prefix) and GAME_CLASS.fullmatch(game)):
+            sys.exit(f"sweep: --game-by-prefix: bad entry '{entry}' (expected PREFIX=Package.Class)")
+        folded = prefix.translate(ASCII_UPPER)
+        if folded in seen:
+            sys.exit(f"sweep: --game-by-prefix: prefix '{prefix}' given twice")
+        seen.add(folded)
+        mapping[prefix] = game
+    return mapping
 
 
 def list_maps(game, subdirs=()):
@@ -132,7 +158,8 @@ def classify(info, exit_code, timed_out, requested_map):
     return "fail"
 
 
-def run_map(exe, game, map_path, seconds, logdir, url_options="", exec_text="", portable=False):
+def run_map(exe, game, map_path, seconds, logdir, url_options="", exec_text="", portable=False,
+            game_text=""):
     name = map_path.stem
     log = logdir / f"{name}.log"
     shot = logdir / f"{name}.png"
@@ -140,7 +167,7 @@ def run_map(exe, game, map_path, seconds, logdir, url_options="", exec_text="", 
     log.unlink(missing_ok=True)
     shot.unlink(missing_ok=True)
     cmd = [str(exe), "--autostart", f"--exit-after={seconds}",
-           f"--smoke-log={log}", f"--url={name}{url_options}"]
+           f"--smoke-log={log}", f"--url={name}{game_text}{url_options}"]
     if exec_text:
         cmd.append(f"--exec={exec_text}")
     cmd.append(str(game))
@@ -204,6 +231,9 @@ def main():
     ap.add_argument("--map-subdir", action="append", default=[], metavar="NAME",
                     help="also sweep the maps under Maps/<name> by their bare names; "
                          "repeat --map-subdir for more folders")
+    ap.add_argument("--game-by-prefix", action="append", default=[], metavar="PREFIX=Package.Class",
+                    help="run each map named PREFIX-<name> under ?game=Package.Class, placed "
+                         "right after the map name; repeat --game-by-prefix for more prefixes")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -211,6 +241,7 @@ def main():
     logdir.mkdir(parents=True, exist_ok=True)
 
     subdirs = map_subdir_names(args.map_subdir)
+    by_prefix = game_by_prefix_entries(args.game_by_prefix)
     maps = list_maps(args.game, subdirs)
     if args.limit > 0:
         maps = maps[:args.limit]
@@ -218,10 +249,11 @@ def main():
     results = []
     report = {"game": PORTABLE_GAME if args.portable else str(args.game), "seconds": args.seconds,
               "url_options": args.url_options or None, "exec": args.exec_text or None,
-              "map_subdirs": subdirs or None, "maps": results}
+              "game_by_prefix": by_prefix or None, "map_subdirs": subdirs or None, "maps": results}
     for m in maps:
         entry = run_map(args.exe, args.game, m, args.seconds, logdir,
-                        args.url_options, args.exec_text, args.portable)
+                        args.url_options, args.exec_text, args.portable,
+                        game_text=game_text(by_prefix.items(), m.stem))
         print(f"{entry['verdict']:8} {entry['map']}", flush=True)
         results.append(entry)
         # Rewritten after every map so an interrupted sweep keeps its rows.

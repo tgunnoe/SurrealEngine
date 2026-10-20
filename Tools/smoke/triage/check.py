@@ -11,6 +11,7 @@ from collections import Counter
 
 from .build import (is_loaded, match_unstarted, matches_started, show_count,
                     warnings_fail, warnings_total)
+from .scenario import game_text
 
 # With require_first_five, the first N non-clean maps in sweep order must
 # have been re-run (not "not-run").
@@ -50,7 +51,7 @@ def repro_regex(scn, name):
     exec_rx = "'?--exec=%s'? " % re.escape(scn.exec) if scn.exec else ""
     return (r"^%srepro: `%s --autostart --exit-after=%d '?--smoke-log=\S+ '?--url=%s%s'? %s"
             % (re.escape(scn.bullet), re.escape(scn.exe), scn.exit_after_seconds, re.escape(name),
-               re.escape("".join(scn.url_options)), exec_rx))
+               re.escape(game_text(scn.url_game_by_prefix, name) + "".join(scn.url_options)), exec_rx))
 
 
 def register_sites(lines, heading):

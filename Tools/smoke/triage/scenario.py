@@ -3,7 +3,30 @@
 No default names a game: a scenario that leaves a field unset gets an
 empty value and the corresponding output is empty or the check is off.
 """
+import string
 from dataclasses import dataclass, field
+
+# The engine folds only the ASCII letters when it compares names, so str.upper() would
+# match prefixes it keeps apart.
+ASCII_UPPER = str.maketrans(string.ascii_lowercase, string.ascii_uppercase)
+
+
+def game_text(pairs, name):
+    """The `?game=<class>` text for a map, or "" when no prefix of `pairs` matches.
+
+    `pairs` holds (prefix, class) pairs. A map's prefix is the part of its name before the
+    first "-" (a name with no "-" has none and never matches), compared without regard to
+    ASCII case. The sweep and a re-run both build the URL through this, so they cannot
+    name different games.
+    """
+    prefix, dash, _ = name.partition("-")
+    if not dash:
+        return ""
+    folded = prefix.translate(ASCII_UPPER)
+    for wanted, game in pairs:
+        if wanted.translate(ASCII_UPPER) == folded:
+            return "?game=" + game
+    return ""
 
 
 @dataclass(frozen=True)
@@ -48,6 +71,9 @@ class Scenario:
     repro_timeout_seconds: int = 0
     repro_logdir: str = ""
     url_options: tuple = ()          # joined onto --url=<map>, e.g. ("?NumBots=4",)
+    # (prefix, class) pairs: a map whose name prefix matches gets ?game=<class> right
+    # after its name, before url_options, e.g. (("AS", "Botpack.Assault"),)
+    url_game_by_prefix: tuple = ()
     exec: str = ""                   # passed as --exec=<exec> when not empty
 
     # Checker options.

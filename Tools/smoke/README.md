@@ -273,7 +273,8 @@ python3 -I Tools/smoke/sweep.py --game "<game folder>" --seconds 15 --limit 3 --
 Options: `--game`, `--out` (required); `--seconds` (default 15); `--limit`
 (first N maps, default all); `--exe` (default `build/SurrealEngine`);
 `--logdir` (default `<out>.d`, holds per-map logs and screenshots);
-`--url-options`, `--exec`, `--portable`, `--map-subdir` (below).
+`--url-options`, `--exec`, `--portable`, `--map-subdir`, `--game-by-prefix`
+(below).
 
 `--url-options <text>` appends the text to every `--url=<map>`, for example
 `?NumBots=4`, so a botmatch run starts `--url=DM-Deck16][?NumBots=4`.
@@ -296,13 +297,33 @@ folder name (empty, `.`, `..`, or holding a path separator) stop the sweep
 before any run. The report records the folders as `map_subdirs`, `null` when
 the flag is absent.
 
+`--game-by-prefix <PREFIX>=<Package.Class>` names the game class a map runs
+under by the map's name prefix, the way the original's menus and servers open
+a map with `?game=`: every map whose prefix matches runs as
+`--url=<mapname>?game=<Package.Class>`, with the text right after the name and
+before `--url-options`. The engine takes the URL's game option before the
+map's own `LevelInfo.DefaultGameType` and then the ini's default game, and a
+map need not store a game type: none of the stock Unreal Tournament `AS-` maps
+does, so without the flag they run as the ini's default deathmatch. The prefix
+is the part of the map's name before its first `-`, compared without regard to
+ASCII case (a name with no `-` has no prefix and never matches), so
+`--game-by-prefix AS=Botpack.Assault` also matches `as-Two`. Repeat the flag
+for more prefixes; a prefix that matches no map is unused, and a map that
+matches none runs as before. An entry that is not `PREFIX=Package.Class` (a prefix of letters,
+digits and underscores; a class of two such words joined by one dot, so it
+cannot add a URL option) and a prefix given twice (prefixes that differ only
+in ASCII case count as one) stop the sweep before any run. `--url-options` is
+not inspected. The report records the entries as `game_by_prefix`, an object
+from each prefix as given to its class, `null` when the flag is absent.
+
 Screenshots capture the whole desktop, so a window in front of the engine
 appears in them, and an occluded engine window renders slowly.
 
 ## Report schema
 
 ```
-{ "game": "<folder>", "seconds": 15, "url_options": null, "exec": null, "map_subdirs": null,
+{ "game": "<folder>", "seconds": 15, "url_options": null, "exec": null,
+  "game_by_prefix": null, "map_subdirs": null,
   "maps": [ { "map", "exit_code", "script_errors", "stub_hits",
               "missing_natives", "exceptions", "script_warnings", "fps_avg", "maps_loaded",
               "login", "match_started", "log", "screenshot", "verdict" } ] }
@@ -487,8 +508,11 @@ documents: `extract` (logs to `stubs.json` and `errors.json`), `build`
 against sidecars) and `repro` (re-run maps and compare). Everything that
 differs between games lives in a `triage.scenario.Scenario` value: class
 hierarchy, bare-owner table, error attribution, prose, document formats,
-re-run options and the checker options. Functions take the scenario and
-explicit directories, never a literal or the working directory.
+re-run options (`url_options`, `exec`, and `url_game_by_prefix`, the
+`(prefix, class)` pairs a sweep's `--game-by-prefix` entries become, so a
+re-run and a repro line carry the sweep's `?game=`) and the checker options.
+Functions take the scenario and explicit directories, never a literal or the
+working directory.
 
 A scenario is a directory under `Tools/smoke/scenarios/` whose `scenario.py`
 defines exactly one `Scenario` (two or none is an error), beside the sweep's
