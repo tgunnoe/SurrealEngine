@@ -5,6 +5,7 @@ import io
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -742,6 +743,47 @@ class TestReproLine(Fixture):
         self.generate(scn)
         self.edit_doc("TRIAGE.md", "'--url=M1?NumBots=4'", "--url=M1")
         self.assertTrue(any("M1: missing repro command" in p for p in self.problems(scn)))
+
+
+class TestGameByPrefix(unittest.TestCase):
+    """A scenario can name the game class each map runs under by the map's name prefix,
+    and the re-run command and the checker's pattern say so as the sweep's URL does."""
+
+    MAPPED = dict(url_game_by_prefix=(("AS", "Botpack.Assault"),), url_options=("?NumBots=4",))
+
+    def repro_line(self, scn, name):
+        # The section's repro line as build.py writes it.
+        argv = " ".join(shlex.quote(a) for a in repro.engine_args(scn, scn.exe, name))
+        return "%srepro: `%s \"%s\"`" % (scn.bullet, argv, scn.game_placeholder)
+
+    def test_command_names_the_game_for_a_matching_prefix_only(self):
+        scn = dataclasses.replace(TOY, **self.MAPPED)
+        self.assertIn("--url=AS-One?game=Botpack.Assault?NumBots=4", repro.engine_args(scn, "Engine", "AS-One"))
+        self.assertIn("--url=DM-Two?NumBots=4", repro.engine_args(scn, "Engine", "DM-Two"))
+        self.assertIn("--url=as-Two?game=Botpack.Assault?NumBots=4", repro.engine_args(scn, "Engine", "as-Two"))
+        # Only the ASCII letters fold, as in the engine: str.upper() would take U+017F for S.
+        stt = dataclasses.replace(scn, url_game_by_prefix=(("ST", "Botpack.Assault"),))
+        self.assertIn("--url=\u017ft-X?NumBots=4", repro.engine_args(stt, "Engine", "\u017ft-X"))
+
+    def test_checker_holds_a_line_to_the_game_text(self):
+        scn = dataclasses.replace(TOY, **self.MAPPED)
+        plain = dataclasses.replace(TOY, url_options=("?NumBots=4",))
+        line = self.repro_line(scn, "AS-One")
+        self.assertIn("?game=Botpack.Assault", line)
+        self.assertIsNotNone(re.match(check.repro_regex(scn, "AS-One"), line))
+        self.assertIsNone(re.match(check.repro_regex(scn, "AS-One"), self.repro_line(plain, "AS-One")))
+        self.assertIsNone(re.match(check.repro_regex(plain, "AS-One"), line))
+
+    def test_a_scenario_with_no_mapping_keeps_its_command_and_pattern(self):
+        # The field is left at its default, not named, so this passes before the field exists.
+        self.assertEqual(repro.engine_args(TOY, "Engine", "AS-One"),
+                         ["Engine", "--autostart", "--exit-after=7",
+                          "--smoke-log=/nonexistent/repro/AS-One.log", "--url=AS-One"])
+        line = self.repro_line(TOY, "AS-One")
+        self.assertIsNotNone(re.match(check.repro_regex(TOY, "AS-One"), line))
+        with_game = line.replace(" --url=AS-One ", " '--url=AS-One?game=Botpack.Assault' ")
+        self.assertNotEqual(with_game, line)
+        self.assertIsNone(re.match(check.repro_regex(TOY, "AS-One"), with_game))
 
 
 def table_rows(text, heading):

@@ -287,6 +287,51 @@ class SweepRunTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertIn("takes a folder name under Maps", self.refusal("--map-subdir", name))
 
+    def argv_of(self, name):
+        return json.loads((self.logdir / f"{name}.log.argv").read_text())
+
+    def sweep_by_prefix(self):
+        """One sweep over assault, deathmatch and dashless maps with AS mapped to Assault."""
+        for stem in ["AS-One", "as-Two", "DM-Two"]:
+            (self.game / "Maps" / f"{stem}.unr").write_bytes(b"")
+        report, _ = self.sweep("--game-by-prefix", "AS=Botpack.Assault", "--url-options", "?NumBots=4")
+        return report
+
+    def test_game_by_prefix_names_the_game_right_after_the_map_name(self):
+        report = self.sweep_by_prefix()
+        # The match folds ASCII case, and the game text comes before the url options.
+        self.assertIn("--url=AS-One?game=Botpack.Assault?NumBots=4", self.argv_of("AS-One"))
+        self.assertIn("--url=as-Two?game=Botpack.Assault?NumBots=4", self.argv_of("as-Two"))
+        self.assertEqual(report["game_by_prefix"], {"AS": "Botpack.Assault"})
+
+    def test_game_by_prefix_leaves_other_prefixes_and_dashless_names_alone(self):
+        self.sweep_by_prefix()
+        # A has no dash, so it has no prefix to match.
+        self.assertIn("--url=DM-Two?NumBots=4", self.argv_of("DM-Two"))
+        self.assertIn("--url=A?NumBots=4", self.argv_of("A"))
+        for name in ["DM-Two", "A"]:
+            self.assertEqual([a for a in self.argv_of(name) if "game=" in a], [])
+
+    def test_without_game_by_prefix_the_command_and_report_are_unchanged(self):
+        report, args = self.sweep()
+        self.assertIn("--url=A", args)
+        self.assertIsNone(report.get("game_by_prefix"))
+
+    def test_game_by_prefix_malformed_or_repeated_entries_are_refused(self):
+        bad = "--game-by-prefix: bad entry '%s' (expected PREFIX=Package.Class)"
+        self.assertIn(bad % "AS", self.refusal("--game-by-prefix", "AS"))
+        text = self.refusal("--game-by-prefix", "AS=Botpack.Assault",
+                            "--game-by-prefix", "as=Botpack.CTFGame")
+        self.assertIn("--game-by-prefix: prefix 'as' given twice", text)
+        # The rest of the entry form: a prefix that is a bare word and a class that is
+        # Package.Class, with nothing in it that could add a url option.
+        for entry in ["=Botpack.Assault", "AS-=Botpack.Assault", "A S=Botpack.Assault",
+                      "AS/x=Botpack.Assault", "AS=", "AS=Assault", "AS=Botpack.Assault.Extra",
+                      "AS=Botpack.Assault?NumBots=4", "AS=Botpack.Assault&x", ".=Botpack.Assault",
+                      "AS=Botpack.Assault\n"]:
+            with self.subTest(entry=entry):
+                self.assertIn(bad % entry, self.refusal("--game-by-prefix", entry))
+
 
 if __name__ == "__main__":
     unittest.main()
