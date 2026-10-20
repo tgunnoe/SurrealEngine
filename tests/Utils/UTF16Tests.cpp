@@ -35,3 +35,9 @@ TEST(NarrowUnicodeFirstUnitAboveByte)
 {
 	CHECK_EQ(narrow_utf16(L"\x0100"), std::string("?"));
 }
+
+TEST(NarrowUnicodeKeepsLastByte)
+{
+	// 0xFF is the largest unit that is still a byte; 0x100 is covered above.
+	CHECK_EQ(narrow_utf16(L"\xff"), std::string(1, '\xff'));
+}
