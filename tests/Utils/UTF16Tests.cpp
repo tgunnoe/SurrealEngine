@@ -12,13 +12,13 @@ TEST(NarrowUnicodeKeepsBytesBelow256)
 	// U+00E9 is the byte 0xE9: the narrowing keeps the code unit, it does not re-encode it.
 	std::string expected = "caf";
 	expected.push_back('\xe9');
-	CHECK_EQ(narrow_utf16(L"café"), expected);
+	CHECK_EQ(narrow_utf16(L"caf\x00e9"), expected);
 }
 
 TEST(NarrowUnicodeReplacesWideUnits)
 {
 	// U+FD92 has the low byte 0x92; only a unit below 256 may pass as a byte.
-	CHECK_EQ(narrow_utf16(L"aﶒb"), std::string("a?b"));
+	CHECK_EQ(narrow_utf16(L"a\xfd92" L"b"), std::string("a?b"));
 }
 
 TEST(NarrowUnicodeReplacesEachSurrogateHalf)
@@ -33,5 +33,5 @@ TEST(NarrowUnicodeEmpty)
 
 TEST(NarrowUnicodeFirstUnitAboveByte)
 {
-	CHECK_EQ(narrow_utf16(L"Ā"), std::string("?"));
+	CHECK_EQ(narrow_utf16(L"\x0100"), std::string("?"));
 }
