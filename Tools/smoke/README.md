@@ -273,8 +273,8 @@ python3 -I Tools/smoke/sweep.py --game "<game folder>" --seconds 15 --limit 3 --
 Options: `--game`, `--out` (required); `--seconds` (default 15); `--limit`
 (first N maps, default all); `--exe` (default `build/SurrealEngine`);
 `--logdir` (default `<out>.d`, holds per-map logs and screenshots);
-`--url-options`, `--exec`, `--portable`, `--map-subdir`, `--game-by-prefix`
-(below).
+`--url-options`, `--exec`, `--portable`, `--map-subdir`, `--game-by-prefix`,
+`--game-by-prefix-except` (below).
 
 `--url-options <text>` appends the text to every `--url=<map>`, for example
 `?NumBots=4`, so a botmatch run starts `--url=DM-Deck16][?NumBots=4`.
@@ -317,6 +317,29 @@ that differ only in ASCII case count as one) stop the sweep before any run.
 `game_by_prefix`, an object from each prefix as given to its class, `null`
 when the flag is absent.
 
+`--game-by-prefix-except <name>` exempts a map from the per-prefix game: the
+named map runs as `--url=<mapname>`, with no `?game=` text, whatever its
+prefix. The engine picks a map's game from the URL's `game` option, then the
+map's stored `LevelInfo.DefaultGameType`, then the ini's default game, then
+`Botpack.DeathMatchPlus`, so a map whose stored type is not the game its
+prefix names would otherwise run under the wrong one. In the stock Unreal
+Tournament maps that is `CTF-Tutorial`: it stores `TrainingCTF`, where the
+other `CTF-` maps that store a type store `CTFGame`. With
+
+```
+--game-by-prefix CTF=Botpack.CTFGame --game-by-prefix-except CTF-Tutorial
+```
+
+`CTF-Tutorial` runs under its own game and the other `CTF-` maps under
+`Botpack.CTFGame`. The name is the map's whole name, as in `--url=<mapname>`,
+compared without regard to ASCII case. Repeat the flag for more maps; a name
+that matches no map is unused. An empty name, `.`, `..`, a name holding `/`,
+`\`, a space, a tab or a newline, and a name given twice (names that differ
+only in ASCII case count as one) stop the sweep before any run. Without
+`--game-by-prefix` there is no game text to leave out, so the flag changes only
+the report. The report records the names as `game_by_prefix_except`, an array
+in the order given, `null` when the flag is absent.
+
 Screenshots capture the whole desktop, so a window in front of the engine
 appears in them, and an occluded engine window renders slowly.
 
@@ -324,7 +347,7 @@ appears in them, and an occluded engine window renders slowly.
 
 ```
 { "game": "<folder>", "seconds": 15, "url_options": null, "exec": null,
-  "game_by_prefix": null, "map_subdirs": null,
+  "game_by_prefix": null, "game_by_prefix_except": null, "map_subdirs": null,
   "maps": [ { "map", "exit_code", "script_errors", "stub_hits",
               "missing_natives", "exceptions", "script_warnings", "fps_avg", "maps_loaded",
               "login", "match_started", "log", "screenshot", "verdict" } ] }
@@ -509,12 +532,13 @@ documents: `extract` (logs to `stubs.json` and `errors.json`), `build`
 against sidecars) and `repro` (re-run maps and compare). Everything that
 differs between games lives in a `triage.scenario.Scenario` value: class
 hierarchy, bare-owner table, error attribution, prose, document formats,
-re-run options (`url_options`, `exec` and `url_game_by_prefix`) and the
-checker options. A re-run and a repro line carry the scenario's
-`url_game_by_prefix` pairs, not the sweep's `--game-by-prefix` entries: the
-field must hold the pairs the sweep was given, and nothing checks that it
-does. Functions take the scenario and explicit directories, never a literal
-or the working directory.
+re-run options (`url_options`, `exec`, `url_game_by_prefix` and
+`url_game_except`) and the checker options. A re-run and a repro line carry
+the scenario's `url_game_by_prefix` pairs and `url_game_except` names, not the
+sweep's `--game-by-prefix` entries and `--game-by-prefix-except` names: the
+fields must hold the pairs and names the sweep was given, and nothing checks
+that they do. Functions take the scenario and explicit directories, never a
+literal or the working directory.
 
 A scenario is a directory under `Tools/smoke/scenarios/` whose `scenario.py`
 defines exactly one `Scenario` (two or none is an error), beside the sweep's

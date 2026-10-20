@@ -785,6 +785,22 @@ class TestGameByPrefix(unittest.TestCase):
         self.assertNotEqual(with_game, line)
         self.assertIsNone(re.match(check.repro_regex(TOY, "AS-One"), with_game))
 
+    EXCEPTED = dict(url_game_by_prefix=(("CTF", "Botpack.CTFGame"),), url_game_except=("CTF-Tutorial",))
+
+    def test_command_leaves_an_excepted_map_without_the_game(self):
+        scn = dataclasses.replace(TOY, **self.EXCEPTED)
+        self.assertIn("--url=CTF-Tutorial", repro.engine_args(scn, "Engine", "CTF-Tutorial"))
+        self.assertIn("--url=CTF-Face?game=Botpack.CTFGame", repro.engine_args(scn, "Engine", "CTF-Face"))
+
+    def test_checker_holds_an_excepted_map_to_no_game_text(self):
+        scn = dataclasses.replace(TOY, **self.EXCEPTED)
+        line = self.repro_line(scn, "CTF-Tutorial")
+        self.assertNotIn("game=", line)
+        self.assertIsNotNone(re.match(check.repro_regex(scn, "CTF-Tutorial"), line))
+        with_game = line.replace(" --url=CTF-Tutorial ", " '--url=CTF-Tutorial?game=Botpack.CTFGame' ")
+        self.assertNotEqual(with_game, line)
+        self.assertIsNone(re.match(check.repro_regex(scn, "CTF-Tutorial"), with_game))
+
 
 def table_rows(text, heading):
     """The cells of each row of the table under `## heading`, header and rule dropped."""
