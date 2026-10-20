@@ -26,13 +26,14 @@ UNREAL = Scenario(
     summary_footer=(
         "\nA map becomes clean only when every signature that lists it above is fixed.\n"),
     # Owner class -> superclass chain, read from the export tables of the Unreal
-    # Gold 226b packages Core.u, Engine.u, UnrealShare.u and UnrealI.u in System/:
-    # each class export (class index 0) carries its super class, an index into the
-    # same package's exports or imports, and the first package to export a name
-    # decides it. Each chain was read by following a class export's super-class
-    # reference through those export tables up to Object.
+    # Gold 226b packages Core.u, Engine.u, UnrealShare.u, UnrealI.u and UPak.u
+    # (Return to Na Pali) in System/: each class export (class index 0) carries
+    # its super class, an index into the same package's exports or imports, and
+    # the first package to export a name decides it. Each chain was read by
+    # following a class export's super-class reference through those export
+    # tables up to Object. PathNodeIterator is exported by UPak.u.
     # A class counts as gameplay when its chain meets a gameplay root. Decal, one
-    # of the roots below, is not exported by any of the four packages, so it
+    # of the roots below, is not exported by any of the five packages, so it
     # has no row.
     hierarchy={
         "Actor": ["Actor", "Object"],
@@ -67,6 +68,7 @@ UNREAL = Scenario(
         "GameReplicationInfo": ["GameReplicationInfo", "ReplicationInfo", "Info", "Actor", "Object"],
         "Spectator": ["Spectator", "PlayerPawn", "Pawn", "Actor", "Object"],
         "Mutator": ["Mutator", "Info", "Actor", "Object"],
+        "PathNodeIterator": ["PathNodeIterator", "Actor", "Object"],
     },
     gameplay_roots=frozenset({
         "Actor", "Pawn", "PlayerPawn", "Inventory", "Weapon", "Projectile",
@@ -84,6 +86,7 @@ UNREAL = Scenario(
         "LevelInfo": "SurrealEngine/Native/NLevelInfo.cpp",
         "NavigationPoint": "SurrealEngine/Native/NNavigationPoint.cpp",
         "Pawn": "SurrealEngine/Native/NPawn.cpp",
+        "PathNodeIterator": "SurrealEngine/Packages/UPak/UPathNodeIterator.cpp",
         "PlayerPawn": "SurrealEngine/Native/NPlayerPawn.cpp",
         "ZoneInfo": "SurrealEngine/Native/NZoneInfo.cpp",
     },
@@ -93,13 +96,6 @@ UNREAL = Scenario(
         (None, "contains", "Unsupported expression value property type",
          "script: Unsupported expression value property type"),
     ),
-    error_owner={
-        "crash: FATAL signal 6": (
-            "unknown: the row's recorded error lines hold only the signal line "
-            "(no script error, missing native, exception or terminate message "
-            "before it), so the aborting frame is not identified",
-            "none applies"),
-    },
     status_natives=_STATUS,
     bullet="- ",
     status_label="Status.md",
@@ -114,7 +110,7 @@ UNREAL = Scenario(
     exit_after_seconds=60,
     repro_timeout_seconds=105,
     repro_logdir="/tmp/repro-unreal",
-    row_count=55,
+    row_count=98,
     screenshots_null=True,
     errors_in_section=True,
     gameplay_stubs_in_section=True,
