@@ -69,6 +69,25 @@ def game_by_prefix_entries(entries):
     return mapping
 
 
+def game_by_prefix_except_names(names):
+    """The --game-by-prefix-except values in the order given, each a bare map name.
+
+    A name stands for one map's file stem, so one that is empty, stands for the current or
+    parent folder, or holds a path separator or a blank is a mistake in the command: it is
+    refused before any run rather than left to match nothing. Names that differ only in
+    ASCII case name one map, so a repeat of either spelling is refused.
+    """
+    seen = set()
+    for name in names:
+        if not name or name in (".", "..") or any(c in name for c in "/\\ \t\n"):
+            sys.exit(f"sweep: --game-by-prefix-except: bad name '{name}'")
+        folded = name.translate(ASCII_UPPER)
+        if folded in seen:
+            sys.exit(f"sweep: --game-by-prefix-except: name '{name}' given twice")
+        seen.add(folded)
+    return list(names)
+
+
 def list_maps(game, subdirs=()):
     """The maps under <game>/Maps, then those of each Maps/<subdir> in the order given.
 
@@ -230,6 +249,10 @@ def main():
     ap.add_argument("--game-by-prefix", action="append", default=[], metavar="PREFIX=Package.Class",
                     help="run each map named PREFIX-<name> under ?game=Package.Class, placed "
                          "right after the map name; repeat --game-by-prefix for more prefixes")
+    ap.add_argument("--game-by-prefix-except", action="append", default=[], metavar="NAME",
+                    help="run the map named NAME without ?game=, whatever its prefix, for a map "
+                         "whose own game type is not its prefix's game; repeat "
+                         "--game-by-prefix-except for more maps")
     args = ap.parse_args()
 
     out = Path(args.out)
@@ -238,6 +261,7 @@ def main():
 
     subdirs = map_subdir_names(args.map_subdir)
     by_prefix = game_by_prefix_entries(args.game_by_prefix)
+    except_names = game_by_prefix_except_names(args.game_by_prefix_except)
     maps = list_maps(args.game, subdirs)
     if args.limit > 0:
         maps = maps[:args.limit]
@@ -245,11 +269,12 @@ def main():
     results = []
     report = {"game": PORTABLE_GAME if args.portable else str(args.game), "seconds": args.seconds,
               "url_options": args.url_options or None, "exec": args.exec_text or None,
-              "game_by_prefix": by_prefix or None, "map_subdirs": subdirs or None, "maps": results}
+              "game_by_prefix": by_prefix or None, "game_by_prefix_except": except_names or None,
+              "map_subdirs": subdirs or None, "maps": results}
     for m in maps:
         entry = run_map(args.exe, args.game, m, args.seconds, logdir,
                         args.url_options, args.exec_text, args.portable,
-                        game_text=game_text(by_prefix.items(), m.stem))
+                        game_text=game_text(by_prefix.items(), m.stem, except_names))
         print(f"{entry['verdict']:8} {entry['map']}", flush=True)
         results.append(entry)
         # Rewritten after every map so an interrupted sweep keeps its rows.

@@ -11,15 +11,23 @@ from dataclasses import dataclass, field
 ASCII_UPPER = str.maketrans(string.ascii_lowercase, string.ascii_uppercase)
 
 
-def game_text(pairs, name):
-    """The `?game=<class>` text for a map, or "" when no prefix of `pairs` matches.
+def game_text(pairs, name, except_names=()):
+    """The `?game=<class>` text for a map, or "" when it is excepted or no prefix of `pairs`
+    matches.
 
     `pairs` holds (prefix, class) pairs. A map's prefix is the part of its name before the
     first "-" (a name with no "-" has none and never matches), compared without regard to
-    ASCII case. One rule serves the sweep, the re-run command and the checker, so given the
-    same pairs they name the same game. Nothing ties the sweep's pairs to a scenario's, so
-    the scenario's `url_game_by_prefix` must hold the pairs the sweep was given.
+    ASCII case. A map whose whole name is in `except_names` gets "" whatever its prefix,
+    checked before the prefix: the engine takes a URL's game option before the map's stored
+    `DefaultGameType`, so a map whose stored type is not its prefix's game is exempted by
+    name. One rule serves the sweep, the re-run command and the checker, so given the same
+    pairs and names they name the same game. Nothing ties the sweep's arguments to a
+    scenario's, so the scenario's `url_game_by_prefix` and `url_game_except` must hold the
+    pairs and names the sweep was given.
     """
+    folded_name = name.translate(ASCII_UPPER)
+    if any(excepted.translate(ASCII_UPPER) == folded_name for excepted in except_names):
+        return ""
     prefix, dash, _ = name.partition("-")
     if not dash:
         return ""
@@ -75,6 +83,9 @@ class Scenario:
     # (prefix, class) pairs: a map whose name prefix matches gets ?game=<class> right
     # after its name, before url_options, e.g. (("AS", "Botpack.Assault"),)
     url_game_by_prefix: tuple = ()
+    # Map names that get no ?game= whatever their prefix, compared without regard to ASCII
+    # case, e.g. ("CTF-Tutorial",): the sweep's --game-by-prefix-except names.
+    url_game_except: tuple = ()
     exec: str = ""                   # passed as --exec=<exec> when not empty
 
     # Checker options.

@@ -37,7 +37,8 @@ def engine_args(scn, exe, name):
     sweep used, so the re-run is the same run. The documents show it too."""
     args = [exe, "--autostart", "--exit-after=%d" % scn.exit_after_seconds,
             "--smoke-log=" + log_path(scn, name),
-            "--url=" + name + game_text(scn.url_game_by_prefix, name) + "".join(scn.url_options)]
+            "--url=" + name + game_text(scn.url_game_by_prefix, name, scn.url_game_except)
+            + "".join(scn.url_options)]
     if scn.exec:
         args.append("--exec=" + scn.exec)
     return args

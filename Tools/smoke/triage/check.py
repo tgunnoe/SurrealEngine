@@ -51,7 +51,8 @@ def repro_regex(scn, name):
     exec_rx = "'?--exec=%s'? " % re.escape(scn.exec) if scn.exec else ""
     return (r"^%srepro: `%s --autostart --exit-after=%d '?--smoke-log=\S+ '?--url=%s%s'? %s"
             % (re.escape(scn.bullet), re.escape(scn.exe), scn.exit_after_seconds, re.escape(name),
-               re.escape(game_text(scn.url_game_by_prefix, name) + "".join(scn.url_options)), exec_rx))
+               re.escape(game_text(scn.url_game_by_prefix, name, scn.url_game_except)
+                         + "".join(scn.url_options)), exec_rx))
 
 
 def register_sites(lines, heading):
