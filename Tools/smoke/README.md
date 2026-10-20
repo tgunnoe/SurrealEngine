@@ -257,9 +257,10 @@ run with `FATAL` instead of `SUMMARY`; it is kept so the line shape is stable.
 ## Sweep runner
 
 `sweep.py` runs every map under `<game>/Maps` (`.unr` and `.dx`, sorted by
-filename), one engine process per map, each with `--url=<mapname>`. A child
-still running 45 seconds after its `--exit-after` is killed with SIGKILL. When
-`grim` is on PATH, a desktop screenshot is taken at the midpoint of each run.
+filename, then the maps of each `--map-subdir` folder), one engine process per
+map, each with `--url=<mapname>`. A child still running 45 seconds after its
+`--exit-after` is killed with SIGKILL. When `grim` is on PATH, a desktop
+screenshot is taken at the midpoint of each run.
 
 Environment (read from the caller, not set by the script):
 
@@ -272,7 +273,7 @@ python3 -I Tools/smoke/sweep.py --game "<game folder>" --seconds 15 --limit 3 --
 Options: `--game`, `--out` (required); `--seconds` (default 15); `--limit`
 (first N maps, default all); `--exe` (default `build/SurrealEngine`);
 `--logdir` (default `<out>.d`, holds per-map logs and screenshots);
-`--url-options`, `--exec`, `--portable` (below).
+`--url-options`, `--exec`, `--portable`, `--map-subdir` (below).
 
 `--url-options <text>` appends the text to every `--url=<map>`, for example
 `?NumBots=4`, so a botmatch run starts `--url=DM-Deck16][?NumBots=4`.
@@ -282,13 +283,26 @@ committed: `game` is `<game folder>`, each row's `log` is the log file's name
 only, and `screenshot` is `null`. The report records the first two flags as
 `url_options` and `exec`, `null` when the flag is absent.
 
+`--map-subdir <name>` also sweeps the maps under `Maps/<name>`, for a game that
+keeps maps in a subfolder: Unreal Gold's Return to Na Pali maps are in
+`Maps/UPak`, which its `Unreal.ini` lists as a map path. Each runs by its bare
+name, as the engine resolves it, so its log is `<mapname>.log` and its URL
+`--url=<mapname>`. The top-level maps run first, then each folder's maps in the
+order the flags are given; repeat the flag for more folders (a folder named
+twice counts once), and `--limit` counts over the whole list. A map name found
+in two folders (names that differ only in ASCII case count as one, as they do
+to the engine), a folder that does not exist and a name that is not a bare
+folder name (empty, `.`, `..`, or holding a path separator) stop the sweep
+before any run. The report records the folders as `map_subdirs`, `null` when
+the flag is absent.
+
 Screenshots capture the whole desktop, so a window in front of the engine
 appears in them, and an occluded engine window renders slowly.
 
 ## Report schema
 
 ```
-{ "game": "<folder>", "seconds": 15, "url_options": null, "exec": null,
+{ "game": "<folder>", "seconds": 15, "url_options": null, "exec": null, "map_subdirs": null,
   "maps": [ { "map", "exit_code", "script_errors", "stub_hits",
               "missing_natives", "exceptions", "script_warnings", "fps_avg", "maps_loaded",
               "login", "match_started", "log", "screenshot", "verdict" } ] }

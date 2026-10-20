@@ -14,6 +14,7 @@ import json
 import os
 import shutil
 import signal
+import string
 import subprocess
 import sys
 import time
@@ -28,16 +29,50 @@ MAP_SUFFIXES = {".unr", ".dx"}
 KILL_GRACE_SECONDS = 45
 GRIM_TIMEOUT_SECONDS = 10
 PORTABLE_GAME = "<game folder>"
+# The engine folds only the ASCII letters when it compares names, so str.upper() would
+# refuse pairs it keeps apart.
+ASCII_UPPER = str.maketrans(string.ascii_lowercase, string.ascii_uppercase)
 
 
-def list_maps(game):
+def map_subdir_names(names):
+    """The --map-subdir values in the order of first mention, each a bare folder name.
+
+    A name is joined onto Maps/ as given, so one holding a separator or standing for the
+    current or parent folder would name something other than a folder directly under Maps.
+    """
+    unique = list(dict.fromkeys(names))
+    for name in unique:
+        if not name or name in (".", "..") or "/" in name or "\\" in name:
+            sys.exit(f"sweep: --map-subdir takes a folder name under Maps, not {name}")
+    return unique
+
+
+def list_maps(game, subdirs=()):
+    """The maps under <game>/Maps, then those of each Maps/<subdir> in the order given.
+
+    The engine resolves a map by its bare name, so a stem found in two folders would name
+    two maps by one name; the sweep refuses that listing rather than pick one. Stems are
+    compared without regard to ASCII case, the only case the engine folds in a name, so
+    Bluff and bluff are one name; the refusal names the stem as found.
+    """
     maps_dir = Path(game) / "Maps"
     if not maps_dir.is_dir():
         sys.exit(f"sweep: no Maps directory in {game}")
-    return sorted(
-        (p for p in maps_dir.iterdir() if p.suffix.lower() in MAP_SUFFIXES),
-        key=lambda p: p.name,
-    )
+    folders = [maps_dir]
+    for name in subdirs:
+        folder = maps_dir / name
+        if not folder.is_dir():
+            sys.exit(f"sweep: no Maps/{name} directory in {game}")
+        folders.append(folder)
+    maps = []
+    folder_of = {}
+    for folder in folders:
+        for p in sorted((p for p in folder.iterdir() if p.suffix.lower() in MAP_SUFFIXES),
+                        key=lambda p: p.name):
+            if folder_of.setdefault(p.stem.translate(ASCII_UPPER), folder) != folder:
+                sys.exit(f"sweep: map name {p.stem} appears in more than one folder")
+            maps.append(p)
+    return maps
 
 
 def parse_log(path):
@@ -166,20 +201,24 @@ def main():
     ap.add_argument("--url-options", default="", help="text appended to every --url=<map>, e.g. ?NumBots=4")
     ap.add_argument("--exec", dest="exec_text", default="", help="passed as --exec=<text> to every run")
     ap.add_argument("--portable", action="store_true", help="write a report with no host path in it")
+    ap.add_argument("--map-subdir", action="append", default=[], metavar="NAME",
+                    help="also sweep the maps under Maps/<name> by their bare names; "
+                         "repeat --map-subdir for more folders")
     args = ap.parse_args()
 
     out = Path(args.out)
     logdir = Path(args.logdir) if args.logdir else out.with_name(out.name + ".d")
     logdir.mkdir(parents=True, exist_ok=True)
 
-    maps = list_maps(args.game)
+    subdirs = map_subdir_names(args.map_subdir)
+    maps = list_maps(args.game, subdirs)
     if args.limit > 0:
         maps = maps[:args.limit]
 
     results = []
     report = {"game": PORTABLE_GAME if args.portable else str(args.game), "seconds": args.seconds,
               "url_options": args.url_options or None, "exec": args.exec_text or None,
-              "maps": results}
+              "map_subdirs": subdirs or None, "maps": results}
     for m in maps:
         entry = run_map(args.exe, args.game, m, args.seconds, logdir,
                         args.url_options, args.exec_text, args.portable)
