@@ -419,8 +419,10 @@ inline void ExpressionValue::Store(const ExpressionValue& rvalue)
 	case ExpressionValueType::ValueStruct:
 		if (UStruct* Struct = VariableProperty ? static_cast<UStructProperty*>(VariableProperty)->Struct : GetStructValue()->Struct)
 		{
-			// A Nothing rvalue is a None context expression. Like the original interpreter, which
-			// zeroes such a result, reset the target; a Nothing value has no storage to copy from.
+			// A Nothing rvalue has no storage to copy from. It arrives from a None context and from
+			// a call that yielded no value (Frame::Call's handling of a Nothing argument lists the
+			// sources). Either way the target is reset; for a None context this matches the original
+			// interpreter, which zeroes such a result.
 			const bool reset = rvalue.Type == ExpressionValueType::Nothing;
 			for (UProperty* prop : Struct->Properties)
 			{
