@@ -98,14 +98,11 @@ section.
 
 | Site | Lines | Maps | Verdict | Grounds |
 | :--- | ---: | ---: | :--- | :--- |
-| UnrealCTFScoreboard.DrawTrailer | 3190 | 1 | faithful | As in the `ut` table: the same stock training game and scoreboard, with the same residual. |
-| AssaultRandomizer.SpecialCost | 20 | 1 | undecided | The callstack names the one statement of the stock `CostEnabled` `SpecialCost`, called from the engine's path search for a bot. In the traced run only one of four bots warned (996 lines against 18 in the sweep of 73df9f26 and 20 in the sweep of 8d225ef3), so by differential the None is that bot's own `PlayerReplicationInfo`; why it has none is not known. |
-| TMale1Bot.Roaming | 18 | 2 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. |
-| TMale2Bot.Roaming | 8 | 2 | faithful | The callstack names `TurnTo(Location + AmbushSpot.lookDir)` at `Bot`'s `LongCamp` label, with the bot's own `AmbushSpot` None; only script assigns `AmbushSpot`, and the stock `PickDestination` sends a bot standing at an ambush point to `LongCamp` without assigning one. |
+| UnrealCTFScoreboard.DrawTrailer | 3178 | 1 | faithful | As in the `ut` table: the same stock training game and scoreboard, with the same residual. |
+| MinigunCannon.SeePlayer | 879 | 1 | undecided | As `MinigunCannon.SeePlayer` in the `ut` table. |
 | UTConsole.AddMessage | 8 | 1 | faithful | As in the `ut` table: the same stock tutorial and console. |
-| MinigunCannon.SeePlayer | 5 | 1 | undecided | As `MinigunCannon.SeePlayer` in the `ut` table. |
-| TeamCannon.SeePlayer | 5 | 3 | undecided | As in the `ut` table: the one traced warning (AS-HiSpeed) saw a cannon, which has no replication info; AS-Mazon and AS-OceanFloor were not traced, and whom the original raises `SeePlayer` for is not known. |
-| TFemale2Bot.Roaming | 1 | 1 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. |
+| TeamCannon.SeePlayer | 4 | 3 | undecided | As in the `ut` table: the one traced warning (AS-HiSpeed) saw a cannon, which has no replication info; AS-Mazon and AS-OceanFloor were not traced, and whom the original raises `SeePlayer` for is not known. |
+| TFemale2Bot.Roaming | 3 | 1 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. |
 
 ### deusex
 
@@ -127,6 +124,9 @@ lines and maps are `-` because no current sweep table lists them.
 | SkaarjBerserker.TakeDamage | - | - | undecided | Inherited from the same seven unguarded `ScriptedPawn` state bodies as `Slith.TakeDamage`, but it did not reproduce in two traced runs on ExtremeDark, so neither the state nor the damage source is known. The re-run of the sweep (f94c1ba6) did not log it either, and no engine change is known to account for that; the runs are not deterministic. |
 | TFemale1Bot.Roaming | - | - | undecided | The same `Bot` `Roaming` body, which has several unguarded dereferences; no traced run logged this class's statement. The re-sweep (8d225ef3) did not log it, and no engine change is known to account for that; the runs are not deterministic. |
 | LAM.Explode | - | - | faithful | The stock `ThrownProjectile` `Flying` `Explode`, which `LAM` inherits, casts its owner to `DeusExPlayer` and dereferences it without a check, so a LAM whose owner is not the player reaches None. No traced run was made for this site, and what set the LAM off is not recorded. The re-sweep (f41c13db) did not log it, and a search of the engine commits' subjects since 28f08a4c found none naming the site; the runs are not deterministic. |
+| AssaultRandomizer.SpecialCost | - | - | faithful | The callstack names the one statement of the stock `CostEnabled` `SpecialCost`, called from the engine's path search for a bot. The sweep of f93c4864 named the game by prefix, so AS-HiSpeed ran under Assault and the cast yields the game; the sweeps of 73df9f26 and 8d225ef3 ran it under DeathMatchPlus, the ini's default for a map that stores no DefaultGameType, where the cast yields None and the stock script dereferences it, as the original would. |
+| TMale1Bot.Roaming | - | - | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. The re-sweep (f93c4864) did not log it; DOM-Cinder now runs under Domination where the sweep of 8d225ef3 ran it under DeathMatchPlus, which may account for it but is not shown to, DM-ArcaneTemple runs the default game in both sweeps, and the one engine commit since 8d225ef3 (the VM's None logging) adds warnings rather than removing them; the runs are not deterministic. |
+| TMale2Bot.Roaming | - | - | faithful | The callstack names `TurnTo(Location + AmbushSpot.lookDir)` at `Bot`'s `LongCamp` label, with the bot's own `AmbushSpot` None; only script assigns `AmbushSpot`, and the stock `PickDestination` sends a bot standing at an ambush point to `LongCamp` without assigning one. The re-sweep (f93c4864) did not log it; AS-OceanFloor and CTF-Command now run under Assault and CTFGame where the sweep of 8d225ef3 ran them under DeathMatchPlus (the traced CTF-Command run behind the verdict named no game, so it ran under DeathMatchPlus too), which may account for it but is not shown to, and the one engine commit since 8d225ef3 (the VM's None logging) adds warnings rather than removing them; the runs are not deterministic. |
 
 ## Sites
 
@@ -465,7 +465,7 @@ show whether `UPakTransitionInfo` itself kills a pawn.
 ### UnrealCTFScoreboard.DrawTrailer
 
 Verdict `faithful`. Lines per map, `ut`: CTF-Tutorial 3234; `ut-bots`:
-CTF-Tutorial 3190.
+CTF-Tutorial 3178.
 
 Stock `BotPack.TournamentScoreBoard`, function `DrawTrailer`, which
 `UnrealCTFScoreBoard` inherits through `TeamScoreBoard`:
@@ -559,7 +559,7 @@ root at startup on a direct launch of `CTF-Tutorial` is unread.
 ### TeamCannon.SeePlayer
 
 Verdict `undecided`. Lines per map, `ut`: AS-HiSpeed 1, AS-Mazon 1,
-AS-OceanFloor 2; `ut-bots`: AS-HiSpeed 1, AS-Mazon 1, AS-OceanFloor 3.
+AS-OceanFloor 2; `ut-bots`: AS-HiSpeed 1, AS-Mazon 1, AS-OceanFloor 2.
 
 Stock `BotPack.TeamCannon`, state `Idle`, function `SeePlayer`:
 
@@ -602,7 +602,7 @@ the original too.
 
 ### MinigunCannon.SeePlayer
 
-Verdict `undecided`. Lines per map, `ut`: CTF-High 4; `ut-bots`: CTF-High 5.
+Verdict `undecided`. Lines per map, `ut`: CTF-High 4; `ut-bots`: CTF-High 879.
 
 `BotPack.MinigunCannon`:
 
@@ -619,161 +619,9 @@ What would decide it: a CTF-High run that traces `MinigunCannon.SeePlayer`
 and names its argument, and the original's rule for the pawns `SeePlayer` is
 raised for.
 
-### AssaultRandomizer.SpecialCost
-
-Verdict `undecided`. Lines per map, `ut-bots`: AS-HiSpeed 20.
-
-Stock `BotPack.AssaultRandomizer`, state `CostEnabled`, function `SpecialCost`;
-the engine calls it from `UPawn::ClearPaths`
-(`SurrealEngine/Packages/Engine/Actors/Pawn/UPawn_Path.cpp`), once per path
-search for each navigation point with `bSpecialCost` set. The game's `Defender`
-is assigned lazily, the first time `Assault.FindPlayerStart` is asked for a
-team start:
-
-```
-    event int SpecialCost(Pawn Seeker)
-    {
-        if ( !Seeker.bIsPlayer || (Seeker.PlayerReplicationInfo.Team == Assault(Level.Game).Defender.TeamIndex) )
-            return 0;
-
-        return ToggledCost;
-    }
-```
-
-```
-        if ( Defender == None )
-...
-            Defender = Teams[d];
-```
-
-Evidence: a run on AS-HiSpeed with four bots and `--trace-script` on
-`AssaultRandomizer.SpecialCost` logged 996 warnings, every one the single
-statement of `SpecialCost`, with one bot as the seeker (`TFemale2Bot0`); 168
-calls with the other three bots logged no warning. The first:
-
-```
-[15.602821] Bot.FindAmbushSpot: trace: AssaultRandomizer2 AssaultRandomizer CostEnabled: SpecialCost(TFemale2Bot0)
-[15.602821] Pawn.FindPathToward: Accessed None in AssaultRandomizer.SpecialCost
-[15.602821] Pawn.FindPathToward: at AssaultRandomizer.CostEnabled.SpecialCost line 21: if (OrOr_BoolBool(Not_PreBool(Seeker.bIsPlayer), skip(EqualEqual_IntInt(byteToInt(Seeker.PlayerReplicationInfo.Team), dynamic cast(Level.Game).Defender.TeamIndex))))
-[15.602821] Pawn.FindPathToward: at Pawn.FindPathToward line 271
-[15.602821] Pawn.FindPathToward: at Bot.FindAmbushSpot line 2455: MoveTarget = FindPathToward(AmbushSpot)
-[15.602821] Pawn.FindPathToward: at Bot.Roaming.PickDestination line 3019: if (AndAnd_BoolBool(Not_PreBool(bWantsToCamp), skip(FindAmbushSpot())))
-[15.602821] Pawn.FindPathToward: at Bot.Roaming line 3387: goto PreBegin
-```
-
-The statement has three dereferences (`Seeker.PlayerReplicationInfo`,
-`Assault(Level.Game)` and its `Defender`). The last two are the same for every
-bot, and three other bots evaluated the statement (168 calls) without a
-warning, so by differential the None is `TFemale2Bot0`'s own
-`PlayerReplicationInfo`; the log does not print it. Why that bot has none is
-the open question: the stock `Pawn.PreBeginPlay` spawns one for a pawn with
-`bIsPlayer`, and the log does not show whether the stock script or the engine
-left this bot without it.
-
-What would decide it: a trace of that bot's spawn path (`Pawn.PreBeginPlay`)
-and its `PlayerReplicationInfo` at first use, and the original's behaviour on
-the same map. The sweep of 73df9f26 logged 18 lines on this map, the sweep of
-8d225ef3 20 and this run 996, so the count says little.
-
-### TMale2Bot.Roaming
-
-Verdict `faithful`. Lines per map, `ut-bots`: AS-OceanFloor 2, CTF-Command 6.
-
-The `faithful` verdict rests on the statement that the traced CTF-Command run
-logged, `TurnTo(Location + AmbushSpot.lookDir)` at `LongCamp`. The sweep of
-8d225ef3 also logged 2 lines on AS-OceanFloor, a map no run traced, and which
-`Roaming` statement those 2 lines name is not known.
-
-The warning names the state: the statement is in the state code (the labels) of
-`BotPack.Bot`'s `Roaming`, shared by the four classes the `ut-bots` sweeps have
-logged. Stock `BotPack.Bot`, state `Roaming`, label `LongCamp`:
-
-```
-LongCamp:
-    bCamping = true;
-    Acceleration = vect(0,0,0);
-    TweenToWaiting(0.15);
-    TurnTo(Location + Ambushspot.lookdir);
-    Sleep(CampTime);
-    Goto('PreBegin');
-```
-
-Evidence: a run on CTF-Command with four bots and `--trace-script` on
-`Bot.TurnTo` and `Bot.ShareWith` logged 22 warnings, all `TMale2Bot0` and all
-this statement. The first:
-
-```
-[45.583836] Botpack.TMale2Bot: trace: TMale2Bot0 TMale2Bot Roaming: TurnTo(?)
-[45.583836] Botpack.TMale2Bot: Accessed None in TMale2Bot.Roaming
-[45.583836] Botpack.TMale2Bot: at Bot.Roaming line 3387: TurnTo(Add_VectorVector(Location, AmbushSpot.lookDir))
-```
-
-`AmbushSpot` is a script property of the bot, and no engine code touches it.
-Two stock routes send a bot to `LongCamp`: `FindAmbushSpot` after it has
-confirmed a spot,
-
-```
-            CampTime = 10.0;
-            SightRadius = AmbushSpot.SightRadius;
-            GotoState('Roaming', 'LongCamp');
-```
-
-and `Roaming`'s `PickDestination`, for a bot standing at an ambush point it
-roamed to, which assigns nothing:
-
-```
-        if ( (AmbushPoint(RoamTarget) != None)
-            && (VSize(Location - RoamTarget.Location) < 2 * CollisionRadius)
-            && (FRand() < 0.4) )
-        {
-            CampTime = 4.0;
-            GotoState('Roaming', 'LongCamp');
-```
-
-Leaving the state clears the spot:
-
-```
-    function EndState()
-...
-        if ( !bSniping && (AmbushSpot != None) )
-        {
-            AmbushSpot.taken = false;
-            AmbushSpot = None;
-```
-
-The engine runs `EndState` only when the state changes (`UObject::GotoState` in
-`SurrealEngine/Packages/Core/UObject.cpp`), so on the first route the spot
-survives the jump to the label, and a bot with no spot gets to the dereference
-by the second route, from stock data. The log keeps one frame for state code
-and does not show which route sent the bot.
-
-All 22 warnings come within 0.45 s after a `TurnTo` call of the same bot in
-`Acquisition` (it makes 39 in the run; 36 of the 38 gaps between them are under
-2 s and run from 0.22 to 0.93 s), and `Roaming.EndState` clears `AmbushSpot`
-each time the bot leaves `Roaming` unless it is sniping. What raised those
-entries into `Acquisition` (an `EnemyAcquired` from `SeePlayer` or
-`HearNoise`) was not traced, and whether the original bounces between the two
-states at that cadence was not read; the `SeePlayer` question of the cannon
-rows applies. The timing alone does not single the warnings out: 49 of the
-bot's 54 `TurnTo` calls in `Roaming` follow an `Acquisition` one within 0.45 s.
-
-### TMale1Bot.Roaming
-
-Verdict `undecided`. Lines per map, `ut-bots`: DM-ArcaneTemple 6, DOM-Cinder 12.
-
-Stock `BotPack.TMale1Bot`:
-
-```
-class TMale1Bot extends MaleBotPlus;
-```
-
-The same body and the same reason as `TFemale1Bot.Roaming`; no run logged this
-class's statement. What would decide it: a run on CTF-EternalCave that logs
-this class's warning, with the callstack naming the statement.
-
 ### TFemale2Bot.Roaming
 
-Verdict `undecided`. Lines per map, `ut-bots`: CTF-LavaGiant 1.
+Verdict `undecided`. Lines per map, `ut-bots`: DM-ArcaneTemple 3.
 
 Stock `BotPack.TFemale2Bot`:
 
@@ -1005,6 +853,153 @@ the same situation was not read. The re-sweep (f41c13db) did not log it, and a
 search of the engine commits' subjects since 28f08a4c found none naming the
 site; the runs are not deterministic.
 
+### AssaultRandomizer.SpecialCost
+
+Verdict `faithful`. No current sweep lists it.
+
+Stock `BotPack.AssaultRandomizer`, state `CostEnabled`, function `SpecialCost`;
+the engine calls it from `UPawn::ClearPaths`
+(`SurrealEngine/Packages/Engine/Actors/Pawn/UPawn_Path.cpp`), once per path
+search for each navigation point with `bSpecialCost` set. The game's `Defender`
+is assigned lazily, the first time `Assault.FindPlayerStart` is asked for a
+team start:
+
+```
+    event int SpecialCost(Pawn Seeker)
+    {
+        if ( !Seeker.bIsPlayer || (Seeker.PlayerReplicationInfo.Team == Assault(Level.Game).Defender.TeamIndex) )
+            return 0;
+
+        return ToggledCost;
+    }
+```
+
+```
+        if ( Defender == None )
+...
+            Defender = Teams[d];
+```
+
+Evidence: a run on AS-HiSpeed with four bots and `--trace-script` on
+`AssaultRandomizer.SpecialCost` logged 996 warnings, every one the single
+statement of `SpecialCost`, with one bot as the seeker (`TFemale2Bot0`); 168
+calls with the other three bots logged no warning. The first:
+
+```
+[15.602821] Bot.FindAmbushSpot: trace: AssaultRandomizer2 AssaultRandomizer CostEnabled: SpecialCost(TFemale2Bot0)
+[15.602821] Pawn.FindPathToward: Accessed None in AssaultRandomizer.SpecialCost
+[15.602821] Pawn.FindPathToward: at AssaultRandomizer.CostEnabled.SpecialCost line 21: if (OrOr_BoolBool(Not_PreBool(Seeker.bIsPlayer), skip(EqualEqual_IntInt(byteToInt(Seeker.PlayerReplicationInfo.Team), dynamic cast(Level.Game).Defender.TeamIndex))))
+[15.602821] Pawn.FindPathToward: at Pawn.FindPathToward line 271
+[15.602821] Pawn.FindPathToward: at Bot.FindAmbushSpot line 2455: MoveTarget = FindPathToward(AmbushSpot)
+[15.602821] Pawn.FindPathToward: at Bot.Roaming.PickDestination line 3019: if (AndAnd_BoolBool(Not_PreBool(bWantsToCamp), skip(FindAmbushSpot())))
+[15.602821] Pawn.FindPathToward: at Bot.Roaming line 3387: goto PreBegin
+```
+
+Every bot hit the `Assault(Level.Game)` None on every call, the game having run
+as `DeathMatchPlus`, where the cast yields None; the second of the last two
+rows of the table under `## The runs` shows it, and the first, with the game
+named on the URL, logged no `SpecialCost` warning. Only one bot's hits were
+logged in those runs, because the VM dropped a None whose statement ended in a
+jump, which the engine at 66ee08e7 no longer does. The sweep of f93c4864 named
+the game by prefix and ran AS-HiSpeed under `Assault`, where the cast yields
+the game, and did not log the site.
+
+### TMale1Bot.Roaming
+
+Verdict `undecided`. No current sweep lists it.
+
+Stock `BotPack.TMale1Bot`:
+
+```
+class TMale1Bot extends MaleBotPlus;
+```
+
+The same body and the same reason as `TFemale1Bot.Roaming`; no run logged this
+class's statement. What would decide it: a run on CTF-EternalCave that logs
+this class's warning, with the callstack naming the statement.
+
+### TMale2Bot.Roaming
+
+Verdict `faithful`. No current sweep lists it.
+
+The `faithful` verdict rests on the statement that the traced CTF-Command run
+logged, `TurnTo(Location + AmbushSpot.lookDir)` at `LongCamp`. The sweep of
+8d225ef3 also logged 2 lines on AS-OceanFloor, a map no run traced, and which
+`Roaming` statement those 2 lines name is not known.
+
+The warning names the state: the statement is in the state code (the labels) of
+`BotPack.Bot`'s `Roaming`, shared by the four classes the `ut-bots` sweeps have
+logged. Stock `BotPack.Bot`, state `Roaming`, label `LongCamp`:
+
+```
+LongCamp:
+    bCamping = true;
+    Acceleration = vect(0,0,0);
+    TweenToWaiting(0.15);
+    TurnTo(Location + Ambushspot.lookdir);
+    Sleep(CampTime);
+    Goto('PreBegin');
+```
+
+Evidence: a run on CTF-Command with four bots and `--trace-script` on
+`Bot.TurnTo` and `Bot.ShareWith` logged 22 warnings, all `TMale2Bot0` and all
+this statement. The first:
+
+```
+[45.583836] Botpack.TMale2Bot: trace: TMale2Bot0 TMale2Bot Roaming: TurnTo(?)
+[45.583836] Botpack.TMale2Bot: Accessed None in TMale2Bot.Roaming
+[45.583836] Botpack.TMale2Bot: at Bot.Roaming line 3387: TurnTo(Add_VectorVector(Location, AmbushSpot.lookDir))
+```
+
+`AmbushSpot` is a script property of the bot, and no engine code touches it.
+Two stock routes send a bot to `LongCamp`: `FindAmbushSpot` after it has
+confirmed a spot,
+
+```
+            CampTime = 10.0;
+            SightRadius = AmbushSpot.SightRadius;
+            GotoState('Roaming', 'LongCamp');
+```
+
+and `Roaming`'s `PickDestination`, for a bot standing at an ambush point it
+roamed to, which assigns nothing:
+
+```
+        if ( (AmbushPoint(RoamTarget) != None)
+            && (VSize(Location - RoamTarget.Location) < 2 * CollisionRadius)
+            && (FRand() < 0.4) )
+        {
+            CampTime = 4.0;
+            GotoState('Roaming', 'LongCamp');
+```
+
+Leaving the state clears the spot:
+
+```
+    function EndState()
+...
+        if ( !bSniping && (AmbushSpot != None) )
+        {
+            AmbushSpot.taken = false;
+            AmbushSpot = None;
+```
+
+The engine runs `EndState` only when the state changes (`UObject::GotoState` in
+`SurrealEngine/Packages/Core/UObject.cpp`), so on the first route the spot
+survives the jump to the label, and a bot with no spot gets to the dereference
+by the second route, from stock data. The log keeps one frame for state code
+and does not show which route sent the bot.
+
+All 22 warnings come within 0.45 s after a `TurnTo` call of the same bot in
+`Acquisition` (it makes 39 in the run; 36 of the 38 gaps between them are under
+2 s and run from 0.22 to 0.93 s), and `Roaming.EndState` clears `AmbushSpot`
+each time the bot leaves `Roaming` unless it is sniping. What raised those
+entries into `Acquisition` (an `EnemyAcquired` from `SeePlayer` or
+`HearNoise`) was not traced, and whether the original bounces between the two
+states at that cadence was not read; the `SeePlayer` question of the cannon
+rows applies. The timing alone does not single the warnings out: 49 of the
+bot's 54 `TurnTo` calls in `Roaming` follow an `Acquisition` one within 0.45 s.
+
 ## The runs
 
 The quoted log lines come from single runs of the engine built from commit
@@ -1030,6 +1025,8 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
 | TeamCannon.SeePlayer, AssaultRandomizer.SpecialCost | Unreal Tournament 436, AS-HiSpeed | `?NumBots=4` and `--exec=5:Fire` | `TeamCannon.SeePlayer,AssaultRandomizer.SpecialCost` |
 | TMale2Bot.Roaming | Unreal Tournament 436, CTF-Command | `?NumBots=4` and `--exec=5:Fire` | `Bot.TurnTo,Bot.ShareWith` |
 | PlayerStart.PlayTeleportEffect (the engine before and after commit 14090e6d; no trace) | Unreal Gold 226b, ExtremeDGen | none | none |
+| AssaultRandomizer.SpecialCost (engine 24afdf6b, 100 s, the game named on the URL; no SpecialCost warning, the game object's class Assault) | Unreal Tournament 436, AS-HiSpeed | `?game=Botpack.Assault?NumBots=4` and `--exec=5:Fire` | `GameInfo.BroadcastLocalizedMessage,GameInfo.BroadcastRegularDeathMessage,AssaultRandomizer.SpecialCost,GameInfo.Killed,Bot.PreBeginPlay,DeathMatchPlus.AddBot` |
+| AssaultRandomizer.SpecialCost (engine 24afdf6b with a temporary log at the VM's None context and before each path-cost call, reverted and in no commit; every bot hit the cast's None on every call, 2904, 54, 44 and 34 times, one bot's logged) | Unreal Tournament 436, AS-HiSpeed | `?NumBots=4` and `--exec=5:Fire` | `AssaultRandomizer.SpecialCost,DeathMatchPlus.AddBot` |
 
 ## Limits
 
@@ -1049,8 +1046,18 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
   flies on the maps that place their own swarms was not traced.
 - The runs are not deterministic: monsters and bots fight, so a site may not
   reproduce (`SkaarjBerserker.TakeDamage` did not in two runs) and counts
-  differ widely from the sweeps' (`AssaultRandomizer.SpecialCost`: 18 lines in
-  the sweep of 73df9f26, 20 in the sweep of 8d225ef3, 996 in one traced run).
+  differ between runs (`AssaultRandomizer.SpecialCost`: 18 lines in the sweep
+  of 73df9f26, 20 in the sweep of 8d225ef3, 996 in one traced run). All three
+  counts were logged under the VM that dropped a None whose statement ended in
+  a jump, where only one bot's hits reached the log, and their spread is the
+  runs' nondeterminism. The sweep of f93c4864 on the engine of 66ee08e7 logs
+  the Nones the VM dropped before, so its counts are not comparable with the
+  earlier sweeps'. The sweep of f93c4864 named each map's game by its prefix
+  (AS Assault, CTF CTFGame, DOM Domination; CTF-Tutorial exempted, since it
+  stores TrainingCTF); the earlier UT sweeps did not, and the traced runs the
+  `TeamCannon.SeePlayer`, `MinigunCannon.SeePlayer` and
+  `AssaultRandomizer.SpecialCost` readings cite, except the one that names the
+  game on the URL, ran AS-HiSpeed under DeathMatchPlus too.
 - Whom the original raises `SeePlayer` for, when the receiver is a stock UT
   cannon, is not known; the engine raises it for each live pawn in sight.
 - The UT scoreboard and console warnings rest on the stock game assuming the
