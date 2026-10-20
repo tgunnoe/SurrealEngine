@@ -5,12 +5,6 @@
   "first_line_run2": "stubs:; match_started:false",
   "reproduced": "yes"
  },
- "DM-Tutorial": {
-  "exit_code": -6,
-  "first_line_run1": "FATAL signal 6; match_started:true",
-  "first_line_run2": "FATAL signal 6; match_started:true",
-  "reproduced": "yes"
- },
  "EOL_Assault": {
   "exit_code": 0,
   "first_line_run1": "stubs:; match_started:false",
@@ -24,6 +18,12 @@
   "reproduced": "yes"
  },
  "EOL_Challenge": {
+  "exit_code": 0,
+  "first_line_run1": "stubs:; match_started:false",
+  "first_line_run2": "stubs:; match_started:false",
+  "reproduced": "yes"
+ },
+ "EOL_Deathmatch": {
   "exit_code": 0,
   "first_line_run1": "stubs:; match_started:false",
   "first_line_run2": "stubs:; match_started:false",

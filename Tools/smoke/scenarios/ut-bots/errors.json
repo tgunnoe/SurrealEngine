@@ -15,34 +15,33 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in AssaultRandomizer.SpecialCost": 18,
+   "Accessed None in AssaultRandomizer.SpecialCost": 20,
    "Accessed None in TeamCannon.SeePlayer": 1
   },
-  "warnings": 19
+  "warnings": 21
  },
  "AS-Mazon": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in TeamCannon.SeePlayer": 3
+   "Accessed None in TeamCannon.SeePlayer": 1
   },
-  "warnings": 3
+  "warnings": 1
  },
  "AS-OceanFloor": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in TeamCannon.SeePlayer": 2
+   "Accessed None in TMale2Bot.Roaming": 2,
+   "Accessed None in TeamCannon.SeePlayer": 3
   },
-  "warnings": 2
+  "warnings": 5
  },
  "AS-Overlord": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in TFemale2Bot.Roaming": 3
-  },
-  "warnings": 3
+  "warning_sites": {},
+  "warnings": 0
  },
  "AS-Rook": {
   "errors": [],
@@ -60,10 +59,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in TFemale1Bot.Roaming": 2,
-   "Accessed None in TMale2Bot.Roaming": 18
+   "Accessed None in TMale2Bot.Roaming": 6
   },
-  "warnings": 20
+  "warnings": 6
  },
  "CTF-Coret": {
   "errors": [],
@@ -92,10 +90,8 @@
  "CTF-EternalCave": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in TMale1Bot.Roaming": 11
-  },
-  "warnings": 11
+  "warning_sites": {},
+  "warnings": 0
  },
  "CTF-Face": {
   "errors": [],
@@ -145,9 +141,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in TFemale2Bot.Roaming": 6
+   "Accessed None in TFemale2Bot.Roaming": 1
   },
-  "warnings": 6
+  "warnings": 1
  },
  "CTF-Niven": {
   "errors": [],
@@ -184,9 +180,9 @@
   "fatal_after_summary": false,
   "warning_sites": {
    "Accessed None in UTConsole.AddMessage": 8,
-   "Accessed None in UnrealCTFScoreboard.DrawTrailer": 3245
+   "Accessed None in UnrealCTFScoreboard.DrawTrailer": 3190
   },
-  "warnings": 3253
+  "warnings": 3198
  },
  "CityIntro": {
   "errors": [],
@@ -203,8 +199,10 @@
  "DM-ArcaneTemple": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {},
-  "warnings": 0
+  "warning_sites": {
+   "Accessed None in TMale1Bot.Roaming": 6
+  },
+  "warnings": 6
  },
  "DM-Barricade": {
   "errors": [],
@@ -387,13 +385,7 @@
   "warnings": 0
  },
  "DM-Tutorial": {
-  "errors": [
-   {
-    "kind": "FATAL",
-    "map_section": "DM-Tutorial",
-    "text": "signal 6"
-   }
-  ],
+  "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {},
   "warnings": 0
@@ -408,9 +400,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in TFemale1Bot.Roaming": 15
+   "Accessed None in TMale1Bot.Roaming": 12
   },
-  "warnings": 15
+  "warnings": 12
  },
  "DOM-Condemned": {
   "errors": [],
