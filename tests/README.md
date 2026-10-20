@@ -47,8 +47,7 @@ are known to fail. For a listed test:
 A name that matches no registered test fails the run. A listed test appears in `ctest` output as `XFAIL.<name>`. An expected failure
 must fail through a check, never through a crash.
 
-`ArrayInsertOutOfBoundsReturnsFalse` is a placeholder: probing it for real is
-unsafe because `ScriptArray::Insert` writes past its new allocation when the
-offset is beyond the end, so the test fails by an explicit message instead of
-making the call. Replace it with a real check once the native bounds-checks
-the offset.
+A probe that would crash the test process or corrupt memory cannot be an
+expected failure as written, since a crash is always a failure. Until the call
+is safe, write the test to fail by an explicit `CHECK_MSG(false, ...)` that
+names the hazard, and put the real check in the commit that makes the call safe.

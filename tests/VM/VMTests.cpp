@@ -7,6 +7,8 @@
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UFunction.h"
 #include "Packages/Core/Properties/UIntProperty.h"
+#include "Packages/Core/Properties/UObjectProperty.h"
+#include "Packages/Core/Properties/UStringProperty.h"
 #include "Packages/Core/Properties/UStructProperty.h"
 #include "Packages/Core/Properties/UArrayProperty.h"
 
@@ -78,6 +80,23 @@ namespace
 		prop->Struct = pair;
 		return prop;
 	}
+
+	// A size-2 int array plus the flag an Array_ native writes its result to. The caller picks the
+	// flag's start value so a native that never writes it cannot pass by leaving it alone.
+	struct ArrayNativeFixture
+	{
+		ScriptArray Array;
+		uint32_t Flag;
+		BitfieldBool Result;
+
+		explicit ArrayNativeFixture(bool startFlag) : Array(MakeIntProperty("Inner", 0)), Flag(startFlag ? 1 : 0), Result{ &Flag, 1 }
+		{
+			Array.Resize(2);
+		}
+
+		ArrayNativeFixture(const ArrayNativeFixture&) = delete;
+		ArrayNativeFixture& operator=(const ArrayNativeFixture&) = delete;
+	};
 }
 
 TEST(CallOmittedOptionalStructParm)
@@ -148,6 +167,184 @@ TEST(CallExplicitNothingArrayParm)
 	CHECK_EQ(result.ToArray().GetSize(), (size_t)0);
 }
 
+// A store whose right side is Nothing is what `S = None.Member` produces: the Context handler
+// pushes a Nothing value when the context object is None. The original interpreter zeroes
+// the result of a None context expression, so the target is reset rather than left alone.
+
+TEST(NullContextStoreResetsStruct)
+{
+	UStructProperty* prop = MakeIntPairStructProperty();
+	prop->DataOffset = { 0, 1 };
+	int32_t storage[2] = { 3, 4 };
+	ExpressionValue lvalue = ExpressionValue::Variable(storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK_EQ(storage[0], 0);
+	CHECK_EQ(storage[1], 0);
+}
+
+TEST(NullContextStoreEmptiesDynArray)
+{
+	UArrayProperty* prop = GC::Alloc<UArrayProperty>("Slot", nullptr, ObjectFlags::NoFlags);
+	prop->Inner = MakeIntProperty("Inner", 0);
+	prop->DataOffset = { 0, 1 };
+	ScriptArray storage(prop->Inner);
+	storage.Resize(2);
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK_EQ(storage.GetSize(), (size_t)0);
+}
+
+// Positive controls: a scalar target already reaches its zero value through the conversion of
+// Nothing, so these pass at every commit and show the Nothing right side is built correctly.
+TEST(NullContextStoreZeroesInt)
+{
+	UIntProperty* prop = MakeIntProperty("Slot", 0);
+	int32_t storage = 7;
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK_EQ(storage, 0);
+}
+
+TEST(NullContextStoreEmptiesString)
+{
+	UStringProperty* prop = GC::Alloc<UStringProperty>("Slot", nullptr, ObjectFlags::NoFlags);
+	prop->DataOffset = { 0, 1 };
+	std::string storage = "x";
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK_EQ(storage, std::string());
+}
+
+TEST(NullContextStoreClearsObject)
+{
+	UObjectProperty* prop = GC::Alloc<UObjectProperty>("Slot", nullptr, ObjectFlags::NoFlags);
+	prop->DataOffset = { 0, 1 };
+	// Any live object will do; a property is the cheapest one the fixture can make.
+	UObject* storage = GC::Alloc<UIntProperty>("Held", nullptr, ObjectFlags::NoFlags);
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK(storage == nullptr);
+}
+
+TEST(NullContextStoreZeroesVector)
+{
+	// A bare struct property is a ValueStruct; only Load marks it as a vector.
+	UStructProperty* prop = GC::Alloc<UStructProperty>("Slot", nullptr, ObjectFlags::NoFlags);
+	prop->ValueType = ExpressionValueType::ValueVector;
+	prop->DataOffset = { 0, 1 };
+	vec3 storage(1.0f, 2.0f, 3.0f);
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK(storage == vec3(0.0f, 0.0f, 0.0f));
+}
+
+// The Array_ natives take a script offset and count from the script. An offset or count outside
+// the array makes the native return false and leave the array alone. The two in-range cases are
+// positive controls: they pass with or without the range check.
+TEST(ArrayNativeInsertAtEndGrows)
+{
+	ArrayNativeFixture f(false);
+
+	NObject::Array_Insert_U227(f.Array, 2, 1, f.Result);
+
+	CHECK(f.Result.Get());
+	CHECK_EQ(f.Array.GetSize(), (size_t)3);
+}
+
+TEST(ArrayNativeRemoveLastShrinks)
+{
+	ArrayNativeFixture f(false);
+
+	NObject::Array_Remove_U227(f.Array, 1, 1, f.Result);
+
+	CHECK(f.Result.Get());
+	CHECK_EQ(f.Array.GetSize(), (size_t)1);
+}
+
+TEST(ArrayNativeInsertNegativeOffsetReturnsFalse)
+{
+	ArrayNativeFixture f(true);
+
+	NObject::Array_Insert_U227(f.Array, -1, 1, f.Result);
+
+	CHECK_MSG(!f.Result.Get(), "Array_Insert returned true for a negative offset");
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
+}
+
+TEST(ArrayNativeInsertNegativeCountReturnsFalse)
+{
+	ArrayNativeFixture f(true);
+
+	NObject::Array_Insert_U227(f.Array, 0, -1, f.Result);
+
+	CHECK_MSG(!f.Result.Get(), "Array_Insert returned true for a negative count");
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
+}
+
+TEST(ArrayNativeRemoveRangePastEndReturnsFalse)
+{
+	ArrayNativeFixture f(true);
+
+	// Offset 1 and count 2 reach one element past the end of a size-2 array.
+	NObject::Array_Remove_U227(f.Array, 1, 2, f.Result);
+
+	CHECK_MSG(!f.Result.Get(), "Array_Remove returned true for a range past the end");
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
+}
+
+// ScriptArray refuses a range past the end before it copies anything.
+TEST(ArrayNativeScriptArrayInsertPastEndThrows)
+{
+	ArrayNativeFixture f(false);
+
+	CHECK_THROWS(f.Array.Insert(3, 1));
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
+}
+
+TEST(ArrayNativeScriptArrayRemovePastEndThrows)
+{
+	ArrayNativeFixture f(false);
+
+	CHECK_THROWS(f.Array.Remove(1, 2));
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
+}
+
+TEST(ArrayRemoveOutOfBoundsReturnsFalse)
+{
+	ScriptArray array(MakeIntProperty("Inner", 0));
+	array.Resize(2);
+	uint32_t flag = 1;
+	BitfieldBool result = { &flag, 1 };
+
+	// Offset equals the size, so no element exists to remove.
+	NObject::Array_Remove_U227(array, 2, 1, result);
+
+	CHECK_MSG(!result.Get(), "Array_Remove returned true for an out-of-bounds offset");
+}
+
+TEST(ArrayInsertOutOfBoundsReturnsFalse)
+{
+	ArrayNativeFixture f(true);
+
+	// The end of a size-2 array is a valid position (offset 2); offset 3 is past it.
+	NObject::Array_Insert_U227(f.Array, 3, 1, f.Result);
+
+	CHECK_MSG(!f.Result.Get(), "Array_Insert returned true for an out-of-bounds offset");
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
+}
+
 // The tests below pin behavior that is wrong today. They are listed in xfail.txt;
 // when one is fixed it reports XPASS and must be removed from that list.
 
@@ -173,24 +370,4 @@ TEST(StaticArrayOutOfRangeIndexThrows)
 	ExpressionValue array = ExpressionValue::Variable(storage, prop);
 
 	CHECK_THROWS(array.ItemAt(7));
-}
-
-TEST(ArrayRemoveOutOfBoundsReturnsFalse)
-{
-	ScriptArray array(MakeIntProperty("Inner", 0));
-	array.Resize(2);
-	uint32_t flag = 1;
-	BitfieldBool result = { &flag, 1 };
-
-	// Offset equals the size, so no element exists to remove.
-	NObject::Array_Remove_U227(array, 2, 1, result);
-
-	CHECK_MSG(!result.Get(), "Array_Remove returned true for an out-of-bounds offset");
-}
-
-TEST(ArrayInsertOutOfBoundsReturnsFalse)
-{
-	// ScriptArray::Insert with an offset past the end writes beyond its new allocation, so this
-	// cannot be probed safely until the native checks bounds first. Fail by check, never by crash.
-	CHECK_MSG(false, "Array_Insert out-of-bounds cannot be exercised safely: the unchecked call overflows the heap");
 }
