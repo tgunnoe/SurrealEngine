@@ -679,6 +679,11 @@ the same map. The sweep of 73df9f26 logged 18 lines on this map, the sweep of
 
 Verdict `faithful`. Lines per map, `ut-bots`: AS-OceanFloor 2, CTF-Command 6.
 
+The `faithful` verdict rests on the statement that the traced CTF-Command run
+logged, `TurnTo(Location + AmbushSpot.lookDir)` at `LongCamp`. The sweep of
+8d225ef3 also logged 2 lines on AS-OceanFloor, a map no run traced, and which
+`Roaming` statement those 2 lines name is not known.
+
 The warning names the state: the statement is in the state code (the labels) of
 `BotPack.Bot`'s `Roaming`, shared by the four classes the `ut-bots` sweeps have
 logged. Stock `BotPack.Bot`, state `Roaming`, label `LongCamp`:
