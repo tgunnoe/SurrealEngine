@@ -14,6 +14,7 @@ import json
 import os
 import shutil
 import signal
+import string
 import subprocess
 import sys
 import time
@@ -28,6 +29,9 @@ MAP_SUFFIXES = {".unr", ".dx"}
 KILL_GRACE_SECONDS = 45
 GRIM_TIMEOUT_SECONDS = 10
 PORTABLE_GAME = "<game folder>"
+# The engine folds only the ASCII letters when it compares names, so str.upper() would
+# refuse pairs it keeps apart.
+ASCII_UPPER = str.maketrans(string.ascii_lowercase, string.ascii_uppercase)
 
 
 def map_subdir_names(names):
@@ -47,7 +51,9 @@ def list_maps(game, subdirs=()):
     """The maps under <game>/Maps, then those of each Maps/<subdir> in the order given.
 
     The engine resolves a map by its bare name, so a stem found in two folders would name
-    two maps by one name; the sweep refuses that listing rather than pick one.
+    two maps by one name; the sweep refuses that listing rather than pick one. Stems are
+    compared without regard to ASCII case, the only case the engine folds in a name, so
+    Bluff and bluff are one name; the refusal names the stem as found.
     """
     maps_dir = Path(game) / "Maps"
     if not maps_dir.is_dir():
@@ -63,7 +69,7 @@ def list_maps(game, subdirs=()):
     for folder in folders:
         for p in sorted((p for p in folder.iterdir() if p.suffix.lower() in MAP_SUFFIXES),
                         key=lambda p: p.name):
-            if folder_of.setdefault(p.stem, folder) != folder:
+            if folder_of.setdefault(p.stem.translate(ASCII_UPPER), folder) != folder:
                 sys.exit(f"sweep: map name {p.stem} appears in more than one folder")
             maps.append(p)
     return maps

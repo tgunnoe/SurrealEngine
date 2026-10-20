@@ -290,7 +290,8 @@ name, as the engine resolves it, so its log is `<mapname>.log` and its URL
 `--url=<mapname>`. The top-level maps run first, then each folder's maps in the
 order the flags are given; repeat the flag for more folders (a folder named
 twice counts once), and `--limit` counts over the whole list. A map name found
-in two folders, a folder that does not exist and a name that is not a bare
+in two folders (names that differ only in ASCII case count as one, as they do
+to the engine), a folder that does not exist and a name that is not a bare
 folder name (empty, `.`, `..`, or holding a path separator) stop the sweep
 before any run. The report records the folders as `map_subdirs`, `null` when
 the flag is absent.
