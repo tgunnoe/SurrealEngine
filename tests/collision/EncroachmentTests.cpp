@@ -91,6 +91,19 @@ namespace
 		return (int)std::floor(coordinate / 256.0);
 	}
 
+	// The cells a world box covers: the cell of its low corner up to one past the cell of its high corner.
+	EncroachCellRange CellsOfBox(const WorldBox& box)
+	{
+		return {
+			{ CellOf(box.lo[0]), CellOf(box.lo[1]), CellOf(box.lo[2]) },
+			{ CellOf(box.hi[0]) + 1, CellOf(box.hi[1]) + 1, CellOf(box.hi[2]) + 1 } };
+	}
+
+	bool SameCells(const EncroachCellRange& a, const EncroachCellRange& b)
+	{
+		return a.start == b.start && a.end == b.end;
+	}
+
 	bool Registered(const Placed& p, int x, int y, int z)
 	{
 		int cell[3] = { x, y, z };
@@ -287,4 +300,28 @@ TEST(EncroachWindowFollowsRotationAndScale)
 
 	EncroachCellRange window = EncroachWindow(source);
 	CHECK(window.start == ivec3(-2, -2, -1) && window.end == ivec3(2, 2, 1));
+}
+
+TEST(EncroachWindowFollowsOffCentreBoxAboutItsPrePivot)
+{
+	// A box that is not centred on its origin, placed about a non-zero pre-pivot, turned and scaled
+	// unevenly, so that a window that turns the wrong way, or takes the pre-pivot with the wrong sign,
+	// lands in other cells. Every other pose of this file is centred on its origin with no pre-pivot.
+	Pose pose = { BBox(vec3(40.0f, -10.0f, 0.0f), vec3(240.0f, 50.0f, 100.0f)), vec3(1050.0f, 400.0f, 64.0f) };
+	pose.yaw = std::acos(-1.0) * 2.0 / 3.0;
+	pose.scale = vec3(1.5f, 2.0f, 1.0f);
+	pose.prePivot = vec3(60.0f, 20.0f, 10.0f);
+
+	Pose turnedBack = pose;
+	turnedBack.yaw = -pose.yaw;
+	Pose otherPivot = pose;
+	otherPivot.prePivot = -pose.prePivot;
+
+	EncroachCellRange expected = CellsOfBox(WorldBoxOf(pose));
+	CHECK(!SameCells(expected, CellsOfBox(WorldBoxOf(turnedBack))));
+	CHECK(!SameCells(expected, CellsOfBox(WorldBoxOf(otherPivot))));
+
+	EncroachCellRange window = EncroachWindow(SourceOf(pose));
+	CHECK(window.start == expected.start);
+	CHECK(window.end == expected.end);
 }
