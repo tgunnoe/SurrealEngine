@@ -100,6 +100,7 @@ public:
 				if (units.back() != 0)
 					Exception::Throw("ObjectStream::ReadString: Unterminated Unicode string in " + package->GetPackageName().ToString());
 				units.pop_back();
+				// c_str() ends the result at the first zero unit, as the byte branch's s.data() does.
 				return narrow_utf16(units).c_str();
 			}
 			if (len < 0 || len > 1024 * 1024)
