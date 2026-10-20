@@ -254,6 +254,14 @@ class SweepRunTests(unittest.TestCase):
         self.assertIn("A", text)
         self.assertIn("more than one folder", text)
 
+    def test_map_subdir_names_differing_by_case_in_two_subfolders_are_refused(self):
+        # The engine compares map names without regard to ASCII case, so q and Q are one map.
+        self.add_maps("X", "q")
+        self.add_maps("Y", "Q")
+        text = self.refusal("--map-subdir", "X", "--map-subdir", "Y")
+        self.assertIn("Q", text)
+        self.assertIn("more than one folder", text)
+
     def test_map_subdir_missing_folder_is_refused(self):
         text = self.refusal("--map-subdir", "Nope")
         self.assertIn("Maps/Nope", text)
