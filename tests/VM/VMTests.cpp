@@ -171,17 +171,31 @@ TEST(CallExplicitNothingArrayParm)
 // pushes a Nothing value when the context object is None. The original interpreter zeroes
 // the result of a None context expression, so the target is reset rather than left alone.
 
-// The struct and array cases below are placeholders until Store handles a Nothing right side:
-// a real call copies from a null pointer and would crash the test's process, so they fail by
-// an explicit message instead of making the call.
 TEST(NullContextStoreResetsStruct)
 {
-	CHECK_MSG(false, "null-context struct store cannot be exercised safely: the store copies from a null pointer");
+	UStructProperty* prop = MakeIntPairStructProperty();
+	prop->DataOffset = { 0, 1 };
+	int32_t storage[2] = { 3, 4 };
+	ExpressionValue lvalue = ExpressionValue::Variable(storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK_EQ(storage[0], 0);
+	CHECK_EQ(storage[1], 0);
 }
 
 TEST(NullContextStoreEmptiesDynArray)
 {
-	CHECK_MSG(false, "null-context array store cannot be exercised safely: the store copies from a null pointer");
+	UArrayProperty* prop = GC::Alloc<UArrayProperty>("Slot", nullptr, ObjectFlags::NoFlags);
+	prop->Inner = MakeIntProperty("Inner", 0);
+	prop->DataOffset = { 0, 1 };
+	ScriptArray storage(prop->Inner);
+	storage.Resize(2);
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK_EQ(storage.GetSize(), (size_t)0);
 }
 
 // Positive controls: a scalar target already reaches its zero value through the conversion of
