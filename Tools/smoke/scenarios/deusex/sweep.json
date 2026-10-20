@@ -3,6 +3,7 @@
   "seconds": 60,
   "url_options": null,
   "exec": null,
+  "map_subdirs": null,
   "maps": [
     {
       "map": "00_Intro",
@@ -12,7 +13,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 309.9508771929825,
+      "fps_avg": 437.3169491525424,
       "maps_loaded": [
         "00_Intro"
       ],
@@ -30,7 +31,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 340.8636363636364,
+      "fps_avg": 321.0406779661017,
       "maps_loaded": [
         "00_Training"
       ],
@@ -48,7 +49,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 529.4155172413792,
+      "fps_avg": 617.0084745762712,
       "maps_loaded": [
         "00_TrainingCombat"
       ],
@@ -66,7 +67,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 852.2096153846154,
+      "fps_avg": 1040.4593220338984,
       "maps_loaded": [
         "00_TrainingFinal"
       ],
@@ -84,7 +85,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 606.6762711864407,
+      "fps_avg": 674.4745762711865,
       "maps_loaded": [
         "01_NYC_UNATCOHQ"
       ],
@@ -102,7 +103,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 63.58620689655172,
+      "fps_avg": 81.5677966101695,
       "maps_loaded": [
         "01_NYC_UNATCOIsland"
       ],
@@ -120,7 +121,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1148.9016949152542,
+      "fps_avg": 1173.4084745762714,
       "maps_loaded": [
         "02_NYC_Bar"
       ],
@@ -138,7 +139,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 114.88813559322035,
+      "fps_avg": 131.35593220338984,
       "maps_loaded": [
         "02_NYC_BatteryPark"
       ],
@@ -156,7 +157,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 543.9372881355932,
+      "fps_avg": 561.8644067796611,
       "maps_loaded": [
         "02_NYC_FreeClinic"
       ],
@@ -174,7 +175,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 815.1135593220339,
+      "fps_avg": 906.1355932203389,
       "maps_loaded": [
         "02_NYC_Hotel"
       ],
@@ -192,7 +193,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1313.9,
+      "fps_avg": 1342.0728813559322,
       "maps_loaded": [
         "02_NYC_Smug"
       ],
@@ -210,7 +211,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 296.1779661016949,
+      "fps_avg": 340.7983050847457,
       "maps_loaded": [
         "02_NYC_Street"
       ],
@@ -228,7 +229,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 467.73333333333335,
+      "fps_avg": 517.193220338983,
       "maps_loaded": [
         "02_NYC_Underground"
       ],
@@ -245,8 +246,8 @@
       "stub_hits": 1,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 2,
-      "fps_avg": 246.59655172413792,
+      "script_warnings": 0,
+      "fps_avg": 275.16610169491526,
       "maps_loaded": [
         "02_NYC_Warehouse"
       ],
@@ -264,7 +265,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 625.0084745762712,
+      "fps_avg": 652.9118644067797,
       "maps_loaded": [
         "03_NYC_747"
       ],
@@ -282,7 +283,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 99.27457627118643,
+      "fps_avg": 101.7813559322034,
       "maps_loaded": [
         "03_NYC_Airfield"
       ],
@@ -300,7 +301,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 556.0322033898306,
+      "fps_avg": 572.8220338983051,
       "maps_loaded": [
         "03_NYC_AirfieldHeliBase"
       ],
@@ -318,7 +319,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 109.42372881355932,
+      "fps_avg": 112.02542372881356,
       "maps_loaded": [
         "03_NYC_BatteryPark"
       ],
@@ -336,7 +337,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 983.4627118644069,
+      "fps_avg": 1032.8135593220338,
       "maps_loaded": [
         "03_NYC_BrooklynBridgeStation"
       ],
@@ -354,7 +355,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 665.8677966101694,
+      "fps_avg": 680.6491525423729,
       "maps_loaded": [
         "03_NYC_Hangar"
       ],
@@ -372,7 +373,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 750.9508474576271,
+      "fps_avg": 769.2033898305085,
       "maps_loaded": [
         "03_NYC_MolePeople"
       ],
@@ -390,7 +391,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1020.0644067796611,
+      "fps_avg": 1009.4338983050848,
       "maps_loaded": [
         "03_NYC_UNATCOHQ"
       ],
@@ -408,7 +409,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 275.82413793103444,
+      "fps_avg": 369.6796610169491,
       "maps_loaded": [
         "03_NYC_UNATCOIsland"
       ],
@@ -426,7 +427,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1212.4881355932205,
+      "fps_avg": 1317.7983050847458,
       "maps_loaded": [
         "04_NYC_Bar"
       ],
@@ -444,7 +445,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 112.7,
+      "fps_avg": 114.63559322033899,
       "maps_loaded": [
         "04_NYC_BatteryPark"
       ],
@@ -462,7 +463,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 719.4610169491525,
+      "fps_avg": 752.4627118644069,
       "maps_loaded": [
         "04_NYC_Hotel"
       ],
@@ -480,7 +481,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 249.4271186440678,
+      "fps_avg": 165.61016949152543,
       "maps_loaded": [
         "04_NYC_NSFHQ"
       ],
@@ -498,7 +499,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1310.9322033898304,
+      "fps_avg": 1353.0237288135593,
       "maps_loaded": [
         "04_NYC_Smug"
       ],
@@ -516,7 +517,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 477.9423728813559,
+      "fps_avg": 481.20338983050846,
       "maps_loaded": [
         "04_NYC_Street"
       ],
@@ -534,7 +535,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1007.2474576271186,
+      "fps_avg": 939.9440677966102,
       "maps_loaded": [
         "04_NYC_UNATCOHQ"
       ],
@@ -552,7 +553,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 903.4762711864406,
+      "fps_avg": 404.16101694915255,
       "maps_loaded": [
         "04_NYC_UNATCOIsland"
       ],
@@ -570,7 +571,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 832.2033898305085,
+      "fps_avg": 939.457627118644,
       "maps_loaded": [
         "04_NYC_Underground"
       ],
@@ -588,7 +589,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 845.2084745762712,
+      "fps_avg": 861.7440677966102,
       "maps_loaded": [
         "05_NYC_UNATCOHQ"
       ],
@@ -606,7 +607,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 777.0661016949152,
+      "fps_avg": 806.3864406779661,
       "maps_loaded": [
         "05_NYC_UNATCOIsland"
       ],
@@ -624,7 +625,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 443.0813559322034,
+      "fps_avg": 450.2949152542373,
       "maps_loaded": [
         "05_NYC_UNATCOMJ12lab"
       ],
@@ -642,7 +643,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 133.34406779661018,
+      "fps_avg": 130.4457627118644,
       "maps_loaded": [
         "06_HongKong_Helibase"
       ],
@@ -660,7 +661,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 145.26949152542372,
+      "fps_avg": 149.7915254237288,
       "maps_loaded": [
         "06_HongKong_MJ12lab"
       ],
@@ -678,7 +679,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 669.5457627118643,
+      "fps_avg": 736.0694915254237,
       "maps_loaded": [
         "06_HongKong_Storage"
       ],
@@ -696,7 +697,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 683.6796610169491,
+      "fps_avg": 711.5186440677966,
       "maps_loaded": [
         "06_HongKong_TongBase"
       ],
@@ -714,7 +715,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 577.542372881356,
+      "fps_avg": 571.4932203389831,
       "maps_loaded": [
         "06_HongKong_VersaLife"
       ],
@@ -732,7 +733,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 82.13559322033899,
+      "fps_avg": 85.7542372881356,
       "maps_loaded": [
         "06_HongKong_WanChai_Canal"
       ],
@@ -750,7 +751,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 342.77288135593216,
+      "fps_avg": 379.09830508474573,
       "maps_loaded": [
         "06_HongKong_WanChai_Garage"
       ],
@@ -768,7 +769,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 224.31694915254238,
+      "fps_avg": 232.01694915254237,
       "maps_loaded": [
         "06_HongKong_WanChai_Market"
       ],
@@ -786,7 +787,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 75.23728813559322,
+      "fps_avg": 78.74067796610169,
       "maps_loaded": [
         "06_HongKong_WanChai_Street"
       ],
@@ -804,7 +805,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 159.58305084745763,
+      "fps_avg": 161.66440677966102,
       "maps_loaded": [
         "06_HongKong_WanChai_Underworld"
       ],
@@ -822,7 +823,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1311.7728813559322,
+      "fps_avg": 1331.4610169491525,
       "maps_loaded": [
         "08_NYC_Bar"
       ],
@@ -840,7 +841,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1855.9559322033897,
+      "fps_avg": 1890.322033898305,
       "maps_loaded": [
         "08_NYC_FreeClinic"
       ],
@@ -858,7 +859,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1048.8661016949152,
+      "fps_avg": 1066.906779661017,
       "maps_loaded": [
         "08_NYC_Hotel"
       ],
@@ -876,7 +877,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1317.8084745762712,
+      "fps_avg": 1338.1389830508474,
       "maps_loaded": [
         "08_NYC_Smug"
       ],
@@ -894,7 +895,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 380.1169491525424,
+      "fps_avg": 387.5491525423729,
       "maps_loaded": [
         "08_NYC_Street"
       ],
@@ -912,7 +913,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 864.1559322033897,
+      "fps_avg": 934.9118644067797,
       "maps_loaded": [
         "08_NYC_Underground"
       ],
@@ -930,7 +931,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 245.46610169491527,
+      "fps_avg": 253.1220338983051,
       "maps_loaded": [
         "09_NYC_Dockyard"
       ],
@@ -948,7 +949,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 456.78983050847455,
+      "fps_avg": 473.96610169491527,
       "maps_loaded": [
         "09_NYC_Graveyard"
       ],
@@ -966,7 +967,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 312.47118644067797,
+      "fps_avg": 289.09322033898303,
       "maps_loaded": [
         "09_NYC_Ship"
       ],
@@ -984,7 +985,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 324.5542372881356,
+      "fps_avg": 393.0661016949153,
       "maps_loaded": [
         "09_NYC_ShipBelow"
       ],
@@ -1002,7 +1003,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 844.2966101694915,
+      "fps_avg": 786.7762711864407,
       "maps_loaded": [
         "09_NYC_ShipFan"
       ],
@@ -1020,7 +1021,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 356.7118644067797,
+      "fps_avg": 363.2813559322034,
       "maps_loaded": [
         "10_Paris_Catacombs"
       ],
@@ -1038,7 +1039,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 157.12708333333333,
+      "fps_avg": 735.642372881356,
       "maps_loaded": [
         "10_Paris_Catacombs_Tunnels"
       ],
@@ -1056,7 +1057,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 545.1050847457627,
+      "fps_avg": 553.3457627118644,
       "maps_loaded": [
         "10_Paris_Chateau"
       ],
@@ -1074,7 +1075,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1260.8661016949154,
+      "fps_avg": 1231.662711864407,
       "maps_loaded": [
         "10_Paris_Club"
       ],
@@ -1092,7 +1093,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 440.74237288135595,
+      "fps_avg": 449.83728813559327,
       "maps_loaded": [
         "10_Paris_Metro"
       ],
@@ -1110,7 +1111,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 562.4186440677965,
+      "fps_avg": 572.0186440677966,
       "maps_loaded": [
         "11_Paris_Cathedral"
       ],
@@ -1128,7 +1129,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 707.9169491525423,
+      "fps_avg": 731.6203389830508,
       "maps_loaded": [
         "11_Paris_Everett"
       ],
@@ -1146,7 +1147,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 804.6237288135594,
+      "fps_avg": 819.4203389830509,
       "maps_loaded": [
         "11_Paris_Underground"
       ],
@@ -1164,7 +1165,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 249.86271186440678,
+      "fps_avg": 279.3762711864407,
       "maps_loaded": [
         "12_Vandenberg_Cmd"
       ],
@@ -1182,7 +1183,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 515.7084745762712,
+      "fps_avg": 817.9338983050848,
       "maps_loaded": [
         "12_Vandenberg_Computer"
       ],
@@ -1200,7 +1201,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 203.26101694915255,
+      "fps_avg": 204.27966101694915,
       "maps_loaded": [
         "12_Vandenberg_Gas"
       ],
@@ -1218,7 +1219,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 799.0830508474577,
+      "fps_avg": 995.7050847457626,
       "maps_loaded": [
         "12_Vandenberg_Tunnels"
       ],
@@ -1236,7 +1237,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 38.81551724137931,
+      "fps_avg": 38.706896551724135,
       "maps_loaded": [
         "14_OceanLab_Lab"
       ],
@@ -1254,7 +1255,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 825.5661016949152,
+      "fps_avg": 895.0525423728814,
       "maps_loaded": [
         "14_OceanLab_UC"
       ],
@@ -1272,7 +1273,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 165.3084745762712,
+      "fps_avg": 163.86101694915254,
       "maps_loaded": [
         "14_Oceanlab_Silo"
       ],
@@ -1290,7 +1291,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 211.4322033898305,
+      "fps_avg": 203.88644067796608,
       "maps_loaded": [
         "14_Vandenberg_Sub"
       ],
@@ -1308,7 +1309,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 213.74237288135592,
+      "fps_avg": 214.98305084745763,
       "maps_loaded": [
         "15_Area51_Bunker"
       ],
@@ -1326,7 +1327,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 506.19322033898305,
+      "fps_avg": 540.5966101694916,
       "maps_loaded": [
         "15_Area51_Entrance"
       ],
@@ -1344,7 +1345,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 211.31694915254238,
+      "fps_avg": 199.70677966101695,
       "maps_loaded": [
         "15_Area51_Final"
       ],
@@ -1362,7 +1363,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 222.88474576271187,
+      "fps_avg": 215.5050847457627,
       "maps_loaded": [
         "15_Area51_Page"
       ],
@@ -1380,7 +1381,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 755.3406779661017,
+      "fps_avg": 856.1050847457626,
       "maps_loaded": [
         "99_Endgame1"
       ],
@@ -1398,7 +1399,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 4,
-      "fps_avg": 899.2610169491526,
+      "fps_avg": 799.6627118644068,
       "maps_loaded": [
         "99_Endgame2"
       ],
@@ -1416,7 +1417,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 672.328813559322,
+      "fps_avg": 672.5169491525423,
       "maps_loaded": [
         "99_Endgame3"
       ],
@@ -1434,7 +1435,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 866.9440677966102,
+      "fps_avg": 883.5796610169491,
       "maps_loaded": [
         "99_Endgame4"
       ],
@@ -1452,7 +1453,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 3097.7576271186445,
+      "fps_avg": 2837.077966101695,
       "maps_loaded": [
         "DX"
       ],
@@ -1470,7 +1471,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1053.406779661017,
+      "fps_avg": 1062.506779661017,
       "maps_loaded": [
         "DXMP_Area51Bunker"
       ],
@@ -1488,7 +1489,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1035.549152542373,
+      "fps_avg": 1029.920338983051,
       "maps_loaded": [
         "DXMP_CMD"
       ],
@@ -1506,7 +1507,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1033.1881355932203,
+      "fps_avg": 1026.1169491525425,
       "maps_loaded": [
         "DXMP_Cathedral"
       ],
@@ -1524,7 +1525,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 854.0305084745763,
+      "fps_avg": 841.0610169491525,
       "maps_loaded": [
         "DXMP_Silo"
       ],
@@ -1542,7 +1543,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1356.8762711864406,
+      "fps_avg": 1314.942372881356,
       "maps_loaded": [
         "DXMP_Smuggler"
       ],
@@ -1560,7 +1561,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 3116.918644067797,
+      "fps_avg": 3048.1881355932205,
       "maps_loaded": [
         "DXOnly"
       ],
@@ -1578,7 +1579,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 2913.0372881355934,
+      "fps_avg": 2884.298305084746,
       "maps_loaded": [
         "Entry"
       ],
