@@ -456,17 +456,29 @@ void NObject::Array_Size_U227(ScriptArray& Ar, std::optional<int> SetSize, int& 
 
 void NObject::Array_Insert_U227(ScriptArray& Ar, int Offset, std::optional<int> Count, BitfieldBool& ReturnValue)
 {
-	// To do: return false if Offset and Count is out of bounds
 	// To do: is the Count default correct?
-	Ar.Insert(Offset, Count.has_value() ? Count.value() : 1);
+	int size = (int)Ar.GetSize();
+	int count = Count.has_value() ? Count.value() : 1;
+	if (Offset < 0 || count < 0 || Offset > size)
+	{
+		ReturnValue = false;
+		return;
+	}
+	Ar.Insert(Offset, count);
 	ReturnValue = true;
 }
 
 void NObject::Array_Remove_U227(ScriptArray& Ar, int Offset, std::optional<int> Count, BitfieldBool& ReturnValue)
 {
-	// To do: return false if out of bounds
 	// To do: is the Count default correct?
-	Ar.Remove(Offset, Count.has_value() ? Count.value() : 1);
+	int size = (int)Ar.GetSize();
+	int count = Count.has_value() ? Count.value() : 1;
+	if (Offset < 0 || count < 0 || Offset > size || count > size - Offset)
+	{
+		ReturnValue = false;
+		return;
+	}
+	Ar.Remove(Offset, count);
 	ReturnValue = true;
 }
 

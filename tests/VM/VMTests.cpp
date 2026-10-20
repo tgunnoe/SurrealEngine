@@ -250,10 +250,9 @@ TEST(NullContextStoreZeroesVector)
 	CHECK(storage == vec3(0.0f, 0.0f, 0.0f));
 }
 
-// The Array_ natives take a script offset and count. The two controls are safe on the unchecked
-// natives and pass at every commit; the rest need a range check the natives lack. The ones that
-// would overflow the heap or run off the end of the buffer are placeholders until the check
-// exists; the remove cases run safely today (the new size cannot wrap) and fail by check.
+// The Array_ natives take a script offset and count from the script. An offset or count outside
+// the array makes the native return false and leave the array alone. The two in-range cases are
+// positive controls: they pass with or without the range check.
 TEST(ArrayNativeInsertAtEndGrows)
 {
 	ArrayNativeFixture f(false);
@@ -276,12 +275,22 @@ TEST(ArrayNativeRemoveLastShrinks)
 
 TEST(ArrayNativeInsertNegativeOffsetReturnsFalse)
 {
-	CHECK_MSG(false, "Array_Insert with a negative offset cannot be exercised safely: it wraps to a huge size_t and the copy runs off the buffer");
+	ArrayNativeFixture f(true);
+
+	NObject::Array_Insert_U227(f.Array, -1, 1, f.Result);
+
+	CHECK_MSG(!f.Result.Get(), "Array_Insert returned true for a negative offset");
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
 }
 
 TEST(ArrayNativeInsertNegativeCountReturnsFalse)
 {
-	CHECK_MSG(false, "Array_Insert with a negative count cannot be exercised safely: it wraps to a huge size_t and the construct loop runs off the buffer");
+	ArrayNativeFixture f(true);
+
+	NObject::Array_Insert_U227(f.Array, 0, -1, f.Result);
+
+	CHECK_MSG(!f.Result.Get(), "Array_Insert returned true for a negative count");
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
 }
 
 TEST(ArrayNativeRemoveRangePastEndReturnsFalse)
@@ -295,9 +304,13 @@ TEST(ArrayNativeRemoveRangePastEndReturnsFalse)
 	CHECK_EQ(f.Array.GetSize(), (size_t)2);
 }
 
+// ScriptArray refuses a range past the end before it copies anything.
 TEST(ArrayNativeScriptArrayInsertPastEndThrows)
 {
-	CHECK_MSG(false, "ScriptArray::Insert past the end cannot be exercised safely: it reads and writes beyond the buffer");
+	ArrayNativeFixture f(false);
+
+	CHECK_THROWS(f.Array.Insert(3, 1));
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
 }
 
 TEST(ArrayNativeScriptArrayRemovePastEndThrows)
@@ -305,6 +318,31 @@ TEST(ArrayNativeScriptArrayRemovePastEndThrows)
 	ArrayNativeFixture f(false);
 
 	CHECK_THROWS(f.Array.Remove(1, 2));
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
+}
+
+TEST(ArrayRemoveOutOfBoundsReturnsFalse)
+{
+	ScriptArray array(MakeIntProperty("Inner", 0));
+	array.Resize(2);
+	uint32_t flag = 1;
+	BitfieldBool result = { &flag, 1 };
+
+	// Offset equals the size, so no element exists to remove.
+	NObject::Array_Remove_U227(array, 2, 1, result);
+
+	CHECK_MSG(!result.Get(), "Array_Remove returned true for an out-of-bounds offset");
+}
+
+TEST(ArrayInsertOutOfBoundsReturnsFalse)
+{
+	ArrayNativeFixture f(true);
+
+	// The end of a size-2 array is a valid position (offset 2); offset 3 is past it.
+	NObject::Array_Insert_U227(f.Array, 3, 1, f.Result);
+
+	CHECK_MSG(!f.Result.Get(), "Array_Insert returned true for an out-of-bounds offset");
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
 }
 
 // The tests below pin behavior that is wrong today. They are listed in xfail.txt;
@@ -332,24 +370,4 @@ TEST(StaticArrayOutOfRangeIndexThrows)
 	ExpressionValue array = ExpressionValue::Variable(storage, prop);
 
 	CHECK_THROWS(array.ItemAt(7));
-}
-
-TEST(ArrayRemoveOutOfBoundsReturnsFalse)
-{
-	ScriptArray array(MakeIntProperty("Inner", 0));
-	array.Resize(2);
-	uint32_t flag = 1;
-	BitfieldBool result = { &flag, 1 };
-
-	// Offset equals the size, so no element exists to remove.
-	NObject::Array_Remove_U227(array, 2, 1, result);
-
-	CHECK_MSG(!result.Get(), "Array_Remove returned true for an out-of-bounds offset");
-}
-
-TEST(ArrayInsertOutOfBoundsReturnsFalse)
-{
-	// ScriptArray::Insert with an offset past the end writes beyond its new allocation, so this
-	// cannot be probed safely until the native checks bounds first. Fail by check, never by crash.
-	CHECK_MSG(false, "Array_Insert out-of-bounds cannot be exercised safely: the unchecked call overflows the heap");
 }

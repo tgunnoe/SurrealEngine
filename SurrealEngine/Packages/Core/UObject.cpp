@@ -857,6 +857,9 @@ void ScriptArray::SetValue(size_t index, const void* src)
 
 void ScriptArray::Insert(size_t insertPos, size_t insertCount)
 {
+	if (insertPos > Size)
+		Exception::Throw("ScriptArray::Insert: position past the end");
+
 	if (insertPos == Size)
 	{
 		Resize(Size + insertCount);
@@ -898,6 +901,9 @@ void ScriptArray::Insert(size_t insertPos, size_t insertCount)
 
 void ScriptArray::Remove(size_t removePos, size_t removeCount)
 {
+	if (removePos > Size || removeCount > Size - removePos)
+		Exception::Throw("ScriptArray::Remove: range past the end");
+
 	auto pitch = Type->ElementPitch();
 	for (size_t i = removePos, end = Size - removeCount; i < end; i++)
 	{

@@ -4,5 +4,3 @@
 # you fix the behavior. A test that crashes is always a failure, listed or not.
 DynArrayReadOutOfRangeDoesNotResize
 StaticArrayOutOfRangeIndexThrows
-ArrayRemoveOutOfBoundsReturnsFalse
-ArrayInsertOutOfBoundsReturnsFalse
