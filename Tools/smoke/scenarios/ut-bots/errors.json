@@ -15,10 +15,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in AssaultRandomizer.SpecialCost": 20,
    "Accessed None in TeamCannon.SeePlayer": 1
   },
-  "warnings": 21
+  "warnings": 1
  },
  "AS-Mazon": {
   "errors": [],
@@ -32,10 +31,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in TMale2Bot.Roaming": 2,
-   "Accessed None in TeamCannon.SeePlayer": 3
+   "Accessed None in TeamCannon.SeePlayer": 2
   },
-  "warnings": 5
+  "warnings": 2
  },
  "AS-Overlord": {
   "errors": [],
@@ -58,10 +56,8 @@
  "CTF-Command": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in TMale2Bot.Roaming": 6
-  },
-  "warnings": 6
+  "warning_sites": {},
+  "warnings": 0
  },
  "CTF-Coret": {
   "errors": [],
@@ -121,9 +117,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in MinigunCannon.SeePlayer": 5
+   "Accessed None in MinigunCannon.SeePlayer": 879
   },
-  "warnings": 5
+  "warnings": 879
  },
  "CTF-Hydro16": {
   "errors": [],
@@ -140,10 +136,8 @@
  "CTF-LavaGiant": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in TFemale2Bot.Roaming": 1
-  },
-  "warnings": 1
+  "warning_sites": {},
+  "warnings": 0
  },
  "CTF-Niven": {
   "errors": [],
@@ -180,9 +174,9 @@
   "fatal_after_summary": false,
   "warning_sites": {
    "Accessed None in UTConsole.AddMessage": 8,
-   "Accessed None in UnrealCTFScoreboard.DrawTrailer": 3190
+   "Accessed None in UnrealCTFScoreboard.DrawTrailer": 3178
   },
-  "warnings": 3198
+  "warnings": 3186
  },
  "CityIntro": {
   "errors": [],
@@ -200,9 +194,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in TMale1Bot.Roaming": 6
+   "Accessed None in TFemale2Bot.Roaming": 3
   },
-  "warnings": 6
+  "warnings": 3
  },
  "DM-Barricade": {
   "errors": [],
@@ -399,10 +393,8 @@
  "DOM-Cinder": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in TMale1Bot.Roaming": 12
-  },
-  "warnings": 12
+  "warning_sites": {},
+  "warnings": 0
  },
  "DOM-Condemned": {
   "errors": [],

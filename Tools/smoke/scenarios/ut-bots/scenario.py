@@ -21,9 +21,12 @@ UTBOTS = Scenario(
         "stub, and its match started: the player's state was `PlayerWalking` when\n"
         "the fire press ran five seconds after login, or became `PlayerWalking`\n"
         "afterwards. Every map was launched with `?NumBots=4`, including maps that\n"
-        "are not matches, whose game types may ignore it. `fps_avg` is recorded\n"
-        "per row in sweep.json, and a row below 50 is weak evidence of absence: a\n"
-        "map that rendered few frames had little chance to log an error or a stub.\n\n"),
+        "are not matches, whose game types may ignore it, and the AS-, CTF- and\n"
+        "DOM- maps under the game their prefix names (Assault, CTFGame,\n"
+        "Domination), except CTF-Tutorial, which keeps the training game it\n"
+        "stores. `fps_avg` is recorded per row in sweep.json, and a row below 50\n"
+        "is weak evidence of absence: a map that rendered few frames had little\n"
+        "chance to log an error or a stub.\n\n"),
     triage_evidence=(
         "Evidence for a row is its verdict line, `maps_loaded`, failing lines and\n"
         "`match_started` line (sweep.json, errors.json) and its stub list\n"
@@ -65,6 +68,9 @@ UTBOTS = Scenario(
     repro_timeout_seconds=105,
     repro_logdir="/tmp/repro-ut-bots",
     url_options=("?NumBots=4",),
+    url_game_by_prefix=(("AS", "Botpack.Assault"), ("CTF", "Botpack.CTFGame"),
+                        ("DOM", "Botpack.Domination")),
+    url_game_except=("CTF-Tutorial",),
     exec="5:Fire",
     require_match_start=True,
     row_count=83,
