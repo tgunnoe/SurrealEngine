@@ -993,17 +993,17 @@ auto simulated state Flying
 When the LAM's owner is not a `DeusExPlayer` the cast gives None and the next
 statements dereference it: `player.Location` and then, in whichever branch is
 taken, `player.ClientFlash`, so the script would log two lines for one
-explosion; the sweep's two lines are consistent with one explosion, not shown to
-be. The map `02_NYC_Warehouse` places four LAMs (`LAM0`, `LAM1`, `LAM3` and
-`LAM5`), and none carries a saved owner. A LAM with no owner is set off by the
-player coming within its proximity radius, or by damage. No traced run was made
-for this site; which of the four exploded in the sweep, and why, is not
-recorded. The site is not in the Deus Ex summary committed as f0bce687 and first
-appears in the re-run committed as 28f08a4c, so a sweep need not set a LAM off;
-whether the original sets off the same LAM in the same situation was not read.
-The re-sweep (f41c13db) did not log it, and a search of the engine commits'
-subjects since 28f08a4c found none naming the site; the runs are not
-deterministic.
+explosion; the two lines of the sweep of 28f08a4c are consistent with one
+explosion, not shown to be. The map `02_NYC_Warehouse` places four LAMs (`LAM0`,
+`LAM1`, `LAM3` and `LAM5`), and none carries a saved owner. A LAM with no owner
+is set off by the player coming within its proximity radius, or by damage. No
+traced run was made for this site; which of the four exploded in the sweep of
+28f08a4c, and why, is not recorded. The site is not in the Deus Ex summary
+committed as f0bce687 and first appears in the re-run committed as 28f08a4c, so
+a sweep need not set a LAM off; whether the original sets off the same LAM in
+the same situation was not read. The re-sweep (f41c13db) did not log it, and a
+search of the engine commits' subjects since 28f08a4c found none naming the
+site; the runs are not deterministic.
 
 ## The runs
 
@@ -1069,9 +1069,9 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
   (36 of the 38 gaps between its 39 `TurnTo` calls there are under 1 s); what
   raised those entries was not traced, and whether the original bounces at that
   cadence was not read.
-- Which of the four placed LAMs exploded in the Deus Ex sweep, and why, is not
-  recorded, and the site appeared only in the re-run, so whether the original
-  sets a LAM off in the same situation was not read.
+- Which of the four placed LAMs exploded in the sweep of 28f08a4c, and why, is
+  not recorded, and the site appeared only in that sweep, so whether the
+  original sets a LAM off in the same situation was not read.
 - The Deus Ex sweeps ran on a folder that holds the stock Deus Ex 1112fm
   `DeusEx.u`, `Engine.u` and the maps of the three sites, so the quoted
   scripts and the map facts are the original's. SHA-256 of the files used:
