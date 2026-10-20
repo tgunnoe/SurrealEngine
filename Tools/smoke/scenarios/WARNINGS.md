@@ -172,10 +172,13 @@ actor owns, so the flies of a destroyed swarm have no owner. The `wander` label
 tests `Owner == None` and calls `Destroy()` but does not leave the state code,
 and the next two statements dereference `Owner`.
 
-Six of the nine maps (Bluff, Ceremony, Dig, ExtremeDark, SkyTown and
-TheSunspire) place no swarm, so their flies belong to carcass swarms. Chizra,
-DasaCellars and Harobed (26 of the 94 lines) place swarms of their own, and
-which swarm orphaned the flies there was not traced.
+In the sweep before this one (94 lines on nine maps), six of the nine maps
+(Bluff, Ceremony, Dig, ExtremeDark, SkyTown and TheSunspire) place no swarm, so
+their flies belong to carcass swarms; Chizra, DasaCellars and Harobed (26 of its
+94 lines, 28 of the current 166) place swarms of their own, and which swarm
+orphaned the flies there was not traced. The five maps the re-run added to the
+site (Crashsite2, DuskFalls, ExtremeLab, Nevec, SkyCaves) were not read for
+swarms.
 
 Evidence: a run on Bluff, with `--trace-script` on `DeadBodySwarm.Destroyed`,
 `DeadBodySwarm.Destroy`, `HorseFly.Destroy`, `HorseFly.SetLocation` and
