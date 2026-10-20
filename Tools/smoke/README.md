@@ -309,12 +309,13 @@ is the part of the map's name before its first `-`, compared without regard to
 ASCII case (a name with no `-` has no prefix and never matches), so
 `--game-by-prefix AS=Botpack.Assault` also matches `as-Two`. Repeat the flag
 for more prefixes; a prefix that matches no map is unused, and a map that
-matches none runs as before. An entry that is not `PREFIX=Package.Class` (a prefix of letters,
-digits and underscores; a class of two such words joined by one dot, so it
-cannot add a URL option) and a prefix given twice (prefixes that differ only
-in ASCII case count as one) stop the sweep before any run. `--url-options` is
-not inspected. The report records the entries as `game_by_prefix`, an object
-from each prefix as given to its class, `null` when the flag is absent.
+matches none runs as before. An entry that is not `PREFIX=Package.Class` (a
+prefix of letters, digits and underscores; a class of two such words joined
+by one dot, so it cannot add a URL option) and a prefix given twice (prefixes
+that differ only in ASCII case count as one) stop the sweep before any run.
+`--url-options` is not inspected. The report records the entries as
+`game_by_prefix`, an object from each prefix as given to its class, `null`
+when the flag is absent.
 
 Screenshots capture the whole desktop, so a window in front of the engine
 appears in them, and an occluded engine window renders slowly.
@@ -508,11 +509,12 @@ documents: `extract` (logs to `stubs.json` and `errors.json`), `build`
 against sidecars) and `repro` (re-run maps and compare). Everything that
 differs between games lives in a `triage.scenario.Scenario` value: class
 hierarchy, bare-owner table, error attribution, prose, document formats,
-re-run options (`url_options`, `exec`, and `url_game_by_prefix`, the
-`(prefix, class)` pairs a sweep's `--game-by-prefix` entries become, so a
-re-run and a repro line carry the sweep's `?game=`) and the checker options.
-Functions take the scenario and explicit directories, never a literal or the
-working directory.
+re-run options (`url_options`, `exec` and `url_game_by_prefix`) and the
+checker options. A re-run and a repro line carry the scenario's
+`url_game_by_prefix` pairs, not the sweep's `--game-by-prefix` entries: the
+field must hold the pairs the sweep was given, and nothing checks that it
+does. Functions take the scenario and explicit directories, never a literal
+or the working directory.
 
 A scenario is a directory under `Tools/smoke/scenarios/` whose `scenario.py`
 defines exactly one `Scenario` (two or none is an error), beside the sweep's
