@@ -319,7 +319,7 @@ class SweepRunTests(unittest.TestCase):
     def test_without_game_by_prefix_the_command_and_report_are_unchanged(self):
         report, args = self.sweep()
         self.assertIn("--url=A", args)
-        self.assertIsNone(report.get("game_by_prefix"))
+        self.assertIsNone(report["game_by_prefix"])
 
     def test_game_by_prefix_malformed_or_repeated_entries_are_refused(self):
         bad = "--game-by-prefix: bad entry '%s' (expected PREFIX=Package.Class)"

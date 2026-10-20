@@ -15,7 +15,6 @@ import os
 import re
 import shutil
 import signal
-import string
 import subprocess
 import sys
 import time
@@ -24,16 +23,13 @@ from pathlib import Path
 # Isolated mode (python3 -I) puts no directory on sys.path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from triage.matchrule import match_started  # noqa: E402
-from triage.scenario import game_text  # noqa: E402
+from triage.scenario import ASCII_UPPER, game_text  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MAP_SUFFIXES = {".unr", ".dx"}
 KILL_GRACE_SECONDS = 45
 GRIM_TIMEOUT_SECONDS = 10
 PORTABLE_GAME = "<game folder>"
-# The engine folds only the ASCII letters when it compares names, so str.upper() would
-# refuse pairs it keeps apart.
-ASCII_UPPER = str.maketrans(string.ascii_lowercase, string.ascii_uppercase)
 # A prefix is one word and a class is Package.Class: nothing in either can add a url option.
 PREFIX_WORD = re.compile(r"[A-Za-z0-9_]+")
 GAME_CLASS = re.compile(r"[A-Za-z0-9_]+\.[A-Za-z0-9_]+")

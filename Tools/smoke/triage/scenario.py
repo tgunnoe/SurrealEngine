@@ -7,7 +7,7 @@ import string
 from dataclasses import dataclass, field
 
 # The engine folds only the ASCII letters when it compares names, so str.upper() would
-# match prefixes it keeps apart.
+# equate names it keeps apart.
 ASCII_UPPER = str.maketrans(string.ascii_lowercase, string.ascii_uppercase)
 
 
@@ -16,8 +16,9 @@ def game_text(pairs, name):
 
     `pairs` holds (prefix, class) pairs. A map's prefix is the part of its name before the
     first "-" (a name with no "-" has none and never matches), compared without regard to
-    ASCII case. The sweep and a re-run both build the URL through this, so they cannot
-    name different games.
+    ASCII case. One rule serves the sweep, the re-run command and the checker, so given the
+    same pairs they name the same game. Nothing ties the sweep's pairs to a scenario's, so
+    the scenario's `url_game_by_prefix` must hold the pairs the sweep was given.
     """
     prefix, dash, _ = name.partition("-")
     if not dash:
