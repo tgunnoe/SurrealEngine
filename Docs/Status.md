@@ -24,9 +24,8 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 
 ## General Engine bugs (affects all games)
 * Movers:
-  - Projectiles pass through some movers
-  - It is possible to get stuck on some movers when approached from certain angles
-  - Encroachment stuff isn't implemented, so movers don't crush anything or return back to their previous position.
+  - Projectiles pass through a mover that rotates, because its collision registration isn't refreshed while it swings
+  - A mover that rotates doesn't crush anything or return back to its previous position, because encroachment isn't checked while it swings.
 * Mirrors/reflections rendering is a bit buggy, especially around the edges of world geometry.
 * Portals:
   - They somewhat work, but might end up "pushing" players/projectiles in unexpected directions.
