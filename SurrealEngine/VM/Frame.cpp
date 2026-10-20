@@ -645,9 +645,19 @@ ExpressionEvalResult Frame::Run()
 		ExpressionEvalResult result = RunExpr(statement, Object, Object, Variables);
 		if (!Func)
 			return result;
+
+		// Logged before the outcome is applied: a jump or switch moves StatementIndex, and the
+		// callstack names this statement from it
+		if (result.ContextWasNone)
+		{
+			LogMessage("Accessed None in " + Object->Class->Name.ToString() + "." + Func->Name.ToString());
+			LogMessage(Frame::GetCallstack());
+		}
+
 		switch (result.Result)
 		{
 		case StatementResult::Next:
+		case StatementResult::AccessedNone:
 			break;
 		case StatementResult::Jump:
 			StatementIndex = Func->Code->FindStatementIndex(result.JumpAddress);
@@ -739,10 +749,6 @@ ExpressionEvalResult Frame::Run()
 			if (Iterators.empty())
 				ThrowException("Iterator pop statement without an iterator in " + Object->Name.ToString() + "." + Func->Name.ToString());
 			Iterators.pop_back();
-			break;
-		case StatementResult::AccessedNone:
-			LogMessage("Accessed None in " + Object->Class->Name.ToString() + "." + Func->Name.ToString());
-			LogMessage(Frame::GetCallstack());
 			break;
 		}
 
@@ -1183,6 +1189,7 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 					else
 					{
 						result.Result = StatementResult::AccessedNone;
+						result.ContextWasNone = true;
 						PushValue(ExpressionValue::NothingValue());
 						PopExpr();
 					}
