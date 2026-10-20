@@ -336,6 +336,43 @@ class SweepRunTests(unittest.TestCase):
             with self.subTest(entry=entry):
                 self.assertIn(bad % entry, self.refusal("--game-by-prefix", entry))
 
+    def sweep_ctf(self, *flags):
+        """One sweep over CTF-Tutorial and CTF-Face with CTF mapped to Botpack.CTFGame."""
+        for stem in ["CTF-Tutorial", "CTF-Face"]:
+            (self.game / "Maps" / f"{stem}.unr").write_bytes(b"")
+        report, _ = self.sweep("--game-by-prefix", "CTF=Botpack.CTFGame", *flags)
+        return report
+
+    def test_game_by_prefix_except_keeps_the_named_map_free_of_the_game(self):
+        report = self.sweep_ctf("--game-by-prefix-except", "CTF-Tutorial")
+        # An argv entry is compared whole, so this also pins that no ?game= text follows.
+        self.assertIn("--url=CTF-Tutorial", self.argv_of("CTF-Tutorial"))
+        self.assertIn("--url=CTF-Face?game=Botpack.CTFGame", self.argv_of("CTF-Face"))
+        self.assertEqual(report["game_by_prefix_except"], ["CTF-Tutorial"])
+
+    def test_game_by_prefix_except_folds_ascii_case(self):
+        self.sweep_ctf("--game-by-prefix-except", "ctf-tutorial")
+        self.assertIn("--url=CTF-Tutorial", self.argv_of("CTF-Tutorial"))
+        # Only the named map is exempt, not every map of the prefix.
+        self.assertIn("--url=CTF-Face?game=Botpack.CTFGame", self.argv_of("CTF-Face"))
+
+    def test_without_game_by_prefix_except_the_report_key_is_null(self):
+        report = self.sweep_ctf()
+        self.assertIsNone(report["game_by_prefix_except"])
+        self.assertIn("--url=CTF-Tutorial?game=Botpack.CTFGame", self.argv_of("CTF-Tutorial"))
+
+    def test_game_by_prefix_except_bad_or_repeated_names_are_refused(self):
+        bad = "--game-by-prefix-except: bad name '%s'"
+        self.assertIn(bad % "CTF/Tutorial", self.refusal("--game-by-prefix-except", "CTF/Tutorial"))
+        text = self.refusal("--game-by-prefix-except", "CTF-Tutorial",
+                            "--game-by-prefix-except", "ctf-tutorial")
+        self.assertIn("--game-by-prefix-except: name 'ctf-tutorial' given twice", text)
+        # The rest of the name form: a bare file stem, with no separator, no blank and no
+        # stand-in for the current or parent folder.
+        for name in ["", ".", "..", "CTF\\Tutorial", "CTF Tutorial", "CTF\tTutorial", "CTF-Tutorial\n"]:
+            with self.subTest(name=name):
+                self.assertIn(bad % name, self.refusal("--game-by-prefix-except", name))
+
 
 if __name__ == "__main__":
     unittest.main()
