@@ -98,15 +98,14 @@ section.
 
 | Site | Lines | Maps | Verdict | Grounds |
 | :--- | ---: | ---: | :--- | :--- |
-| UnrealCTFScoreboard.DrawTrailer | 3245 | 1 | faithful | As in the `ut` table: the same stock training game and scoreboard, with the same residual. |
-| AssaultRandomizer.SpecialCost | 18 | 1 | undecided | The callstack names the one statement of the stock `CostEnabled` `SpecialCost`, called from the engine's path search for a bot. In the traced run only one of four bots warned (996 lines against 18 in the sweep), so by differential the None is that bot's own `PlayerReplicationInfo`; why it has none is not known. |
-| TMale2Bot.Roaming | 18 | 1 | faithful | The callstack names `TurnTo(Location + AmbushSpot.lookDir)` at `Bot`'s `LongCamp` label, with the bot's own `AmbushSpot` None; only script assigns `AmbushSpot`, and the stock `PickDestination` sends a bot standing at an ambush point to `LongCamp` without assigning one. |
-| TFemale1Bot.Roaming | 17 | 2 | undecided | The same `Bot` `Roaming` body, which has several unguarded dereferences; no traced run logged this class's statement. |
-| TMale1Bot.Roaming | 11 | 1 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. |
-| TFemale2Bot.Roaming | 9 | 2 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. |
+| UnrealCTFScoreboard.DrawTrailer | 3190 | 1 | faithful | As in the `ut` table: the same stock training game and scoreboard, with the same residual. |
+| AssaultRandomizer.SpecialCost | 20 | 1 | undecided | The callstack names the one statement of the stock `CostEnabled` `SpecialCost`, called from the engine's path search for a bot. In the traced run only one of four bots warned (996 lines against 18 in the sweep of 73df9f26 and 20 in the sweep of 8d225ef3), so by differential the None is that bot's own `PlayerReplicationInfo`; why it has none is not known. |
+| TMale1Bot.Roaming | 18 | 2 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. |
+| TMale2Bot.Roaming | 8 | 2 | faithful | The callstack names `TurnTo(Location + AmbushSpot.lookDir)` at `Bot`'s `LongCamp` label, with the bot's own `AmbushSpot` None; only script assigns `AmbushSpot`, and the stock `PickDestination` sends a bot standing at an ambush point to `LongCamp` without assigning one. |
 | UTConsole.AddMessage | 8 | 1 | faithful | As in the `ut` table: the same stock tutorial and console. |
-| TeamCannon.SeePlayer | 6 | 3 | undecided | As in the `ut` table: the one traced warning (AS-HiSpeed) saw a cannon, which has no replication info; AS-Mazon and AS-OceanFloor were not traced, and whom the original raises `SeePlayer` for is not known. |
 | MinigunCannon.SeePlayer | 5 | 1 | undecided | As `MinigunCannon.SeePlayer` in the `ut` table. |
+| TeamCannon.SeePlayer | 5 | 3 | undecided | As in the `ut` table: the one traced warning (AS-HiSpeed) saw a cannon, which has no replication info; AS-Mazon and AS-OceanFloor were not traced, and whom the original raises `SeePlayer` for is not known. |
+| TFemale2Bot.Roaming | 1 | 1 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. |
 
 ### deusex
 
@@ -127,6 +126,7 @@ lines and maps are `-` because no current sweep table lists them.
 | ElectricityEmitter.CalcTrace | - | - | engine-side | The same iterator and the same dereference in the stock script, fixed by the same commit; the re-run (28f08a4c) no longer lists it. |
 | PlayerStart.PlayTeleportEffect | - | - | engine-side | The engine bound ExtremeDGen's game to a level info the map saved as deleted, so the start spot's `Level.Game` was None. Fixed by commit 14090e6d, which takes the level's first actor as the level info; the re-run of the sweep (f94c1ba6) no longer lists it. |
 | SkaarjBerserker.TakeDamage | - | - | undecided | Inherited from the same seven unguarded `ScriptedPawn` state bodies as `Slith.TakeDamage`, but it did not reproduce in two traced runs on ExtremeDark, so neither the state nor the damage source is known. The re-run of the sweep (f94c1ba6) did not log it either, and no engine change is known to account for that; the runs are not deterministic. |
+| TFemale1Bot.Roaming | - | - | undecided | The same `Bot` `Roaming` body, which has several unguarded dereferences; no traced run logged this class's statement. The re-sweep (8d225ef3) did not log it, and no engine change is known to account for that; the runs are not deterministic. |
 
 ## Sites
 
@@ -465,7 +465,7 @@ show whether `UPakTransitionInfo` itself kills a pawn.
 ### UnrealCTFScoreboard.DrawTrailer
 
 Verdict `faithful`. Lines per map, `ut`: CTF-Tutorial 3234; `ut-bots`:
-CTF-Tutorial 3245.
+CTF-Tutorial 3190.
 
 Stock `BotPack.TournamentScoreBoard`, function `DrawTrailer`, which
 `UnrealCTFScoreBoard` inherits through `TeamScoreBoard`:
@@ -559,7 +559,7 @@ root at startup on a direct launch of `CTF-Tutorial` is unread.
 ### TeamCannon.SeePlayer
 
 Verdict `undecided`. Lines per map, `ut`: AS-HiSpeed 1, AS-Mazon 1,
-AS-OceanFloor 2; `ut-bots`: AS-HiSpeed 1, AS-Mazon 3, AS-OceanFloor 2.
+AS-OceanFloor 2; `ut-bots`: AS-HiSpeed 1, AS-Mazon 1, AS-OceanFloor 3.
 
 Stock `BotPack.TeamCannon`, state `Idle`, function `SeePlayer`:
 
@@ -621,7 +621,7 @@ raised for.
 
 ### AssaultRandomizer.SpecialCost
 
-Verdict `undecided`. Lines per map, `ut-bots`: AS-HiSpeed 18.
+Verdict `undecided`. Lines per map, `ut-bots`: AS-HiSpeed 20.
 
 Stock `BotPack.AssaultRandomizer`, state `CostEnabled`, function `SpecialCost`;
 the engine calls it from `UPawn::ClearPaths`
@@ -672,16 +672,16 @@ left this bot without it.
 
 What would decide it: a trace of that bot's spawn path (`Pawn.PreBeginPlay`)
 and its `PlayerReplicationInfo` at first use, and the original's behaviour on
-the same map. The sweep logged 18 lines on this map and this run 996, so the
-count says little.
+the same map. The sweep of 73df9f26 logged 18 lines on this map, the sweep of
+8d225ef3 20 and this run 996, so the count says little.
 
 ### TMale2Bot.Roaming
 
-Verdict `faithful`. Lines per map, `ut-bots`: CTF-Command 18.
+Verdict `faithful`. Lines per map, `ut-bots`: AS-OceanFloor 2, CTF-Command 6.
 
 The warning names the state: the statement is in the state code (the labels) of
-`BotPack.Bot`'s `Roaming`, shared by the four classes of the `ut-bots` table.
-Stock `BotPack.Bot`, state `Roaming`, label `LongCamp`:
+`BotPack.Bot`'s `Roaming`, shared by the four classes the `ut-bots` sweeps have
+logged. Stock `BotPack.Bot`, state `Roaming`, label `LongCamp`:
 
 ```
 LongCamp:
@@ -752,27 +752,9 @@ states at that cadence was not read; the `SeePlayer` question of the cannon
 rows applies. The timing alone does not single the warnings out: 49 of the
 bot's 54 `TurnTo` calls in `Roaming` follow an `Acquisition` one within 0.45 s.
 
-### TFemale1Bot.Roaming
-
-Verdict `undecided`. Lines per map, `ut-bots`: CTF-Command 2, DOM-Cinder 15.
-
-Stock `BotPack.TFemale1Bot`:
-
-```
-class TFemale1Bot extends FemaleBotPlus;
-```
-
-The same `Bot` `Roaming` body as `TMale2Bot.Roaming`. Its labels also
-dereference `MoveTarget`, `OrderObject` and
-`InventorySpot(MoveTarget).markedItem`, some of which natives assign, so the
-verdict of one statement does not carry to the others. The traced CTF-Command
-run, which holds this class on the same map, logged only `TMale2Bot` warnings.
-What would decide it: a run that logs this class's warning, whose callstack
-names the statement.
-
 ### TMale1Bot.Roaming
 
-Verdict `undecided`. Lines per map, `ut-bots`: CTF-EternalCave 11.
+Verdict `undecided`. Lines per map, `ut-bots`: DM-ArcaneTemple 6, DOM-Cinder 12.
 
 Stock `BotPack.TMale1Bot`:
 
@@ -786,7 +768,7 @@ this class's warning, with the callstack naming the statement.
 
 ### TFemale2Bot.Roaming
 
-Verdict `undecided`. Lines per map, `ut-bots`: AS-Overlord 3, CTF-LavaGiant 6.
+Verdict `undecided`. Lines per map, `ut-bots`: CTF-LavaGiant 1.
 
 Stock `BotPack.TFemale2Bot`:
 
@@ -991,6 +973,30 @@ a None instigator (zone or drowning damage from `Pawn`'s pain timer) or the
 pawn is in one of the seven states with no enemy, and engine-side if the
 callstack shows an engine-supplied None.
 
+### TFemale1Bot.Roaming
+
+Verdict `undecided`. No current sweep lists it.
+
+Stock `BotPack.TFemale1Bot`:
+
+```
+class TFemale1Bot extends FemaleBotPlus;
+```
+
+The same `Bot` `Roaming` body as `TMale2Bot.Roaming`. Its labels also
+dereference `MoveTarget`, `OrderObject` and
+`InventorySpot(MoveTarget).markedItem`, some of which natives assign, so the
+verdict of one statement does not carry to the others. The traced CTF-Command
+run, which holds this class on the same map, logged only `TMale2Bot` warnings.
+What would decide it: a run that logs this class's warning, whose callstack
+names the statement.
+
+The sweep of 73df9f26 logged it on CTF-Command (2 lines) and DOM-Cinder (15).
+The re-sweep (8d225ef3) did not, but logged the same `Roaming` body under
+`TMale2Bot` on CTF-Command (6 lines) and under `TMale1Bot` on DOM-Cinder (12).
+No engine change is known to account for that, and the runs are not
+deterministic.
+
 ## The runs
 
 The quoted log lines come from single runs of the engine built from commit
@@ -1035,8 +1041,8 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
   flies on the maps that place their own swarms was not traced.
 - The runs are not deterministic: monsters and bots fight, so a site may not
   reproduce (`SkaarjBerserker.TakeDamage` did not in two runs) and counts
-  differ widely from the sweep's (`AssaultRandomizer.SpecialCost`: 18 lines in
-  the sweep, 996 in one traced run).
+  differ widely from the sweeps' (`AssaultRandomizer.SpecialCost`: 18 lines in
+  the sweep of 73df9f26, 20 in the sweep of 8d225ef3, 996 in one traced run).
 - Whom the original raises `SeePlayer` for, when the receiver is a stock UT
   cannon, is not known; the engine raises it for each live pawn in sight.
 - The UT scoreboard and console warnings rest on the stock game assuming the
