@@ -3,6 +3,15 @@
 #include "Utils/UTF16.h"
 #include "Utils/Exception.h"
 
+std::string narrow_utf16(const std::wstring& str)
+{
+	std::string result;
+	result.reserve(str.size());
+	for (wchar_t c : str)
+		result.push_back(static_cast<uint32_t>(c) < 256 ? static_cast<char>(c) : '?');
+	return result;
+}
+
 #ifdef WIN32
 
 std::string from_utf16(const std::wstring& str)
