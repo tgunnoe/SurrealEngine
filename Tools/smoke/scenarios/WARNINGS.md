@@ -896,13 +896,15 @@ calls with the other three bots logged no warning. The first:
 ```
 
 Every bot hit the `Assault(Level.Game)` None on every call, the game having run
-as `DeathMatchPlus`, where the cast yields None; the second of the last two
-rows of the table under `## The runs` shows it, and the first, with the game
-named on the URL, logged no `SpecialCost` warning. Only one bot's hits were
-logged in those runs, because the VM dropped a None whose statement ended in a
-jump, which the engine at 66ee08e7 no longer does. The sweep of f93c4864 named
-the game by prefix and ran AS-HiSpeed under `Assault`, where the cast yields
-the game, and did not log the site.
+as `DeathMatchPlus`, where the cast yields None; the AS-HiSpeed run under
+`## The runs` with a temporary log at the VM's None context shows it, and the
+AS-HiSpeed run there with the game named on the URL logged no `SpecialCost`
+warning, an observation made on engine 24afdf6b under the VM described next, so
+the sweep of f93c4864 carries the claim. Only one bot's hits were logged in
+those runs, because the VM dropped a None whose statement ended in a jump,
+which the engine at 66ee08e7 no longer does. The sweep of f93c4864 named the
+game by prefix and ran AS-HiSpeed under `Assault`, where the cast yields the
+game, and did not log the site.
 
 ### TMale1Bot.Roaming
 
