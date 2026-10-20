@@ -7,6 +7,8 @@
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UFunction.h"
 #include "Packages/Core/Properties/UIntProperty.h"
+#include "Packages/Core/Properties/UObjectProperty.h"
+#include "Packages/Core/Properties/UStringProperty.h"
 #include "Packages/Core/Properties/UStructProperty.h"
 #include "Packages/Core/Properties/UArrayProperty.h"
 
@@ -78,6 +80,23 @@ namespace
 		prop->Struct = pair;
 		return prop;
 	}
+
+	// A size-2 int array plus the flag an Array_ native writes its result to. The caller picks the
+	// flag's start value so a native that never writes it cannot pass by leaving it alone.
+	struct ArrayNativeFixture
+	{
+		ScriptArray Array;
+		uint32_t Flag;
+		BitfieldBool Result;
+
+		explicit ArrayNativeFixture(bool startFlag) : Array(MakeIntProperty("Inner", 0)), Flag(startFlag ? 1 : 0), Result{ &Flag, 1 }
+		{
+			Array.Resize(2);
+		}
+
+		ArrayNativeFixture(const ArrayNativeFixture&) = delete;
+		ArrayNativeFixture& operator=(const ArrayNativeFixture&) = delete;
+	};
 }
 
 TEST(CallOmittedOptionalStructParm)
@@ -146,6 +165,132 @@ TEST(CallExplicitNothingArrayParm)
 
 	CHECK(result.GetType() == ExpressionValueType::ValueArray);
 	CHECK_EQ(result.ToArray().GetSize(), (size_t)0);
+}
+
+// A store whose right side is Nothing is what `S = None.Member` produces: the Context handler
+// pushes a Nothing value when the context object is None. The original interpreter zeroes
+// the result of a None context expression, so the target is reset rather than left alone.
+
+// The struct and array cases below are placeholders until Store handles a Nothing right side:
+// a real call copies from a null pointer and would crash the test's process, so they fail by
+// an explicit message instead of making the call.
+TEST(NullContextStoreResetsStruct)
+{
+	CHECK_MSG(false, "null-context struct store cannot be exercised safely: the store copies from a null pointer");
+}
+
+TEST(NullContextStoreEmptiesDynArray)
+{
+	CHECK_MSG(false, "null-context array store cannot be exercised safely: the store copies from a null pointer");
+}
+
+// Positive controls: a scalar target already reaches its zero value through the conversion of
+// Nothing, so these pass at every commit and show the Nothing right side is built correctly.
+TEST(NullContextStoreZeroesInt)
+{
+	UIntProperty* prop = MakeIntProperty("Slot", 0);
+	int32_t storage = 7;
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK_EQ(storage, 0);
+}
+
+TEST(NullContextStoreEmptiesString)
+{
+	UStringProperty* prop = GC::Alloc<UStringProperty>("Slot", nullptr, ObjectFlags::NoFlags);
+	prop->DataOffset = { 0, 1 };
+	std::string storage = "x";
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK_EQ(storage, std::string());
+}
+
+TEST(NullContextStoreClearsObject)
+{
+	UObjectProperty* prop = GC::Alloc<UObjectProperty>("Slot", nullptr, ObjectFlags::NoFlags);
+	prop->DataOffset = { 0, 1 };
+	// Any live object will do; a property is the cheapest one the fixture can make.
+	UObject* storage = GC::Alloc<UIntProperty>("Held", nullptr, ObjectFlags::NoFlags);
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK(storage == nullptr);
+}
+
+TEST(NullContextStoreZeroesVector)
+{
+	// A bare struct property is a ValueStruct; only Load marks it as a vector.
+	UStructProperty* prop = GC::Alloc<UStructProperty>("Slot", nullptr, ObjectFlags::NoFlags);
+	prop->ValueType = ExpressionValueType::ValueVector;
+	prop->DataOffset = { 0, 1 };
+	vec3 storage(1.0f, 2.0f, 3.0f);
+	ExpressionValue lvalue = ExpressionValue::Variable(&storage, prop);
+
+	lvalue.Store(ExpressionValue::NothingValue());
+
+	CHECK(storage == vec3(0.0f, 0.0f, 0.0f));
+}
+
+// The Array_ natives take a script offset and count. The two controls are safe on the unchecked
+// natives and pass at every commit; the rest need a range check the natives lack. The ones that
+// would overflow the heap or run off the end of the buffer are placeholders until the check
+// exists; the remove cases run safely today (the new size cannot wrap) and fail by check.
+TEST(ArrayNativeInsertAtEndGrows)
+{
+	ArrayNativeFixture f(false);
+
+	NObject::Array_Insert_U227(f.Array, 2, 1, f.Result);
+
+	CHECK(f.Result.Get());
+	CHECK_EQ(f.Array.GetSize(), (size_t)3);
+}
+
+TEST(ArrayNativeRemoveLastShrinks)
+{
+	ArrayNativeFixture f(false);
+
+	NObject::Array_Remove_U227(f.Array, 1, 1, f.Result);
+
+	CHECK(f.Result.Get());
+	CHECK_EQ(f.Array.GetSize(), (size_t)1);
+}
+
+TEST(ArrayNativeInsertNegativeOffsetReturnsFalse)
+{
+	CHECK_MSG(false, "Array_Insert with a negative offset cannot be exercised safely: it wraps to a huge size_t and the copy runs off the buffer");
+}
+
+TEST(ArrayNativeInsertNegativeCountReturnsFalse)
+{
+	CHECK_MSG(false, "Array_Insert with a negative count cannot be exercised safely: it wraps to a huge size_t and the construct loop runs off the buffer");
+}
+
+TEST(ArrayNativeRemoveRangePastEndReturnsFalse)
+{
+	ArrayNativeFixture f(true);
+
+	// Offset 1 and count 2 reach one element past the end of a size-2 array.
+	NObject::Array_Remove_U227(f.Array, 1, 2, f.Result);
+
+	CHECK_MSG(!f.Result.Get(), "Array_Remove returned true for a range past the end");
+	CHECK_EQ(f.Array.GetSize(), (size_t)2);
+}
+
+TEST(ArrayNativeScriptArrayInsertPastEndThrows)
+{
+	CHECK_MSG(false, "ScriptArray::Insert past the end cannot be exercised safely: it reads and writes beyond the buffer");
+}
+
+TEST(ArrayNativeScriptArrayRemovePastEndThrows)
+{
+	ArrayNativeFixture f(false);
+
+	CHECK_THROWS(f.Array.Remove(1, 2));
 }
 
 // The tests below pin behavior that is wrong today. They are listed in xfail.txt;
