@@ -42,7 +42,8 @@ inline bool ActorBlocks(const MovingActor& moving, const HitTarget& hit)
 // rides does not either unless the caller asks for its own base to block (it does when it checks
 // whether it can stand). The level stops an actor that collides with the world.
 //
-// A mover's brush is ruled exactly as any other actor for now.
+// A mover's brush is world geometry to whatever collides with the world, so the mover's own flag
+// decides, whatever flags the moving actor carries.
 inline bool HitBlocks(const MovingActor& moving, const HitTarget& hit, bool isOwnBaseBlocking)
 {
 	if (hit.isBasedOnMoving || (hit.isBaseOfMoving && !isOwnBaseBlocking))
@@ -53,6 +54,7 @@ inline bool HitBlocks(const MovingActor& moving, const HitTarget& hit, bool isOw
 	case HitKind::Level:
 		return moving.collidesWorld;
 	case HitKind::MoverBrush:
+		return moving.collidesWorld && (moving.isPlayerOrProjectile ? hit.blocksPlayers : hit.blocksActors);
 	case HitKind::Actor:
 		return ActorBlocks(moving, hit);
 	}
