@@ -89,9 +89,9 @@ section.
 
 | Site | Lines | Maps | Verdict | Grounds |
 | :--- | ---: | ---: | :--- | :--- |
-| UnrealCTFScoreboard.DrawTrailer | 3234 | 1 | faithful | The stock training game sets the rated-game flag, and the scoreboard's `DrawTrailer` then reads `RatedGameLadderObj.SkillText`, a ladder object that a direct map launch never assigns. Residual: the None operand is inferred by elimination, and the original's startup is unread. |
+| UnrealCTFScoreboard.DrawTrailer | 3193 | 1 | faithful | The stock training game sets the rated-game flag, and the scoreboard's `DrawTrailer` then reads `RatedGameLadderObj.SkillText`, a ladder object that a direct map launch never assigns. Residual: the None operand is inferred by elimination, and the original's startup is unread. |
+| MinigunCannon.SeePlayer | 884 | 1 | undecided | `MinigunCannon` inherits `TeamCannon`'s `Idle` `SeePlayer`, which reads `Pawn(SeenPlayer).PlayerReplicationInfo.Team` unguarded; the engine raises `SeePlayer` for each live pawn in sight, and in a traced AS-HiSpeed run of `TeamCannon` the seen pawn was another cannon. Whom the original raises it for is not known; no run traced it on CTF-High. |
 | UTConsole.AddMessage | 8 | 1 | faithful | The stock tutorial calls `AddMessage` on a console whose `MessageWindow` exists only after the menu has created the UWindow root, which a direct launch never does. Residual: the original's startup is unread. |
-| MinigunCannon.SeePlayer | 4 | 1 | undecided | `MinigunCannon` inherits `TeamCannon`'s `Idle` `SeePlayer`, which reads `Pawn(SeenPlayer).PlayerReplicationInfo.Team` unguarded; the engine raises `SeePlayer` for each live pawn in sight, and in a traced AS-HiSpeed run of `TeamCannon` the seen pawn was another cannon. Whom the original raises it for is not known; no run traced it on CTF-High. |
 | TeamCannon.SeePlayer | 4 | 3 | undecided | In the one traced warning (an AS-HiSpeed run with bots; none of these four lines was traced) the seen pawn was another `TeamCannon`, which has no replication info, so the stock `Idle` `SeePlayer` reads None; the engine raises `SeePlayer` for each live pawn in sight, and whom the original raises it for is not known. |
 
 ### ut-bots
@@ -464,7 +464,7 @@ show whether `UPakTransitionInfo` itself kills a pawn.
 
 ### UnrealCTFScoreboard.DrawTrailer
 
-Verdict `faithful`. Lines per map, `ut`: CTF-Tutorial 3234; `ut-bots`:
+Verdict `faithful`. Lines per map, `ut`: CTF-Tutorial 3193; `ut-bots`:
 CTF-Tutorial 3178.
 
 Stock `BotPack.TournamentScoreBoard`, function `DrawTrailer`, which
@@ -602,7 +602,7 @@ the original too.
 
 ### MinigunCannon.SeePlayer
 
-Verdict `undecided`. Lines per map, `ut`: CTF-High 4; `ut-bots`: CTF-High 879.
+Verdict `undecided`. Lines per map, `ut`: CTF-High 884; `ut-bots`: CTF-High 879.
 
 `BotPack.MinigunCannon`:
 
@@ -1056,7 +1056,8 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
   the Nones the VM dropped before, so its counts are not comparable with the
   earlier sweeps'. The sweep of f93c4864 named each map's game by its prefix
   (AS Assault, CTF CTFGame, DOM Domination; CTF-Tutorial exempted, since it
-  stores TrainingCTF); the earlier UT sweeps did not, and the traced runs the
+  stores TrainingCTF), and the `ut` sweep of c30fcc04 did the same; the
+  earlier UT sweeps did not, and the traced runs the
   `TeamCannon.SeePlayer`, `MinigunCannon.SeePlayer` and
   `AssaultRandomizer.SpecialCost` readings cite, except the one that names the
   game on the URL, ran AS-HiSpeed under DeathMatchPlus too.
