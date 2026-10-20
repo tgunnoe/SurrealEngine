@@ -80,10 +80,8 @@
  "02_NYC_Warehouse": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in LAM.Explode": 2
-  },
-  "warnings": 2
+  "warning_sites": {},
+  "warnings": 0
  },
  "03_NYC_747": {
   "errors": [],

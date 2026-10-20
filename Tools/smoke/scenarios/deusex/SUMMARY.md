@@ -1,6 +1,6 @@
 # Deus Ex 1112fm sweep summary
 
-Maps: 88. clean: 88. fail: 0. crash: 0. timeout: 0. pass-verdict but non-clean (stub-only): 0. warnings: 6.
+Maps: 88. clean: 88. fail: 0. crash: 0. timeout: 0. pass-verdict but non-clean (stub-only): 0. warnings: 4.
 
 Check: the verdict counts are recomputed from sweep.json by the `check`
 command of the triage module, which exits 0 only if they equal the line
@@ -11,7 +11,6 @@ above.
 | Site | Lines | Maps |
 | :--- | ---: | ---: |
 | Accessed None in TriggerLight.Trigger | 3 | 1 |
-| Accessed None in LAM.Explode | 2 | 1 |
 | Accessed None in ShakeTrigger.Trigger | 1 | 1 |
 
 ## Failure signatures
