@@ -5,9 +5,12 @@ the requested map, rendered, logged no error line and no gameplay-class
 stub, and its match started: the player's state was `PlayerWalking` when
 the fire press ran five seconds after login, or became `PlayerWalking`
 afterwards. Every map was launched with `?NumBots=4`, including maps that
-are not matches, whose game types may ignore it. `fps_avg` is recorded
-per row in sweep.json, and a row below 50 is weak evidence of absence: a
-map that rendered few frames had little chance to log an error or a stub.
+are not matches, whose game types may ignore it, and the AS-, CTF- and
+DOM- maps under the game their prefix names (Assault, CTFGame,
+Domination), except CTF-Tutorial, which keeps the training game it
+stores. `fps_avg` is recorded per row in sweep.json, and a row below 50
+is weak evidence of absence: a map that rendered few frames had little
+chance to log an error or a stub.
 
 Evidence for a row is its verdict line, `maps_loaded`, failing lines and
 `match_started` line (sweep.json, errors.json) and its stub list
