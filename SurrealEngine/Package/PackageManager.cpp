@@ -563,6 +563,11 @@ Package* PackageManager::LoadMap(const std::string& path)
 	return GC::Alloc<Package>(this, mapFilename.stem().string(), absolute_path.string());
 }
 
+GCRoot<Package> PackageManager::LoadMapHeld(const std::string& path)
+{
+	return GCRoot<Package>(LoadMap(path));
+}
+
 void PackageManager::UnloadPackage(Package* package)
 {
 	ForgetStreams(package);
@@ -606,6 +611,11 @@ Package* PackageManager::LoadSaveSlot(int slotNum)
 		return nullptr;
 
 	return GC::Alloc<Package>(this, file.stem().string(), file.string());
+}
+
+GCRoot<Package> PackageManager::LoadSaveSlotHeld(int slotNum)
+{
+	return GCRoot<Package>(LoadSaveSlot(slotNum));
 }
 
 void PackageManager::ScanForMaps()
@@ -771,7 +781,7 @@ Package* PackageManager::GetSaveInfoPackage(const NameString& saveFolderName)
 	auto idx = saveInfos.find(saveFolderName);
 
 	if (idx != saveInfos.end())
-		return idx->second;
+		return idx->second.get();
 
 	return nullptr;
 }
