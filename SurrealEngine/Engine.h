@@ -117,6 +117,30 @@ HoldParseResult ParseHoldCommand(const Array<std::string>& args, double now);
 // the held value for good.
 std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string& name, ExpressionValueType type, PropertyFlags flags);
 
+struct PlaceCommand
+{
+	vec3 location;				// Where the player is to be put
+	bool hasYaw = false;
+	float yawDegrees = 0.0f;	// Valid only when hasYaw
+};
+
+struct PlaceParseResult
+{
+	PlaceCommand place;		// Valid only when the command was accepted
+	std::string error;		// Names the offending part; empty when the command was accepted
+
+	bool ok() const { return error.empty(); }
+};
+
+// Parses "place <x> <y> <z> [<yaw>]" (the arguments as the console splits them, the command word
+// at args[0]) into the location to put the player at and the optional yaw in degrees. Every
+// operand must be a finite number.
+PlaceParseResult ParsePlaceCommand(const Array<std::string>& args);
+
+// The smoke log's text for one placement after its kind: the location asked for, the location
+// the engine left the player at, and the yaw when one was given.
+std::string FormatPlaceLine(const vec3& requested, const vec3& ended, bool hasYaw, float yawDegrees);
+
 struct CallArgsResult
 {
 	Array<ExpressionValue> values;	// Valid only when the arguments were accepted; one per parameter, in order
@@ -350,6 +374,7 @@ public:
 	InputHoldSchedule inputHolds;
 	double LoginClockSeconds() const;
 	bool HoldInput(const Array<std::string>& args);
+	bool PlacePlayer(const Array<std::string>& args);
 	void ReleaseHolds(const Array<InputHoldSchedule::Hold>& holds);
 
 	// Writes a STATE line to the smoke log when the player's state name changes, and on the first

@@ -1360,6 +1360,55 @@ std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string&
 	return {};
 }
 
+namespace
+{
+	// A float can run to 39 digits, so the text is sized by the longest one rather than by the
+	// levels' range
+	std::string OneDecimal(float value)
+	{
+		char text[64];
+		std::snprintf(text, sizeof(text), "%.1f", value);
+		return text;
+	}
+
+	std::string FormatPoint(const vec3& point)
+	{
+		return "(" + OneDecimal(point.x) + ", " + OneDecimal(point.y) + ", " + OneDecimal(point.z) + ")";
+	}
+}
+
+PlaceParseResult ParsePlaceCommand(const Array<std::string>& args)
+{
+	const char* usage = "place takes '<x> <y> <z> [<yaw>]'";
+
+	if (args.size() != 4 && args.size() != 5)
+		return { {}, usage };
+
+	static const char* const names[] = { "x", "y", "z", "yaw" };
+	const size_t operands = args.size() - 1;
+	double values[4];
+	for (size_t i = 0; i < operands; i++)
+	{
+		if (!ParseFiniteNumber(args[i + 1], values[i]) || !std::isfinite((float)values[i]))
+			return { {}, std::string("place ") + names[i] + " '" + args[i + 1] + "' is not a number" };
+	}
+
+	PlaceCommand place;
+	place.location = vec3((float)values[0], (float)values[1], (float)values[2]);
+	place.hasYaw = operands == 4;
+	if (place.hasYaw)
+		place.yawDegrees = (float)values[3];
+	return { place, {} };
+}
+
+std::string FormatPlaceLine(const vec3& requested, const vec3& ended, bool hasYaw, float yawDegrees)
+{
+	std::string line = FormatPoint(requested) + " -> " + FormatPoint(ended);
+	if (hasYaw)
+		line += " yaw " + OneDecimal(yawDegrees);
+	return line;
+}
+
 void Engine::NotePlayerLogin()
 {
 	SmokeLog::Get()->Event("LOGIN");
@@ -1975,6 +2024,54 @@ bool Engine::HoldInput(const Array<std::string>& args)
 	return true;
 }
 
+bool Engine::PlacePlayer(const Array<std::string>& args)
+{
+	PlaceParseResult parsed = ParsePlaceCommand(args);
+	if (!parsed.ok())
+	{
+		LogMessage("place: " + parsed.error);
+		return false;
+	}
+	const PlaceCommand& place = parsed.place;
+
+	// Written to the smoke log and, with the engine log's level-time stamp, to the engine log, where
+	// the probes' answers are: a line that is to be read against them has to be in that file
+	auto report = [](const std::string& kind, const std::string& text)
+	{
+		SmokeLog::Get()->Event(kind, text);
+		LogMessage("place: " + kind + " " + text);
+	};
+
+	UPlayerPawn* actor = viewport->Actor();
+	if (!actor)
+	{
+		report("PLACE_FAILED", FormatPoint(place.location) + " no player");
+		return false;
+	}
+
+	// The engine's own placement, so a spot inside the level's solid space is shifted or refused as
+	// it would be for the game's scripts. It reports only whether the actor moved; where it ended
+	// is read back from the actor
+	if (!actor->SetLocation(place.location))
+	{
+		report("PLACE_FAILED", FormatPoint(place.location) + " refused");
+		return false;
+	}
+
+	if (place.hasYaw)
+	{
+		// The player's next move takes the body yaw from the view and the pawn's tick takes the view
+		// from the body in the other direction, so both are written to leave them agreeing. Folding
+		// the turns away first keeps a huge finite yaw within what the rounding can represent
+		const int yaw = (int)std::lround(std::fmod((double)place.yawDegrees, 360.0) * 65536.0 / 360.0) & 0xFFFF;
+		actor->Rotation().Yaw = yaw;
+		actor->ViewRotation().Yaw = yaw;
+	}
+
+	report("PLACE", FormatPlaceLine(place.location, actor->Location(), place.hasYaw, place.yawDegrees));
+	return true;
+}
+
 void Engine::ReleaseHolds(const Array<InputHoldSchedule::Hold>& holds)
 {
 	UPlayerPawn* actor = viewport->Actor();
@@ -2291,6 +2388,10 @@ bool Engine::ExecCommand(const Array<std::string>& args)
 	else if (command == "call")
 	{
 		return CallFunction(args);
+	}
+	else if (command == "place")
+	{
+		return PlacePlayer(args);
 	}
 
 	for (UObject* target : { static_cast<UObject*>(viewport->Actor()), static_cast<UObject*>(console) })
