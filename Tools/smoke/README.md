@@ -87,6 +87,41 @@ and about 4 at one frame per second. The `FPS` lines of the log show that rate.
 A run whose `FPS` falls to about 1 during the hold is therefore not evidence
 that the held input had no effect.
 
+`place <x> <y> <z> [<yaw>]` puts the player at a location in the level, for a
+run that needs the player somewhere other than where the map starts it (for
+example `--exec='5.25:place -2199 344 -380 38'`). The numbers are finite
+numbers in the level's units, and the yaw is in degrees. The move is the
+engine's own placement, so a script's move and this one meet the same checks:
+a location inside solid space is shifted to the free spot the engine finds
+nearby, or refused, and a refused placement leaves the player where it was.
+When a yaw is given and the move succeeded, the player's body and view are
+both turned to it (pitch and roll are left alone), and the player then walks
+forward along (cos yaw, sin yaw); a refused move writes no yaw.
+
+Every placement writes one line to the smoke log. The line
+`PLACE (x, y, z) -> (x', y', z')` gives the location asked for and the
+location the player was left at, each coordinate with one decimal, followed by
+` yaw <degrees>` (one decimal) when a yaw was given; the two triples differ
+when the engine shifted the placement. `PLACE_FAILED (x, y, z) refused` says
+the engine would not move the player, and `PLACE_FAILED (x, y, z) no player`
+that there was no player. The same text is written to the engine log as
+`place: <line>` with that log's level-time stamp, among the answers of `call`
+probes, so a probe that comes after it can be read against it. A refused
+placement also makes the item `EXEC_FAILED` and adds
+`Unknown command: place ...` to the engine log, as a refused `hold` does, and a
+command line that is not `place` followed by three or four finite numbers is
+refused the same way, with `place: <reason>` in the engine log.
+
+The command does only that. The player's zone is refreshed by its next move,
+not by the placement, the teleport flag is not set, nothing is pushed aside and
+the velocity is kept, so a player placed in the air falls to the floor. It
+moves the player only, and like `hold` and `call` it is also reachable through
+`ConsoleCommand` from the console and from a script. To put the player
+somewhere that collision or a touch matters, place it; do not fly there with
+`Ghost`, which clears collision so that the player touches no trigger, dies
+once it leaves the level's geometry in Unreal Tournament, does nothing in Deus
+Ex, and with `Walk` afterwards drops the player wherever it stopped.
+
 `call <Function> [arg ...]` runs a function of the player, or failing that of
 the console, whatever its flags, so a run can start game logic that no `exec`
 function exposes (a Deus Ex conversation, for example):
@@ -240,19 +275,32 @@ each. The entry-map preload is not logged.
 | `MISSING_NATIVE <text>` | An unknown native function. Either it aborted the run (followed by `FATAL`), or the VM caught it inside another native's callback and logged it as a script error, in which case the run continues and it is counted here, not as `SCRIPT_ERROR`. |
 | `EXCEPTION <text>` | An exception reached the top level; always followed by `FATAL`. |
 | `EXEC <seconds> <command>` | An `--exec` command ran; `<seconds>` is the scheduled time, not the time the command ran. Written after `LOGIN`, once per command, in schedule order. |
-| `EXEC_FAILED <seconds> <command>` | An `--exec` command ran, but the console found neither a built-in command nor an `exec` function of that name, or a `hold` command was refused (a duration that is not positive, a speed that is not a number, or a name that is not an input button or axis of the player; the engine log says which), or a `call` command was refused or skipped (an argument or a lookup that failed, or a call the VM would not make; the engine log says which). A script `exec` function that rejects its arguments still counts as `EXEC`. |
+| `EXEC_FAILED <seconds> <command>` | An `--exec` command ran, but the console found neither a built-in command nor an `exec` function of that name, or a `hold` command was refused (a duration that is not positive, a speed that is not a number, or a name that is not an input button or axis of the player; the engine log says which), or a `call` command was refused or skipped (an argument or a lookup that failed, or a call the VM would not make; the engine log says which), or a `place` command was refused (a line that is not three or four finite numbers, or a placement the engine would not make, or no player; the engine log says which). A script `exec` function that rejects its arguments still counts as `EXEC`. |
 | `EXEC_SKIPPED <seconds> <command>` | An `--exec` command never ran because the run ended first (or no login happened). Written just before `SUMMARY`; absent after a fatal run. |
+| `PLACE (x, y, z) -> (x', y', z')` | A `place` command moved the player. The first triple is the location asked for, the second the location the player was left at (different when the engine shifted the placement), each coordinate with one decimal; ` yaw <degrees>` follows when a yaw was given. The same text is in the engine log as `place: PLACE ...`. |
+| `PLACE_FAILED (x, y, z) refused` / `PLACE_FAILED (x, y, z) no player` | A `place` command did not move the player: the engine would not make the placement (no yaw is written), or there was no player. The triple is the location asked for. |
 | `STATE <seconds> <state>` | The player's state name, as seen once per frame after the first `LOGIN`; `None` means the player has no state. `<seconds>` counts from that first `LOGIN` with one decimal and keeps counting across maps. A line is written when the state changes and when a new map's player is first seen, even if its state name is unchanged. The first line for each player carries ` at (x, y, z)`, the player's location with one decimal per coordinate. A state entered and left between two frames is not seen. |
 | `FPS <value>` | Frames per second, sampled about once per second. |
 | `SUMMARY script_errors=N stub_hits=N missing_natives=N exceptions=N script_warnings=N fps_avg=X` | Last line of a clean `--exit-after` run. |
 | `FATAL <text>` / `FATAL terminate: <message>` / `FATAL signal <n>` | Last line of a fatal run; `SUMMARY` is then absent. A crash during teardown, after the main loop ended, can still append `FATAL signal <n>` after `SUMMARY`. Whenever the process reaches `std::terminate` under `--autostart`, `FATAL terminate: <message>` is written just before `FATAL signal 6`; `<message>` is the text of the exception in flight, `unknown exception` for one that is not a standard exception, or `no exception` when none is in flight. When the exception was thrown while others were still unwinding (a double fault, such as a destructor that throws during unwinding), the message ends with how many were unwinding and says it names the later throw, not the one that started the unwind. It is written after `SUMMARY` too, when terminate is reached during teardown. |
 
-`EXEC`, `EXEC_FAILED` and `EXEC_SKIPPED` lines are not counted in `SUMMARY`.
+`EXEC`, `EXEC_FAILED`, `EXEC_SKIPPED`, `PLACE` and `PLACE_FAILED` lines are not
+counted in `SUMMARY`.
 `EXEC` and `EXEC_FAILED` lines follow the first `LOGIN`; a command never runs
 before it.
 
 `exceptions` in `SUMMARY` is always 0 today, because every exception ends the
 run with `FATAL` instead of `SUMMARY`; it is kept so the line shape is stable.
+
+Two clocks run in a run's logs. The seconds of `STATE` lines and of the
+`--exec` schedule are wall-clock seconds since the first `LOGIN`. The engine
+log's bracketed seconds, and the `trace:` lines of `--trace-script`, are level
+time: it starts at zero when the level begins play, and each frame advances it
+by the wall time of that frame, capped at one second, times the level's time
+dilation. The two differ in origin and in rate, so a `STATE` second is not the
+same second as a bracketed or `trace:` one, and events that are to be lined up
+(a `place` against the probes after it, say) are lined up by the engine log's
+stamps.
 
 ## Sweep runner
 
