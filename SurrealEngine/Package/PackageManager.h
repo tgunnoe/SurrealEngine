@@ -93,9 +93,12 @@ public:
 	Package* GetSaveInfoPackage(const NameString& saveFolderName);
 	void RemoveSaveInfoPackage(const NameString& saveFolderName);
 	void RegisterSaveInfo(const std::string& saveFolderName);
-	std::map<NameString, Package*> GetSaveInfoPackages() const { return saveInfos; };
 
 	Package* LoadMap(const std::string& path);
+
+	// The package LoadMap returns, kept alive by the root for as long as the holder keeps the root
+	GCRoot<Package> LoadMapHeld(const std::string& path);
+
 	void UnloadPackage(Package* package);
 
 	// Drops the cached streams of a package: the cache is keyed by the package's address alone, so
@@ -105,6 +108,10 @@ public:
 	void CloseStreams();
 
 	Package* LoadSaveSlot(int slotNum);
+
+	// The package LoadSaveSlot returns, kept alive by the root for as long as the holder keeps the root;
+	// the root is empty when there is no such slot
+	GCRoot<Package> LoadSaveSlotHeld(int slotNum);
 
 	std::shared_ptr<PackageStream> GetStream(Package* package);
 
@@ -176,7 +183,7 @@ private:
 	std::map<NameString, std::unique_ptr<IniFile>> iniFiles;
 	std::map<NameString, std::shared_ptr<IniFile>> intFiles;
 	std::map<std::string, std::string> packageRemaps;
-	std::map<NameString, Package*> saveInfos;
+	std::map<NameString, GCRoot<Package>> saveInfos;
 
 	std::map<NameString, std::string> aviFilenames;
 
