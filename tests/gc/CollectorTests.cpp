@@ -86,14 +86,23 @@ TEST(GcMarksThroughObjectProperties)
 	UObject* first = fixture.Hold(fixture.NewInstance(cls, "First"));
 	UObject* second = fixture.NewInstance(cls, "Second");
 	UObject* third = fixture.NewInstance(cls, "Third");
-	fixture.NewInstance(cls, "Unreferenced");
+	UObject* unreferenced = fixture.NewInstance(cls, "Unreferenced");
 	first->Value<UObject*>(link->DataOffset) = second;
 	second->Value<UObject*>(link->DataOffset) = third;
 
-	// The collection is withheld until the object property mark is fixed: it hands the address
-	// of the property's slot to the collector as if it were an object, so collecting here writes
-	// into the memory next to the property data and never marks the object the slot holds.
-	CHECK_MSG(false, "not collecting: the object property mark treats its slot as an object and corrupts the memory beside it");
+	const size_t before = GC::GetStats().numObjects;
+	GC::Collect();
+	const size_t after = GC::GetStats().numObjects;
+	const bool firstLive = IsLive(first);
+	const bool secondLive = IsLive(second);
+	const bool thirdLive = IsLive(third);
+	const bool unreferencedLive = IsLive(unreferenced);
+
+	CHECK_MSG(firstLive, "the held object was swept");
+	CHECK_MSG(secondLive, "an object held by a property of a held object was swept");
+	CHECK_MSG(thirdLive, "an object two property hops from a root was swept");
+	CHECK_MSG(!unreferencedLive, "an object reachable from no root survived");
+	CHECK_EQ(before - after, size_t{ 1 });
 }
 
 TEST(GcMarksStructMemberArrays)
@@ -121,9 +130,15 @@ TEST(GcMarksStructMemberArrays)
 	*static_cast<UObject**>(member->GetElement(structData, 0)) = firstElement;
 	*static_cast<UObject**>(member->GetElement(structData, 1)) = secondElement;
 
-	// Withheld for the same reason as in GcMarksThroughObjectProperties: the first element of the
-	// array is marked through the same slot mark, so a collection here corrupts memory.
-	CHECK_MSG(false, "not collecting: the object property mark treats its slot as an object and corrupts the memory beside it");
+	const size_t before = GC::GetStats().numObjects;
+	GC::Collect();
+	const size_t after = GC::GetStats().numObjects;
+	const bool firstLive = IsLive(firstElement);
+	const bool secondLive = IsLive(secondElement);
+
+	CHECK_MSG(firstLive, "the first element of a static array inside a struct was swept");
+	CHECK_MSG(secondLive, "the second element of a static array inside a struct was swept");
+	CHECK_EQ(after, before);
 }
 
 namespace

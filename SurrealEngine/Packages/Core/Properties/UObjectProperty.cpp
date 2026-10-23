@@ -85,6 +85,6 @@ void UObjectProperty::SetValueFromString(void* data, const std::string& valueStr
 
 GCAllocation* UObjectProperty::MarkPropertyElement(GCAllocation* marklist, void* data)
 {
-	GC::MarkObject(marklist, static_cast<UObject*>(data));
+	marklist = GC::MarkObject(marklist, *static_cast<UObject**>(data));
 	return marklist;
 }
