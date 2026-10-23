@@ -82,13 +82,13 @@ namespace DeusExTextDetail
 
 	inline bool ReadChars(const std::string& text, size_t& pos, const std::string& chars)
 	{
-		if (pos + chars.size() >= text.size() || text.substr(pos, chars.size()) != chars)
+		if (pos + chars.size() > text.size() || text.substr(pos, chars.size()) != chars)
 			return false;
 		pos += chars.size();
 		return true;
 	}
 
-	inline bool ReadInteger(const std::string& text, size_t& pos, int value)
+	inline bool ReadInteger(const std::string& text, size_t& pos, uint8_t& value)
 	{
 		std::string v;
 		size_t len = text.size();
@@ -99,7 +99,7 @@ namespace DeusExTextDetail
 		}
 		if (v.empty())
 			return false;
-		value = std::atoi(v.c_str());
+		value = static_cast<uint8_t>(std::atoi(v.c_str())); // above 255 keeps the low byte
 		return true;
 	}
 
@@ -135,14 +135,14 @@ namespace DeusExTextDetail
 
 	inline bool ReadTagFile(const std::string& text, size_t& pos, std::string& filename, std::string& filedescription)
 	{
-		if (!ReadTextUntil(text, pos, filename, ',') || !ReadChars(text, pos, ","))
+		if (!ReadChars(text, pos, "=") || !ReadTextUntil(text, pos, filename, ',') || !ReadChars(text, pos, ","))
 			return false;
 		return ReadTextUntil(text, pos, filedescription, '>');
 	}
 
 	inline bool ReadTagEmail(const std::string& text, size_t& pos, std::string& emailName, std::string& emailSubject, std::string& emailFrom, std::string& emailTo, std::string& emailCC)
 	{
-		if (!ReadTextUntil(text, pos, emailName, ',') || !ReadChars(text, pos, ","))
+		if (!ReadChars(text, pos, "=") || !ReadTextUntil(text, pos, emailName, ',') || !ReadChars(text, pos, ","))
 			return false;
 		if (!ReadTextUntil(text, pos, emailSubject, ',') || !ReadChars(text, pos, ","))
 			return false;
@@ -272,13 +272,19 @@ inline bool NextToken(const std::string& text, size_t pos, const std::string& pl
 			}
 			else if (tagname == "JC" && ReadChars(text, pos, ">"))
 			{
-				out.tag = DeusExTextTags::TT_None; // What does <JC> mean? Seems to be used for headlines
+				out.tag = DeusExTextTags::TT_CenterText;
+				out.pos = pos;
+				return true;
+			}
+			else if (tagname == "JL" && ReadChars(text, pos, ">"))
+			{
+				out.tag = DeusExTextTags::TT_LeftJustify;
 				out.pos = pos;
 				return true;
 			}
 			else if (tagname == "JR" && ReadChars(text, pos, ">"))
 			{
-				out.tag = DeusExTextTags::TT_None; // What does <JR> mean? Seems to be used for signatures
+				out.tag = DeusExTextTags::TT_RightJustify;
 				out.pos = pos;
 				return true;
 			}
@@ -316,7 +322,7 @@ inline bool NextToken(const std::string& text, size_t pos, const std::string& pl
 			}
 			else if (tagname == "EMAIL" && ReadTagEmail(text, pos, out.emailName, out.emailSubject, out.emailFrom, out.emailTo, out.emailCC) && ReadChars(text, pos, ">"))
 			{
-				out.tag = DeusExTextTags::TT_File;
+				out.tag = DeusExTextTags::TT_Email;
 				out.pos = pos;
 				return true;
 			}
