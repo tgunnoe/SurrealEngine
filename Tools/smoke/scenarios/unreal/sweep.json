@@ -3,6 +3,8 @@
   "seconds": 60,
   "url_options": null,
   "exec": null,
+  "game_by_prefix": null,
+  "game_by_prefix_except": null,
   "map_subdirs": [
     "UPak"
   ],
@@ -14,8 +16,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 27,
-      "fps_avg": 478.993220338983,
+      "script_warnings": 21,
+      "fps_avg": 479.46440677966103,
       "maps_loaded": [
         "Bluff"
       ],
@@ -32,8 +34,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 17,
-      "fps_avg": 505.6813559322034,
+      "script_warnings": 24,
+      "fps_avg": 498.02881355932203,
       "maps_loaded": [
         "Ceremony"
       ],
@@ -51,7 +53,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 17,
-      "fps_avg": 1268.593220338983,
+      "fps_avg": 1279.472881355932,
       "maps_loaded": [
         "Chizra"
       ],
@@ -69,7 +71,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1146.9338983050848,
+      "fps_avg": 1117.328813559322,
       "maps_loaded": [
         "DCrater"
       ],
@@ -87,7 +89,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 744.6932203389831,
+      "fps_avg": 727.0610169491525,
       "maps_loaded": [
         "DKNightOp"
       ],
@@ -105,7 +107,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 897.6203389830508,
+      "fps_avg": 865.9237288135594,
       "maps_loaded": [
         "Dark"
       ],
@@ -122,8 +124,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 8,
-      "fps_avg": 601.3491525423728,
+      "script_warnings": 6,
+      "fps_avg": 593.1237288135594,
       "maps_loaded": [
         "DasaCellars"
       ],
@@ -141,7 +143,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 559.4677966101694,
+      "fps_avg": 555.6830508474577,
       "maps_loaded": [
         "DasaPass"
       ],
@@ -158,8 +160,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 15,
-      "fps_avg": 590.9220338983051,
+      "script_warnings": 10,
+      "fps_avg": 594.6322033898306,
       "maps_loaded": [
         "Dig"
       ],
@@ -177,7 +179,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1187.3237288135595,
+      "fps_avg": 1168.079661016949,
       "maps_loaded": [
         "DmAriza"
       ],
@@ -195,7 +197,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1278.557627118644,
+      "fps_avg": 1269.6118644067797,
       "maps_loaded": [
         "DmCurse"
       ],
@@ -213,7 +215,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1246.4271186440678,
+      "fps_avg": 1238.935593220339,
       "maps_loaded": [
         "DmDeathFan"
       ],
@@ -231,7 +233,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1081.9457627118645,
+      "fps_avg": 1072.606779661017,
       "maps_loaded": [
         "DmDeck16"
       ],
@@ -249,7 +251,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1520.157627118644,
+      "fps_avg": 1506.1677966101695,
       "maps_loaded": [
         "DmElsinore"
       ],
@@ -267,7 +269,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1006.9220338983051,
+      "fps_avg": 996.8491525423728,
       "maps_loaded": [
         "DmFith"
       ],
@@ -285,7 +287,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1138.750847457627,
+      "fps_avg": 1136.2644067796612,
       "maps_loaded": [
         "DmHealPod"
       ],
@@ -303,7 +305,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1008.4254237288135,
+      "fps_avg": 1002.3067796610169,
       "maps_loaded": [
         "DmMorbias"
       ],
@@ -321,7 +323,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 2316.164406779661,
+      "fps_avg": 2308.0745762711863,
       "maps_loaded": [
         "DmRadikus"
       ],
@@ -339,7 +341,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1086.5881355932204,
+      "fps_avg": 1085.2101694915254,
       "maps_loaded": [
         "DmTundra"
       ],
@@ -356,8 +358,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 1,
-      "fps_avg": 1825.5949152542373,
+      "script_warnings": 0,
+      "fps_avg": 1771.0559322033898,
       "maps_loaded": [
         "Dug"
       ],
@@ -374,8 +376,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 0,
-      "fps_avg": 1083.1118644067797,
+      "script_warnings": 8,
+      "fps_avg": 1068.5525423728814,
       "maps_loaded": [
         "Endgame"
       ],
@@ -393,7 +395,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1238.6457627118646,
+      "fps_avg": 1236.0728813559322,
       "maps_loaded": [
         "Entry"
       ],
@@ -411,7 +413,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1235.950847457627,
+      "fps_avg": 1235.5338983050847,
       "maps_loaded": [
         "Entry_MP"
       ],
@@ -429,7 +431,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 853.857627118644,
+      "fps_avg": 834.1661016949153,
       "maps_loaded": [
         "ExtremeBeg"
       ],
@@ -447,7 +449,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1784.335593220339,
+      "fps_avg": 1759.0305084745762,
       "maps_loaded": [
         "ExtremeCore"
       ],
@@ -465,7 +467,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1431.4322033898304,
+      "fps_avg": 1077.7983050847458,
       "maps_loaded": [
         "ExtremeDGen"
       ],
@@ -482,8 +484,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 8,
-      "fps_avg": 865.2813559322034,
+      "script_warnings": 0,
+      "fps_avg": 836.3338983050847,
       "maps_loaded": [
         "ExtremeDark"
       ],
@@ -501,7 +503,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 539.671186440678,
+      "fps_avg": 514.1830508474576,
       "maps_loaded": [
         "ExtremeEnd"
       ],
@@ -519,7 +521,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 505.84576271186444,
+      "fps_avg": 485.8101694915254,
       "maps_loaded": [
         "ExtremeGen"
       ],
@@ -536,8 +538,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 14,
-      "fps_avg": 446.9542372881356,
+      "script_warnings": 27,
+      "fps_avg": 466.7762711864407,
       "maps_loaded": [
         "ExtremeLab"
       ],
@@ -555,7 +557,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 463.5508474576271,
+      "fps_avg": 446.2661016949153,
       "maps_loaded": [
         "Gateway"
       ],
@@ -572,8 +574,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 6,
-      "fps_avg": 1668.1016949152543,
+      "script_warnings": 15,
+      "fps_avg": 1635.015254237288,
       "maps_loaded": [
         "Harobed"
       ],
@@ -591,7 +593,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 504.7610169491526,
+      "fps_avg": 484.9237288135593,
       "maps_loaded": [
         "IsvDeck1"
       ],
@@ -609,7 +611,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 361.3694915254237,
+      "fps_avg": 357.53898305084743,
       "maps_loaded": [
         "IsvKran32"
       ],
@@ -627,7 +629,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 884.6135593220339,
+      "fps_avg": 885.1627118644068,
       "maps_loaded": [
         "IsvKran4"
       ],
@@ -645,7 +647,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 479.72711864406784,
+      "fps_avg": 464.0406779661017,
       "maps_loaded": [
         "NaliBoat"
       ],
@@ -663,7 +665,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 429.4423728813559,
+      "fps_avg": 424.97966101694914,
       "maps_loaded": [
         "NaliC"
       ],
@@ -681,7 +683,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 588.0050847457628,
+      "fps_avg": 583.7949152542374,
       "maps_loaded": [
         "NaliLord"
       ],
@@ -699,7 +701,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 614.0644067796611,
+      "fps_avg": 609.1491525423729,
       "maps_loaded": [
         "Noork"
       ],
@@ -717,7 +719,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1317.2118644067796,
+      "fps_avg": 1284.284745762712,
       "maps_loaded": [
         "NyLeve"
       ],
@@ -735,7 +737,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1269.3864406779662,
+      "fps_avg": 1371.3610169491526,
       "maps_loaded": [
         "Passage"
       ],
@@ -753,7 +755,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 384.2983050847457,
+      "fps_avg": 374.9542372881356,
       "maps_loaded": [
         "QueenEnd"
       ],
@@ -771,7 +773,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 1,
-      "fps_avg": 1143.7203389830509,
+      "fps_avg": 1199.084745762712,
       "maps_loaded": [
         "Ruins"
       ],
@@ -789,7 +791,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1101.7745762711863,
+      "fps_avg": 1086.3762711864406,
       "maps_loaded": [
         "SkyBase"
       ],
@@ -806,8 +808,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 11,
-      "fps_avg": 1432.0949152542373,
+      "script_warnings": 14,
+      "fps_avg": 1342.0203389830508,
       "maps_loaded": [
         "SkyCaves"
       ],
@@ -824,8 +826,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 16,
-      "fps_avg": 598.9169491525423,
+      "script_warnings": 23,
+      "fps_avg": 517.4593220338983,
       "maps_loaded": [
         "SkyTown"
       ],
@@ -842,8 +844,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 1,
-      "fps_avg": 1423.406779661017,
+      "script_warnings": 13,
+      "fps_avg": 1422.5711864406778,
       "maps_loaded": [
         "SpireVillage"
       ],
@@ -861,7 +863,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 306.07796610169487,
+      "fps_avg": 299.36101694915254,
       "maps_loaded": [
         "TerraLift"
       ],
@@ -879,7 +881,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1049.6677966101695,
+      "fps_avg": 1050.7372881355932,
       "maps_loaded": [
         "Terraniux"
       ],
@@ -896,8 +898,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 10,
-      "fps_avg": 1260.6457627118646,
+      "script_warnings": 21,
+      "fps_avg": 1243.7338983050847,
       "maps_loaded": [
         "TheSunspire"
       ],
@@ -915,7 +917,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1236.1271186440679,
+      "fps_avg": 1228.9966101694915,
       "maps_loaded": [
         "Trench"
       ],
@@ -933,7 +935,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 4417.520338983051,
+      "fps_avg": 4306.9457627118645,
       "maps_loaded": [
         "UGCredits"
       ],
@@ -951,7 +953,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 590.715254237288,
+      "fps_avg": 575.7050847457626,
       "maps_loaded": [
         "Unreal"
       ],
@@ -969,7 +971,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 653.0796610169491,
+      "fps_avg": 645.9949152542372,
       "maps_loaded": [
         "VeloraEnd"
       ],
@@ -987,7 +989,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 643.1474576271186,
+      "fps_avg": 636.2508474576272,
       "maps_loaded": [
         "Vortex2"
       ],
@@ -1005,7 +1007,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 3,
-      "fps_avg": 748.7745762711864,
+      "fps_avg": 736.8271186440678,
       "maps_loaded": [
         "Abyss"
       ],
@@ -1023,7 +1025,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 847.4271186440677,
+      "fps_avg": 816.0067796610169,
       "maps_loaded": [
         "Crashsite"
       ],
@@ -1041,7 +1043,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 563.1237288135594,
+      "fps_avg": 562.5593220338983,
       "maps_loaded": [
         "Crashsite1"
       ],
@@ -1058,8 +1060,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 8,
-      "fps_avg": 376.0542372881356,
+      "script_warnings": 16,
+      "fps_avg": 370.17118644067796,
       "maps_loaded": [
         "Crashsite2"
       ],
@@ -1077,7 +1079,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 790.3542372881357,
+      "fps_avg": 791.8033898305085,
       "maps_loaded": [
         "DmAthena"
       ],
@@ -1095,7 +1097,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 851.0508474576271,
+      "fps_avg": 852.1169491525424,
       "maps_loaded": [
         "DmDaybreak"
       ],
@@ -1113,7 +1115,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 753.9661016949152,
+      "fps_avg": 756.8644067796611,
       "maps_loaded": [
         "DmHazard"
       ],
@@ -1131,7 +1133,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 685.8983050847457,
+      "fps_avg": 688.7372881355932,
       "maps_loaded": [
         "DmStomp"
       ],
@@ -1149,7 +1151,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 807.3406779661017,
+      "fps_avg": 805.606779661017,
       "maps_loaded": [
         "DmSunSpeak"
       ],
@@ -1167,7 +1169,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1105.1135593220338,
+      "fps_avg": 1114.5203389830508,
       "maps_loaded": [
         "DmTerra"
       ],
@@ -1184,8 +1186,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 12,
-      "fps_avg": 672.0389830508475,
+      "script_warnings": 14,
+      "fps_avg": 661.0728813559323,
       "maps_loaded": [
         "DuskFalls"
       ],
@@ -1203,7 +1205,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1084.45593220339,
+      "fps_avg": 1093.2881355932204,
       "maps_loaded": [
         "Eldora"
       ],
@@ -1221,7 +1223,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 513.5355932203389,
+      "fps_avg": 517.8372881355932,
       "maps_loaded": [
         "End"
       ],
@@ -1239,7 +1241,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 376.15423728813556,
+      "fps_avg": 376.42033898305084,
       "maps_loaded": [
         "Foundry"
       ],
@@ -1257,7 +1259,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 3,
-      "fps_avg": 1034.9389830508476,
+      "fps_avg": 1027.6881355932203,
       "maps_loaded": [
         "Glacena"
       ],
@@ -1275,7 +1277,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 866.6694915254237,
+      "fps_avg": 839.9491525423729,
       "maps_loaded": [
         "Glathriel1"
       ],
@@ -1293,7 +1295,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 413.5491525423729,
+      "fps_avg": 423.42711864406783,
       "maps_loaded": [
         "Glathriel2"
       ],
@@ -1311,7 +1313,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1134.4627118644069,
+      "fps_avg": 984.771186440678,
       "maps_loaded": [
         "Inter1"
       ],
@@ -1329,7 +1331,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 2343.3677966101695,
+      "fps_avg": 2288.8966101694914,
       "maps_loaded": [
         "Inter10"
       ],
@@ -1347,7 +1349,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 578.2101694915254,
+      "fps_avg": 575.8779661016949,
       "maps_loaded": [
         "Inter11"
       ],
@@ -1365,7 +1367,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1135.2559322033899,
+      "fps_avg": 1126.9050847457627,
       "maps_loaded": [
         "Inter12"
       ],
@@ -1383,7 +1385,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1773.8762711864406,
+      "fps_avg": 1764.5406779661016,
       "maps_loaded": [
         "Inter13"
       ],
@@ -1401,7 +1403,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 2285.335593220339,
+      "fps_avg": 2264.6830508474573,
       "maps_loaded": [
         "Inter14"
       ],
@@ -1419,7 +1421,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 1,
-      "fps_avg": 1166.9135593220337,
+      "fps_avg": 1176.677966101695,
       "maps_loaded": [
         "Inter2"
       ],
@@ -1437,7 +1439,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1207.8338983050846,
+      "fps_avg": 1208.0440677966103,
       "maps_loaded": [
         "Inter3"
       ],
@@ -1455,7 +1457,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 506.793220338983,
+      "fps_avg": 508.0457627118644,
       "maps_loaded": [
         "Inter4"
       ],
@@ -1473,7 +1475,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1323.3661016949154,
+      "fps_avg": 1328.1932203389829,
       "maps_loaded": [
         "Inter5"
       ],
@@ -1491,7 +1493,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1186.4661016949153,
+      "fps_avg": 1186.0559322033898,
       "maps_loaded": [
         "Inter6"
       ],
@@ -1509,7 +1511,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1358.472881355932,
+      "fps_avg": 1372.0627118644068,
       "maps_loaded": [
         "Inter7"
       ],
@@ -1527,7 +1529,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1723.877966101695,
+      "fps_avg": 1702.1440677966102,
       "maps_loaded": [
         "Inter8"
       ],
@@ -1545,7 +1547,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 838.6610169491526,
+      "fps_avg": 837.5254237288135,
       "maps_loaded": [
         "Inter9"
       ],
@@ -1563,7 +1565,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 555.2627118644068,
+      "fps_avg": 549.564406779661,
       "maps_loaded": [
         "InterCrashsite"
       ],
@@ -1581,7 +1583,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1768.3152542372882,
+      "fps_avg": 1703.6016949152543,
       "maps_loaded": [
         "InterIntro"
       ],
@@ -1599,7 +1601,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 736.4423728813559,
+      "fps_avg": 733.9508474576271,
       "maps_loaded": [
         "Intro1"
       ],
@@ -1617,7 +1619,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 775.8813559322034,
+      "fps_avg": 774.6881355932203,
       "maps_loaded": [
         "Intro2",
         "InterIntro"
@@ -1636,7 +1638,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 860.7169491525424,
+      "fps_avg": 856.5084745762712,
       "maps_loaded": [
         "Nagomi"
       ],
@@ -1649,12 +1651,12 @@
     {
       "map": "NagomiSun",
       "exit_code": 0,
-      "script_errors": 0,
-      "stub_hits": 0,
+      "script_errors": 10,
+      "stub_hits": 3,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 0,
-      "fps_avg": 815.671186440678,
+      "script_warnings": 10,
+      "fps_avg": 882.5440677966102,
       "maps_loaded": [
         "NagomiSun"
       ],
@@ -1662,7 +1664,7 @@
       "match_started": false,
       "log": "NagomiSun.log",
       "screenshot": null,
-      "verdict": "pass"
+      "verdict": "fail"
     },
     {
       "map": "Nalic2",
@@ -1671,8 +1673,8 @@
       "stub_hits": 0,
       "missing_natives": 0,
       "exceptions": 0,
-      "script_warnings": 0,
-      "fps_avg": 276.8525423728814,
+      "script_warnings": 4,
+      "fps_avg": 270.7813559322034,
       "maps_loaded": [
         "Nalic2"
       ],
@@ -1690,7 +1692,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 19,
-      "fps_avg": 925.0525423728814,
+      "fps_avg": 898.3237288135593,
       "maps_loaded": [
         "Nevec"
       ],
@@ -1708,7 +1710,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 791.3610169491526,
+      "fps_avg": 785.0813559322035,
       "maps_loaded": [
         "SpireLand"
       ],
@@ -1726,7 +1728,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1530.1864406779662,
+      "fps_avg": 1520.0440677966103,
       "maps_loaded": [
         "Toxic"
       ],
@@ -1744,7 +1746,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 589.2118644067797,
+      "fps_avg": 591.0169491525423,
       "maps_loaded": [
         "Upack"
       ],
@@ -1762,7 +1764,7 @@
       "missing_natives": 0,
       "exceptions": 0,
       "script_warnings": 0,
-      "fps_avg": 1034.0322033898306,
+      "fps_avg": 1033.1084745762712,
       "maps_loaded": [
         "Velora"
       ],

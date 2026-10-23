@@ -4,9 +4,9 @@ Distinct stub lines in the logs: 3. Rows below: 3.
 
 | Stub | Maps | Class | Reason |
 | :--- | ---: | :--- | :--- |
-| `PathNodeIterator.BuildPath()` | 1 | gameplay | PathNodeIterator descends from Actor |
-| `PathNodeIterator.GetFirst()` | 1 | gameplay | PathNodeIterator descends from Actor |
-| `PathNodeIterator.GetLast()` | 1 | gameplay | PathNodeIterator descends from Actor |
+| `PathNodeIterator.BuildPath()` | 2 | gameplay | PathNodeIterator descends from Actor |
+| `PathNodeIterator.GetFirst()` | 2 | gameplay | PathNodeIterator descends from Actor |
+| `PathNodeIterator.GetLast()` | 2 | gameplay | PathNodeIterator descends from Actor |
 
 A stub is gameplay when its owner descends from one of the gameplay roots
 listed in scenarios/unreal/scenario.py. An owner missing from that

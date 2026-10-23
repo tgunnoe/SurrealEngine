@@ -11,29 +11,32 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 20,
+   "Accessed None in HorseFly.meander": 6,
+   "Accessed None in Nali.Killed": 7,
+   "Accessed None in NaliPriest.Killed": 1,
    "Accessed None in SinglePlayer.Killed": 4,
    "Accessed None in SinglePlayer.ScoreKill": 3
   },
-  "warnings": 27
+  "warnings": 21
  },
  "Ceremony": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 10,
+   "Accessed None in HorseFly.meander": 9,
+   "Accessed None in Nali.Killed": 1,
+   "Accessed None in NaliPriest.Killed": 7,
    "Accessed None in SinglePlayer.Killed": 5,
    "Accessed None in SinglePlayer.ScoreKill": 2
   },
-  "warnings": 17
+  "warnings": 24
  },
  "Chizra": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 14,
-   "Accessed None in SinglePlayer.Killed": 2,
-   "Accessed None in Slith.TakeDamage": 1
+   "Accessed None in HorseFly.meander": 15,
+   "Accessed None in SinglePlayer.Killed": 2
   },
   "warnings": 17
  },
@@ -53,9 +56,10 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 8
+   "Accessed None in CrashSiteGame.Killed": 1,
+   "Accessed None in HorseFly.meander": 15
   },
-  "warnings": 8
+  "warnings": 16
  },
  "DCrater": {
   "errors": [],
@@ -79,9 +83,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 8
+   "Accessed None in HorseFly.meander": 6
   },
-  "warnings": 8
+  "warnings": 6
  },
  "DasaPass": {
   "errors": [],
@@ -93,10 +97,10 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 14,
+   "Accessed None in HorseFly.meander": 9,
    "Accessed None in SinglePlayer.Killed": 1
   },
-  "warnings": 15
+  "warnings": 10
  },
  "DmAriza": {
   "errors": [],
@@ -197,18 +201,16 @@
  "Dug": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in SinglePlayer.Killed": 1
-  },
-  "warnings": 1
+  "warning_sites": {},
+  "warnings": 0
  },
  "DuskFalls": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 12
+   "Accessed None in HorseFly.meander": 14
   },
-  "warnings": 12
+  "warnings": 14
  },
  "Eldora": {
   "errors": [],
@@ -225,8 +227,10 @@
  "Endgame": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {},
-  "warnings": 0
+  "warning_sites": {
+   "Accessed None in WarpZoneMarker.PostBeginPlay": 8
+  },
+  "warnings": 8
  },
  "Entry": {
   "errors": [],
@@ -261,10 +265,8 @@
  "ExtremeDark": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {
-   "Accessed None in HorseFly.meander": 8
-  },
-  "warnings": 8
+  "warning_sites": {},
+  "warnings": 0
  },
  "ExtremeEnd": {
   "errors": [],
@@ -282,9 +284,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 14
+   "Accessed None in HorseFly.meander": 27
   },
-  "warnings": 14
+  "warnings": 27
  },
  "Foundry": {
   "errors": [],
@@ -322,9 +324,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 6
+   "Accessed None in HorseFly.meander": 15
   },
-  "warnings": 6
+  "warnings": 15
  },
  "Inter1": {
   "errors": [],
@@ -461,10 +463,18 @@
   "warnings": 0
  },
  "NagomiSun": {
-  "errors": [],
+  "errors": [
+   {
+    "kind": "SCRIPT_ERROR",
+    "map_section": "NagomiSun",
+    "text": "Accessed None  Script call stack: at PathNodeIterator.BuildPath line 16 at Predator.Hiding.PickDestination line 919: pni.BuildPath(Location, home.Location) at Predator.Hiding line 1349: PickDestination()"
+   }
+  ],
   "fatal_after_summary": false,
-  "warning_sites": {},
-  "warnings": 0
+  "warning_sites": {
+   "Accessed None in Predator.PickDestination": 10
+  },
+  "warnings": 10
  },
  "NaliBoat": {
   "errors": [],
@@ -487,8 +497,11 @@
  "Nalic2": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {},
-  "warnings": 0
+  "warning_sites": {
+   "Accessed None in NaliPriest.Killed": 1,
+   "Accessed None in UPakSinglePlayer.Killed": 3
+  },
+  "warnings": 4
  },
  "Nevec": {
   "errors": [],
@@ -541,19 +554,20 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 10,
+   "Accessed None in HorseFly.meander": 12,
+   "Accessed None in Krall.MeleeDamageTarget": 1,
    "Accessed None in SinglePlayer.Killed": 1
   },
-  "warnings": 11
+  "warnings": 14
  },
  "SkyTown": {
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 14,
+   "Accessed None in HorseFly.meander": 21,
    "Accessed None in SinglePlayer.Killed": 2
   },
-  "warnings": 16
+  "warnings": 23
  },
  "SpireLand": {
   "errors": [],
@@ -565,9 +579,10 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
+   "Accessed None in HorseFly.meander": 12,
    "Accessed None in SinglePlayer.Killed": 1
   },
-  "warnings": 1
+  "warnings": 13
  },
  "TerraLift": {
   "errors": [],
@@ -585,9 +600,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in HorseFly.meander": 10
+   "Accessed None in HorseFly.meander": 21
   },
-  "warnings": 10
+  "warnings": 21
  },
  "Toxic": {
   "errors": [],
