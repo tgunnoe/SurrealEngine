@@ -374,6 +374,7 @@ public:
 	InputHoldSchedule inputHolds;
 	double LoginClockSeconds() const;
 	bool HoldInput(const Array<std::string>& args);
+	bool PlacePlayer(const Array<std::string>& args);
 	void ReleaseHolds(const Array<InputHoldSchedule::Hold>& holds);
 
 	// Writes a STATE line to the smoke log when the player's state name changes, and on the first
