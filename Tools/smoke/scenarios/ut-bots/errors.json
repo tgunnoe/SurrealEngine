@@ -2,8 +2,10 @@
  "AS-Frigate": {
   "errors": [],
   "fatal_after_summary": false,
-  "warning_sites": {},
-  "warnings": 0
+  "warning_sites": {
+   "Accessed None in MinigunCannon.SeePlayer": 1
+  },
+  "warnings": 1
  },
  "AS-Guardia": {
   "errors": [],
@@ -117,9 +119,9 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in MinigunCannon.SeePlayer": 879
+   "Accessed None in MinigunCannon.SeePlayer": 876
   },
-  "warnings": 879
+  "warnings": 876
  },
  "CTF-Hydro16": {
   "errors": [],
@@ -174,9 +176,9 @@
   "fatal_after_summary": false,
   "warning_sites": {
    "Accessed None in UTConsole.AddMessage": 8,
-   "Accessed None in UnrealCTFScoreboard.DrawTrailer": 3178
+   "Accessed None in UnrealCTFScoreboard.DrawTrailer": 3153
   },
-  "warnings": 3186
+  "warnings": 3161
  },
  "CityIntro": {
   "errors": [],
@@ -194,9 +196,10 @@
   "errors": [],
   "fatal_after_summary": false,
   "warning_sites": {
-   "Accessed None in TFemale2Bot.Roaming": 3
+   "Accessed None in TFemale2Bot.Roaming": 2,
+   "Accessed None in TMale1Bot.Roaming": 7
   },
-  "warnings": 3
+  "warnings": 9
  },
  "DM-Barricade": {
   "errors": [],

@@ -71,7 +71,23 @@
   "IsvKran32": [],
   "IsvKran4": [],
   "Nagomi": [],
-  "NagomiSun": [],
+  "NagomiSun": [
+   {
+    "class": "gameplay",
+    "owner": "PathNodeIterator",
+    "text": "PathNodeIterator.BuildPath()"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PathNodeIterator",
+    "text": "PathNodeIterator.GetFirst()"
+   },
+   {
+    "class": "gameplay",
+    "owner": "PathNodeIterator",
+    "text": "PathNodeIterator.GetLast()"
+   }
+  ],
   "NaliBoat": [],
   "NaliC": [],
   "NaliLord": [],
