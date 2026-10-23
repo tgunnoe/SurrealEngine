@@ -5,12 +5,17 @@
 
 CollisionHitList TraceAABBModel::Trace(UModel* model, const dvec3& origin, double tmin, const dvec3& dirNormalized, double tmax, const dvec3& extents, bool visibilityOnly)
 {
+	if (model == nullptr || model->Nodes.empty())
+		return {};
+
 	Model = model;
 	CollisionHitList hits;
 	Trace(origin, tmin, dirNormalized, tmax, extents, visibilityOnly, &Model->Nodes.front(), hits);
 	std::stable_sort(hits.begin(), hits.end(), [](const auto& a, const auto& b) { return a.Fraction < b.Fraction; });
 	return hits;
 }
+
+static Array<dvec4> planes; // Grr, memory allocations all over this codebase
 
 void TraceAABBModel::Trace(const dvec3& origin, double tmin, const dvec3& dirNormalized, double tmax, const dvec3& extents, bool visibilityOnly, BspNode* node, CollisionHitList& hits)
 {
@@ -36,7 +41,7 @@ void TraceAABBModel::Trace(const dvec3& origin, double tmin, const dvec3& dirNor
 		if (cursor.ClipBoxPlanes(bbox))
 		{
 			// Grab the hull planes and flip the plane direction if the plane points in the wrong direction.
-			Array<dvec4> planes;
+			planes.clear();
 			for (int i = 0; i < hullPlanesCount; i++)
 			{
 				int32_t hullIndex = hullIndexList[i];

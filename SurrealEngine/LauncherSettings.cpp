@@ -3,6 +3,7 @@
 #include "LauncherSettings.h"
 #include "Utils/JsonValue.h"
 #include "Utils/File.h"
+#include "Utils/UserDirs.h"
 
 LauncherSettings& LauncherSettings::Get()
 {
@@ -12,7 +13,7 @@ LauncherSettings& LauncherSettings::Get()
 
 static std::string GetSettingsFilename()
 {
-	return (Directory::localAppData() / "SurrealEngine/Settings.json").string();
+	return (UserDirs::appConfigDir() / "Settings.json").string();
 }
 
 LauncherSettings::LauncherSettings()

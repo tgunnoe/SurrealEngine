@@ -1,0 +1,516 @@
+{
+ "AS-Frigate": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in MinigunCannon.SeePlayer": 1
+  },
+  "warnings": 1
+ },
+ "AS-Guardia": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "AS-HiSpeed": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in TeamCannon.SeePlayer": 1
+  },
+  "warnings": 1
+ },
+ "AS-Mazon": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in TeamCannon.SeePlayer": 1
+  },
+  "warnings": 1
+ },
+ "AS-OceanFloor": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in TeamCannon.SeePlayer": 2
+  },
+  "warnings": 2
+ },
+ "AS-Overlord": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "AS-Rook": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "AS-Tutorial": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Command": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Coret": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Cybrosis][": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Darji16": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Dreary": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-EternalCave": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Face": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Face][": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Gauntlet": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-HallOfGiants": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-High": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in MinigunCannon.SeePlayer": 876
+  },
+  "warnings": 876
+ },
+ "CTF-Hydro16": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Kosov": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-LavaGiant": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Niven": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-November": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Noxion16": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Nucleus": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Orbital": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "CTF-Tutorial": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in UTConsole.AddMessage": 8,
+   "Accessed None in UnrealCTFScoreboard.DrawTrailer": 3153
+  },
+  "warnings": 3161
+ },
+ "CityIntro": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Agony": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-ArcaneTemple": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {
+   "Accessed None in TFemale2Bot.Roaming": 2,
+   "Accessed None in TMale1Bot.Roaming": 7
+  },
+  "warnings": 9
+ },
+ "DM-Barricade": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Codex": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Conveyor": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Crane": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Curse][": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Cybrosis][": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Deck16][": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Fetid": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Fractal": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Gothic": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Grinder": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-HealPod][": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-HyperBlast": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-KGalleon": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Liandri": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Malevolence": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Mojo][": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Morbias][": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Morpheus": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Oblivion": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Peak": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Phobos": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Pressure": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Pyramid": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Shrapnel][": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-SpaceNoxx": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Stalwart": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-StalwartXL": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Tempest": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Turbine": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Tutorial": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DM-Zeto": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Cinder": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Condemned": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Cryptic": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Gearbolt": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Ghardhen": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Lament": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Leadworks": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-MetalDream": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Olden": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Sesmar": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "DOM-Tutorial": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "EOL_Assault": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "EOL_CTF": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "EOL_Challenge": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "EOL_Deathmatch": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "EOL_Domination": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "EOL_Statues": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "Entry": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "UT-Logo-Map": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ },
+ "UTCredits": {
+  "errors": [],
+  "fatal_after_summary": false,
+  "warning_sites": {},
+  "warnings": 0
+ }
+}

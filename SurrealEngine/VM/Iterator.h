@@ -247,7 +247,7 @@ public:
 class TraceTextureIterator : public Iterator
 {
 public:
-	TraceTextureIterator(UObject* BaseClass, UObject** OutActor, NameString* TexName, NameString* TexGroup, int* Flags, vec3& HitLoc, vec3& HitNorm, vec3 End, vec3* Start, vec3* Extent);
+	TraceTextureIterator(UObject* BaseClass, UObject** OutActor, NameString* TexName, NameString* TexGroup, int* Flags, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent);
 	bool Next() override;
 
 	UObject* BaseClass = nullptr;
@@ -255,11 +255,11 @@ public:
 	NameString* TexName = nullptr;
 	NameString* TexGroup = nullptr;
 	int* flags = nullptr;
-	vec3 HitLoc = vec3(0, 0, 0);
-	vec3 HitNorm = vec3(0, 0, 0);
-	vec3 End = vec3(0,0, 0);
-	vec3* Start = nullptr;
-	vec3* m_Extent = nullptr;
+	vec3* HitLoc = nullptr;
+	vec3* HitNorm = nullptr;
+	vec3 End = vec3(0, 0, 0);
+	vec3 Start = vec3(0, 0, 0);
+	vec3 Extent = vec3(0, 0, 0);
 
 private:
 	CollisionHitList m_CollList;
@@ -270,16 +270,16 @@ private:
 class TraceVisibleActorsIterator : public Iterator
 {
 public:
-	TraceVisibleActorsIterator(UObject* BaseClass, UObject** OutActor, vec3& HitLoc, vec3& HitNorm, vec3 End, vec3* Start, vec3* Extent);
+	TraceVisibleActorsIterator(UObject* BaseClass, UObject** OutActor, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent);
 	bool Next() override;
 
 	UObject* BaseClass = nullptr;
 	UObject** OutActor = nullptr;
-	vec3 HitLoc = vec3(0, 0, 0);
-	vec3 HitNorm = vec3(0, 0, 0);
-	vec3 End = vec3(0,0, 0);
-	vec3* Start = nullptr;
-	vec3* m_Extent = nullptr;
+	vec3* HitLoc = nullptr;
+	vec3* HitNorm = nullptr;
+	vec3 End = vec3(0, 0, 0);
+	vec3 Start = vec3(0, 0, 0);
+	vec3 Extent = vec3(0, 0, 0);
 
 private:
 	CollisionHitList m_CollList;

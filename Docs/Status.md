@@ -24,9 +24,8 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 
 ## General Engine bugs (affects all games)
 * Movers:
-  - Projectiles pass through some movers
-  - It is possible to get stuck on some movers when approached from certain angles
-  - Encroachment stuff isn't implemented, so movers don't crush anything or return back to their previous position.
+  - Projectiles and other actors can pass through the part of a rotating mover that has swung outside the cells it was registered in, because a mover's collision registration isn't refreshed while it rotates
+  - A mover's rotation isn't checked for encroachment, so a swinging door doesn't crush anything or return to its previous position when it swings into something.
 * Mirrors/reflections rendering is a bit buggy, especially around the edges of world geometry.
 * Portals:
   - They somewhat work, but might end up "pushing" players/projectiles in unexpected directions.
@@ -40,7 +39,6 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 * viewclass command crashes with null deref.
 * Sometimes opening a map crashes the engine with a "Failed to spawn the player actor" error.
 * Sounds may become too loud (e.g. Pulse Rifle secondary fire, minigun firing sound)
-* Inventory from loaded saves do NOT transfer to the next map.
 * Saving packages (.u[xx] files, game saves, etc.) functionality is not fully implemented yet.
 * There is no networking support at all.
 * By design, native mods will never work with SE. Thankfully these kind of mods are extremely rare.
@@ -87,7 +85,7 @@ Anything beyond 469c currently won't boot.
 * Conversation system is not fully implemented yet.
 * If you click on the area where the saves should be in the Load Game menu the buttons below stop working so you cannot go back.
 * In-game HUD has some missing text.
-* DataCubes and books cannot be read yet.
+* Books open and the script receives their text with its colour and alignment tags; the text parser reads file tags and five-field email tags for the computer screens (none has been opened), but four-field email tags are still misread; datacubes and newspapers use the same script but are untested, and the look of the reading window is unchecked.
 
 ## Tactical-Ops: Assault on Terror
 

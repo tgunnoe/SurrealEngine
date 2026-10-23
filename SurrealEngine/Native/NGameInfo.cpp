@@ -26,8 +26,8 @@ void NGameInfo::RegisterFunctions()
 
 void NGameInfo::GetNetworkNumber(UObject* Self, std::string& ReturnValue)
 {
-	ReturnValue = "0";
-	LogUnimplemented("GetNetworkNumber");
+	// Empty, as in the 227 variant: the engine has no network number to report.
+	ReturnValue = "";
 }
 
 void NGameInfo::ParseKillMessage(const std::string& KillerName, const std::string& VictimName, const std::string& WeaponName, const std::string& DeathMessage, std::string& ReturnValue)

@@ -1,13 +1,20 @@
 
 #include "Precomp.h"
 #include "UActor.h"
+#include "Packages/Core/UClass.h"
 #include "VM/ScriptCall.h"
 #include "Engine.h"
 #include "Packages/Engine/Actors/UProjectile.h"
+#include "Packages/Engine/Actors/Brush/UMover.h"
 #include "Packages/Engine/Actors/Pawn/UPlayerPawn.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
+#include "Collision/TopLevel/Blocking.h"
+#include "Collision/TopLevel/Placement.h"
+#include <map>
+#include <set>
+#include <tuple>
 
 void UActor::TickPhysics(float elapsed)
 {
@@ -41,6 +48,7 @@ void UActor::TickPhysics(float elapsed)
 void UActor::SetPhysics(uint8_t newPhysics)
 {
 	Physics() = newPhysics;
+	LadderMode = false;
 }
 
 void UActor::SetCollision(bool newColActors, bool newBlockActors, bool newBlockPlayers)
@@ -141,6 +149,9 @@ bool UActor::SetCollisionSize(float newRadius, float newHeight)
 
 void UActor::PhysLanded(UActor* hitActor, const vec3& hitNormal)
 {
+	if (!hitActor)
+		hitActor = Level();
+
 	// landed on the floor
 	CallEvent(this, EventName::Landed, { ExpressionValue::VectorValue(hitNormal) });
 
@@ -248,6 +259,158 @@ void UActor::RecomputeVelocityFromDisplacement(float elapsed)
 		Velocity() = (Location() - OldLocation()) / elapsed;
 }
 
+// Offsets of the candidate grid, in the order CheckLocation tests them
+static const int CheckLocationOffsets[] = { 0, 1, -1 };
+
+static std::string FormatVec3(const vec3& v)
+{
+	return "(" + std::to_string(v.x) + ", " + std::to_string(v.y) + ", " + std::to_string(v.z) + ")";
+}
+
+// An overlap hit on the level geometry carries no point and a zero normal, so it is named by the
+// BSP node the test matched: the hull bounds, the node plane and the surface (and brush) it came from.
+static std::string DescribeBlockingHit(UModel* model, const CollisionHit& hit)
+{
+	if (hit.Actor)
+		return hit.Actor->Name.ToString() + " (" + hit.Actor->Class->Name.ToString() + ")";
+
+	if (!hit.Node)
+		return "world with no node";
+
+	BBox bounds = hit.Node->GetCollisionBox(model);
+	std::string what = "world at " + FormatVec3(bounds.center()) +
+		" normal " + FormatVec3({ hit.Node->PlaneX, hit.Node->PlaneY, hit.Node->PlaneZ }) +
+		" node=" + std::to_string(hit.Node - &model->Nodes.front()) +
+		" surf=" + std::to_string(hit.Node->Surf) +
+		" bounds=" + FormatVec3(bounds.min) + "-" + FormatVec3(bounds.max);
+
+	int surf = hit.Node->Surf;
+	if (surf >= 0 && surf < (int)model->Surfaces.size() && model->Surfaces[surf].BrushActor)
+	{
+		UActor* brush = model->Surfaces[surf].BrushActor;
+		what += " brush=" + brush->Name.ToString() + " (" + brush->Class->Name.ToString() + ")";
+	}
+	return what;
+}
+
+// CheckLocation discards its hits, so the failure path repeats the identical grid to name what blocked each
+// candidate. The success path pays nothing for this.
+static void LogBlockedCandidates(ULevel* level, const vec3& location, float radius, float height)
+{
+	float scale = std::max(radius, height);
+	for (int z = 0; z < 3; z++)
+	{
+		for (int y = 0; y < 3; y++)
+		{
+			for (int x = 0; x < 3; x++)
+			{
+				vec3 testlocation = location + vec3(CheckLocationOffsets[x] * scale, CheckLocationOffsets[y] * scale, CheckLocationOffsets[z] * scale);
+				CollisionHitList hits = level->Collision.OverlapTest(testlocation, height, radius, false, true, false);
+				std::string what = hits.empty() ? "nothing on re-test" : DescribeBlockingHit(level->Model, hits.front());
+				LogMessage("CheckLocation: candidate " + FormatVec3(testlocation) + " r=" + std::to_string(radius) + " h=" + std::to_string(height) + " blocked by " + what);
+			}
+		}
+	}
+	LogMessage("CheckLocation: no free candidate for " + FormatVec3(location));
+}
+
+// The convex hull a leaf node's overlap test matched, read the way OverlapAABBModel reads it
+static std::vector<HullPlane> ReadHullPlanes(UModel* model, const BspNode& node)
+{
+	std::vector<HullPlane> hull;
+	const int32_t* hullIndexList = &model->LeafHulls[node.CollisionBound];
+	for (int i = 0; hullIndexList[i] >= 0; i++)
+	{
+		bool flipped = !!(hullIndexList[i] & 0x4000'0000);
+		const BspNode& hullNode = model->Nodes[hullIndexList[i] & ~0x4000'0000];
+		hull.push_back({ dvec4(hullNode.PlaneX, hullNode.PlaneY, hullNode.PlaneZ, hullNode.PlaneW), flipped });
+	}
+	return hull;
+}
+
+// A box that penetrates a hull by a few units has free space just outside that hull, which the coarse
+// neighbour grid of CheckLocation steps over. When the grid finds nothing, move out through the shallowest
+// face of the first hull hit and retest, accepting the first free spot within one body size of the request.
+static std::optional<vec3> ResolvePenetration(ULevel* level, const vec3& location, float radius, float height, CollisionHitList hits, std::vector<std::string>& moves)
+{
+	const int maxRounds = 8;
+	const double maxDisplacement = (double)height + (double)radius;
+	const dvec3 extents(radius, radius, height);
+
+	vec3 current = location;
+	for (int round = 0; round < maxRounds && !hits.empty(); round++)
+	{
+		const BspNode* node = hits.front().Node;
+		if (!node || node->CollisionBound < 0)
+			return std::nullopt;
+
+		std::optional<std::pair<dvec3, double>> exit = HullExit(to_dvec3(current), extents, ReadHullPlanes(level->Model, *node));
+		if (!exit)
+			return std::nullopt;
+
+		// The overlap test takes floats, so continue from the float position it will see
+		vec3 next = to_vec3(to_dvec3(current) + exit->first * exit->second);
+		if (length(next - location) > maxDisplacement)
+			return std::nullopt;
+
+		moves.push_back("CheckLocation: moved " + FormatVec3(current) + " to " + FormatVec3(next) + " out of node " + std::to_string(node - &level->Model->Nodes.front()));
+		current = next;
+		hits = level->Collision.OverlapTest(current, height, radius, false, true, false);
+	}
+
+	if (!hits.empty())
+		return std::nullopt;
+
+	return current;
+}
+
+// Callers retry a blocked spot freely (reachability probes, debris, a pawn's patrol), so each requested
+// location gets its placement lines once per level: the moves once, the failure dump once and a single
+// "again" line on the first repeat. The record is dropped when the level changes.
+namespace
+{
+	typedef std::tuple<int, int, int> PlacementKey;
+
+	struct PlacementLogRecord
+	{
+		ULevel* Level = nullptr;
+		std::set<PlacementKey> Moved;
+		std::map<PlacementKey, int> Failures;
+	};
+
+	PlacementLogRecord PlacementLog;
+
+	PlacementKey LogKeyFor(ULevel* level, const vec3& location)
+	{
+		if (PlacementLog.Level != level)
+		{
+			PlacementLog.Level = level;
+			PlacementLog.Moved.clear();
+			PlacementLog.Failures.clear();
+		}
+		return { (int)std::lround(location.x), (int)std::lround(location.y), (int)std::lround(location.z) };
+	}
+}
+
+static void LogResolvedMoves(ULevel* level, const vec3& location, const std::vector<std::string>& moves)
+{
+	if (!PlacementLog.Moved.insert(LogKeyFor(level, location)).second)
+		return;
+
+	for (const std::string& move : moves)
+		LogMessage(move);
+}
+
+static void LogPlacementFailure(ULevel* level, const vec3& location, float radius, float height)
+{
+	int& seen = PlacementLog.Failures[LogKeyFor(level, location)];
+	if (seen == 0)
+		LogBlockedCandidates(level, location, radius, height);
+	else if (seen == 1)
+		LogMessage("CheckLocation: no free candidate for " + FormatVec3(location) + " again");
+	seen++;
+}
+
 std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float height, bool check)
 {
 	// Search for a valid spot near the location
@@ -256,7 +419,6 @@ std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float h
 		return { true, location };
 
 	// What is a reasonable size for this grid? what did UE1 do?
-	int offset[] = { 0, 1, -1 };
 	bool found = false;
 	float scale = std::max(radius, height);
 	for (int z = 0; z < 3 && !found; z++)
@@ -265,7 +427,7 @@ std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float h
 		{
 			for (int x = 0; x < 3 && !found; x++)
 			{
-				vec3 testlocation = location + vec3(offset[x] * scale, offset[y] * scale, offset[z] * scale);
+				vec3 testlocation = location + vec3(CheckLocationOffsets[x] * scale, CheckLocationOffsets[y] * scale, CheckLocationOffsets[z] * scale);
 				CollisionHitList hits = XLevel()->Collision.OverlapTest(testlocation, height, radius, false, true, false);
 				if (hits.empty())
 				{
@@ -275,6 +437,22 @@ std::pair<bool, vec3> UActor::CheckLocation(vec3 location, float radius, float h
 			}
 		}
 	}
+
+	if (!found)
+	{
+		// Only a start the grid cannot place gets the hull exit, so every placement the grid
+		// finds stays exactly where it always was. The first grid candidate is the location itself.
+		CollisionHitList startHits = XLevel()->Collision.OverlapTest(location, height, radius, false, true, false);
+		std::vector<std::string> moves;
+		if (std::optional<vec3> resolved = ResolvePenetration(XLevel(), location, radius, height, startHits, moves))
+		{
+			LogResolvedMoves(XLevel(), location, moves);
+			return { true, *resolved };
+		}
+
+		LogPlacementFailure(XLevel(), location, radius, height);
+	}
+
 	return { found, location };
 }
 
@@ -393,6 +571,32 @@ bool UActor::TraceThisActor(vec3& TraceEnd, vec3 TraceStart, vec3* HitLocation, 
 	return true;
 }
 
+// What the trace and the touch filter make of a hit: the level when there is no actor, a mover's brush
+// for a mover that has one, and an actor otherwise.
+static HitKind KindOfHit(UActor* actor)
+{
+	if (!actor)
+		return HitKind::Level;
+
+	UMover* mover = UObject::TryCast<UMover>(actor);
+	return mover && mover->Brush() ? HitKind::MoverBrush : HitKind::Actor;
+}
+
+static HitTarget TargetOf(UActor* actor, HitKind kind, bool isBaseOfMoving, bool isBasedOnMoving)
+{
+	HitTarget target;
+	target.kind = kind;
+	if (actor)
+	{
+		target.isPlayerOrProjectile = UObject::TryCast<UPlayerPawn>(actor) || UObject::TryCast<UProjectile>(actor);
+		target.blocksPlayers = actor->bBlockPlayers();
+		target.blocksActors = actor->bBlockActors();
+	}
+	target.isBaseOfMoving = isBaseOfMoving;
+	target.isBasedOnMoving = isBasedOnMoving;
+	return target;
+}
+
 CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlocking)
 {
 	// Static and non-movable objects can't move
@@ -409,6 +613,17 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 
 	// Analyze what we will hit if we move as requested and stop if it is the level or a blocking actor
 	bool useBlockPlayers = UObject::TryCast<UPlayerPawn>(this) || UObject::TryCast<UProjectile>(this);
+
+	// The events a move sends can change the flags of the moving actor, so each test reads them afresh.
+	auto movingActor = [&]() {
+		MovingActor moving;
+		moving.isPlayerOrProjectile = useBlockPlayers;
+		moving.collidesWorld = bCollideWorld();
+		moving.blocksPlayers = bBlockPlayers();
+		moving.blocksActors = bBlockActors();
+		return moving;
+	};
+
 	CollisionHit blockingHit;
 	CollisionHitList hits;
 	if (!Brush())
@@ -418,22 +633,10 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 		{
 			for (auto& hit : hits)
 			{
-				if (hit.Actor)
-				{
-					bool isBlocking;
-					if (useBlockPlayers || UObject::TryCast<UPlayerPawn>(hit.Actor) || UObject::TryCast<UProjectile>(hit.Actor))
-						isBlocking = hit.Actor->bBlockPlayers() && bBlockPlayers();
-					else
-						isBlocking = hit.Actor->bBlockActors() && bBlockActors();
-
-					// We never hit ourselves or anything moving along with us
-					if (isBlocking && (isOwnBaseBlocking || !hit.Actor->IsBasedOn(this)) && !IsBasedOn(hit.Actor))
-					{
-						blockingHit = hit;
-						break;
-					}
-				}
-				else
+				// We never hit ourselves or anything moving along with us
+				bool isBaseOfMoving = hit.Actor && hit.Actor->IsBasedOn(this);
+				bool isBasedOnMoving = hit.Actor && IsBasedOn(hit.Actor);
+				if (HitBlocks(movingActor(), TargetOf(hit.Actor, KindOfHit(hit.Actor), isBaseOfMoving, isBasedOnMoving), isOwnBaseBlocking))
 				{
 					blockingHit = hit;
 					break;
@@ -452,17 +655,30 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 	Location() += actuallyMoved;
 	XLevel()->Collision.AddToCollision(this);
 
+	// A moving brush that the script stops has to take its passengers back with it, so what each one
+	// achieved is kept for as long as the encroach events can still send the brush back.
+	bool notifyEncroachment = Brush() && (bBlockPlayers() || bBlockActors() || bCollideActors());
+	struct PassengerStep
+	{
+		UActor* Actor;
+		vec3 Moved;
+	};
+	std::vector<PassengerStep> passengerSteps;
+
 	for (size_t i = 0; i < BasedActors.size(); )
 	{
 		UActor* basedActor = BasedActors[i];
+		vec3 passengerOldLocation = basedActor->Location();
 		basedActor->TryMove(actuallyMoved, false, false);
+		if (notifyEncroachment)
+			passengerSteps.push_back({ basedActor, basedActor->Location() - passengerOldLocation });
 		// UnrealScript events triggered in TryMove can call methods such as SetBase or Destroy, so need to guard while iterating.
 		if (i < BasedActors.size() && BasedActors[i] == basedActor)
 			i++;
 	}
 
 	// Notify actor of encroachment
-	if (Brush() && (bBlockPlayers() || bBlockActors() || bCollideActors()))
+	if (notifyEncroachment)
 	{
 		Array<UActor*> encroachingActors = XLevel()->Collision.EncroachingActors(this);
 		for (UActor* actor : encroachingActors)
@@ -470,13 +686,7 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 			if (actor == this || actor->Brush())
 				continue;
 
-			bool isBlocking;
-			if (useBlockPlayers || UObject::TryCast<UPlayerPawn>(actor) || UObject::TryCast<UProjectile>(actor))
-				isBlocking = actor->bBlockPlayers() && bBlockPlayers();
-			else
-				isBlocking = actor->bBlockActors() && bBlockActors();
-
-			if (isBlocking)
+			if (HitBlocks(movingActor(), TargetOf(actor, HitKind::Actor, false, false), false))
 			{
 				bool stopMovement = CallEvent(this, EventName::EncroachingOn, { ExpressionValue::ObjectValue(actor) }).ToBool();
 				if (stopMovement)
@@ -484,6 +694,13 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 					XLevel()->Collision.RemoveFromCollision(this);
 					Location() = OldLocation;
 					XLevel()->Collision.AddToCollision(this);
+
+					// Actors that were deleted by the events are gone and stay where they are
+					for (const PassengerStep& step : passengerSteps)
+					{
+						if (!step.Actor->bDeleteMe())
+							step.Actor->TryMove(-step.Moved, false, false);
+					}
 
 					CollisionHit hit;
 					hit.Fraction = 0.0f;
@@ -497,13 +714,7 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 			if (actor == this)
 				continue;
 
-			bool isBlocking;
-			if (useBlockPlayers || UObject::TryCast<UPlayerPawn>(actor) || UObject::TryCast<UProjectile>(actor))
-				isBlocking = actor->bBlockPlayers() && bBlockPlayers();
-			else
-				isBlocking = actor->bBlockActors() && bBlockActors();
-
-			if (isBlocking)
+			if (HitBlocks(movingActor(), TargetOf(actor, HitKind::Actor, false, false), false))
 				CallEvent(actor, EventName::EncroachedBy, { ExpressionValue::ObjectValue(this) }).ToBool();
 		}
 	}
@@ -527,12 +738,7 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 		if (hit.Actor && !hit.Actor->IsBasedOn(this) && !IsBasedOn(hit.Actor) && bCollideActors() && hit.Actor->bCollideActors())
 		{
 			// We can't touch stuff we are blocked by
-			bool isBlocking;
-			if (useBlockPlayers || UObject::TryCast<UPlayerPawn>(hit.Actor) || UObject::TryCast<UProjectile>(hit.Actor))
-				isBlocking = hit.Actor->bBlockPlayers() && bBlockPlayers();
-			else
-				isBlocking = hit.Actor->bBlockActors() && bBlockActors();
-			if (!isBlocking)
+			if (!HitBlocks(movingActor(), TargetOf(hit.Actor, KindOfHit(hit.Actor), false, false), false))
 				Touch(hit.Actor);
 		}
 	}

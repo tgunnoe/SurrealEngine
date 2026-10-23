@@ -45,24 +45,17 @@ struct Breakpoint
 	bool Enabled = true;
 };
 
-class LocalVariables
+// An entry of the script-call trace: calls on objects of this class or a subclass are traced,
+// only those of Function when it is not None.
+struct TraceFilter
 {
-public:
-	LocalVariables(UStruct* func);
-	~LocalVariables();
-
-	UStruct* Func = nullptr;
-	void* Data = nullptr;
+	NameString Class;
+	NameString Function;
 };
 
-struct VMStackFrame
-{
-	Expression* expr[32];
-	int pass[32];
-	ExpressionValue value[32];
-	UObject* context[32];
-	void* localVariables;
-};
+// How a log line names an object: "None" for null, its name, or "<unnamed ClassName>" for an
+// object with no name, which is what `new` makes when the script gives none.
+std::string ObjectLabel(UObject* obj);
 
 class Frame
 {
@@ -70,8 +63,11 @@ public:
 	static ExpressionValue Call(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args);
 	static std::string GetCallstack();
 	static std::string GetDisassembly(Expression* statement);
+	static std::string FormatTraceArgs(const ArrayView<ExpressionValue>& args);
 
 	static bool AddBreakpoint(const NameString& cls, const NameString& func, const NameString& state = {}, int statementIndex = 0);
+
+	static Array<TraceFilter> TraceEntries;
 
 	static std::function<void()> RunDebugger;
 	static Array<Breakpoint> Breakpoints;
@@ -90,31 +86,38 @@ public:
 
 	static std::unique_ptr<Iterator> CreatedIterator;
 
-	Frame(UObject* instance, UStruct* func);
+	Frame(UObject* instance, UStruct* func, size_t statementIndex, bool isStateFrame);
+	~Frame();
 
 	void SetState(UStruct* func);
-
+	void SetLatentState(LatentRunState state) { LatentState = state; }
 	void GotoLabel(const NameString& label);
 	void Tick();
 
+	UStruct* GetFunc() const { return Func; }
+	void* GetVariables() const { return Variables; }
 	std::string GetName();
+	size_t GetStatementIndex() const { return StatementIndex; }
+	UObject* GetUObject() const { return Object; }
+	LatentRunState GetLatentState() const { return LatentState; }
 
-	LatentRunState LatentState = LatentRunState::Continue;
+private:
+	void InitVariables();
+	void DeinitVariables();
 
-	std::unique_ptr<LocalVariables> Variables;
+	bool IsStateFrame = false;
+	void* Variables = nullptr;
 	UObject* Object = nullptr;
 	UStruct* Func = nullptr;
 	size_t StatementIndex = 0;
+	LatentRunState LatentState = LatentRunState::Continue;
 	Array<std::unique_ptr<Iterator>> Iterators;
 
-private:
 	ExpressionEvalResult Run();
-	void ProcessSwitch(const ExpressionValue& condition, VMStackFrame* stack);
+	void ProcessSwitch(const ExpressionValue& condition);
 
-	static ExpressionEvalResult RunExpr(Expression* expr, UObject* self, UObject* context, VMStackFrame* stack);
-
+	static ExpressionEvalResult RunExpr(Expression* expr, UObject* self, UObject* context, void* variables);
 	static ExpressionValue CallNative(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args);
-	static ExpressionValue CallScript(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args);
 	static void TraceCall(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args);
 
 	struct ActiveCallStackFrame
@@ -122,4 +125,7 @@ private:
 		ActiveCallStackFrame(Frame* frame) { Frame::Callstack.push_back(frame); }
 		~ActiveCallStackFrame() { Frame::Callstack.pop_back(); }
 	};
+
+	Frame(const Frame&) = delete;
+	Frame& operator=(const Frame&) = delete;
 };

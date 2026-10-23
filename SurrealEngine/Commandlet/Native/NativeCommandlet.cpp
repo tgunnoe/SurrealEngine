@@ -29,6 +29,28 @@ void NativeCommandlet::OnCommand(DebuggerApp* console, const std::string& args)
 		std::string path = console->launchinfo.gameExecutableName + "-" + console->launchinfo.gameVersionString + "-Natives.json";
 		File::write_all_text(path, NativeFuncExtractor::Run(engine.packages.get()));
 	}
+	else if (args == "coverage")
+	{
+		// Reuse the debugger's engine when there is one; the registry is rebuilt per engine either way.
+		std::unique_ptr<Engine> ownEngine;
+		if (!engine)
+			ownEngine = std::make_unique<Engine>(console->launchinfo);
+
+		Array<std::string> skipped;
+		Array<std::string> missing = NativeFuncExtractor::FindMissing(engine->packages.get(), skipped);
+		std::string text;
+		for (const std::string& line : missing)
+			text += line + "\n";
+		text += "MISSING " + std::to_string(missing.size()) + "\n";
+
+		console->WriteOutput("GAME " + console->launchinfo.gameExecutableName + "-" + console->launchinfo.gameVersionString + NewLine());
+		for (const std::string& pkg : skipped)
+			console->WriteOutput("SKIPPED " + pkg + NewLine());
+		if (console->OutFile.empty())
+			console->WriteOutput(text);
+		else
+			File::write_all_text(console->OutFile, text);
+	}
 	else if (args == "extractprops")
 	{
 		Engine engine(console->launchinfo);
@@ -46,13 +68,14 @@ void NativeCommandlet::OnCommand(DebuggerApp* console, const std::string& args)
 	}
 	else
 	{
-		console->WriteOutput("Unknown command " + args + NewLine());
+		throw std::runtime_error("Unknown native subcommand: " + args);
 	}
 }
 
 void NativeCommandlet::OnPrintHelp(DebuggerApp* console)
 {
 	console->WriteOutput("Syntax: native extractfuncs" + NewLine());
+	console->WriteOutput("Syntax: native coverage" + NewLine());
 	console->WriteOutput("Syntax: native extractprops" + NewLine());
 	console->WriteOutput("Syntax: native update" + NewLine());
 }

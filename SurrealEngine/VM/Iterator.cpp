@@ -7,6 +7,8 @@
 #include "Package/PackageManager.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
+#include "Packages/Engine/Actors/Info/ULevelInfo.h"
+#include "Packages/Engine/Actors/Brush/UMover.h"
 
 #include <algorithm>
 
@@ -295,9 +297,8 @@ TraceActorsIterator::TraceActorsIterator(UActor* SelfActor, UObject* BaseClass, 
 	flags.others = true;
 	flags.onlyProjectiles = false; // Should this be true or false?
 
-	// Why is this tracing backwards? Is that correct?
-	vec3 traceStart = End;
-	vec3 traceEnd = Start;
+	vec3 traceStart = Start;
+	vec3 traceEnd = End;
 
 	for (auto& hit : SelfActor->XLevel()->Collision.Trace(traceStart, traceEnd, Extent.z, Extent.x, flags.traceActors(), flags.traceWorld(), false))
 	{
@@ -305,7 +306,7 @@ TraceActorsIterator::TraceActorsIterator(UActor* SelfActor, UObject* BaseClass, 
 		{
 			vec3 hitNormal = hit.Normal;
 			vec3 hitLocation = traceStart + (traceEnd - traceStart) * hit.Fraction;
-			tracedActors.push_back({ hit.Actor, *HitLoc, *HitNorm });
+			tracedActors.push_back({ hit.Actor, hitLocation, hitNormal });
 		}
 	}
 
@@ -420,14 +421,14 @@ bool ZoneActorsIterator::Next()
 
 /////////////////////////////////////////////////////////////////////////////
 
-TraceTextureIterator::TraceTextureIterator(UObject* BaseClass, UObject** OutActor, NameString* TexName, NameString* TexGroup, int* Flags, vec3& HitLoc, vec3& HitNorm, vec3 End, vec3* Start, vec3* Extent)
+TraceTextureIterator::TraceTextureIterator(UObject* BaseClass, UObject** OutActor, NameString* TexName, NameString* TexGroup, int* Flags, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent)
 	: BaseClass(BaseClass), OutActor(OutActor), TexName(TexName), TexGroup(TexGroup), flags(Flags), HitLoc(HitLoc), HitNorm(HitNorm),
-	End(End), Start(Start), m_Extent(Extent)
+	End(End), Start(Start), Extent(Extent)
 {
-	auto radius = m_Extent ? length(m_Extent->xy()) : 0;
-	auto height = m_Extent ? ( m_Extent->z < 0 ? -m_Extent->z : m_Extent->z ) : 0;
+	float radius = length(Extent.xy());
+	float height = Extent.z < 0 ? -Extent.z : Extent.z;
 
-	m_CollList = engine->Level->Collision.Trace(*Start, End, height, radius, true, true, false);
+	m_CollList = engine->Level->Collision.Trace(Start, End, height, radius, true, true, false);
 
 	m_Iterator = m_CollList.begin();
 }
@@ -437,18 +438,49 @@ bool TraceTextureIterator::Next()
 	while (m_Iterator != m_CollList.end())
 	{
 		UTexture* foundTexture = nullptr;
+		uint32_t foundFlags = 0;
 
-		*OutActor = m_Iterator->Actor;
+		UActor* actor = m_Iterator->Actor;
+		if (!actor)
+			actor = engine->LevelInfo;
+
+		*OutActor = actor;
 		const auto node = m_Iterator->Node;
 
-		HitLoc = mix(*Start, End, m_Iterator->Fraction);
+		*HitLoc = mix(Start, End, m_Iterator->Fraction);
 
-		HitNorm = m_Iterator->Normal;
+		*HitNorm = m_Iterator->Normal;
 
-		if (node)
-			foundTexture = engine->Level->Model->Surfaces[node->Surf].Material;
-		else if (*OutActor && (*OutActor)->IsA(BaseClass->Name))
+		if (node && node->Surf >= 0)
+		{
+			// A mover hit's node indexes the mover's own brush, not the level model
+			UModel* model = engine->Level->Model;
+			UMover* mover = UObject::TryCast<UMover>(actor);
+			if (mover && mover->Brush())
+				model = mover->Brush();
+
+			// The texture and flags VisibleFrame uses for a level surface (PF_Mirrored lives on the
+			// surface, not the texture). It draws a mover from its brush polys, so for a mover this
+			// is the brush surface's equivalent rather than exactly what is drawn.
+			const BspSurface& surface = model->Surfaces[node->Surf];
+			foundTexture = surface.Material ? surface.Material : engine->LevelInfo->DefaultTexture();
+			foundFlags = surface.PolyFlags;
+			if (surface.Material)
+				foundFlags |= surface.Material->PolyFlags();
+		}
+		else if (node)
+		{
+			// Surf is negative: the node has no surface. Collision still reports it as a solid hit
+			// (only VisibleFrame skips drawing it), so report it with the default texture and no
+			// flags, as a surface with no material, rather than let the trace see through it.
+			foundTexture = engine->LevelInfo->DefaultTexture();
+		}
+		else if (!node && *OutActor && (*OutActor)->IsA(BaseClass->Name))
+		{
 			foundTexture = UObject::Cast<UActor>(*OutActor)->Skin();
+			if (foundTexture)
+				foundFlags = foundTexture->PolyFlags();
+		}
 
 		++m_Iterator;
 
@@ -456,27 +488,29 @@ bool TraceTextureIterator::Next()
 		{
 			*TexName = foundTexture->Name;
 			*TexGroup = foundTexture->Outer() ? foundTexture->Outer()->Name : "";
-			*flags = foundTexture->PolyFlags();
+			*flags = (int)foundFlags;
 			return true;
 		}
 	}
 
 	*OutActor = nullptr;
-	TexName = nullptr;
-	TexGroup = nullptr;
-	flags = nullptr;
+	*HitLoc = vec3(0.0f);
+	*HitNorm = vec3(0.0f);
+	*TexName = NameString();
+	*TexGroup = NameString();
+	*flags = 0;
 	return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-TraceVisibleActorsIterator::TraceVisibleActorsIterator(UObject* BaseClass, UObject** OutActor, vec3& HitLoc, vec3& HitNorm, vec3 End, vec3* Start, vec3* Extent)
-	: BaseClass(BaseClass), OutActor(OutActor), HitLoc(HitLoc), HitNorm(HitNorm),  End(End), Start(Start), m_Extent(Extent)
+TraceVisibleActorsIterator::TraceVisibleActorsIterator(UObject* BaseClass, UObject** OutActor, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent)
+	: BaseClass(BaseClass), OutActor(OutActor), HitLoc(HitLoc), HitNorm(HitNorm), End(End), Start(Start), Extent(Extent)
 {
-	auto radius = m_Extent ? length(m_Extent->xy()) : 0;
-	auto height = m_Extent ? ( m_Extent->z < 0 ? -m_Extent->z : m_Extent->z ) : 0;
+	float radius = length(Extent.xy());
+	float height = Extent.z < 0 ? -Extent.z : Extent.z;
 
-	m_CollList = engine->Level->Collision.Trace(*Start, End, height, radius, true, true, false);
+	m_CollList = engine->Level->Collision.Trace(Start, End, height, radius, true, true, false);
 
 	m_Iterator = m_CollList.begin();
 }
@@ -487,8 +521,8 @@ bool TraceVisibleActorsIterator::Next()
 	{
 		auto foundActor = m_Iterator->Actor;
 
-		HitLoc = mix(*Start, End, m_Iterator->Fraction);
-		HitNorm = m_Iterator->Normal;
+		*HitLoc = mix(Start, End, m_Iterator->Fraction);
+		*HitNorm = m_Iterator->Normal;
 
 		++m_Iterator;
 
@@ -500,5 +534,7 @@ bool TraceVisibleActorsIterator::Next()
 	}
 
 	*OutActor = nullptr;
+	*HitLoc = vec3(0.0f);
+	*HitNorm = vec3(0.0f);
 	return false;
 }
