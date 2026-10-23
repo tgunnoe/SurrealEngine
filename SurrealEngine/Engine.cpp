@@ -1360,6 +1360,16 @@ std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string&
 	return {};
 }
 
+PlaceParseResult ParsePlaceCommand(const Array<std::string>& args)
+{
+	return { {}, "not implemented" };
+}
+
+std::string FormatPlaceLine(const vec3& requested, const vec3& ended, bool hasYaw, float yawDegrees)
+{
+	return {};
+}
+
 void Engine::NotePlayerLogin()
 {
 	SmokeLog::Get()->Event("LOGIN");
