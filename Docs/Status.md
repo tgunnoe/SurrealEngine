@@ -85,7 +85,7 @@ Anything beyond 469c currently won't boot.
 * Conversation system is not fully implemented yet.
 * If you click on the area where the saves should be in the Load Game menu the buttons below stop working so you cannot go back.
 * In-game HUD has some missing text.
-* Books open and the script receives their text with its colour, alignment, email and file tags; datacubes and newspapers use the same script but are untested, and the look of the reading window is unchecked.
+* Books open and the script receives their text with its colour and alignment tags; the text parser reads file tags and five-field email tags for the computer screens (none has been opened), but four-field email tags are still misread; datacubes and newspapers use the same script but are untested, and the look of the reading window is unchecked.
 
 ## Tactical-Ops: Assault on Terror
 
