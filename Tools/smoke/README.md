@@ -92,11 +92,14 @@ run that needs the player somewhere other than where the map starts it (for
 example `--exec='5.25:place -2199 344 -380 38'`). The numbers are finite
 numbers in the level's units, and the yaw is in degrees. The move is the
 engine's own placement, so a script's move and this one meet the same checks:
-a location inside solid space is shifted to the free spot the engine finds
-nearby, or refused, and a refused placement leaves the player where it was.
-When a yaw is given and the move succeeded, the player's body and view are
-both turned to it (pitch and roll are left alone), and the player then walks
-forward along (cos yaw, sin yaw); a refused move writes no yaw.
+a location inside the level's solid geometry is shifted to the free spot the
+engine finds nearby, or refused, and a refused placement leaves the player
+where it was. The check is against the level's geometry only: a location
+inside a mover, a door or another actor is neither shifted nor refused, so the
+player can be left overlapping one. When a yaw is given and the move
+succeeded, the player's body and view are both turned to it (pitch and roll
+are left alone), so that a forward move afterwards goes along
+(cos yaw, sin yaw); a refused move writes no yaw.
 
 Every placement writes one line to the smoke log. The line
 `PLACE (x, y, z) -> (x', y', z')` gives the location asked for and the
@@ -104,7 +107,9 @@ location the player was left at, each coordinate with one decimal, followed by
 ` yaw <degrees>` (one decimal) when a yaw was given; the two triples differ
 when the engine shifted the placement. `PLACE_FAILED (x, y, z) refused` says
 the engine would not move the player, and `PLACE_FAILED (x, y, z) no player`
-that there was no player. The same text is written to the engine log as
+that there was no player. Either line comes before the `EXEC` or `EXEC_FAILED`
+line of its own command, because that line is written after the command
+returns. The same text is written to the engine log as
 `place: <line>` with that log's level-time stamp, among the answers of `call`
 probes, so a probe that comes after it can be read against it. A refused
 placement also makes the item `EXEC_FAILED` and adds
@@ -114,7 +119,8 @@ refused the same way, with `place: <reason>` in the engine log.
 
 The command does only that. The player's zone is refreshed by its next move,
 not by the placement, the teleport flag is not set, nothing is pushed aside and
-the velocity is kept, so a player placed in the air falls to the floor. It
+the velocity is kept, so a player that was moving keeps moving, and a player
+placed in the air falls to the floor. It
 moves the player only, and like `hold` and `call` it is also reachable through
 `ConsoleCommand` from the console and from a script. To put the player
 somewhere that collision or a touch matters, place it; do not fly there with
