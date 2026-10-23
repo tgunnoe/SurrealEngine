@@ -79,7 +79,7 @@ section.
 | :--- | ---: | ---: | :--- | :--- |
 | HorseFly.meander | 200 | 14 | undecided | On Bluff a fly lost its owner when the carcass swarm that spawned it was destroyed (inferred from the timing and the script); the stock `meander` state then calls `Destroy()` on the fly and the next two statements dereference `Owner`, and the engine runs them. Whether the original keeps running state code after `Destroy()` is not known. |
 | SinglePlayer.Killed | 16 | 7 | faithful | The stock `SinglePlayer.Killed` subtracts 2 from `killer.PlayerReplicationInfo.Score` when a Nali dies, with no check, and the killer of a Nali can be a monster, which has no replication info, or None. |
-| Predator.PickDestination | 10 | 1 | engine-side | The engine implements none of `PathNodeIterator`'s functions: `GetFirst` returns None, so the stock `Hiding` `PickDestination` finds no path for any candidate, clears `Home`, and its loop, which has no exit for a None `Home`, calls `BuildPath(Location, Home.Location)` on it. An iterator that finds a path ends the loop at the first candidate. |
+| Predator.PickDestination | 10 | 1 | engine-side | The engine implements none of `PathNodeIterator`'s functions: `GetFirst` returns None, so the stock `Hiding` `PickDestination` finds no path for any candidate; unless the pawn can reach `Home` directly, which ends the loop at its `break`, it clears `Home` and goes round again, and the loop has no exit for a None `Home`, so it calls `BuildPath(Location, Home.Location)` on it. An iterator that finds a path ends the loop at the first candidate. |
 | NaliPriest.Killed | 9 | 3 | faithful | `NaliPriest` inherits `Nali.Killed`, whose test `Nali(Other) != None && Killer.bIsPlayer` reads `Killer` when a Nali dies, and the killer is None when the fatal damage has no instigator. |
 | Nali.Killed | 8 | 2 | faithful | The stock `Nali.Killed` tests `Killer.bIsPlayer` when the dying pawn is a Nali, and every Nali-family pawn runs it for each death, so a Nali's death with a None killer logs once per Nali-family pawn alive. |
 | WarpZoneMarker.PostBeginPlay | 8 | 1 | faithful | The stock `PostBeginPlay` reads `markedWarpZone.numDestinations` with no check, and Endgame's name table holds no `markedWarpZone` while the five other maps with markers do, so none of its eight markers has a zone. |
@@ -107,7 +107,7 @@ section.
 | UnrealCTFScoreboard.DrawTrailer | 3153 | 1 | faithful | As in the `ut` table: the same stock training game and scoreboard, with the same residual. |
 | MinigunCannon.SeePlayer | 877 | 2 | undecided | As `MinigunCannon.SeePlayer` in the `ut` table. |
 | UTConsole.AddMessage | 8 | 1 | faithful | As in the `ut` table: the same stock tutorial and console. |
-| TMale1Bot.Roaming | 7 | 1 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. The re-sweep (f93c4864) did not log it; DOM-Cinder now runs under Domination where the sweep of 8d225ef3 ran it under DeathMatchPlus, which may account for it but is not shown to, DM-ArcaneTemple runs the default game in both sweeps, and the one engine commit since 8d225ef3 (the VM's None logging) adds warnings rather than removing them; the runs are not deterministic. |
+| TMale1Bot.Roaming | 7 | 1 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. The re-sweep (f93c4864) did not log it; DOM-Cinder now runs under Domination where the sweep of 8d225ef3 ran it under DeathMatchPlus, which may account for it but is not shown to, DM-ArcaneTemple runs the default game in both sweeps, and the one engine commit since 8d225ef3 (the VM's None logging) adds warnings rather than removing them; the runs are not deterministic. The sweep of a8a70202 logs it again. |
 | TeamCannon.SeePlayer | 4 | 3 | undecided | As in the `ut` table: the one traced warning (AS-HiSpeed) saw a cannon, which has no replication info; AS-Mazon and AS-OceanFloor were not traced, and whom the original raises `SeePlayer` for is not known. |
 | TFemale2Bot.Roaming | 2 | 1 | undecided | The same `Bot` `Roaming` body; no traced run logged this class's statement. |
 
@@ -133,7 +133,7 @@ lines and maps are `-` because no current sweep table lists them.
 | LAM.Explode | - | - | faithful | The stock `ThrownProjectile` `Flying` `Explode`, which `LAM` inherits, casts its owner to `DeusExPlayer` and dereferences it without a check, so a LAM whose owner is not the player reaches None. No traced run was made for this site, and what set the LAM off is not recorded. The re-sweep (f41c13db) did not log it, and a search of the engine commits' subjects since 28f08a4c found none naming the site; the runs are not deterministic. |
 | AssaultRandomizer.SpecialCost | - | - | faithful | The callstack names the one statement of the stock `CostEnabled` `SpecialCost`, called from the engine's path search for a bot. The sweep of f93c4864 named the game by prefix, so AS-HiSpeed ran under Assault and the cast yields the game; the sweeps of 73df9f26 and 8d225ef3 ran it under DeathMatchPlus, the ini's default for a map that stores no DefaultGameType, where the cast yields None and the stock script dereferences it, as the original would. |
 | TMale2Bot.Roaming | - | - | faithful | The callstack names `TurnTo(Location + AmbushSpot.lookDir)` at `Bot`'s `LongCamp` label, with the bot's own `AmbushSpot` None; only script assigns `AmbushSpot`, and the stock `PickDestination` sends a bot standing at an ambush point to `LongCamp` without assigning one. The re-sweep (f93c4864) did not log it; AS-OceanFloor and CTF-Command now run under Assault and CTFGame where the sweep of 8d225ef3 ran them under DeathMatchPlus (the traced CTF-Command run behind the verdict named no game, so it ran under DeathMatchPlus too), which may account for it but is not shown to, and the one engine commit since 8d225ef3 (the VM's None logging) adds warnings rather than removing them; the runs are not deterministic. |
-| Slith.TakeDamage | - | - | faithful | The callstack names `ScriptedPawn`'s `Patroling` state body, one of seven stock bodies that read `Enemy` unguarded; a Slith in `Patroling` has no enemy, and the call is a BiterFish's stock `Pawn.BaseChange` stomp of the Slith. The engine raises `BaseChange` from its own physics, the one part not read against the original. The re-run of the sweep (a8a7020) did not log it. |
+| Slith.TakeDamage | - | - | faithful | The callstack names `ScriptedPawn`'s `Patroling` state body, one of seven stock bodies that read `Enemy` unguarded; a Slith in `Patroling` has no enemy, and the call is a BiterFish's stock `Pawn.BaseChange` stomp of the Slith. The engine raises `BaseChange` from its own physics, the one part not read against the original. The re-run of the sweep (a8a70202) did not log it. |
 
 ## Sites
 
@@ -917,7 +917,7 @@ game, and did not log the site.
 ### TMale1Bot.Roaming
 
 Verdict `undecided`. Lines per map, `ut-bots`: DM-ArcaneTemple 7. The sweep of
-a8a7020 logs it again; the sweep of f93c4864 did not.
+a8a70202 logs it again; the sweep of f93c4864 did not.
 
 Stock `BotPack.TMale1Bot`:
 
@@ -1015,7 +1015,7 @@ bot's 54 `TurnTo` calls in `Roaming` follow an `Acquisition` one within 0.45 s.
 
 Verdict `faithful`. Lines per map, `unreal`: Bluff 7, Ceremony 1.
 
-The sweep of a8a7020, run on the engine at 95ed235d, is the first to log the
+The sweep of a8a70202, run on the engine at 95ed235d, is the first to log the
 site: that engine's VM logs a None under every outcome (3d29a16a), where the
 engine of the Unreal Gold sweep of f94c1ba6 dropped a None in the test of an
 `if`, as here.
@@ -1045,11 +1045,12 @@ second candidate. Damage with no instigator leaves `Killer` None:
 Evidence, from the smoke logs of the sweep (not committed): on Bluff the eight
 lines of this site and `NaliPriest.Killed` stand together, one
 `NaliPriest.Killed` then seven `Nali.Killed`, and on Ceremony the same eight
-stand as seven `NaliPriest.Killed` then one `Nali.Killed`; on both maps one
-`SinglePlayer.ScoreKill` line and one `SinglePlayer.Killed` line follow at once.
-That is the order `Pawn.Died` runs for one Nali's death: `Killed` on eight
-Nali-family pawns, then on the game. The `ScoreKill` warning needs a None killer
-or a self-kill and this site needs a None killer, so the two agree on the death.
+stand as six `NaliPriest.Killed`, one `Nali.Killed` and one more
+`NaliPriest.Killed`; on both maps one `SinglePlayer.ScoreKill` line and one
+`SinglePlayer.Killed` line follow at once. That is the order `Pawn.Died` runs
+for one Nali's death: `Killed` on eight Nali-family pawns, then on the game. The
+`ScoreKill` warning needs a None killer or a self-kill and this site needs a
+None killer, so the two agree on the death.
 
 Residual: the sweep keeps no callstack and no run traced these deaths, so which
 damage had no instigator was not observed; the two candidates, the drowning of
@@ -1060,7 +1061,7 @@ list names that the original's raising of them was not read.
 
 Verdict `faithful`. Lines per map, `unreal`: Bluff 1, Ceremony 7, Nalic2 1.
 
-The sweep of a8a7020, run on the engine at 95ed235d, is the first to log the
+The sweep of a8a70202, run on the engine at 95ed235d, is the first to log the
 site: that engine's VM logs a None under every outcome (3d29a16a), where the
 engine of the Unreal Gold sweep of f94c1ba6 dropped a None in the test of an
 `if`, as here.
@@ -1076,7 +1077,7 @@ play, before the first `FPS` line of the smoke log, beside the three
 
 Verdict `faithful`. Lines per map, `unreal`: Endgame 8.
 
-The sweep of a8a7020, run on the engine at 95ed235d, is the first to log the
+The sweep of a8a70202, run on the engine at 95ed235d, is the first to log the
 site: that engine's VM logs a None under every outcome (3d29a16a), where the
 engine of the Unreal Gold sweep of f94c1ba6 dropped a None in the test of an
 `if`, as here.
@@ -1110,7 +1111,7 @@ an unsaved object property None, and the native side of the class
 
 Verdict `faithful`. Lines per map, `unreal`: Nalic2 3.
 
-The sweep of a8a7020, run on the engine at 95ed235d, is the first to log the
+The sweep of a8a70202, run on the engine at 95ed235d, is the first to log the
 site: that engine's VM logs a None under every outcome (3d29a16a), where the
 engine of the Unreal Gold sweep of f94c1ba6 dropped a None in the test of an
 `if`, as here.
@@ -1154,7 +1155,7 @@ engine's.
 
 Verdict `faithful`. Lines per map, `unreal`: Crashsite2 1.
 
-The sweep of a8a7020, run on the engine at 95ed235d, is the first to log the
+The sweep of a8a70202, run on the engine at 95ed235d, is the first to log the
 site: that engine's VM logs a None under every outcome (3d29a16a), where the
 engine of the Unreal Gold sweep of f94c1ba6 dropped a None in the test of an
 `if`, as here.
@@ -1191,7 +1192,7 @@ line of the Crashsite2 smoke log. Residual: as for `UPakSinglePlayer.Killed`.
 Verdict `engine-side`. Lines per map, `unreal`: NagomiSun 10.
 
 The Unreal Gold sweep of f94c1ba6 ran NagomiSun with no stub hit, so its
-`Predator` never reached the path search, and the sweep of a8a7020 is the first
+`Predator` never reached the path search, and the sweep of a8a70202 is the first
 to log the site. `Predator` is a `ScriptedPawn` of `UPak.u` (Return to Na Pali);
 its `pni` is a `PathNodeIterator`, a class of that package whose functions are
 declared `intrinsic`. Stock `UPak.Predator`, state `Hiding`, function
@@ -1245,12 +1246,12 @@ so each remaining pass calls `pni.BuildPath( Location, Home.Location )` with
 ran, which a None `pni` would have prevented (the VM skips a call whose context
 object is None, `SurrealEngine/VM/Frame.cpp`); the None is the argument
 `Home.Location`, so `Home`. Each of the ten warnings comes with a `SCRIPT_ERROR
-Accessed None`, the failure of the row; the script callstack of the first (the
-leading `line 919` is the first statement of `PickDestination`, not the
-statement named):
+Accessed None`, the failure of the row; the first, cut before its native call
+stack (the leading `line 919` is the first statement of `PickDestination`, not
+the statement named):
 
 ```
-SCRIPT_ERROR Accessed None  Script call stack: at PathNodeIterator.BuildPath line 16 at Predator.Hiding.PickDestination line 919: pni.BuildPath(Location, home.Location) at Predator.Hiding line 1349: PickDestination()
+SCRIPT_ERROR Accessed None  Script call stack: at PathNodeIterator.BuildPath line 16 at Predator.Hiding.PickDestination line 919: pni.BuildPath(Location, home.Location) at Predator.Hiding line 1349: PickDestination() ...
 SCRIPT_WARNING Accessed None in Predator.PickDestination
 ```
 
@@ -1265,10 +1266,12 @@ implementing the iterator's functions.
 
 Verdict `undecided`. Lines per map, `unreal`: SkyCaves 1.
 
-The sweep of a8a7020, run on the engine at 95ed235d, is the first to log the
-site: that engine's VM logs a None under every outcome (3d29a16a), where the
-engine of the Unreal Gold sweep of f94c1ba6 dropped a None in the test of an
-`if`, as here.
+The sweep of a8a70202, run on the engine at 95ed235d, is the first to log the
+site. Whether the engine of the Unreal Gold sweep of f94c1ba6 dropped this None
+is not established: its VM dropped a None only in a statement that ended in a
+jump, and the log keeps no callstack, so the statement that logged is unknown
+(the `if` test, or the `Trace` that reads `Enemy`, a plain statement that engine
+logged).
 
 `UnrealI.Krall` declares no `MeleeDamageTarget` and calls the inherited one from
 `StrikeDamageTarget`, `PoundDamageTarget` and `ThrowDamageTarget`. Stock
@@ -1402,16 +1405,20 @@ and the `trace:` lines. Both are described in `Tools/smoke/README.md`.
   `DeusEx.u`, `Engine.u` and maps are byte-identical to the vanilla
   folder's and whose conversation packages (`System/DeusExConText.u` among
   them) are the mod's.
-- The sweeps taken at a8a7020 ran the engine at 95ed235d, whose VM logs a None
-  under every outcome (3d29a16a). Six of the seven Unreal Gold sites first
-  logged there (`WarpZoneMarker.PostBeginPlay`, `Nali.Killed`,
-  `NaliPriest.Killed`, `UPakSinglePlayer.Killed`, `CrashSiteGame.Killed` and
-  `Krall.MeleeDamageTarget`) are Nones in the test of an `if`, which the engines
-  of the earlier committed Unreal Gold and Deus Ex sweeps (f94c1ba6, f41c13db)
-  did not log; the Unreal Tournament sweeps already carried the fuller logging,
-  and the Deus Ex sweep of a8a7020 adds no site. The seventh,
-  `Predator.PickDestination`, is not one of them: the Unreal Gold sweep of
-  f94c1ba6 ran NagomiSun without a stub hit. `TMale1Bot.Roaming`, logged again
-  by the `ut-bots` sweep of a8a7020 after the sweep of f93c4864 did not, is not
-  explained by the logging either, since f93c4864 already carried it; its row
-  records that the runs are not deterministic.
+- The sweeps of a8a70202 ran the engine at 95ed235d, whose VM logs a None under
+  every outcome (3d29a16a); the engines of the earlier committed Unreal Gold and
+  Deus Ex sweeps (f94c1ba6, f41c13db) dropped a None in a statement that ended
+  in a jump. Five of the seven Unreal Gold sites first logged there
+  (`WarpZoneMarker.PostBeginPlay`, `Nali.Killed`, `NaliPriest.Killed`,
+  `UPakSinglePlayer.Killed` and `CrashSiteGame.Killed`) are Nones in the test of
+  an `if`, which those engines dropped; the Unreal Tournament sweeps already
+  carried the fuller logging, and the Deus Ex sweep of a8a70202 adds no site.
+  The other two are different. For `Krall.MeleeDamageTarget` that cause is not
+  established: the log keeps no callstack, so the statement that logged is
+  unknown, and the function's `Trace` statement, a plain one that reads `Enemy`,
+  was logged by those engines too. `Predator.PickDestination` is not a dropped
+  None: the Unreal Gold sweep of f94c1ba6 ran NagomiSun without a stub hit.
+  `TMale1Bot.Roaming`, logged again by the `ut-bots` sweep of a8a70202 after the
+  sweep of f93c4864 did not, is not explained by the logging either, since
+  f93c4864 already carried it; its row records that the runs are not
+  deterministic.
