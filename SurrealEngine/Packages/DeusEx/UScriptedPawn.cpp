@@ -68,6 +68,9 @@ uint8_t UScriptedPawn::GetPawnAllianceType(UPawn* QueryPawn)
 			return (uint8_t)EAllianceType::ALLIANCE_Hostile;
 		}
 	}
+	// The stock distress handler passes None when the distressed pawn has no enemy.
+	if (!QueryPawn)
+		return GetAllianceType(NameString());
 	return GetAllianceType(QueryPawn->Alliance());
 }
 
