@@ -29,7 +29,9 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 * Mirrors/reflections rendering is a bit buggy, especially around the edges of world geometry.
 * Portals:
   - They somewhat work, but might end up "pushing" players/projectiles in unexpected directions.
-* Semisolid brushes are finicky. Usually you'll fall through them as if they weren't there.
+* Semisolid brushes:
+  - A fall all the way through the top face of a semisolid brush was not reproduced (Unreal Tournament's CTF-Nucleus, Unreal's SkyBase; no Deus Ex brush qualified for the runs).
+  - A player set down over a top polygon whose plane no neighbouring hull carries sinks into it until another brush's hull holds it (16 units on SkyBase's platform); where the neighbouring hulls carry the plane (CTF-Nucleus's slab) the player stands at the top. This sink has not been compared with the original game. Played by hand in the original game, CTF-Nucleus's slab holds a player on its ring and lets it fall through its open centre.
 * Bot and Scripted Pawn AI while better than before, still isn't fully functional.
 * Bots literally rotate their entire body (feet off the ground) to look up/down in ways they shouldn't be able to.
 * Waving water textures at the end of waterfalls render broken. Easily observable in NyLeve's Falls (Unreal) or DM-ArcaneTemple (UT)
