@@ -2,6 +2,7 @@
 
 #include "Math/vec.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <functional>
 #include <optional>
@@ -203,5 +204,56 @@ namespace AIMath
 		if (pitch < 0x10000 - rate)
 			return 0x10000 - rate;
 		return pitch;
+	}
+
+	constexpr int MaxPathNodes = 64;
+
+	struct PathResult
+	{
+		std::vector<int> nodes;
+		int cost = 0;
+	};
+
+	// Stubs: the path functions, the store, the cursor and the fall step answer nothing yet.
+	inline std::optional<PathResult> ShortestPath(const Graph&, int, int, bool)
+	{
+		return std::nullopt;
+	}
+
+	struct PathStore
+	{
+		std::array<int, MaxPathNodes> nodes{};
+		int count = 0;
+		int cost = 0;
+	};
+
+	inline PathStore StorePath(const std::vector<int>&, int)
+	{
+		return {};
+	}
+
+	struct PathCursor
+	{
+		int count = 0;
+		int index = 0;
+	};
+
+	inline std::optional<int> CursorFirst(PathCursor&) { return std::nullopt; }
+	inline std::optional<int> CursorNext(PathCursor&) { return std::nullopt; }
+	inline std::optional<int> CursorPrevious(PathCursor&) { return std::nullopt; }
+	inline std::optional<int> CursorCurrent(PathCursor&) { return std::nullopt; }
+	inline std::optional<int> CursorLast(PathCursor&) { return std::nullopt; }
+
+	constexpr float LongFallSeconds = 0.0f;
+
+	struct FallStep
+	{
+		float fallen = 0.0f;
+		bool raise = false;
+	};
+
+	inline FallStep AdvanceFall(float fallen, float, float = LongFallSeconds)
+	{
+		return { fallen, false };
 	}
 }
