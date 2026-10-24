@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-// Arithmetic behind the Deus Ex AI natives, kept over plain values so it can be tested
+// Arithmetic behind the pawn AI natives and ticks, kept over plain values so it can be tested
 // without a loaded package. Angles are Unreal rotator units: 65536 is one full turn.
 namespace AIMath
 {
@@ -192,5 +192,16 @@ namespace AIMath
 			}
 		}
 		return distance;
+	}
+
+	// The body pitch UPawn::TickRotating writes for a desired pitch, given the pitch of the rotation rate.
+	inline int CapBodyPitch(int desiredPitch, int rate)
+	{
+		int pitch = desiredPitch & 0xffff;
+		if (pitch < 0x8000)
+			return std::max(pitch, rate);
+		if (pitch < 0x10000 - rate)
+			return 0x10000 - rate;
+		return pitch;
 	}
 }
