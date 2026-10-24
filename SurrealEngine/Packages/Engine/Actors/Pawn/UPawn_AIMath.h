@@ -353,16 +353,28 @@ namespace AIMath
 		return --cursor.index;
 	}
 
-	constexpr float LongFallSeconds = 0.0f;
+	// A pawn waiting to land (WaitForLanding) is told LongFall once its fall has lasted this many seconds of
+	// engine time. The figure is the stock scripts' own: the FallingState of the Unreal, Unreal Tournament
+	// and Deus Ex pawns waits out a fall with Sleep(2.0) before its LongFall label. The rule is designed
+	// from that wait, not recovered from the original.
+	constexpr float LongFallSeconds = 2.0f;
 
 	struct FallStep
 	{
+		// Seconds fallen, including this step.
 		float fallen = 0.0f;
+		// Set on the one step where the total first reaches the threshold.
 		bool raise = false;
 	};
 
-	inline FallStep AdvanceFall(float fallen, float, float = LongFallSeconds)
+	// Adds the seconds of a tick to the seconds fallen so far. A step counts only when it is finite and
+	// positive. The raise is set exactly when the total was under the threshold before the step and is at
+	// least the threshold after it, so a fall raises it once, whatever the size of the steps.
+	inline FallStep AdvanceFall(float fallen, float elapsed, float threshold = LongFallSeconds)
 	{
-		return { fallen, false };
+		if (!std::isfinite(elapsed) || elapsed <= 0.0f)
+			return { fallen, false };
+		float total = fallen + elapsed;
+		return { total, fallen < threshold && total >= threshold };
 	}
 }

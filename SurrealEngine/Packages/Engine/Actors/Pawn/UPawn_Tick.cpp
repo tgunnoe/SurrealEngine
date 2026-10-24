@@ -96,7 +96,12 @@ void UPawn::Tick(float elapsed)
 			}
 			else
 			{
-				// To do: need to send a LongFall event if the fall state lasts long enough
+				// LatentFloat holds the seconds fallen since WaitForLanding. The LongFall handler can change
+				// the state, so the state frame is not touched again after the event.
+				AIMath::FallStep fall = AIMath::AdvanceFall(LatentFloat(), elapsed, AIMath::LongFallSeconds);
+				LatentFloat() = fall.fallen;
+				if (fall.raise)
+					CallEvent(this, "LongFall");
 			}
 		}
 	}
@@ -335,7 +340,10 @@ void UPawn::TurnToward(UActor* newTarget)
 void UPawn::WaitForLanding()
 {
 	if (StateFrame)
+	{
+		LatentFloat() = 0.0f;
 		StateFrame->SetLatentState(LatentRunState::WaitForLanding);
+	}
 }
 
 void UPawn::SetMoveDuration(const vec3& deltaMove)
