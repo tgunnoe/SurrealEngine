@@ -196,14 +196,19 @@ namespace AIMath
 	}
 
 	// The body pitch UPawn::TickRotating writes for a desired pitch, given the pitch of the rotation rate.
+	// The body stays within the rate of level on both sides, as the stock scripts keep a player's body: a
+	// pitch inside that band is kept, one above it (up to the half turn) becomes the rate, and one below it
+	// becomes the full turn minus the rate. The rate is brought into 0 to 32767 first, so the result is
+	// always a pitch of 0 to 65535 and a rate of 0 holds the body level.
 	inline int CapBodyPitch(int desiredPitch, int rate)
 	{
-		int pitch = desiredPitch & 0xffff;
-		if (pitch < 0x8000)
-			return std::max(pitch, rate);
-		if (pitch < 0x10000 - rate)
-			return 0x10000 - rate;
-		return pitch;
+		int pitch = desiredPitch & (AngleUnits - 1);
+		int limit = std::clamp(rate, 0, AngleUnits / 2 - 1);
+		if (pitch <= limit || pitch >= AngleUnits - limit)
+			return pitch;
+		if (pitch < AngleUnits / 2)
+			return limit;
+		return (AngleUnits - limit) & (AngleUnits - 1);
 	}
 
 	constexpr int MaxPathNodes = 64;
