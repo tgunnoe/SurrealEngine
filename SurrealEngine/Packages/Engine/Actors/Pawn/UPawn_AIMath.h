@@ -211,6 +211,12 @@ namespace AIMath
 		return (AngleUnits - limit) & (AngleUnits - 1);
 	}
 
+	// The path node iterator of Unreal Gold's UPak.u (PathNodeIterator, which the Predator uses to flee)
+	// is built on these functions. Its semantics are designed here, from the declaration of the stock class
+	// and from what the Predator's calls need, and are not recovered from the original: a path is the
+	// cheapest node sequence, kept in a store of at most MaxPathNodes nodes (the stock NodePath array),
+	// and a cursor over the store answers no node before the first or after the last, so the loops the
+	// Predator runs over it end.
 	constexpr int MaxPathNodes = 64;
 
 	struct PathResult
@@ -219,12 +225,58 @@ namespace AIMath
 		int cost = 0;
 	};
 
-	// Stubs: the path functions, the store, the cursor and the fall step answer nothing yet.
-	inline std::optional<PathResult> ShortestPath(const Graph&, int, int, bool)
+	// The cheapest path from start to end, both nodes of the graph, or nothing when end is unreachable or
+	// either node is outside the graph. The nodes run from start to end and none repeats; a path from a node
+	// to itself is that node alone at cost zero. Its cost equals the entry ShortestDistances gives for end.
+	// Where two paths cost the same, the one the search settles first is returned.
+	inline std::optional<PathResult> ShortestPath(const Graph& graph, int start, int end, bool usePruned)
 	{
-		return std::nullopt;
+		int nodes = (int)graph.size();
+		if (start < 0 || start >= nodes || end < 0 || end >= nodes)
+			return std::nullopt;
+
+		std::vector<int> distance(nodes, Unreachable);
+		std::vector<int> previous(nodes, -1);
+
+		using Entry = std::pair<int, int>; // cost so far, node
+		std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> queue;
+		distance[start] = 0;
+		queue.push({ 0, start });
+		while (!queue.empty())
+		{
+			auto [cost, node] = queue.top();
+			queue.pop();
+			if (cost > distance[node])
+				continue;
+			if (node == end)
+				break;
+			for (const Edge& edge : graph[node])
+			{
+				if ((edge.pruned && !usePruned) || edge.to < 0 || edge.to >= nodes)
+					continue;
+				int candidate = cost + std::max(edge.cost, 0);
+				int& best = distance[edge.to];
+				if (best == Unreachable || candidate < best)
+				{
+					best = candidate;
+					previous[edge.to] = node;
+					queue.push({ candidate, edge.to });
+				}
+			}
+		}
+		if (distance[end] == Unreachable)
+			return std::nullopt;
+
+		PathResult path;
+		path.cost = distance[end];
+		for (int node = end; node != -1; node = previous[node])
+			path.nodes.push_back(node);
+		std::reverse(path.nodes.begin(), path.nodes.end());
+		return path;
 	}
 
+	// A path as the iterator keeps it: the first count nodes, in order, and the cost of the whole path.
+	// Slots from count on are unspecified.
 	struct PathStore
 	{
 		std::array<int, MaxPathNodes> nodes{};
@@ -232,22 +284,74 @@ namespace AIMath
 		int cost = 0;
 	};
 
-	inline PathStore StorePath(const std::vector<int>&, int)
+	// A path longer than MaxPathNodes keeps its first MaxPathNodes nodes and its whole cost.
+	inline PathStore StorePath(const std::vector<int>& nodes, int cost)
 	{
-		return {};
+		PathStore store;
+		store.count = (int)std::min(nodes.size(), (size_t)MaxPathNodes);
+		std::copy_n(nodes.begin(), store.count, store.nodes.begin());
+		store.cost = cost;
+		return store;
 	}
 
+	// The position of a walk over a store of count nodes (0 to MaxPathNodes). Each function below first
+	// brings index into 0 to count-1 (0 when the path is empty), since a script can write it, then answers
+	// the slot to read, or nothing when there is no such node. First, Last and Current answer nothing only
+	// for an empty path; Next stays on the last node and Previous on the first when they run out.
 	struct PathCursor
 	{
 		int count = 0;
 		int index = 0;
 	};
 
-	inline std::optional<int> CursorFirst(PathCursor&) { return std::nullopt; }
-	inline std::optional<int> CursorNext(PathCursor&) { return std::nullopt; }
-	inline std::optional<int> CursorPrevious(PathCursor&) { return std::nullopt; }
-	inline std::optional<int> CursorCurrent(PathCursor&) { return std::nullopt; }
-	inline std::optional<int> CursorLast(PathCursor&) { return std::nullopt; }
+	// Brings the index inside the path; false when the path is empty.
+	inline bool FitCursor(PathCursor& cursor)
+	{
+		if (cursor.count <= 0)
+		{
+			cursor.index = 0;
+			return false;
+		}
+		cursor.index = std::clamp(cursor.index, 0, cursor.count - 1);
+		return true;
+	}
+
+	inline std::optional<int> CursorFirst(PathCursor& cursor)
+	{
+		if (!FitCursor(cursor))
+			return std::nullopt;
+		cursor.index = 0;
+		return cursor.index;
+	}
+
+	inline std::optional<int> CursorLast(PathCursor& cursor)
+	{
+		if (!FitCursor(cursor))
+			return std::nullopt;
+		cursor.index = cursor.count - 1;
+		return cursor.index;
+	}
+
+	inline std::optional<int> CursorCurrent(PathCursor& cursor)
+	{
+		if (!FitCursor(cursor))
+			return std::nullopt;
+		return cursor.index;
+	}
+
+	inline std::optional<int> CursorNext(PathCursor& cursor)
+	{
+		if (!FitCursor(cursor) || cursor.index == cursor.count - 1)
+			return std::nullopt;
+		return ++cursor.index;
+	}
+
+	inline std::optional<int> CursorPrevious(PathCursor& cursor)
+	{
+		if (!FitCursor(cursor) || cursor.index == 0)
+			return std::nullopt;
+		return --cursor.index;
+	}
 
 	constexpr float LongFallSeconds = 0.0f;
 
