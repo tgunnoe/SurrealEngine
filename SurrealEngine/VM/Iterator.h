@@ -11,13 +11,21 @@ class ULevel;
 class ULevelInfo;
 struct IntObject;
 
-// The levels an iterator called on an actor of callerLevel walks, in walk order. entryLevel and
-// playedLevel are the two levels the engine runs. The choice is a function of these three handles
-// alone, which keeps it checkable without an engine.
+// The levels an iterator called on an actor of callerLevel walks, in walk order: the actor's own
+// level, never the level being played. The engine ticks the entry level beside the played one, so
+// its scripts iterate while the played level is the engine's current level, and an iterator that
+// followed the current level would show them the played level's actors. entryLevel and playedLevel
+// are the engine's two running levels, kept as parameters for a form that walks more than one.
+//
+// This rule is inferred, not read from the original engine: the stock scripts iterate the calling
+// actor's own level (the replication info refills its player list with AllActors every 0.2 s, and
+// that list must not hold another level's records). The choice is a function of these three
+// handles alone, which keeps it checkable without an engine.
 std::vector<ULevel*> IteratorLevels(ULevel* callerLevel, ULevel* entryLevel, ULevel* playedLevel);
 
-// The levels for an iterator function called on self, read from the one place that knows the
-// engine's levels.
+// The levels for an iterator function called on self (the frame's actor for a bare foreach, the
+// named actor for foreach Other.AllActors), read from the one place that knows the engine's levels.
+// An actor in no level gets an empty list and a logged script error naming iterator.
 std::vector<ULevel*> ActorLevels(UObject* self, const char* iterator);
 
 class Iterator

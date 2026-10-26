@@ -15,16 +15,25 @@
 
 std::vector<ULevel*> IteratorLevels(ULevel* callerLevel, ULevel* entryLevel, ULevel* playedLevel)
 {
-	// The engine's rule until the calling actor's level is honored: the level being played.
-	if (!playedLevel)
+	// An actor in no level walks nothing. Falling back to the level being played would hand it
+	// another level's actors.
+	if (!callerLevel)
 		return {};
-	return { playedLevel };
+	return { callerLevel };
 }
 
-std::vector<ULevel*> ActorLevels(UObject* self, const char*)
+std::vector<ULevel*> ActorLevels(UObject* self, const char* iterator)
 {
 	UActor* actor = UObject::Cast<UActor>(self);
-	return IteratorLevels(actor->XLevel(), engine->EntryLevel, engine->Level);
+	ULevel* level = actor->XLevel();
+	if (!level)
+	{
+		// The Script error prefix makes the smoke log count this. It must not throw: a throw from
+		// the native would leave the script statement with no iterator at all.
+		LogMessage("Script error: " + std::string(iterator) + " on " + actor->Name.ToString() + ": the actor is in no level");
+		return {};
+	}
+	return IteratorLevels(level, engine->EntryLevel, engine->Level);
 }
 
 AllObjectsIterator::AllObjectsIterator(UObject* BaseClass, UObject** ReturnValue, UObject* InOuter)
