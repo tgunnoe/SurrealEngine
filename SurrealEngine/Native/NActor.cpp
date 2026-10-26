@@ -186,17 +186,17 @@ void NActor::Add_ColorColor(const Color& A, const Color& B, Color& ReturnValue)
 
 void NActor::AllActors(UObject* Self, UObject* BaseClass, UObject*& Actor, std::optional<NameString> MatchTag)
 {
-	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(BaseClass, &Actor, MatchTag ? *MatchTag : std::string());
+	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(ActorLevels(Self, "AllActors"), BaseClass, &Actor, MatchTag ? *MatchTag : std::string());
 }
 
 void NActor::AllActors_U227(UObject* Self, UObject* BaseClass, UObject*& Actor, std::optional<NameString> MatchTag, std::optional<NameString> MatchEvent)
 {
-	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(BaseClass, &Actor, MatchTag ? *MatchTag : std::string(), MatchEvent ? *MatchEvent : std::string());
+	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(ActorLevels(Self, "AllActors"), BaseClass, &Actor, MatchTag ? *MatchTag : std::string(), MatchEvent ? *MatchEvent : std::string());
 }
 
 void NActor::AllActors_U227k(UObject* Self, UObject* BaseClass, UObject*& Actor, std::optional<NameString> MatchTag, std::optional<NameString> MatchEvent, bool bAllLevels)
 {
-	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(BaseClass, &Actor, MatchTag ? *MatchTag : std::string(), MatchEvent ? *MatchEvent : std::string(), bAllLevels);
+	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(ActorLevels(Self, "AllActors"), BaseClass, &Actor, MatchTag ? *MatchTag : std::string(), MatchEvent ? *MatchEvent : std::string(), bAllLevels);
 }
 
 void NActor::AutonomousPhysics(UObject* Self, float DeltaSeconds)
@@ -217,7 +217,7 @@ void NActor::ChildActors(UObject* Self, UObject* BaseClass, UObject*& Actor)
 
 void NActor::CycleActors(UObject* Self, UObject* BaseClass, UObject*& Actor, int& index)  
 {  
-	Frame::CreatedIterator = std::make_unique<CycleActorsIterator>(BaseClass, &Actor, &index);  
+	Frame::CreatedIterator = std::make_unique<CycleActorsIterator>(ActorLevels(Self, "CycleActors"), BaseClass, &Actor, &index);  
 }
 
 void NActor::ConsoleCommand(UObject* Self, const std::string& Command, std::string& ReturnValue)
@@ -622,7 +622,7 @@ void NActor::PlayerCanSeeMe(UObject* Self, BitfieldBool& ReturnValue)
 void NActor::RadiusActors(UObject* Self, UObject* BaseClass, UObject*& Actor, float Radius, std::optional<vec3> Loc)
 {
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
-	Frame::CreatedIterator = std::make_unique<RadiusActorsIterator>(SelfActor, BaseClass, &Actor, Radius, Loc ? *Loc : SelfActor->Location());
+	Frame::CreatedIterator = std::make_unique<RadiusActorsIterator>(ActorLevels(Self, "RadiusActors"), BaseClass, &Actor, Radius, Loc ? *Loc : SelfActor->Location());
 }
 
 void NActor::SetBase(UObject* Self, UObject* NewBase)
@@ -753,7 +753,7 @@ void NActor::VisibleActors(UObject* Self, UObject* BaseClass, UObject*& Actor, s
 {
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
 	Frame::CreatedIterator = std::make_unique<VisibleActorsIterator>(
-		SelfActor, BaseClass, &Actor,
+		ActorLevels(Self, "VisibleActors"), SelfActor, BaseClass, &Actor,
 		Radius ? *Radius : SelfActor->CollisionRadius(),
 		Loc ? *Loc : SelfActor->Location());
 }
@@ -762,7 +762,7 @@ void NActor::VisibleCollidingActors(UObject* Self, UObject* BaseClass, UObject*&
 {
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
 	Frame::CreatedIterator = std::make_unique<VisibleCollidingActorsIterator>(
-		BaseClass, &Actor,
+		ActorLevels(Self, "VisibleCollidingActors"), BaseClass, &Actor,
 		Radius ? *Radius : SelfActor->CollisionRadius(),
 		Loc ? *Loc : SelfActor->Location(),
 		bIgnoreHidden ? *bIgnoreHidden : false);
@@ -772,7 +772,7 @@ void NActor::VisibleCollidingActors_219(UObject* Self, UObject* BaseClass, UObje
 {
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
 	Frame::CreatedIterator = std::make_unique<VisibleCollidingActorsIterator>(
-		BaseClass, &Actor,
+		ActorLevels(Self, "VisibleCollidingActors"), BaseClass, &Actor,
 		Radius ? *Radius : SelfActor->CollisionRadius(),
 		Loc ? *Loc : SelfActor->Location(),
 		false);
@@ -881,7 +881,7 @@ void NActor::TraceTexture(UObject* Self, UObject* BaseClass, UObject*& Actor, Na
 	vec3 realStart = Start ? *Start : SelfActor->Location();
 	vec3 realExtent = Extent ? *Extent : vec3(0, 0, 0);
 
-	Frame::CreatedIterator = std::make_unique<TraceTextureIterator>(BaseClass, &Actor, &texName, &texGroup, &flags, &HitLoc, &HitNorm, End, realStart, realExtent);
+	Frame::CreatedIterator = std::make_unique<TraceTextureIterator>(ActorLevels(Self, "TraceTexture"), SelfActor->Level(), BaseClass, &Actor, &texName, &texGroup, &flags, &HitLoc, &HitNorm, End, realStart, realExtent);
 }
 
 void NActor::TraceVisibleActors(UObject* Self, UObject* BaseClass, UObject*& Actor, vec3& HitLoc, vec3& HitNorm, const vec3& End, std::optional<vec3> Start, std::optional<vec3> Extent)
@@ -891,7 +891,7 @@ void NActor::TraceVisibleActors(UObject* Self, UObject* BaseClass, UObject*& Act
 	vec3 realStart = Start ? *Start : SelfActor->Location();
 	vec3 realExtent = Extent ? *Extent : vec3(0, 0, 0);
 
-	Frame::CreatedIterator = std::make_unique<TraceVisibleActorsIterator>(BaseClass, &Actor, &HitLoc, &HitNorm, End, realStart, realExtent);
+	Frame::CreatedIterator = std::make_unique<TraceVisibleActorsIterator>(ActorLevels(Self, "TraceVisibleActors"), BaseClass, &Actor, &HitLoc, &HitNorm, End, realStart, realExtent);
 }
 
 void NActor::TraceSurfHitInfo_U227(UObject* Self, vec3& Start, vec3& End, vec3* HitLocation, vec3* HitNormal, UObject* HitTex, int* HitFlags, BitfieldBool& ReturnValue)

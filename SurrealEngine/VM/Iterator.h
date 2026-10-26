@@ -3,9 +3,22 @@
 #include "ExpressionValue.h"
 #include "Collision/TopLevel/CollisionHit.h"
 
+#include <vector>
+
 class UZoneInfo;
 class UActor;
+class ULevel;
+class ULevelInfo;
 struct IntObject;
+
+// The levels an iterator called on an actor of callerLevel walks, in walk order. entryLevel and
+// playedLevel are the two levels the engine runs. The choice is a function of these three handles
+// alone, which keeps it checkable without an engine.
+std::vector<ULevel*> IteratorLevels(ULevel* callerLevel, ULevel* entryLevel, ULevel* playedLevel);
+
+// The levels for an iterator function called on self, read from the one place that knows the
+// engine's levels.
+std::vector<ULevel*> ActorLevels(UObject* self, const char* iterator);
 
 class Iterator
 {
@@ -49,15 +62,17 @@ private:
 class AllActorsIterator : public Iterator
 {
 public:
-	AllActorsIterator(UObject* BaseClass, UObject** ReturnValue, NameString MatchTag);
+	AllActorsIterator(std::vector<ULevel*> Levels, UObject* BaseClass, UObject** ReturnValue, NameString MatchTag);
 	// Unreal 227i version of AllActors
-	AllActorsIterator(UObject* BaseClass, UObject** ReturnValue, NameString MatchTag, NameString MatchEvent);
+	AllActorsIterator(std::vector<ULevel*> Levels, UObject* BaseClass, UObject** ReturnValue, NameString MatchTag, NameString MatchEvent);
 	// Unreal 227k version of AllActors
 	// TODO: Handle bAllLevels parameter
-	AllActorsIterator(UObject* BaseClass, UObject** ReturnValue, NameString MatchTag, NameString MatchEvent, bool bAllLevels);
+	AllActorsIterator(std::vector<ULevel*> Levels, UObject* BaseClass, UObject** ReturnValue, NameString MatchTag, NameString MatchEvent, bool bAllLevels);
 	bool Next() override;
 
 private:
+	std::vector<ULevel*> Levels;
+	size_t levelIndex = 0;
 	UObject* BaseClass = nullptr;
 	UObject** ReturnValue = nullptr;
 	NameString MatchTag = "";
@@ -114,9 +129,11 @@ public:
 class CycleActorsIterator : public Iterator
 {
 public:
-	CycleActorsIterator(UObject* BaseClass, UObject** Actor, int* outIndex);
+	CycleActorsIterator(std::vector<ULevel*> Levels, UObject* BaseClass, UObject** Actor, int* outIndex);
 	bool Next() override;
 private:
+	std::vector<ULevel*> Levels;
+	size_t levelIndex = 0;
 	UObject* BaseClass = nullptr;
 	UObject** Actor = nullptr;
 	int* outIndex = nullptr;
@@ -142,7 +159,7 @@ private:
 class RadiusActorsIterator : public Iterator
 {
 public:
-	RadiusActorsIterator(UActor* Caller, UObject* BaseClass, UObject** Actor, float Radius, vec3 Location);
+	RadiusActorsIterator(const std::vector<ULevel*>& Levels, UObject* BaseClass, UObject** Actor, float Radius, vec3 Location);
 	bool Next() override;
 
 	UObject* BaseClass = nullptr;
@@ -199,7 +216,7 @@ public:
 class VisibleActorsIterator : public Iterator
 {
 public:
-	VisibleActorsIterator(UActor* Caller, UObject* BaseClass, UObject** Actor, float Radius, const vec3& Location);
+	VisibleActorsIterator(const std::vector<ULevel*>& Levels, UActor* Caller, UObject* BaseClass, UObject** Actor, float Radius, const vec3& Location);
 	bool Next() override;
 
 	UObject* BaseClass = nullptr;
@@ -215,7 +232,7 @@ public:
 class VisibleCollidingActorsIterator : public Iterator
 {
 public:
-	VisibleCollidingActorsIterator(UObject* BaseClass, UObject** ReturnValue, float Radius, const vec3& Location, bool IgnoreHidden);
+	VisibleCollidingActorsIterator(const std::vector<ULevel*>& Levels, UObject* BaseClass, UObject** ReturnValue, float Radius, const vec3& Location, bool IgnoreHidden);
 	bool Next() override;
 
 	UObject* BaseClass = nullptr;
@@ -231,7 +248,7 @@ public:
 class ZoneActorsIterator : public Iterator
 {
 public:
-	ZoneActorsIterator(UZoneInfo* zone, UObject* BaseClass, UObject** Actor);
+	ZoneActorsIterator(const std::vector<ULevel*>& Levels, UZoneInfo* zone, UObject* BaseClass, UObject** Actor);
 	bool Next() override;
 
 	UZoneInfo* Zone = nullptr;
@@ -247,7 +264,7 @@ public:
 class TraceTextureIterator : public Iterator
 {
 public:
-	TraceTextureIterator(UObject* BaseClass, UObject** OutActor, NameString* TexName, NameString* TexGroup, int* Flags, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent);
+	TraceTextureIterator(const std::vector<ULevel*>& Levels, ULevelInfo* LevelInfo, UObject* BaseClass, UObject** OutActor, NameString* TexName, NameString* TexGroup, int* Flags, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent);
 	bool Next() override;
 
 	UObject* BaseClass = nullptr;
@@ -262,6 +279,8 @@ public:
 	vec3 Extent = vec3(0, 0, 0);
 
 private:
+	ULevel* Level = nullptr;
+	ULevelInfo* LevelInfo = nullptr;
 	CollisionHitList m_CollList;
 	CollisionHitList::const_iterator m_Iterator;
 };
@@ -270,7 +289,7 @@ private:
 class TraceVisibleActorsIterator : public Iterator
 {
 public:
-	TraceVisibleActorsIterator(UObject* BaseClass, UObject** OutActor, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent);
+	TraceVisibleActorsIterator(const std::vector<ULevel*>& Levels, UObject* BaseClass, UObject** OutActor, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent);
 	bool Next() override;
 
 	UObject* BaseClass = nullptr;
