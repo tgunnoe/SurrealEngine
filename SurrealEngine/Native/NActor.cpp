@@ -217,7 +217,7 @@ void NActor::ChildActors(UObject* Self, UObject* BaseClass, UObject*& Actor)
 
 void NActor::CycleActors(UObject* Self, UObject* BaseClass, UObject*& Actor, int& index)  
 {  
-	Frame::CreatedIterator = std::make_unique<CycleActorsIterator>(ActorLevels(Self, "CycleActors"), BaseClass, &Actor, &index);  
+	Frame::CreatedIterator = std::make_unique<CycleActorsIterator>(ActorLevels(Self, "CycleActors"), BaseClass, &Actor, &index);
 }
 
 void NActor::ConsoleCommand(UObject* Self, const std::string& Command, std::string& ReturnValue)
