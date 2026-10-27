@@ -133,6 +133,12 @@ bool UActor::Destroy()
 	// change) is undone. The state itself is kept: script such as Razor2 calls a state function after
 	// destroying its actor. The call is composed here instead of using CallEvent, because CallEvent
 	// passes only Destroyed to an actor already marked deleted, so a plain CallEvent would do nothing.
+	// Where it runs matters. It follows bDeleteMe = true, so an EndState that destroys the actor again
+	// (UDamage's does) returns at once at the check above instead of destroying twice. It precedes
+	// SetBase and the rest of the teardown, so the owner is still set (Destroyed clears it through the
+	// inventory, and an EndState such as Invisibility's needs it), and so whatever the EndState
+	// registers again, such as a collision entry through SetCollision or a sound, is removed by the
+	// steps that follow instead of outliving the actor.
 	if (!GetStateName().IsNone() && SkipReasonFor(this, IsEventEnabled(EventName::EndState), true) == ScriptCallSkip::None)
 	{
 		if (UFunction* endState = FindEventFunction(this, ToNameString(EventName::EndState)))
