@@ -72,6 +72,9 @@ void VisibleActor::Process(VisibleFrame* frame, UActor* actor)
 	if (!frame->Clipper.IsAABBVisible(actor->BspInfo.BoundingBox))
 		return;
 
+	if (frame->IsMirrorFrame && MirrorPlaneCullsBox(actor->BspInfo.BoundingBox, frame->ClipPlane))
+		return;
+
 	EDrawType dt = (EDrawType)actor->DrawType();
 	if (dt == DT_Mesh && actor->Mesh())
 	{

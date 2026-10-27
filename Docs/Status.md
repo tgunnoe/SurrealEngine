@@ -26,7 +26,7 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 * Movers:
   - Projectiles and other actors can pass through the part of a rotating mover that has swung outside the cells it was registered in, because a mover's collision registration isn't refreshed while it rotates
   - A mover's rotation isn't checked for encroachment, so a swinging door doesn't crush anything or return to its previous position when it swings into something.
-* Mirrors/reflections rendering is a bit buggy, especially around the edges of world geometry.
+* A mirror seen inside another mirror is placed from the viewer's own position, not from its reflection, so two mirrors on parallel planes at different heights (as on the stairs of Deus Ex's training map) or at an oblique angle can show the wrong side inside the reflection.
 * Portals:
   - They somewhat work, but might end up "pushing" players/projectiles in unexpected directions.
 * Semisolid brushes:
@@ -61,7 +61,6 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 * [227*] Many new native functions/features are not yet implemented.
 * [227i] Translator Scale option does not do anything.
 * Some UPak native functions are not implemented yet.
-* Nali Fruit Seeds and ASMDs in a map don't render, but are pickable.
 * ASMD tertiary fire rings render wrong.
 
 ## Unreal Tournament
