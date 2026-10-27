@@ -71,3 +71,30 @@ TEST(AIBodyPitchInsideTheBandIsReturnedUnchanged)
 		}
 	}
 }
+
+TEST(AIBodyPitchMasksTheDesiredPitchToSixteenBits)
+{
+	// TickRotating stores a downward desired pitch as a negative number, so the mask is load-bearing.
+	CHECK_EQ(AIMath::CapBodyPitch(-10000, 4096), 61440);
+	for (int rate : Rates)
+	{
+		for (int pitch = -AIMath::AngleUnits; pitch < 2 * AIMath::AngleUnits; pitch++)
+		{
+			int masked = AIMath::CapBodyPitch(pitch & 0xffff, rate);
+			int capped = AIMath::CapBodyPitch(pitch, rate);
+			CHECK_MSG(capped == masked,
+				"rate " + std::to_string(rate) + " pitch " + std::to_string(pitch) + " gave " + std::to_string(capped) + ", expected " + std::to_string(masked));
+		}
+	}
+}
+
+TEST(AIBodyPitchClampsTheRateToZeroAndTheHalfTurn)
+{
+	for (int pitch = 0; pitch < AIMath::AngleUnits; pitch++)
+	{
+		for (int rate : { -1, -4096 })
+			CHECK_MSG(AIMath::CapBodyPitch(pitch, rate) == AIMath::CapBodyPitch(pitch, 0), "rate " + std::to_string(rate) + " pitch " + std::to_string(pitch));
+		for (int rate : { 40000, 65536 })
+			CHECK_MSG(AIMath::CapBodyPitch(pitch, rate) == AIMath::CapBodyPitch(pitch, 32767), "rate " + std::to_string(rate) + " pitch " + std::to_string(pitch));
+	}
+}

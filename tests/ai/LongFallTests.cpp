@@ -84,3 +84,10 @@ TEST(AILongFallThresholdIsTwoSeconds)
 {
 	CHECK_EQ(AIMath::LongFallSeconds, 2.0f);
 }
+
+TEST(AILongFallRaisesWhereAnotherThresholdIsReached)
+{
+	std::vector<int> raised = RaisedSteps(0.25f, 8, 1.0f);
+	CHECK_EQ(raised.size(), (size_t)1);
+	CHECK_EQ(raised[0], 4);
+}
