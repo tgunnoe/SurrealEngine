@@ -50,8 +50,13 @@ inline int FindMirrorPortalToJoin(const Array<VisiblePortal>& portals, const vec
 {
 	for (size_t i = 0; i < portals.size(); i++)
 	{
-		if (portals[i].IsMirror)
+		const VisiblePortal& portal = portals[i];
+		if (portal.IsMirror &&
+			dot(portal.MirrorPlane.xyz(), plane.xyz()) >= 1.0f - MirrorPlaneNormalTolerance &&
+			std::fabs(portal.MirrorPlane.w - plane.w) <= MirrorPlaneOffsetTolerance)
+		{
 			return (int)i;
+		}
 	}
 	return -1;
 }

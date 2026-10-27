@@ -1,5 +1,4 @@
 # Render tests that fail by a check until their fix lands; each fix removes its names.
-MirrorPortalPerPlane
 MeshFrameOffsetsInsideASMDPick
 MeshFrameOffsetsInsideSeed
 TimedemoOverlayOffInDeusEx
