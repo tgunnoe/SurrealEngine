@@ -36,7 +36,7 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 * Bots literally rotate their entire body (feet off the ground) to look up/down in ways they shouldn't be able to.
 * Waving water textures at the end of waterfalls render broken. Easily observable in NyLeve's Falls (Unreal) or DM-ArcaneTemple (UT)
 * Underwater collisions are somewhat buggy, especially on Klingon Honor Guard
-* A power-up that tints the screen (like Invisibility or Energy Amplifier) no longer keeps its effect on when its charge runs out: the engine now runs the power-up's end-of-state script when the item destroys itself, which for Unreal's Invisibility calls the reversing `ClientAdjustGlow` (shown in a script trace; the picture itself has not been checked). The other Unreal power-ups, and a tint from a power-up picked up and activated twice, have not been checked, and Deus Ex was only traced for one item (AdaptiveArmor).
+* A power-up that tints the screen (like Invisibility or Energy Amplifier) used to keep its effect on when its charge ran out. The engine now runs the power-up's end-of-state script when the item destroys itself, which for Unreal's Invisibility calls the reversing `ClientAdjustGlow` (seen in a script trace; the picture itself has not been checked). The Energy Amplifier and the other Unreal power-ups have not been run, and neither has a tint from a power-up picked up and activated twice.
 * viewclass command crashes with null deref.
 * Sometimes opening a map crashes the engine with a "Failed to spawn the player actor" error.
 * Sounds may become too loud (e.g. Pulse Rifle secondary fire, minigun firing sound)

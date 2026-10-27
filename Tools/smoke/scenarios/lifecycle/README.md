@@ -2,7 +2,7 @@
 
 These runs drive stock maps of Unreal Gold 226b, Unreal Tournament 436 and Deus Ex 1112fm to show what happens to an item's effect when the item destroys itself while it is in its `Activated` state. `UActor::Destroy` now runs the current state's `EndState` once, after the actor is marked deleted and before `Destroyed`, so the effect the state started is undone while the owner is still set. The state is not left, because stock script such as Unreal Tournament's `Razor2` calls a state function after destroying its actor.
 
-The original game's code was not read. That the original runs a state's `EndState` when an actor is destroyed in it is inferred from the stock scripts (Unreal Tournament's invisibility and Deus Ex's charged items undo their effect only there, and Unreal Tournament's `UDamage` guards its expiry function against the re-entry that only such an engine produces). A hand test of the original Unreal Gold game agrees: the Invisibility tint fades away a few seconds after the item runs out.
+The original game's code was not read. That the original runs a state's `EndState` when an actor is destroyed in it is inferred from the stock scripts (Unreal Tournament's invisibility and Deus Ex's charged items undo their effect only there, and Unreal Tournament's `UDamage` guards its expiry function against the re-entry that only such an engine produces). A hand test of the original Unreal Gold game agrees: the tester reports that the blueish tint "fades away in a few seconds at that moment", that is, when the Invisibility runs out.
 
 ## Recipe
 
@@ -38,7 +38,7 @@ with the trace `ChargedPickup.GiveTo,ChargedPickup.PostBeginPlay,ChargedPickup.A
 
 ## Expiry runs
 
-`Previous binary` is the build before the change, `Fixed binary` the build with it. The Unreal Tournament rows of the previous binary were not re-run: they are read from the logs of earlier traced runs of that same build (`DM-Deck16][`, the same recipes), which the engine source has not moved from.
+`Previous binary` is the build before the change, `Fixed binary` the build with it. The Unreal Tournament rows of the previous binary were not re-run: they are read from the logs of earlier traced runs of that same build (`DM-Deck16][`, the same recipes, except that the `UDamage` trace of those runs lacked `Weapon.SetDefaultDisplayProperties`, so the previous binary's weapon display resets are not traced), which the engine source has not moved from.
 
 | Run | Previous binary | Fixed binary |
 | :--- | :--- | :--- |
@@ -76,15 +76,16 @@ Fifteen stock maps, 60 seconds each, on the fixed binary, as the committed sweep
 
 The Unreal Gold warning counts vary from run to run and are not a regression signal. One logged Accessed None site has no row in the register under its scenario heading: `Slith.TakeDamage` (once, in the Chizra run). No other sample run and the botmatch below logged a new site.
 
-What the sample exercised: the 15 runs made 2164 `Destroy` calls, and 0 of them raised an `EndState`. The sample never destroyed an actor that was in a state with an `EndState`, so it shows that the change does not disturb the ordinary destroys of these maps and says nothing more.
+What the sample exercised: the 15 runs made 2164 traced script calls to `Destroy`, and 0 of them raised an `EndState`. The engine's own destroys (`LifeSpan` expiry, zone and projectile kills) print no trace line, so whether any of them raised an `EndState` is not read. The sample shows that the change does not disturb the script destroys of these maps and says nothing more.
 
-Botmatch guard: `DM-Deck16][?game=Botpack.DeathMatchPlus?NumBots=4?Difficulty=3`, `--exit-after=300`, `--exec=5:Fire`, trace `GameInfo.Killed,GameInfo.ScoreKill,Pawn.Died,Pawn.KilledBy`. The run logged 100 `GameInfo.Killed:` lines (an earlier measurement of the same recipe had 18; the guard is at least 9), the player was the victim of 1 of them, and the run ended with `script_errors=0 stub_hits=0 missing_natives=0 exceptions=0 script_warnings=6`.
+Botmatch guard: `DM-Deck16][?game=Botpack.DeathMatchPlus?NumBots=4?Difficulty=3`, `--exit-after=300`, `--exec=5:Fire`, trace `GameInfo.Killed,GameInfo.ScoreKill,Pawn.Died,Pawn.KilledBy`. The run had ten bots (the game folder's ini sets `InitialBots`; `DeathMatchPlus` reads no `NumBots` option, so the `NumBots=4` in the url did nothing). It logged 100 `GameInfo.Killed:` lines against a guard of at least 9, the player was the victim of 1 of them, and the run ended with `script_errors=0 stub_hits=0 missing_natives=0 exceptions=0 script_warnings=6`.
 
 ## What the runs do not cover
 
 - No pixel is read. The tint's removal is shown by the reversing `ClientAdjustGlow(0.15, ...)` call in the trace, not on screen.
 - The predicted effects on Unreal's Dampener, SCUBA gear, Flashlight and Energy Amplifier, which have the same shape as Invisibility, are not run.
 - Deus Ex was observed for one item, `AdaptiveArmor`, picked up and used in `00_TrainingFinal`; the other charged items are not run.
-- The sample raised no `EndState` from a destroy (above); no run reached the trace cap of 20000 calls.
+- The sample raised no `EndState` from a traced script destroy (above), and the engine's own destroys are untraced; no run reached the trace cap of 20000 calls.
 - An `EndState` that destroys its own actor from inside a `GotoState` would have the state's `EndState` raised a second time by the nested `Destroy`; no stock script does this and no run reaches it.
+- The fixed engine makes the reversing call within one frame of the item running out, so the fade over a few seconds that the hand test saw in the original is neither reproduced nor explained here.
 - The original's behaviour is inferred from the stock scripts and one hand test, not from its code.
