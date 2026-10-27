@@ -77,10 +77,12 @@ The three calibration runs, one per game on the previous binary, gave 1280x720 p
 | 03_NYC_UNATCOHQ | MATCH | 0 | 0 | 0 | 1 | 0, 0 |
 | 04_NYC_Hotel | MATCH | 0 | 0 | 0 | 1 | 0, 0 |
 
-The botmatch (Unreal Tournament DM-Deck16][, four bots at difficulty 3, 300 s, `Fire` at 5 s) logged 109 lines of `GameInfo.Killed:`; the player died once, at 86.1 s, to a bot; the counters of its `SUMMARY` line are 0 script errors, 0 stub hits, 0 missing natives, 0 exceptions and 6 script warnings at a mean of 960.5 `FPS`.
+The botmatch (Unreal Tournament DM-Deck16][, ten bots at difficulty 3: the URL asks for four and the trace names ten, 300 s, `Fire` at 5 s) logged 109 lines of `GameInfo.Killed:`, which is not comparable with the 18 of the earlier measurement; the player died once, at 86.1 s, to a bot; the counters of its `SUMMARY` line are 0 script errors, 0 stub hits, 0 missing natives, 0 exceptions and 6 script warnings at a mean of 960.5 `FPS`.
 
 ## What the runs do not cover
 
 The pictures are judged outside this file. The fixed binary has not been compared with the original games. The Direct3D 11 device is not built on the machine of these runs. A frame rate above 60 on this machine says nothing about slower ones, and inside the nested compositor the frame rate is lower than on the desktop session. The Deus Ex pictures are 1280x720 and are framed differently from the 1280x1024 pictures of the desktop session.
 
 The CTF-Niven ASMD pair was not observed: with the game type `Botpack.CTFGame` the level has no actor named `ASMD0` or `ASMD1`, so the pickups were not there to look at, and the player died in both runs of the pair. The Unreal Tournament pair of DOM-Cinder needed a third attempt of the fixed-binary run because the player died in the first two.
+
+The flash runs cannot show the flash change. At the frame rates of these runs (485 to 1185 `FPS`) the stock view-flash script sends the device no flash: one easing step from rest is snapped back to rest on every frame, and a step escapes the snap only below about 41 `FPS` for the tint of water, 79 for Invisibility and 205 for a heavy hit flash.
