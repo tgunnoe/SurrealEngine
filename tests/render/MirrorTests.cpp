@@ -168,3 +168,25 @@ TEST(MirrorPortalSamePlaneMerges)
 	CHECK_EQ(FindMirrorPortalToJoin(portals, vec4(0.0f, 0.0f, 1.0f, -216.0f)), 1);
 	CHECK_EQ(FindMirrorPortalToJoin(portals, vec4(0.0f, 0.0f, 1.0f, -216.2f)), 1);
 }
+
+TEST(MirrorPortalDifferentPlanesDoNotMerge)
+{
+	// Parallel planes 16 units apart, perpendicular planes, and opposite normals are all different planes.
+	struct Case
+	{
+		vec4 Held;
+		vec4 Query;
+	};
+	const Case cases[] =
+	{
+		{ vec4(0.0f, 0.0f, 1.0f, -3504.0f), vec4(0.0f, 0.0f, 1.0f, -3488.0f) },
+		{ vec4(1.0f, 0.0f, 0.0f, -10.0f), vec4(0.0f, 1.0f, 0.0f, -10.0f) },
+		{ vec4(0.0f, 0.0f, 1.0f, 0.0f), vec4(0.0f, 0.0f, -1.0f, 0.0f) },
+	};
+	for (const Case& c : cases)
+	{
+		Array<VisiblePortal> portals;
+		portals.push_back(MakePortal(true, c.Held));
+		CHECK_EQ(FindMirrorPortalToJoin(portals, c.Query), -1);
+	}
+}

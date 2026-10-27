@@ -55,3 +55,12 @@ TEST(FlashLockNoPlayerDefaultIsNeutral)
 	FlashLockValues lock = ComputeFlashLockNoPlayer();
 	CHECK(FlashIsNeutral(lock.Scale, lock.Fog));
 }
+
+TEST(FlashIsNotNeutralForARealFlash)
+{
+	FlashLockValues scaleOnly = ComputeFlashLock(vec3(0.61f), vec3(0.0f));
+	CHECK(!FlashIsNeutral(scaleOnly.Scale, scaleOnly.Fog));
+
+	FlashLockValues fogOnly = ComputeFlashLock(vec3(1.0f), vec3(0.2f, 0.1f, 0.05f));
+	CHECK(!FlashIsNeutral(fogOnly.Scale, fogOnly.Fog));
+}
