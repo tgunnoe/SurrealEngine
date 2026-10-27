@@ -86,6 +86,6 @@ Botmatch guard: `DM-Deck16][?game=Botpack.DeathMatchPlus?NumBots=4?Difficulty=3`
 - The predicted effects on Unreal's Dampener, SCUBA gear, Flashlight and Energy Amplifier, which have the same shape as Invisibility, are not run.
 - Deus Ex was observed for one item, `AdaptiveArmor`, picked up and used in `00_TrainingFinal`; the other charged items are not run.
 - The sample raised no `EndState` from a traced script destroy (above), and the engine's own destroys are untraced; no run reached the trace cap of 20000 calls.
-- An `EndState` that destroys its own actor from inside a `GotoState` would have the state's `EndState` raised a second time by the nested `Destroy`; no stock script does this and no run reaches it.
+- A stock `EndState` can destroy its own actor (`UDamage`'s does, through `UsedUp`), and `UDamage`'s `Activated` state can also be left by a state change (`GotoState('DeActivated')` through `Inventory.Activate`). Read from the code, not run: the `Destroy` inside that `EndState` finds the actor not yet marked deleted, marks it and raises the `EndState` once more, and the `Destroy` inside that second pass finds the actor marked and returns at once. No run here reaches this case.
 - The fixed engine makes the reversing call within one frame of the item running out, so the fade over a few seconds that the hand test saw in the original is neither reproduced nor explained here.
 - The original's behaviour is inferred from the stock scripts and one hand test, not from its code.
