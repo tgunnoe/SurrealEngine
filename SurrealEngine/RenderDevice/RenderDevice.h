@@ -111,15 +111,16 @@ struct FlashLockValues
 };
 
 // The values to lock the device with, given the camera player's script flash scale and fog.
+// The script's scale rests at 1 where the device's rests at 0.5, so it is halved; fog is not.
 inline FlashLockValues ComputeFlashLock(const vec3& scriptScale, const vec3& scriptFog)
 {
-	return { vec4(scriptScale, 1.0f), vec4(scriptFog, 1.0f) };
+	return { vec4(scriptScale * 0.5f, 0.0f), vec4(scriptFog, 0.0f) };
 }
 
 // The values to lock the device with when there is no camera player (or a video frame).
 inline FlashLockValues ComputeFlashLockNoPlayer()
 {
-	return { vec4(0.5f, 0.5f, 0.5f, 1.0f), vec4(0.0f, 0.0f, 0.0f, 1.0f) };
+	return { FlashNeutralScale(), FlashNeutralFog() };
 }
 
 class RenderDevice

@@ -1,8 +1,4 @@
 # Render tests that fail by a check until their fix lands; each fix removes its names.
-Vec4InequalitySeesW
-Vec4InequalityFalseForEqual
-FlashLockAtRestIsNeutral
-FlashLockHalvesScriptScale
 MirrorMatrixReflectsXNormal
 MirrorMatrixReflectsObliqueNormals
 MirrorMatrixIsSymmetricInvolution
