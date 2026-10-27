@@ -7,6 +7,7 @@
 #include "VisibleActor.h"
 #include "VisiblePortal.h"
 #include "BspClipper.h"
+#include "Math/bbox.h"
 #include "RenderDevice/RenderDevice.h"
 
 // How far toward the viewer a mirror frame's clip plane is pushed, so that the surface the
@@ -21,13 +22,20 @@ constexpr float MirrorPlaneOffsetTolerance = 0.5f;
 // mirror surface with this normal and point, seen from the viewer.
 inline vec4 MirrorClipPlane(const vec3& normal, const vec3& pointOnPlane, const vec3& viewer)
 {
-	return vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	vec3 n = normalize(normal);
+	vec4 plane(n, -dot(n, pointOnPlane));
+	if (dot(plane, vec4(viewer, 1.0f)) < 0.0f)
+		plane = -plane;
+	plane.w -= MirrorClipBias;
+	return plane;
 }
 
 // Whether a world-space box lies wholly on the negative side of a mirror frame's clip plane.
 inline bool MirrorPlaneCullsBox(const BBox& box, const vec4& plane)
 {
-	return false;
+	// The corner furthest along the plane's normal is the last one to leave the negative side.
+	vec3 corner(plane.x >= 0.0f ? box.max.x : box.min.x, plane.y >= 0.0f ? box.max.y : box.min.y, plane.z >= 0.0f ? box.max.z : box.min.z);
+	return dot(plane, vec4(corner, 1.0f)) < 0.0f;
 }
 
 // The plane (normal, offset) of a mirror surface, as stored in a mirror portal.

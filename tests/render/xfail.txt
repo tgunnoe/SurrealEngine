@@ -1,6 +1,4 @@
 # Render tests that fail by a check until their fix lands; each fix removes its names.
-MirrorClipPlaneKeepsViewerSide
-MirrorActorBehindPlaneIsCulled
 MirrorPortalPerPlane
 MeshFrameOffsetsInsideASMDPick
 MeshFrameOffsetsInsideSeed

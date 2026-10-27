@@ -258,9 +258,6 @@ void VisibleFrame::ProcessNodeSurface(BspNode* node, bool front)
 		}
 		else if (PolyFlags & PF_Mirrored)
 		{
-			if (PortalDepth > 0) // To do: cull backfacing surfaces so we don't need this hack
-				return;
-
 			Array<PortalSpan> spans = Clipper.CheckPortal(points, numverts);
 			if (!spans.empty())
 			{
