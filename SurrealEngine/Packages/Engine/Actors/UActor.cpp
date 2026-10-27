@@ -129,7 +129,35 @@ bool UActor::Destroy()
 
 	bDeleteMe() = true;
 
-	//GotoState({}, {}); // What should happen to function calls after Destroy() has been called? Razor2 calls SetRoll afterwards!
+	// Run the current state's EndState so that whatever the state started (a screen tint, a display
+	// change) is undone. The state itself is kept: script such as Razor2 calls a state function after
+	// destroying its actor. The call is composed here instead of using CallEvent, because CallEvent
+	// passes only Destroyed to an actor already marked deleted, so a plain CallEvent would do nothing.
+	// Where it runs matters. It follows bDeleteMe = true, so an EndState that destroys the actor again
+	// (UDamage's does) returns at once at the check above instead of destroying twice. It precedes
+	// SetBase and the rest of the teardown, so the owner is still set (Destroyed clears it through the
+	// inventory, and an EndState such as Invisibility's needs it), and so whatever the EndState
+	// registers again, such as a collision entry through SetCollision or a sound, is removed by the
+	// steps that follow instead of outliving the actor.
+	if (!GetStateName().IsNone() && SkipReasonFor(this, IsEventEnabled(EventName::EndState), true) == ScriptCallSkip::None)
+	{
+		if (UFunction* endState = FindEventFunction(this, ToNameString(EventName::EndState)))
+		{
+			try
+			{
+				Frame::Call(endState, this, ArrayView<ExpressionValue>());
+			}
+			catch (const std::exception& e)
+			{
+				LogMessage("Script error: EndState of " + Name.ToString() + " threw while it was destroyed: " + e.what());
+			}
+			catch (...)
+			{
+				LogMessage("Script error: EndState of " + Name.ToString() + " threw an unknown error while it was destroyed");
+			}
+		}
+	}
+
 	SetBase(nullptr, true);
 
 	engine->audiodev->ActorDestroyed(this);
