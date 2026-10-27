@@ -4,8 +4,14 @@
 #include "Packages/Core/UClass.h"
 #include "Packages/Engine/Actors/UActor.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
+#include "PropertyOffsets.h"
+#include "Utils/AlignedAlloc.h"
 #include <string>
 #include <vector>
+
+// The engine global, declared here so the test can check it stays null without the engine header.
+class Engine;
+extern Engine* engine;
 
 // These cover which levels an actor iterator walks and how the walk of a level list proceeds.
 // A level is chosen from three handles (the calling actor's, the entry level's and the played
@@ -230,4 +236,23 @@ TEST(CycleActorsIteratorNumbersTheMatchesAcrossTheLevelsGiven)
 	run({ b }, yielded, indexes);
 	CHECK(yielded == std::vector<UObject*>({ b0, b1 }));
 	CHECK(indexes == std::vector<int>({ 0, 1 }));
+}
+
+// Falling back to the played level for an actor in no level is the rule this branch removed.
+TEST(ActorLevelsForAnActorInNoLevelIsNothingAndNeedsNoEngine)
+{
+	// The runner runs one test per process, so setting this global is safe.
+	PropOffsets_Actor.XLevel.DataOffset = 0;
+	UClass* cls = GC::Alloc<UClass>("Actor", nullptr, ObjectFlags::NoFlags);
+	UActor* actor = GC::Alloc<UActor>("NoLevelActor", cls, ObjectFlags::NoFlags);
+	actor->PropertyData.Data = AlignedAlloc(alignof(ULevel*), sizeof(ULevel*));
+	actor->PropertyData.Size = sizeof(ULevel*);
+	actor->XLevel() = nullptr;
+
+	CHECK(engine == nullptr);
+	std::vector<ULevel*> levels;
+	try { levels = ActorLevels(actor, "AllActors"); }
+	catch (...) { CHECK_MSG(false, "ActorLevels threw for an actor in no level"); }
+	CHECK(levels.empty());
+	CHECK(engine == nullptr);
 }
