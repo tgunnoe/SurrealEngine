@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-// Arithmetic behind the Deus Ex AI natives, kept over plain values so it can be tested
+// Arithmetic behind the pawn AI natives and ticks, kept over plain values so it can be tested
 // without a loaded package. Angles are Unreal rotator units: 65536 is one full turn.
 namespace AIMath
 {
@@ -192,5 +192,46 @@ namespace AIMath
 			}
 		}
 		return distance;
+	}
+
+	// The body pitch UPawn::TickRotating writes for a desired pitch, given the pitch of the rotation rate.
+	// The body stays within the rate of level on both sides, as the stock scripts keep a player's body: a
+	// pitch inside that band is kept, one above it (up to the half turn) becomes the rate, and one below it
+	// becomes the full turn minus the rate. The rate is brought into 0 to 32767 first, so the result is
+	// always a pitch of 0 to 65535 and a rate of 0 holds the body level.
+	inline int CapBodyPitch(int desiredPitch, int rate)
+	{
+		int pitch = desiredPitch & (AngleUnits - 1);
+		int limit = std::clamp(rate, 0, AngleUnits / 2 - 1);
+		if (pitch <= limit || pitch >= AngleUnits - limit)
+			return pitch;
+		if (pitch < AngleUnits / 2)
+			return limit;
+		return (AngleUnits - limit) & (AngleUnits - 1);
+	}
+
+	// A pawn waiting to land (WaitForLanding) is told LongFall once its fall has lasted this many seconds of
+	// engine time. The figure is the stock scripts' own: the FallingState of the Unreal, Unreal Tournament
+	// and Deus Ex pawns waits out a fall with Sleep(2.0) before its LongFall label. The rule is designed
+	// from that wait, not recovered from the original.
+	constexpr float LongFallSeconds = 2.0f;
+
+	struct FallStep
+	{
+		// Seconds fallen, including this step.
+		float fallen = 0.0f;
+		// Set on the one step where the total first reaches the threshold.
+		bool raise = false;
+	};
+
+	// Adds the seconds of a tick to the seconds fallen so far. A step counts only when it is finite and
+	// positive. The raise is set exactly when the total was under the threshold before the step and is at
+	// least the threshold after it, so a fall raises it once, whatever the size of the steps.
+	inline FallStep AdvanceFall(float fallen, float elapsed, float threshold = LongFallSeconds)
+	{
+		if (!std::isfinite(elapsed) || elapsed <= 0.0f)
+			return { fallen, false };
+		float total = fallen + elapsed;
+		return { total, fallen < threshold && total >= threshold };
 	}
 }

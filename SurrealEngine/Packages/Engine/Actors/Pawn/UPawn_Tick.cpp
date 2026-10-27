@@ -1,6 +1,7 @@
 
 #include "Precomp.h"
 #include "UPawn.h"
+#include "UPawn_AIMath.h"
 #include "VM/ScriptCall.h"
 #include "VM/Frame.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
@@ -95,7 +96,12 @@ void UPawn::Tick(float elapsed)
 			}
 			else
 			{
-				// To do: need to send a LongFall event if the fall state lasts long enough
+				// LatentFloat holds the seconds fallen since WaitForLanding. The LongFall handler can change
+				// the state, so the state frame is not touched again after the event.
+				AIMath::FallStep fall = AIMath::AdvanceFall(LatentFloat(), elapsed, AIMath::LongFallSeconds);
+				LatentFloat() = fall.fallen;
+				if (fall.raise)
+					CallEvent(this, "LongFall");
 			}
 		}
 	}
@@ -198,15 +204,7 @@ void UPawn::TickRotating(float elapsed)
 
 	if ((DesiredRotation().Pitch & 0xffff) != (rot.Pitch & 0xffff))
 	{
-		rot.Pitch = DesiredRotation().Pitch & 0xffff;
-		if (rot.Pitch < 0x8000)
-		{
-			rot.Pitch = std::max(rot.Pitch, RotationRate().Pitch);
-		}
-		else if (rot.Pitch < 0x10000 - RotationRate().Pitch)
-		{
-			rot.Pitch = 0x10000 - RotationRate().Pitch;
-		}
+		rot.Pitch = AIMath::CapBodyPitch(DesiredRotation().Pitch, RotationRate().Pitch);
 	}
 
 	// To do: apply RotationRate().Roll
@@ -342,7 +340,10 @@ void UPawn::TurnToward(UActor* newTarget)
 void UPawn::WaitForLanding()
 {
 	if (StateFrame)
+	{
+		LatentFloat() = 0.0f;
 		StateFrame->SetLatentState(LatentRunState::WaitForLanding);
+	}
 }
 
 void UPawn::SetMoveDuration(const vec3& deltaMove)
