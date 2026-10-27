@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math/mat.h"
+#include <algorithm>
 
 class UActor;
 class UMesh;
@@ -24,7 +25,13 @@ inline MeshFrameOffsets ComputeMeshFrameOffsets(float scaledFrame, int startFram
 	int frame1 = frame0 + 1;
 	frame0 = frame0 % numFrames;
 	frame1 = frame1 % numFrames;
-	return { (startFrame + frame0) * frameVerts, (startFrame + frame1) * frameVerts, scaledFrame - (float)frame0 };
+
+	// A sequence may declare more frames than the mesh holds; reading past the last held frame
+	// would leave the vertex array, so the frame index is clamped into the frames the mesh has.
+	int last = std::max(heldFrames - 1, 0);
+	int index0 = std::clamp(startFrame + frame0, 0, last);
+	int index1 = std::clamp(startFrame + frame1, 0, last);
+	return { index0 * frameVerts, index1 * frameVerts, scaledFrame - (float)frame0 };
 }
 
 struct BlendInfo
