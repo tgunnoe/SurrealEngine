@@ -9,6 +9,24 @@ struct MeshFace;
 class ULodMesh;
 class VisibleFrame;
 
+// The vertex offsets of the two frames a sequence plays between, and the blend between them.
+// scaledFrame is the animation frame already multiplied by the sequence's frame count.
+struct MeshFrameOffsets
+{
+	int V0;
+	int V1;
+	float T0;
+};
+
+inline MeshFrameOffsets ComputeMeshFrameOffsets(float scaledFrame, int startFrame, int numFrames, int frameVerts, int heldFrames)
+{
+	int frame0 = (int)scaledFrame;
+	int frame1 = frame0 + 1;
+	frame0 = frame0 % numFrames;
+	frame1 = frame1 % numFrames;
+	return { (startFrame + frame0) * frameVerts, (startFrame + frame1) * frameVerts, scaledFrame - (float)frame0 };
+}
+
 struct BlendInfo
 {
 	int offsets[3];

@@ -94,6 +94,34 @@ public:
 	void Log(const std::string& text) { }
 };
 
+// The device draws the screen flash as a quad of alpha 1 - min(2 * FlashScale.x, 1), so its
+// unit is half the script's flash scale and its neutral scale is 0.5, not the script's 1.
+inline vec4 FlashNeutralScale() { return vec4(0.5f, 0.5f, 0.5f, 0.0f); }
+inline vec4 FlashNeutralFog() { return vec4(0.0f, 0.0f, 0.0f, 0.0f); }
+
+inline bool FlashIsNeutral(const vec4& scale, const vec4& fog)
+{
+	return !(scale != FlashNeutralScale() || fog != FlashNeutralFog());
+}
+
+struct FlashLockValues
+{
+	vec4 Scale;
+	vec4 Fog;
+};
+
+// The values to lock the device with, given the camera player's script flash scale and fog.
+inline FlashLockValues ComputeFlashLock(const vec3& scriptScale, const vec3& scriptFog)
+{
+	return { vec4(scriptScale, 1.0f), vec4(scriptFog, 1.0f) };
+}
+
+// The values to lock the device with when there is no camera player (or a video frame).
+inline FlashLockValues ComputeFlashLockNoPlayer()
+{
+	return { vec4(0.5f, 0.5f, 0.5f, 1.0f), vec4(0.0f, 0.0f, 0.0f, 1.0f) };
+}
+
 class RenderDevice
 {
 public:

@@ -8,6 +8,12 @@ class UFont;
 class UMover;
 class UViewportWindow;
 
+// Whether the statistics overlay is drawn.
+inline bool ShouldDrawTimedemoStats(bool timedemoFlag, bool isDeusEx)
+{
+	return timedemoFlag || isDeusEx;
+}
+
 class RenderSubsystem
 {
 public:

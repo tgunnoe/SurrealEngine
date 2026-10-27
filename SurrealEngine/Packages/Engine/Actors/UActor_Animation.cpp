@@ -6,6 +6,7 @@
 #include "VM/Frame.h"
 #include "Packages/Engine/Resources/Mesh/USkeletalMesh.h"
 #include "Engine.h"
+#include "Render/VisibleMesh.h"
 
 bool UActor::HasAnim(const NameString& sequence)
 {
@@ -537,13 +538,10 @@ void UActor::SetTweenFromAnimFrame()
 		if (seq)
 		{
 			float animFrame = std::max(AnimFrame(), 0.0f) * seq->NumFrames;
-			int frame0 = (int)animFrame;
-			int frame1 = frame0 + 1;
-			frame0 = frame0 % seq->NumFrames;
-			frame1 = frame1 % seq->NumFrames;
-			TweenFromAnimFrame.V0 = (seq->StartFrame + frame0) * Mesh()->FrameVerts;
-			TweenFromAnimFrame.V1 = (seq->StartFrame + frame1) * Mesh()->FrameVerts;
-			TweenFromAnimFrame.T = animFrame - (float)frame0;
+			MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, Mesh()->FrameVerts, Mesh()->AnimFrames);
+			TweenFromAnimFrame.V0 = frames.V0;
+			TweenFromAnimFrame.V1 = frames.V1;
+			TweenFromAnimFrame.T = frames.T0;
 		}
 		else // For safety. Should never happen.
 		{
@@ -574,13 +572,10 @@ void UActor::SetTweenFromBlendAnimFrame(int slot)
 	if (seq)
 	{
 		float frame = std::max(BlendAnimFrame()[slot], 0.0f) * seq->NumFrames;
-		int frame0 = (int)frame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		TweenFromBlendAnimFrame[slot].V0 = (seq->StartFrame + frame0) * Mesh()->FrameVerts;
-		TweenFromBlendAnimFrame[slot].V1 = (seq->StartFrame + frame1) * Mesh()->FrameVerts;
-		TweenFromBlendAnimFrame[slot].T = frame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(frame, seq->StartFrame, seq->NumFrames, Mesh()->FrameVerts, Mesh()->AnimFrames);
+		TweenFromBlendAnimFrame[slot].V0 = frames.V0;
+		TweenFromBlendAnimFrame[slot].V1 = frames.V1;
+		TweenFromBlendAnimFrame[slot].T = frames.T0;
 	}
 	else
 	{

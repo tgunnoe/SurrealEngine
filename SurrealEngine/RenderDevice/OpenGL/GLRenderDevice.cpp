@@ -1969,7 +1969,7 @@ void GLRenderDevice::ReadPixels(TextureColor* Pixels)
 
 void GLRenderDevice::EndFlash()
 {
-	if (FlashScale != vec4(0.5f, 0.5f, 0.5f, 0.0f) || FlashFog != vec4(0.0f, 0.0f, 0.0f, 0.0f))
+	if (!FlashIsNeutral(FlashScale, FlashFog))
 	{
 		DrawBatches();
 
