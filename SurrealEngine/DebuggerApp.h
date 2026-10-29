@@ -3,6 +3,7 @@
 #include "GameFolder.h"
 #include "Commandlet/Commandlet.h"
 
+class CommandLine;
 class Frame;
 class UObject;
 struct LogMessageLine;
@@ -35,7 +36,12 @@ public:
 
 	bool ResumeProgram = false;
 
+	// Set by --command / --out: run one command without reading stdin.
+	std::string BatchCommand;
+	std::string OutFile;
+
 private:
+	int RunBatch(const CommandLine& cmd);
 	void CreateCommandlets();
 	void Tick();
 
@@ -60,6 +66,7 @@ private:
 	bool PromptLineActive = false;
 	bool GameRunning = false;
 	bool InCommandlet = false;
+	bool CommandFailed = false;
 
 	std::string WriteBuffer;
 

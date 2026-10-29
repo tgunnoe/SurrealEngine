@@ -131,7 +131,6 @@ public:
 		{
 			volume = newVolume;
 			alSourcef(id, AL_GAIN, volume * globalVolume);
-			alSourcef(id, AL_MAX_GAIN, volume * globalVolume);
 		}
 	}
 
@@ -177,7 +176,6 @@ private:
 
 // TODO list:
 //  Sound looping
-//  Positional audio
 //  Music fade in/out
 //  Music crossfade
 //  EFX effects
@@ -207,13 +205,6 @@ public:
 		alDevice = alcOpenDevice(NULL);
 		if (alDevice == nullptr)
 			Exception::Throw("Failed to initialize OpenAL device");
-
-		const ALCint ctxAttribs[] =
-		{
-			ALC_FREQUENCY, inFrequency,
-			ALC_REFRESH, 60,
-			ALC_SYNC, ALC_FALSE
-		};
 
 		alContext = alcCreateContext(alDevice, NULL);
 		if (alContext == nullptr)

@@ -3,12 +3,38 @@
 #include "Iterator.h"
 #include "Utils/File.h"
 #include "Utils/StrTools.h"
+#include "Utils/Logger.h"
 #include "Engine.h"
 #include "Package/PackageManager.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
+#include "Packages/Engine/Actors/Info/ULevelInfo.h"
+#include "Packages/Engine/Actors/Brush/UMover.h"
 
 #include <algorithm>
+
+std::vector<ULevel*> IteratorLevels(ULevel* callerLevel, ULevel* entryLevel, ULevel* playedLevel)
+{
+	// An actor in no level walks nothing. Falling back to the level being played would hand it
+	// another level's actors.
+	if (!callerLevel)
+		return {};
+	return { callerLevel };
+}
+
+std::vector<ULevel*> ActorLevels(UObject* self, const char* iterator)
+{
+	UActor* actor = UObject::Cast<UActor>(self);
+	ULevel* level = actor->XLevel();
+	if (!level)
+	{
+		// The Script error prefix makes the smoke log count this. It must not throw: a throw from
+		// the native would leave the script statement with no iterator at all.
+		LogMessage("Script error: " + std::string(iterator) + " on " + actor->Name.ToString() + ": the actor is in no level");
+		return {};
+	}
+	return IteratorLevels(level, engine->EntryLevel, engine->Level);
+}
 
 AllObjectsIterator::AllObjectsIterator(UObject* BaseClass, UObject** ReturnValue, UObject* InOuter)
 	: BaseClass(BaseClass), ReturnValue(ReturnValue), InOuter(InOuter), m_Objects(GC::GetObjects()), m_Iterator(m_Objects.begin())
@@ -35,18 +61,18 @@ bool AllObjectsIterator::Next()
 
 /////////////////////////////////////////////////////////////////////////////
 
-AllActorsIterator::AllActorsIterator(UObject* BaseClass, UObject** ReturnValue, NameString MatchTag)
-	: BaseClass(BaseClass), ReturnValue(ReturnValue), MatchTag(MatchTag)
+AllActorsIterator::AllActorsIterator(std::vector<ULevel*> Levels, UObject* BaseClass, UObject** ReturnValue, NameString MatchTag)
+	: Levels(std::move(Levels)), BaseClass(BaseClass), ReturnValue(ReturnValue), MatchTag(MatchTag)
 {
 }
 
-AllActorsIterator::AllActorsIterator(UObject* BaseClass, UObject** ReturnValue, NameString MatchTag, NameString MatchEvent)
-	: BaseClass(BaseClass), ReturnValue(ReturnValue), MatchTag(MatchTag), MatchEvent(MatchEvent)
+AllActorsIterator::AllActorsIterator(std::vector<ULevel*> Levels, UObject* BaseClass, UObject** ReturnValue, NameString MatchTag, NameString MatchEvent)
+	: Levels(std::move(Levels)), BaseClass(BaseClass), ReturnValue(ReturnValue), MatchTag(MatchTag), MatchEvent(MatchEvent)
 {
 }
 
-AllActorsIterator::AllActorsIterator(UObject* BaseClass, UObject** ReturnValue, NameString MatchTag, NameString MatchEvent, bool bAllLevels)
-	: BaseClass(BaseClass), ReturnValue(ReturnValue), MatchTag(MatchTag), MatchEvent(MatchEvent), bAllLevels(bAllLevels)
+AllActorsIterator::AllActorsIterator(std::vector<ULevel*> Levels, UObject* BaseClass, UObject** ReturnValue, NameString MatchTag, NameString MatchEvent, bool bAllLevels)
+	: Levels(std::move(Levels)), BaseClass(BaseClass), ReturnValue(ReturnValue), MatchTag(MatchTag), MatchEvent(MatchEvent), bAllLevels(bAllLevels)
 {
 }
 
@@ -55,15 +81,21 @@ bool AllActorsIterator::Next()
 	bool matchTag = !MatchTag.IsNone();
 	bool matchEvent = !MatchEvent.IsNone();
 
-	size_t size = engine->Level->Actors.size();
-	while (index < size)
+	// A level's actor list is read afresh at every call, so an actor spawned during the loop is visited.
+	while (levelIndex < Levels.size())
 	{
-		UActor* actor = engine->Level->Actors[index++];
-		if (actor && actor->IsA(BaseClass->Name) && (!matchTag || actor->Tag() == MatchTag) && (!matchEvent || actor->Event() == MatchEvent))
+		auto& actors = Levels[levelIndex]->Actors;
+		while (index < actors.size())
 		{
-			*ReturnValue = actor;
-			return true;
+			UActor* actor = actors[index++];
+			if (actor && actor->IsA(BaseClass->Name) && (!matchTag || actor->Tag() == MatchTag) && (!matchEvent || actor->Event() == MatchEvent))
+			{
+				*ReturnValue = actor;
+				return true;
+			}
 		}
+		++levelIndex;
+		index = 0;
 	}
 	*ReturnValue = nullptr;
 	return false;
@@ -172,23 +204,28 @@ bool ChildActorsIterator::Next()
 
 /////////////////////////////////////////////////////////////////////////////
 
-CycleActorsIterator::CycleActorsIterator(UObject* BaseClass, UObject** Actor, int* outIndex)  : BaseClass(BaseClass), Actor(Actor), outIndex(outIndex)
+CycleActorsIterator::CycleActorsIterator(std::vector<ULevel*> Levels, UObject* BaseClass, UObject** Actor, int* outIndex)  : Levels(std::move(Levels)), BaseClass(BaseClass), Actor(Actor), outIndex(outIndex)
 {  
 }  
 
 bool CycleActorsIterator::Next()  
 {
-	auto& actors = engine->Level->Actors;
-	while (actorsIndex < actors.size())
+	while (levelIndex < Levels.size())
 	{
-		UActor* levelActor = actors[actorsIndex++];
-		if (levelActor && levelActor->IsA(BaseClass->Name))
+		auto& actors = Levels[levelIndex]->Actors;
+		while (actorsIndex < actors.size())
 		{
-			*Actor = levelActor;
-			if (outIndex) *outIndex = currentIndex;
-			++currentIndex;
-			return true;
+			UActor* levelActor = actors[actorsIndex++];
+			if (levelActor && levelActor->IsA(BaseClass->Name))
+			{
+				*Actor = levelActor;
+				if (outIndex) *outIndex = currentIndex;
+				++currentIndex;
+				return true;
+			}
 		}
+		++levelIndex;
+		actorsIndex = 0;
 	}
 	return false;
 }
@@ -230,12 +267,15 @@ bool IntDescIterator::Next()
 
 /////////////////////////////////////////////////////////////////////////////
 
-RadiusActorsIterator::RadiusActorsIterator(UActor* Caller, UObject* BaseClass, UObject** Actor, float Radius, vec3 Location) : BaseClass(BaseClass), Actor(Actor), Radius(Radius), Location(Location)
+RadiusActorsIterator::RadiusActorsIterator(const std::vector<ULevel*>& Levels, UObject* BaseClass, UObject** Actor, float Radius, vec3 Location) : BaseClass(BaseClass), Actor(Actor), Radius(Radius), Location(Location)
 {
-	for (UActor* levelActor : engine->Level->Actors)
+	for (ULevel* level : Levels)
 	{
-		if (levelActor && levelActor->IsA(BaseClass->Name) && length(levelActor->Location() - Location) <= Radius)
-			RadiusActors.push_back(levelActor);
+		for (UActor* levelActor : level->Actors)
+		{
+			if (levelActor && levelActor->IsA(BaseClass->Name) && length(levelActor->Location() - Location) <= Radius)
+				RadiusActors.push_back(levelActor);
+		}
 	}
 
 	iterator = RadiusActors.begin();
@@ -295,9 +335,8 @@ TraceActorsIterator::TraceActorsIterator(UActor* SelfActor, UObject* BaseClass, 
 	flags.others = true;
 	flags.onlyProjectiles = false; // Should this be true or false?
 
-	// Why is this tracing backwards? Is that correct?
-	vec3 traceStart = End;
-	vec3 traceEnd = Start;
+	vec3 traceStart = Start;
+	vec3 traceEnd = End;
 
 	for (auto& hit : SelfActor->XLevel()->Collision.Trace(traceStart, traceEnd, Extent.z, Extent.x, flags.traceActors(), flags.traceWorld(), false))
 	{
@@ -305,7 +344,7 @@ TraceActorsIterator::TraceActorsIterator(UActor* SelfActor, UObject* BaseClass, 
 		{
 			vec3 hitNormal = hit.Normal;
 			vec3 hitLocation = traceStart + (traceEnd - traceStart) * hit.Fraction;
-			tracedActors.push_back({ hit.Actor, *HitLoc, *HitNorm });
+			tracedActors.push_back({ hit.Actor, hitLocation, hitNormal });
 		}
 	}
 
@@ -332,20 +371,23 @@ bool TraceActorsIterator::Next()
 
 /////////////////////////////////////////////////////////////////////////////
 
-VisibleActorsIterator::VisibleActorsIterator(UActor* Caller, UObject* BaseClass, UObject** Actor, float Radius, const vec3& Location) : BaseClass(BaseClass), Actor(Actor), Radius(Radius), Location(Location)
+VisibleActorsIterator::VisibleActorsIterator(const std::vector<ULevel*>& Levels, UActor* Caller, UObject* BaseClass, UObject** Actor, float Radius, const vec3& Location) : BaseClass(BaseClass), Actor(Actor), Radius(Radius), Location(Location)
 {
 	double sqrRadius = Radius * Radius;
-	for (auto levelActor : engine->Level->Actors)
+	for (ULevel* level : Levels)
 	{
-		// Our checks:
-		// * Whether the actor we're dealing with is not hidden and is the class of BaseClass
-		// * Then whether the distance of the actor from our given Location is no more than Radius
-		// * A zero Radius means infinite range (To do: is this actually true? Seems expensive!)
-		if (levelActor && !levelActor->bHidden() && levelActor->IsA(BaseClass->Name))
+		for (auto levelActor : level->Actors)
 		{
-			vec3 d = levelActor->Location() - Location;
-			if ((Radius == 0.0f || dot(d, d) <= sqrRadius) && Caller->FastTrace(levelActor->Location(), Location))
-				VisibleActors.push_back(levelActor);
+			// Our checks:
+			// * Whether the actor we're dealing with is not hidden and is the class of BaseClass
+			// * Then whether the distance of the actor from our given Location is no more than Radius
+			// * A zero Radius means infinite range (To do: is this actually true? Seems expensive!)
+			if (levelActor && !levelActor->bHidden() && levelActor->IsA(BaseClass->Name))
+			{
+				vec3 d = levelActor->Location() - Location;
+				if ((Radius == 0.0f || dot(d, d) <= sqrRadius) && Caller->FastTrace(levelActor->Location(), Location))
+					VisibleActors.push_back(levelActor);
+			}
 		}
 	}
 
@@ -368,9 +410,13 @@ bool VisibleActorsIterator::Next()
 
 /////////////////////////////////////////////////////////////////////////////
 
-VisibleCollidingActorsIterator::VisibleCollidingActorsIterator(UObject* BaseClass, UObject** ReturnValue, float Radius, const vec3& Location, bool IgnoreHidden) : BaseClass(BaseClass), ReturnValue(ReturnValue), Radius(Radius), Location(Location), IgnoreHidden(IgnoreHidden)
+VisibleCollidingActorsIterator::VisibleCollidingActorsIterator(const std::vector<ULevel*>& Levels, UObject* BaseClass, UObject** ReturnValue, float Radius, const vec3& Location, bool IgnoreHidden) : BaseClass(BaseClass), ReturnValue(ReturnValue), Radius(Radius), Location(Location), IgnoreHidden(IgnoreHidden)
 {
-	HitActors = engine->Level->Collision.CollidingActors(Location, Radius);
+	for (ULevel* level : Levels)
+	{
+		auto hits = level->Collision.CollidingActors(Location, Radius);
+		HitActors.insert(HitActors.end(), hits.begin(), hits.end());
+	}
 }
 
 bool VisibleCollidingActorsIterator::Next()
@@ -391,13 +437,16 @@ bool VisibleCollidingActorsIterator::Next()
 
 /////////////////////////////////////////////////////////////////////////////
 
-ZoneActorsIterator::ZoneActorsIterator(UZoneInfo* zone, UObject* BaseClass, UObject** Actor) : Zone(zone), BaseClass(BaseClass), Actor(Actor)
+ZoneActorsIterator::ZoneActorsIterator(const std::vector<ULevel*>& Levels, UZoneInfo* zone, UObject* BaseClass, UObject** Actor) : Zone(zone), BaseClass(BaseClass), Actor(Actor)
 {
-	for (UActor* levelActor : engine->Level->Actors)
+	for (ULevel* level : Levels)
 	{
-		if (levelActor && levelActor->Region().Zone == zone && levelActor->IsA(BaseClass->Name))
+		for (UActor* levelActor : level->Actors)
 		{
-			ZoneActors.push_back(levelActor);
+			if (levelActor && levelActor->Region().Zone == zone && levelActor->IsA(BaseClass->Name))
+			{
+				ZoneActors.push_back(levelActor);
+			}
 		}
 	}
 
@@ -420,14 +469,17 @@ bool ZoneActorsIterator::Next()
 
 /////////////////////////////////////////////////////////////////////////////
 
-TraceTextureIterator::TraceTextureIterator(UObject* BaseClass, UObject** OutActor, NameString* TexName, NameString* TexGroup, int* Flags, vec3& HitLoc, vec3& HitNorm, vec3 End, vec3* Start, vec3* Extent)
+TraceTextureIterator::TraceTextureIterator(const std::vector<ULevel*>& Levels, ULevelInfo* LevelInfo, UObject* BaseClass, UObject** OutActor, NameString* TexName, NameString* TexGroup, int* Flags, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent)
 	: BaseClass(BaseClass), OutActor(OutActor), TexName(TexName), TexGroup(TexGroup), flags(Flags), HitLoc(HitLoc), HitNorm(HitNorm),
-	End(End), Start(Start), m_Extent(Extent)
+	End(End), Start(Start), Extent(Extent), LevelInfo(LevelInfo)
 {
-	auto radius = m_Extent ? length(m_Extent->xy()) : 0;
-	auto height = m_Extent ? ( m_Extent->z < 0 ? -m_Extent->z : m_Extent->z ) : 0;
+	float radius = length(Extent.xy());
+	float height = Extent.z < 0 ? -Extent.z : Extent.z;
 
-	m_CollList = engine->Level->Collision.Trace(*Start, End, height, radius, true, true, false);
+	// A trace is one ordered list of hits, so it runs in one level: the caller's.
+	Level = Levels.empty() ? nullptr : Levels.front();
+	if (Level && LevelInfo)
+		m_CollList = Level->Collision.Trace(Start, End, height, radius, true, true, false);
 
 	m_Iterator = m_CollList.begin();
 }
@@ -437,18 +489,49 @@ bool TraceTextureIterator::Next()
 	while (m_Iterator != m_CollList.end())
 	{
 		UTexture* foundTexture = nullptr;
+		uint32_t foundFlags = 0;
 
-		*OutActor = m_Iterator->Actor;
+		UActor* actor = m_Iterator->Actor;
+		if (!actor)
+			actor = LevelInfo;
+
+		*OutActor = actor;
 		const auto node = m_Iterator->Node;
 
-		HitLoc = mix(*Start, End, m_Iterator->Fraction);
+		*HitLoc = mix(Start, End, m_Iterator->Fraction);
 
-		HitNorm = m_Iterator->Normal;
+		*HitNorm = m_Iterator->Normal;
 
-		if (node)
-			foundTexture = engine->Level->Model->Surfaces[node->Surf].Material;
-		else if (*OutActor && (*OutActor)->IsA(BaseClass->Name))
+		if (node && node->Surf >= 0)
+		{
+			// A mover hit's node indexes the mover's own brush, not the level model
+			UModel* model = Level->Model;
+			UMover* mover = UObject::TryCast<UMover>(actor);
+			if (mover && mover->Brush())
+				model = mover->Brush();
+
+			// The texture and flags VisibleFrame uses for a level surface (PF_Mirrored lives on the
+			// surface, not the texture). It draws a mover from its brush polys, so for a mover this
+			// is the brush surface's equivalent rather than exactly what is drawn.
+			const BspSurface& surface = model->Surfaces[node->Surf];
+			foundTexture = surface.Material ? surface.Material : LevelInfo->DefaultTexture();
+			foundFlags = surface.PolyFlags;
+			if (surface.Material)
+				foundFlags |= surface.Material->PolyFlags();
+		}
+		else if (node)
+		{
+			// Surf is negative: the node has no surface. Collision still reports it as a solid hit
+			// (only VisibleFrame skips drawing it), so report it with the default texture and no
+			// flags, as a surface with no material, rather than let the trace see through it.
+			foundTexture = LevelInfo->DefaultTexture();
+		}
+		else if (!node && *OutActor && (*OutActor)->IsA(BaseClass->Name))
+		{
 			foundTexture = UObject::Cast<UActor>(*OutActor)->Skin();
+			if (foundTexture)
+				foundFlags = foundTexture->PolyFlags();
+		}
 
 		++m_Iterator;
 
@@ -456,27 +539,31 @@ bool TraceTextureIterator::Next()
 		{
 			*TexName = foundTexture->Name;
 			*TexGroup = foundTexture->Outer() ? foundTexture->Outer()->Name : "";
-			*flags = foundTexture->PolyFlags();
+			*flags = (int)foundFlags;
 			return true;
 		}
 	}
 
 	*OutActor = nullptr;
-	TexName = nullptr;
-	TexGroup = nullptr;
-	flags = nullptr;
+	*HitLoc = vec3(0.0f);
+	*HitNorm = vec3(0.0f);
+	*TexName = NameString();
+	*TexGroup = NameString();
+	*flags = 0;
 	return false;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-TraceVisibleActorsIterator::TraceVisibleActorsIterator(UObject* BaseClass, UObject** OutActor, vec3& HitLoc, vec3& HitNorm, vec3 End, vec3* Start, vec3* Extent)
-	: BaseClass(BaseClass), OutActor(OutActor), HitLoc(HitLoc), HitNorm(HitNorm),  End(End), Start(Start), m_Extent(Extent)
+TraceVisibleActorsIterator::TraceVisibleActorsIterator(const std::vector<ULevel*>& Levels, UObject* BaseClass, UObject** OutActor, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent)
+	: BaseClass(BaseClass), OutActor(OutActor), HitLoc(HitLoc), HitNorm(HitNorm), End(End), Start(Start), Extent(Extent)
 {
-	auto radius = m_Extent ? length(m_Extent->xy()) : 0;
-	auto height = m_Extent ? ( m_Extent->z < 0 ? -m_Extent->z : m_Extent->z ) : 0;
+	float radius = length(Extent.xy());
+	float height = Extent.z < 0 ? -Extent.z : Extent.z;
 
-	m_CollList = engine->Level->Collision.Trace(*Start, End, height, radius, true, true, false);
+	// A trace is one ordered list of hits, so it runs in one level: the caller's.
+	if (!Levels.empty())
+		m_CollList = Levels.front()->Collision.Trace(Start, End, height, radius, true, true, false);
 
 	m_Iterator = m_CollList.begin();
 }
@@ -487,8 +574,8 @@ bool TraceVisibleActorsIterator::Next()
 	{
 		auto foundActor = m_Iterator->Actor;
 
-		HitLoc = mix(*Start, End, m_Iterator->Fraction);
-		HitNorm = m_Iterator->Normal;
+		*HitLoc = mix(Start, End, m_Iterator->Fraction);
+		*HitNorm = m_Iterator->Normal;
 
 		++m_Iterator;
 
@@ -500,5 +587,7 @@ bool TraceVisibleActorsIterator::Next()
 	}
 
 	*OutActor = nullptr;
+	*HitLoc = vec3(0.0f);
+	*HitNorm = vec3(0.0f);
 	return false;
 }

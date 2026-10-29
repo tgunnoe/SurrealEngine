@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "ErrorWindow.h"
 #include "Utils/File.h"
+#include "Utils/UserDirs.h"
 #include "Utils/CrashReporter.h"
 #include "Utils/CommandLine.h"
 #include "Engine.h"
@@ -49,7 +50,7 @@ bool ErrorWindow::CheckCrashReporter()
 	}
 	else
 	{
-		const auto reportsDirectory = fs::path(Directory::localAppData()) / "SurrealEngine/CrashReports";
+		const auto reportsDirectory = UserDirs::appConfigDir() / "CrashReports";
 		Directory::create(reportsDirectory.string());
 		CrashReporter::Init(reportsDirectory.string(), [](const std::string& logFilename) { Logger::Get()->SaveLog(logFilename); });
 		return false;

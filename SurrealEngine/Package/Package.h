@@ -79,3 +79,7 @@ private:
 	friend class UObject;
 	friend class PackageWriter;
 };
+
+// The package a run-time object belongs to when it is made with `new(outer)`: the outer's, and the
+// transient package when there is no outer or the outer has no package of its own.
+Package* NewObjectPackage(UObject* outer, Package* transientPackage);

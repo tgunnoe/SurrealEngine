@@ -11,6 +11,7 @@
 #include "Package/ObjectFlags.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UEnum.h"
+#include <chrono>
 #include <cmath>
 
 #ifdef _MSC_VER
@@ -97,7 +98,6 @@ void NObject::RegisterFunctions()
 	RegisterVMNativeFunc_3("Object", "GreaterGreater_VectorRotator", &NObject::GreaterGreater_VectorRotator, 276);
 	RegisterVMNativeFunc_3("Object", "Greater_FloatFloat", &NObject::Greater_FloatFloat, 177);
 	RegisterVMNativeFunc_3("Object", "Greater_IntInt", &NObject::Greater_IntInt, 151);
-	RegisterVMNativeFunc_3("Object", "Greater_StrStr", &NObject::Greater_StrStr, 1186);
 	if (engine->LaunchInfo.IsUnreal1_227())
 		RegisterVMNativeFunc_4("Object", "InStr", &NObject::InStr_U227, 126);
 	else
@@ -278,6 +278,10 @@ void NObject::RegisterFunctions()
 	{
 		RegisterVMNativeFunc_2("Object", "AllObjects", &NObject::AllObjects_DeusEx, 1001);
 		RegisterVMNativeFunc_1("Object", "CriticalDelete", &NObject::CriticalDelete, 751);
+		RegisterVMNativeFunc_1("Object", "clock", &NObject::clock, 1005);
+		RegisterVMNativeFunc_1("Object", "unclock", &NObject::unclock, 1006);
+		RegisterVMNativeFunc_2("Object", "CyclesToSeconds", &NObject::CyclesToSeconds, 1007);
+		RegisterVMNativeFunc_3("Object", "GetConfig", &NObject::GetConfig, 0);
 	}
 
 	// Package 61 stuff
@@ -301,6 +305,7 @@ void NObject::RegisterFunctions()
 	else
 	{
 		RegisterVMNativeFunc_3("Object", "At_StrStr", &NObject::At_StrStr, 168);
+		RegisterVMNativeFunc_3("Object", "Greater_StrStr", &NObject::Greater_StrStr, 116);
 	}
 
 	if (engine->LaunchInfo.IsHarryPotter1())
@@ -451,17 +456,29 @@ void NObject::Array_Size_U227(ScriptArray& Ar, std::optional<int> SetSize, int& 
 
 void NObject::Array_Insert_U227(ScriptArray& Ar, int Offset, std::optional<int> Count, BitfieldBool& ReturnValue)
 {
-	// To do: return false if Offset and Count is out of bounds
 	// To do: is the Count default correct?
-	Ar.Insert(Offset, Count.has_value() ? Count.value() : 1);
+	int size = (int)Ar.GetSize();
+	int count = Count.has_value() ? Count.value() : 1;
+	if (Offset < 0 || count < 0 || Offset > size)
+	{
+		ReturnValue = false;
+		return;
+	}
+	Ar.Insert(Offset, count);
 	ReturnValue = true;
 }
 
 void NObject::Array_Remove_U227(ScriptArray& Ar, int Offset, std::optional<int> Count, BitfieldBool& ReturnValue)
 {
-	// To do: return false if out of bounds
 	// To do: is the Count default correct?
-	Ar.Remove(Offset, Count.has_value() ? Count.value() : 1);
+	int size = (int)Ar.GetSize();
+	int count = Count.has_value() ? Count.value() : 1;
+	if (Offset < 0 || count < 0 || Offset > size || count > size - Offset)
+	{
+		ReturnValue = false;
+		return;
+	}
+	Ar.Remove(Offset, count);
 	ReturnValue = true;
 }
 
@@ -1704,4 +1721,42 @@ void NObject::SetConfigString_Nerf(const std::string& section, const std::string
 	if (pos != std::string::npos)
 		realIniName = realIniName.substr(0, pos);
 	engine->packages->SetIniValue(realIniName, section, key, value);
+}
+
+// Cycles are microseconds from a steady clock, truncated to the 32 bits a script int holds.
+static uint32_t CycleCount()
+{
+	using namespace std::chrono;
+	return (uint32_t)duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+void NObject::clock(int& Cycles)
+{
+	Cycles = SubtractCycles(Cycles, CycleCount());
+}
+
+void NObject::unclock(int& Cycles)
+{
+	Cycles = AddCycles(Cycles, CycleCount());
+}
+
+void NObject::CyclesToSeconds(int Cycles, float& ReturnValue)
+{
+	ReturnValue = (float)Cycles / 1000000.0f;
+}
+
+// The arithmetic wraps like the counter does, so a span that crosses the wrap still comes out right.
+int NObject::SubtractCycles(int Cycles, uint32_t Now)
+{
+	return (int)((uint32_t)Cycles - Now);
+}
+
+int NObject::AddCycles(int Cycles, uint32_t Now)
+{
+	return (int)((uint32_t)Cycles + Now);
+}
+
+void NObject::GetConfig(const std::string& ConfigSection, const std::string& ConfigKey, std::string& ReturnValue)
+{
+	ReturnValue = engine->packages->GetIniValue("system", ConfigSection, ConfigKey, "");
 }

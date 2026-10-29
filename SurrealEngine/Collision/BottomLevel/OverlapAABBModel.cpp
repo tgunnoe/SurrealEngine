@@ -5,6 +5,9 @@
 
 CollisionHitList OverlapAABBModel::TestOverlap(UModel* model, const vec3& center, const vec3& extents, bool visibilityOnly)
 {
+	if (model == nullptr || model->Nodes.empty())
+		return {};
+
 	Model = model;
 	CollisionHitList hits;
 	TestOverlap(to_dvec3(center), to_dvec3(extents), visibilityOnly, &Model->Nodes.front(), hits);

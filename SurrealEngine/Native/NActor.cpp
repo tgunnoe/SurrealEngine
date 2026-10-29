@@ -186,17 +186,17 @@ void NActor::Add_ColorColor(const Color& A, const Color& B, Color& ReturnValue)
 
 void NActor::AllActors(UObject* Self, UObject* BaseClass, UObject*& Actor, std::optional<NameString> MatchTag)
 {
-	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(BaseClass, &Actor, MatchTag ? *MatchTag : std::string());
+	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(ActorLevels(Self, "AllActors"), BaseClass, &Actor, MatchTag ? *MatchTag : std::string());
 }
 
 void NActor::AllActors_U227(UObject* Self, UObject* BaseClass, UObject*& Actor, std::optional<NameString> MatchTag, std::optional<NameString> MatchEvent)
 {
-	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(BaseClass, &Actor, MatchTag ? *MatchTag : std::string(), MatchEvent ? *MatchEvent : std::string());
+	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(ActorLevels(Self, "AllActors"), BaseClass, &Actor, MatchTag ? *MatchTag : std::string(), MatchEvent ? *MatchEvent : std::string());
 }
 
 void NActor::AllActors_U227k(UObject* Self, UObject* BaseClass, UObject*& Actor, std::optional<NameString> MatchTag, std::optional<NameString> MatchEvent, bool bAllLevels)
 {
-	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(BaseClass, &Actor, MatchTag ? *MatchTag : std::string(), MatchEvent ? *MatchEvent : std::string(), bAllLevels);
+	Frame::CreatedIterator = std::make_unique<AllActorsIterator>(ActorLevels(Self, "AllActors"), BaseClass, &Actor, MatchTag ? *MatchTag : std::string(), MatchEvent ? *MatchEvent : std::string(), bAllLevels);
 }
 
 void NActor::AutonomousPhysics(UObject* Self, float DeltaSeconds)
@@ -217,7 +217,7 @@ void NActor::ChildActors(UObject* Self, UObject* BaseClass, UObject*& Actor)
 
 void NActor::CycleActors(UObject* Self, UObject* BaseClass, UObject*& Actor, int& index)  
 {  
-	Frame::CreatedIterator = std::make_unique<CycleActorsIterator>(BaseClass, &Actor, &index);  
+	Frame::CreatedIterator = std::make_unique<CycleActorsIterator>(ActorLevels(Self, "CycleActors"), BaseClass, &Actor, &index);
 }
 
 void NActor::ConsoleCommand(UObject* Self, const std::string& Command, std::string& ReturnValue)
@@ -276,7 +276,7 @@ void NActor::FinishInterpolation(UObject* Self)
 {
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
 	if (Self->StateFrame)
-		Self->StateFrame->LatentState = LatentRunState::FinishInterpolation;
+		Self->StateFrame->SetLatentState(LatentRunState::FinishInterpolation);
 }
 
 void NActor::GetAnimGroup(UObject* Self, const NameString& Sequence, NameString& ReturnValue)
@@ -463,6 +463,13 @@ void NActor::IsOverlapping(UObject* Self, UObject* checkActor, BitfieldBool& Ret
 	ReturnValue = selfActor && otherActor && selfActor->IsOverlapping(otherActor); 
 }
 
+// Only Deus Ex's Actor declares LastRenderTime. PropertyOffsets leaves the offset unset for the
+// other games, and reading through an unset offset throws.
+static bool HasRenderStamp()
+{
+	return PropOffsets_Actor.LastRenderTime.DataOffset != ~(size_t)0;
+}
+
 void NActor::LastRendered(UObject *Self, float &ReturnValue)
 {
 	if (UDecal* decal = UObject::TryCast<UDecal>(Self))  
@@ -471,7 +478,18 @@ void NActor::LastRendered(UObject *Self, float &ReturnValue)
 	}  
 	else  
 	{  
-		ReturnValue = 0.0f; // UActor no tiene LastRenderedTime  
+		if (HasRenderStamp())
+		{
+			// Map-placed actors serialize the editor session's stamp, which is ahead of the level clock
+			// until VisibleActor first collects them; that counts as never rendered.
+			float now = engine->LevelInfo->TimeSeconds();
+			float stamp = UObject::Cast<UActor>(Self)->LastRenderTime();
+			ReturnValue = stamp > now ? now : now - stamp;
+		}
+		else
+		{
+			ReturnValue = 0.0f; // This game's Actor has no LastRenderTime
+		}
 	}  
 }
 
@@ -604,7 +622,7 @@ void NActor::PlayerCanSeeMe(UObject* Self, BitfieldBool& ReturnValue)
 void NActor::RadiusActors(UObject* Self, UObject* BaseClass, UObject*& Actor, float Radius, std::optional<vec3> Loc)
 {
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
-	Frame::CreatedIterator = std::make_unique<RadiusActorsIterator>(SelfActor, BaseClass, &Actor, Radius, Loc ? *Loc : SelfActor->Location());
+	Frame::CreatedIterator = std::make_unique<RadiusActorsIterator>(ActorLevels(Self, "RadiusActors"), BaseClass, &Actor, Radius, Loc ? *Loc : SelfActor->Location());
 }
 
 void NActor::SetBase(UObject* Self, UObject* NewBase)
@@ -667,7 +685,7 @@ void NActor::Sleep(UObject* Self, float Seconds)
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
 	SelfActor->SleepTimeLeft = Seconds;
 	if (Self->StateFrame)
-		Self->StateFrame->LatentState = LatentRunState::Sleep;
+		Self->StateFrame->SetLatentState(LatentRunState::Sleep);
 }
 
 void NActor::Spawn(UObject* Self, UObject* SpawnClass, std::optional<UObject*> SpawnOwner, std::optional<NameString> SpawnTag, std::optional<vec3> SpawnLocation, std::optional<Rotator> SpawnRotation, UObject*& ReturnValue)
@@ -735,7 +753,7 @@ void NActor::VisibleActors(UObject* Self, UObject* BaseClass, UObject*& Actor, s
 {
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
 	Frame::CreatedIterator = std::make_unique<VisibleActorsIterator>(
-		SelfActor, BaseClass, &Actor,
+		ActorLevels(Self, "VisibleActors"), SelfActor, BaseClass, &Actor,
 		Radius ? *Radius : SelfActor->CollisionRadius(),
 		Loc ? *Loc : SelfActor->Location());
 }
@@ -744,7 +762,7 @@ void NActor::VisibleCollidingActors(UObject* Self, UObject* BaseClass, UObject*&
 {
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
 	Frame::CreatedIterator = std::make_unique<VisibleCollidingActorsIterator>(
-		BaseClass, &Actor,
+		ActorLevels(Self, "VisibleCollidingActors"), BaseClass, &Actor,
 		Radius ? *Radius : SelfActor->CollisionRadius(),
 		Loc ? *Loc : SelfActor->Location(),
 		bIgnoreHidden ? *bIgnoreHidden : false);
@@ -754,7 +772,7 @@ void NActor::VisibleCollidingActors_219(UObject* Self, UObject* BaseClass, UObje
 {
 	UActor* SelfActor = UObject::Cast<UActor>(Self);
 	Frame::CreatedIterator = std::make_unique<VisibleCollidingActorsIterator>(
-		BaseClass, &Actor,
+		ActorLevels(Self, "VisibleCollidingActors"), BaseClass, &Actor,
 		Radius ? *Radius : SelfActor->CollisionRadius(),
 		Loc ? *Loc : SelfActor->Location(),
 		false);
@@ -840,7 +858,8 @@ void NActor::AISendEvent(UObject* Self, const NameString& eventName, uint8_t eve
 
 void NActor::AISetEventCallback(UObject* Self, const NameString& eventName, const NameString& callback, std::optional<NameString> scoreCallback, std::optional<bool> bCheckVisibility, std::optional<bool> bCheckDir, std::optional<bool> bCheckCylinder, std::optional<bool> bCheckLOS)
 {
-	LogUnimplemented("Actor.AISetEventCallback");
+	UActor* actor = UObject::Cast<UActor>(Self);
+	actor->AISetEventCallback(eventName, callback, scoreCallback, bCheckVisibility, bCheckDir, bCheckCylinder, bCheckLOS);
 }
 
 void NActor::AIStartEvent(UObject* Self, const NameString& eventName, uint8_t eventType, std::optional<float> Value, std::optional<float> Radius)
@@ -862,7 +881,15 @@ void NActor::TraceTexture(UObject* Self, UObject* BaseClass, UObject*& Actor, Na
 	vec3 realStart = Start ? *Start : SelfActor->Location();
 	vec3 realExtent = Extent ? *Extent : vec3(0, 0, 0);
 
-	Frame::CreatedIterator = std::make_unique<TraceTextureIterator>(BaseClass, &Actor, &texName, &texGroup, &flags, HitLoc, HitNorm, End, &realStart, &realExtent);
+	std::vector<ULevel*> levels = ActorLevels(Self, "TraceTexture");
+	ULevelInfo* levelInfo = SelfActor->Level();
+	if (!levelInfo && !levels.empty())
+	{
+		LogMessage("Script error: TraceTexture on " + SelfActor->Name.ToString() + ": the actor is in no level");
+		levels.clear();
+	}
+
+	Frame::CreatedIterator = std::make_unique<TraceTextureIterator>(levels, levelInfo, BaseClass, &Actor, &texName, &texGroup, &flags, &HitLoc, &HitNorm, End, realStart, realExtent);
 }
 
 void NActor::TraceVisibleActors(UObject* Self, UObject* BaseClass, UObject*& Actor, vec3& HitLoc, vec3& HitNorm, const vec3& End, std::optional<vec3> Start, std::optional<vec3> Extent)
@@ -872,7 +899,7 @@ void NActor::TraceVisibleActors(UObject* Self, UObject* BaseClass, UObject*& Act
 	vec3 realStart = Start ? *Start : SelfActor->Location();
 	vec3 realExtent = Extent ? *Extent : vec3(0, 0, 0);
 
-	Frame::CreatedIterator = std::make_unique<TraceVisibleActorsIterator>(BaseClass, &Actor, HitLoc, HitNorm, End, &realStart, &realExtent);
+	Frame::CreatedIterator = std::make_unique<TraceVisibleActorsIterator>(ActorLevels(Self, "TraceVisibleActors"), BaseClass, &Actor, &HitLoc, &HitNorm, End, realStart, realExtent);
 }
 
 void NActor::TraceSurfHitInfo_U227(UObject* Self, vec3& Start, vec3& End, vec3* HitLocation, vec3* HitNormal, UObject* HitTex, int* HitFlags, BitfieldBool& ReturnValue)
@@ -1012,7 +1039,7 @@ void NActor::SetInstantSoundVolume(UObject* Self, uint8_t newSoundVolume)
 
 void NActor::SetInstantSpeechVolume(UObject* Self, uint8_t newSpeechVolume)
 {
-	LogUnimplemented("Actor.SetInstantSpeechVolume");
+	engine->audiodev->SetSpeechVolume(newSpeechVolume);
 }
 
 void NActor::StopSound_Deus(UObject* Self, int Id)

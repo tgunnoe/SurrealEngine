@@ -24,23 +24,22 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 
 ## General Engine bugs (affects all games)
 * Movers:
-  - Projectiles pass through some movers
-  - It is possible to get stuck on some movers when approached from certain angles
-  - Encroachment stuff isn't implemented, so movers don't crush anything or return back to their previous position.
+  - Projectiles and other actors can pass through the part of a rotating mover that has swung outside the cells it was registered in, because a mover's collision registration isn't refreshed while it rotates
+  - A mover's rotation isn't checked for encroachment, so a swinging door doesn't crush anything or return to its previous position when it swings into something.
 * Mirrors/reflections rendering is a bit buggy, especially around the edges of world geometry.
 * Portals:
   - They somewhat work, but might end up "pushing" players/projectiles in unexpected directions.
-* Semisolid brushes are finicky. Usually you'll fall through them as if they weren't there.
+* Semisolid brushes:
+  - A fall all the way through the top face of a semisolid brush was not reproduced (Unreal Tournament's CTF-Nucleus, Unreal's SkyBase; no Deus Ex brush qualified for the runs).
+  - A player set down over a top polygon whose plane no neighbouring hull carries sinks into it until another brush's hull holds it (16 units on SkyBase's platform); where the neighbouring hulls carry the plane (CTF-Nucleus's slab) the player stands at the top. This sink has not been compared with the original game. Played by hand in the original game, CTF-Nucleus's slab holds a player on its ring and lets it fall through its open centre.
 * Bot and Scripted Pawn AI while better than before, still isn't fully functional.
 * Bots literally rotate their entire body (feet off the ground) to look up/down in ways they shouldn't be able to.
 * Waving water textures at the end of waterfalls render broken. Easily observable in NyLeve's Falls (Unreal) or DM-ArcaneTemple (UT)
 * Underwater collisions are somewhat buggy, especially on Klingon Honor Guard
-* If the player currently has a power-up active that tints the screen (like Invisibility or Energy Amplifier), the tint remains
-(and accumulates if a new power-up of the same type is picked up and activated) until the player switches to a different map.
+* A power-up that tints the screen (like Invisibility or Energy Amplifier) used to keep its effect on when its charge ran out. The engine now runs the power-up's end-of-state script when the item destroys itself, which for Unreal's Invisibility calls the reversing `ClientAdjustGlow` (seen in a script trace; the picture itself has not been checked). The Energy Amplifier and the other Unreal power-ups have not been run, and neither has a tint from a power-up picked up and activated twice.
 * viewclass command crashes with null deref.
 * Sometimes opening a map crashes the engine with a "Failed to spawn the player actor" error.
 * Sounds may become too loud (e.g. Pulse Rifle secondary fire, minigun firing sound)
-* Inventory from loaded saves do NOT transfer to the next map.
 * Saving packages (.u[xx] files, game saves, etc.) functionality is not fully implemented yet.
 * There is no networking support at all.
 * By design, native mods will never work with SE. Thankfully these kind of mods are extremely rare.
@@ -87,7 +86,7 @@ Anything beyond 469c currently won't boot.
 * Conversation system is not fully implemented yet.
 * If you click on the area where the saves should be in the Load Game menu the buttons below stop working so you cannot go back.
 * In-game HUD has some missing text.
-* DataCubes and books cannot be read yet.
+* Books open and the script receives their text with its colour and alignment tags; the text parser reads file tags and five-field email tags for the computer screens (none has been opened), but four-field email tags are still misread; datacubes and newspapers use the same script but are untested, and the look of the reading window is unchecked.
 
 ## Tactical-Ops: Assault on Terror
 

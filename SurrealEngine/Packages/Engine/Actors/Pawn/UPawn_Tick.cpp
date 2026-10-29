@@ -1,6 +1,7 @@
 
 #include "Precomp.h"
 #include "UPawn.h"
+#include "UPawn_AIMath.h"
 #include "VM/ScriptCall.h"
 #include "VM/Frame.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
@@ -14,33 +15,34 @@ void UPawn::Tick(float elapsed)
 
 	if (StateFrame)
 	{
-		if (StateFrame->LatentState == LatentRunState::MoveTo)
+		LatentRunState latentState = StateFrame->GetLatentState();
+		if (latentState == LatentRunState::MoveTo)
 		{
 			TickRotateTo(Focus());
 			if (TickMoveTo(Destination()))
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 		}
-		else if (StateFrame->LatentState == LatentRunState::MoveToward)
+		else if (latentState == LatentRunState::MoveToward)
 		{
 			if (MoveTarget())
 			{
 				Focus() = MoveTarget()->Location();
 				TickRotateTo(Focus());
 				if (TickMoveTo(MoveTarget()->Location()))
-					StateFrame->LatentState = LatentRunState::Continue;
+					StateFrame->SetLatentState(LatentRunState::Continue);
 			}
 			else
 			{
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 			}
 		}
-		else if (StateFrame->LatentState == LatentRunState::StrafeTo)
+		else if (latentState == LatentRunState::StrafeTo)
 		{
 			TickRotateTo(Focus());
 			if (TickMoveTo(Destination()))
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 		}
-		else if (StateFrame->LatentState == LatentRunState::StrafeFacing)
+		else if (latentState == LatentRunState::StrafeFacing)
 		{
 			if (engine->LaunchInfo.ue1Version > 219 && FaceTarget())
 			{
@@ -48,53 +50,58 @@ void UPawn::Tick(float elapsed)
 				TickRotateTo(Focus());
 				vec3 oldDest = Destination();
 				if (TickMoveTo(Destination()))
-					StateFrame->LatentState = LatentRunState::Continue;
+					StateFrame->SetLatentState(LatentRunState::Continue);
 				Destination() = oldDest;
 			}
 			else if (engine->LaunchInfo.ue1Version <= 219)
 			{
 				// How did StrafeFacing work in this version? We don't have FaceTarget.
 				LogUnimplemented("StrafeFacing not implemented for old versions");
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 			}
 			else
 			{
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 			}
 		}
-		else if (StateFrame->LatentState == LatentRunState::TurnTo)
+		else if (latentState == LatentRunState::TurnTo)
 		{
 			if (TickRotateTo(Focus()))
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 		}
-		else if (StateFrame->LatentState == LatentRunState::TurnToward)
+		else if (latentState == LatentRunState::TurnToward)
 		{
 			if (engine->LaunchInfo.ue1Version > 219 && FaceTarget())
 			{
 				Focus() = FaceTarget()->Location();
 				if (TickRotateTo(FaceTarget()->Location()))
-					StateFrame->LatentState = LatentRunState::Continue;
+					StateFrame->SetLatentState(LatentRunState::Continue);
 			}
 			else if (engine->LaunchInfo.ue1Version <= 219)
 			{
 				// How did StrafeFacing work in this version? We don't have FaceTarget.
 				LogUnimplemented("TurnToward not implemented for old versions");
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 			}
 			else
 			{
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 			}
 		}
-		else if (StateFrame->LatentState == LatentRunState::WaitForLanding)
+		else if (latentState == LatentRunState::WaitForLanding)
 		{
 			if (Physics() != PHYS_Falling)
 			{
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 			}
 			else
 			{
-				// To do: need to send a LongFall event if the fall state lasts long enough
+				// LatentFloat holds the seconds fallen since WaitForLanding. The LongFall handler can change
+				// the state, so the state frame is not touched again after the event.
+				AIMath::FallStep fall = AIMath::AdvanceFall(LatentFloat(), elapsed, AIMath::LongFallSeconds);
+				LatentFloat() = fall.fallen;
+				if (fall.raise)
+					CallEvent(this, "LongFall");
 			}
 		}
 	}
@@ -197,15 +204,7 @@ void UPawn::TickRotating(float elapsed)
 
 	if ((DesiredRotation().Pitch & 0xffff) != (rot.Pitch & 0xffff))
 	{
-		rot.Pitch = DesiredRotation().Pitch & 0xffff;
-		if (rot.Pitch < 0x8000)
-		{
-			rot.Pitch = std::max(rot.Pitch, RotationRate().Pitch);
-		}
-		else if (rot.Pitch < 0x10000 - RotationRate().Pitch)
-		{
-			rot.Pitch = 0x10000 - RotationRate().Pitch;
-		}
+		rot.Pitch = AIMath::CapBodyPitch(DesiredRotation().Pitch, RotationRate().Pitch);
 	}
 
 	// To do: apply RotationRate().Roll
@@ -272,7 +271,7 @@ void UPawn::MoveTo(const vec3& newDestination, float speed)
 	Focus() = newDestination;
 	SetMoveDuration(newDestination - Location());
 	if (StateFrame)
-		StateFrame->LatentState = LatentRunState::MoveTo;
+		StateFrame->SetLatentState(LatentRunState::MoveTo);
 }
 
 void UPawn::MoveToward(UActor* newTarget, float speed)
@@ -290,7 +289,7 @@ void UPawn::MoveToward(UActor* newTarget, float speed)
 	else
 		SetMoveDuration(newTarget->Location() - Location());
 	if (StateFrame)
-		StateFrame->LatentState = LatentRunState::MoveToward;
+		StateFrame->SetLatentState(LatentRunState::MoveToward);
 }
 
 void UPawn::StrafeFacing(const vec3& newDestination, UActor* newTarget)
@@ -303,7 +302,7 @@ void UPawn::StrafeFacing(const vec3& newDestination, UActor* newTarget)
 		FaceTarget() = newTarget;
 	SetMoveDuration(newDestination - Location());
 	if (StateFrame)
-		StateFrame->LatentState = LatentRunState::StrafeFacing;
+		StateFrame->SetLatentState(LatentRunState::StrafeFacing);
 }
 
 void UPawn::StrafeTo(const vec3& newDestination, const vec3& newFocus)
@@ -315,7 +314,7 @@ void UPawn::StrafeTo(const vec3& newDestination, const vec3& newFocus)
 	Focus() = newFocus;
 	SetMoveDuration(newDestination - Location());
 	if (StateFrame)
-		StateFrame->LatentState = LatentRunState::StrafeTo;
+		StateFrame->SetLatentState(LatentRunState::StrafeTo);
 }
 
 void UPawn::TurnTo(const vec3& newFocus)
@@ -323,7 +322,7 @@ void UPawn::TurnTo(const vec3& newFocus)
 	MoveTarget() = nullptr;
 	Focus() = newFocus;
 	if (StateFrame)
-		StateFrame->LatentState = LatentRunState::TurnTo;
+		StateFrame->SetLatentState(LatentRunState::TurnTo);
 }
 
 void UPawn::TurnToward(UActor* newTarget)
@@ -335,13 +334,16 @@ void UPawn::TurnToward(UActor* newTarget)
 		FaceTarget() = newTarget;
 	Focus() = newTarget->Location();
 	if (StateFrame)
-		StateFrame->LatentState = LatentRunState::TurnToward;
+		StateFrame->SetLatentState(LatentRunState::TurnToward);
 }
 
 void UPawn::WaitForLanding()
 {
 	if (StateFrame)
-		StateFrame->LatentState = LatentRunState::WaitForLanding;
+	{
+		LatentFloat() = 0.0f;
+		StateFrame->SetLatentState(LatentRunState::WaitForLanding);
+	}
 }
 
 void UPawn::SetMoveDuration(const vec3& deltaMove)
