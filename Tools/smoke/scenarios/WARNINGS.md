@@ -288,8 +288,10 @@ The class declares two functions named `Tick`: its own, and one inside
 `state OwnerFadeIn`. The VM names a site by the object's class and the
 function, never by a state, so the line does not say which ran. The state's
 `Tick` tests its owner first (line 93 of the `UPak.UPakShieldEffect` text,
-`if( Pawn( Owner ) != none )`) and reads nothing of it afterwards, so it cannot
-log. Only the class-level `Tick` can. It does not call `Super.Tick`, so the
+`if( Pawn( Owner ) != none )`); the read at line 95 of the same text,
+`if( Pawn( Owner ).Health <= 0 )`, sits inside that test, and nothing after
+the `Destroy()` at line 97 reads the owner, so it cannot log. Only the
+class-level `Tick` can. It does not call `Super.Tick`, so the
 stock `ShieldBeltEffect.Tick`, which tests `Owner != None` (line 35 of the
 `UnrealShare.ShieldBeltEffect` text), does not run. Stock
 `UPak.UPakShieldEffect`, function `Tick`:
@@ -334,9 +336,11 @@ decoration is the one owner they show.
 
 The None is the script's own data in the sense of `faithful`: the script spawned
 the owner itself, and the failed cast is of its own value. The three lines come
-from one call. The None context at line 24 logs the first and reads 0, so
-`0 <= 0` holds and `Destroy()` runs (line 26). The engine's `UActor::Destroy`
-(in `SurrealEngine/Packages/Engine/Actors/UActor.cpp`) then clears the owner, so
+from one call. The None context at line 24 logs the first, and the engine
+reads it as 0 (`SurrealEngine/VM/Frame.cpp` pushes a Nothing value that becomes
+0), so `0 <= 0` holds and `Destroy()` runs (line 26). The engine's
+`UActor::Destroy` (in `SurrealEngine/Packages/Engine/Actors/UActor.cpp`) then
+clears the owner, so
 the next test, `Owner.ScaleGlow < 1.5` (line 29), is a second None access and
 its branch, `Owner.ScaleGlow += 0.01` (line 31) or `Owner.Style = STY_Normal`
 (line 36), a third; nothing later in the function reads `Owner`. A destroyed
@@ -345,8 +349,9 @@ frames logs three lines and not one per frame. Which statement logs which of the
 three is inferred from this reading and the count, not observed.
 
 Residual: no run traced these maps, so the statement behind each line and the
-`FrozenMesh` owner are inferred; the owner clearing at `Destroy` is the
-engine's, and whether the original does the same before line 29 was not read.
+`FrozenMesh` owner are inferred; the zero read of the None and the owner
+clearing at `Destroy` are the engine's, and whether the original does either
+before line 29 was not read.
 
 ### SinglePlayer.ScoreKill
 
