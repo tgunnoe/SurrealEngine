@@ -83,13 +83,13 @@ section.
 | NaliPriest.Killed | 9 | 3 | faithful | `NaliPriest` inherits `Nali.Killed`, whose test `Nali(Other) != None && Killer.bIsPlayer` reads `Killer` when a Nali dies, and the killer is None when the fatal damage has no instigator. |
 | Nali.Killed | 8 | 2 | faithful | The stock `Nali.Killed` tests `Killer.bIsPlayer` when the dying pawn is a Nali, and every Nali-family pawn runs it for each death, so a Nali's death with a None killer logs once per Nali-family pawn alive. |
 | WarpZoneMarker.PostBeginPlay | 8 | 1 | faithful | The stock `PostBeginPlay` reads `markedWarpZone.numDestinations` with no check, and Endgame's name table holds no `markedWarpZone` while the five other maps with markers do, so none of its eight markers has a zone. |
-| UPakShieldEffect.Tick | 6 | 2 | undecided | `UPakShieldEffect` is a class of `UPak.u` (Return to Na Pali), whose script is unread on this host: no dump of that package exists here. Its export table lists a `Tick` of its own, so the stock `ShieldBeltEffect.Tick`, which tests `Owner` for None, is not the body that ran. A dump of `UPak.u` would decide it. |
+| UPakShieldEffect.Tick | 6 | 2 | faithful | `UPakShieldEffect` is a class of `UPak.u` (Return to Na Pali), spawned by `FrozenMesh`, a `Decoration`, as its owner (line 14 of the `UPak.FrozenMesh` text). Its own `Tick` reads `Pawn( Owner ).Health` with no test for None (line 24 of the `UPak.UPakShieldEffect` text), and the cast of a decoration is None, so the script reaches the None from its own data; stock `ShieldBeltEffect.Tick` tests `Owner` but is overridden. The three lines per map are inferred from one call (no callstack, no traced run). |
 | SinglePlayer.ScoreKill | 5 | 2 | faithful | The `ScoreKill` that `SinglePlayer` inherits from `GameInfo` subtracts 1 from `Other.PlayerReplicationInfo.Score` when the killer is None or the victim itself, and a monster victim has no replication info. |
 | UPakSinglePlayer.Killed | 3 | 1 | faithful | The stock `UPakSinglePlayer.Killed` calls `Killer.IsA('PlayerPawn')` with no check, and a death with no instigator passes a None killer. |
 | BabyCow.PickDestination | 2 | 2 | faithful | The stock Ruins map places a `BabyCow` with no `mom`, and the stock `Grazing` state's `PickDestination` has no `return` after its `Mom == None` branch, so it falls through to `mom.Destination`. |
 | CrashSiteGame.Killed | 1 | 1 | faithful | `CrashSiteGame.Killed` ends in `Super.Killed`, the `UPakSinglePlayer.Killed` body, whose `Killer.IsA('PlayerPawn')` has no check, and a death with no instigator passes a None killer. |
 | Krall.MeleeDamageTarget | 1 | 1 | undecided | `Krall` inherits `ScriptedPawn.MeleeDamageTarget`, whose one `if` test reads both `Target` and `Enemy` with no check; the sweep keeps no callstack and no run traced it, so the operand is not known. |
-| UPakTransitionInfo.ScoreKill | 1 | 1 | undecided | `UPakTransitionInfo` is a class of `UPak.u` (Return to Na Pali), whose script is unread on this host. Its export table lists no `ScoreKill`, so the body is the stock `GameInfo.ScoreKill`, which reads two things that can be None (the victim and its replication info); the sweep keeps no callstack to say which statement or who died. A plaintext engine log of an Inter2 run would decide it. |
+| UPakTransitionInfo.ScoreKill | 1 | 1 | faithful | `UPakTransitionInfo` is a class of `UPak.u` (Return to Na Pali) that declares no `ScoreKill`, so the body is the stock `GameInfo.ScoreKill`. Its one None the situation singles out is `Other.PlayerReplicationInfo.Score -= 1` (line 1003 of the `Engine.GameInfo` text), reached for a killer of None and a victim that is not a player; the victim is inferred to be Inter2's `NaliRabbit`, since no callstack names it. |
 
 ### ut
 
@@ -271,30 +271,87 @@ instigator kills one at 35.471638 (a None killer):
 
 ### UPakShieldEffect.Tick
 
-Verdict `undecided`. Lines per map, `unreal`: Abyss 3, Glacena 3.
+Verdict `faithful`. Lines per map, `unreal`: Abyss 3, Glacena 3.
 
-`UPakShieldEffect` is a class of `UPak.u` (Return to Na Pali), and no dump of
-that package exists on this host, so its script is unread. The sweep keeps no
-plaintext engine log, so the site has no callstack either; what there is, is the
-smoke log of each map in the sweep of f94c1ba6 (not committed). Both maps log
-the line three times, after `STATE 0.0` and before the first `FPS` line:
+`UPakShieldEffect` is a class of `UPak.u` (Return to Na Pali), which extends
+`ShieldBeltEffect`; its script is read from the script texts of that package.
+The sweep keeps no plaintext engine log, so the site has no callstack; what
+there is, is the smoke log of each map in the sweep of a8a70202, run on the
+engine at 95ed235d (not committed). Both maps log the line three times, after
+`STATE 0.0` and before the first `FPS` line, so within the first second of play:
 
 ```
 SCRIPT_WARNING Accessed None in UPakShieldEffect.Tick
 ```
 
-The class chain, read from the export tables of `UPak.u`, `UnrealShare.u` and
-`Engine.u`, is `UPakShieldEffect`, `ShieldBeltEffect`, `Effects`, `Actor`. The
-export table of `UPak.u` lists a `Tick` function under `UPakShieldEffect`
-(beside `PostBeginPlay`, `Timer`, `Destroyed` and the state `OwnerFadeIn`), so
-the body that ran is the package's own, not the stock one. The nearest stock
-superclass with a dump, `UnrealShare.ShieldBeltEffect`, has a `Tick` that tests
-`Owner != None` before it reads `Owner.bHidden`; whether the Return to Na Pali
-one does is not known.
+The class declares two functions named `Tick`: its own, and one inside
+`state OwnerFadeIn`. The VM names a site by the object's class and the
+function, never by a state, so the line does not say which ran. The state's
+`Tick` tests its owner first (line 93 of the `UPak.UPakShieldEffect` text,
+`if( Pawn( Owner ) != none )`); the read at line 95 of the same text,
+`if( Pawn( Owner ).Health <= 0 )`, sits inside that test, and nothing after
+the `Destroy()` at line 97 reads the owner, so it cannot log. Only the
+class-level `Tick` can. It does not call `Super.Tick`, so the
+stock `ShieldBeltEffect.Tick`, which tests `Owner != None` (line 35 of the
+`UnrealShare.ShieldBeltEffect` text), does not run. Stock
+`UPak.UPakShieldEffect`, function `Tick`:
 
-What would decide it: a dump of `UPak.u`, which shows the statement that reads a
-None, or a plaintext engine log of an Abyss or Glacena run, whose callstack
-names it.
+```
+simulated function Tick( float DeltaTime )
+{
+...
+    if( Pawn( Owner ).Health <= 0 )
+    {
+        Destroy();
+    }
+
+    if( Owner.ScaleGlow < 1.5 )
+    {
+        Owner.ScaleGlow += 0.01;
+    }
+    else
+    {
+        Owner.Style = STY_Normal;
+...
+}
+```
+
+The first test (line 24 of the `UPak.UPakShieldEffect` text) reads
+`Pawn( Owner ).Health` with no test for None. The effect is spawned in
+`FrozenMesh.PostBeginPlay` by the line below, so its owner is the `FrozenMesh`
+decoration (line 14 of the `UPak.FrozenMesh` text):
+
+```
+MyEffect = Spawn(class'UPakShieldEffect', Self,,Location, Rotation);
+```
+
+A `Decoration` is not a `Pawn`, so `Pawn( Owner )` is None and the statement
+reads a None context. The other spawner, `SpaceMarine`, which spawns
+`class'UPakShieldEffect'` (line 1640 of the `UPak.SpaceMarine` text), gives a
+pawn as owner, which a live marine passes
+without a None. Abyss and Glacena each hold one `FrozenMesh` and no
+`SpaceMarine`, as their export tables show; the tables list classes and not
+owners, so a marine spawned at run time is not excluded by them, but the
+decoration is the one owner they show.
+
+The None is the script's own data in the sense of `faithful`: the script spawned
+the owner itself, and the failed cast is of its own value. The three lines come
+from one call. The None context at line 24 logs the first, and the engine
+reads it as 0 (`SurrealEngine/VM/Frame.cpp` pushes a Nothing value that becomes
+0), so `0 <= 0` holds and `Destroy()` runs (line 26). The engine's
+`UActor::Destroy` (in `SurrealEngine/Packages/Engine/Actors/UActor.cpp`) then
+clears the owner, so
+the next test, `Owner.ScaleGlow < 1.5` (line 29), is a second None access and
+its branch, `Owner.ScaleGlow += 0.01` (line 31) or `Owner.Style = STY_Normal`
+(line 36), a third; nothing later in the function reads `Owner`. A destroyed
+effect does not tick again, which is why a first second of about a thousand
+frames logs three lines and not one per frame. Which statement logs which of the
+three is inferred from this reading and the count, not observed.
+
+Residual: no run traced these maps, so the statement behind each line and the
+`FrozenMesh` owner are inferred; the zero read of the None and the owner
+clearing at `Destroy` are the engine's, and whether the original does either
+before line 29 was not read.
 
 ### SinglePlayer.ScoreKill
 
@@ -416,25 +473,26 @@ neither `mom` nor `bHasBaby`, so no saved actor sets either. The script has no
 
 ### UPakTransitionInfo.ScoreKill
 
-Verdict `undecided`. Lines per map, `unreal`: Inter2 1.
+Verdict `faithful`. Lines per map, `unreal`: Inter2 1.
 
-`UPakTransitionInfo` is a class of `UPak.u` (Return to Na Pali), and no dump of
-that package exists on this host, so its script is unread. The sweep keeps no
-plaintext engine log, so the site has no callstack either; what there is, is the
-smoke log of Inter2 in the sweep of f94c1ba6 (not committed), which holds the
-line once, after `STATE 0.0` and before the first `FPS` line:
+`UPakTransitionInfo` is a class of `UPak.u` (Return to Na Pali), which extends
+`UnrealGameInfo`; its script is read from the script texts of that package. The
+sweep keeps no plaintext engine log, so the site has no callstack; what there is
+is the smoke log of Inter2 in the sweep of a8a70202, run on the engine at
+95ed235d (not committed), which holds the line once, after `STATE 0.0` and
+before the first `FPS` line:
 
 ```
 SCRIPT_WARNING Accessed None in UPakTransitionInfo.ScoreKill
 ```
 
-The class chain, read from the export tables of `UPak.u`, `UnrealShare.u` and
-`Engine.u`, is `UPakTransitionInfo`, `UnrealGameInfo`, `GameInfo`, `Info`,
-`Actor`. The export table of `UPak.u` lists `Login`, `SwitchFromUnrealPlayer`,
-`AdjustVolume`, `RedirectorSearch` and `Timer` under the class, and no
-`ScoreKill` or `Killed`; the stock `UnrealShare.UnrealGameInfo` defines neither.
-So the `ScoreKill` that ran is the one `Engine.GameInfo` defines, which its
-`Killed` calls:
+The class (line 4 of the `UPak.UPakTransitionInfo` text, `class
+UPakTransitionInfo expands UnrealGameInfo`) declares `Login`, `Timer`,
+`AdjustVolume`, `RedirectorSearch` and `SwitchFromUnrealPlayer`, and no
+`ScoreKill` or `Killed`; the stock `UnrealGameInfo` (line 7 of the
+`UnrealShare.UnrealGameInfo` text, `class UnrealGameInfo extends GameInfo`)
+defines neither. So the `ScoreKill` that ran is the one `Engine.GameInfo`
+defines, which its `Killed` calls:
 
 ```
 function ScoreKill(pawn Killer, pawn Other)
@@ -452,22 +510,33 @@ function ScoreKill(pawn Killer, pawn Other)
 ```
 
 Two statements can read a None: `Other.DieCount++` when the victim is None, and
-`Other.PlayerReplicationInfo.Score -= 1` when the killer is None or the victim
-itself and the victim has no replication info, the statement
-`SinglePlayer.ScoreKill` reaches for a monster victim. If the caller is the
-stock `GameInfo.Killed`, the victim cannot be None: `Killed` reads
-`Other.bIsPlayer` as its first statement (line 923 of the stock
-`Engine.GameInfo` text) and calls `ScoreKill` as its last (line 991), and the
-Inter2 smoke log above holds no `UPakTransitionInfo.Killed` warning, which a
-None victim would have logged at the first. Under that caller only the
-replication-info read remains, the `SinglePlayer.ScoreKill` pattern, and a None
-victim needs a caller inside `UPak.u`, which the decider below already asks
-about. The log line names neither a statement, a victim nor a killer, so the
-site is not read the way `SinglePlayer.ScoreKill` is.
+`Other.PlayerReplicationInfo.Score -= 1` (line 1003 of the `Engine.GameInfo`
+text) when the killer is None or the victim itself and the victim has no
+replication info. The victim cannot be None: `Killed` reads `Other.bIsPlayer` as
+its first statement (line 923 of the `Engine.GameInfo` text) and calls
+`ScoreKill` as its last (line 991), so a None victim would have logged a
+`UPakTransitionInfo.Killed` line first, and the Inter2 smoke log holds none. The
+callers of the game's `Killed` are `Pawn.Died` (line 1325 of the `Engine.Pawn`
+text, `level.game.Killed(Killer, self, damageType)`), `SpaceMarine.Died` (line
+1826 of the `UPak.SpaceMarine` text) and a `ScriptedPawn` handler; all pass the
+dying pawn, so only the replication-info read remains.
 
-What would decide it: a plaintext engine log of an Inter2 run, whose callstack
-names the statement and its caller, or a dump of `UPak.u`, whose functions would
-show whether `UPakTransitionInfo` itself kills a pawn.
+Inter2 holds one `NaliRabbit`, two `Bird1`, a `GreenBook` and no `SpaceMarine`,
+as its export table shows. `NaliRabbit` and `Bird1` extend `FlockPawn`, which
+extends `Pawn`. `Bird1` declares its own `Died`, which does not reach the game's
+`Killed`. `NaliRabbit` and `FlockPawn` declare none, so a rabbit's death runs
+`Pawn.Died`, and the fall out of the world calls
+`Died(None, 'fell', Location)` (line 355 of the `Engine.Pawn` text): a killer
+of None, taking the first branch, and a pawn that is not a player, whose
+`PlayerReplicationInfo` is None. That is the same body and the same operand as
+`SinglePlayer.ScoreKill`, which a Bluff run traced for monster victims. The
+single line is inferred to be the rabbit's: no callstack names the statement,
+the victim or the event.
+
+Residual: no run traced Inter2, so the victim, the statement and the event that
+starts the death are inferred; a pawn spawned at run time is not excluded by the
+export table; and whether the original raises `FellOutOfWorld` for those pawns
+at the first tick was not read (the Limits list says so for the sibling).
 
 ### UnrealCTFScoreboard.DrawTrailer
 
