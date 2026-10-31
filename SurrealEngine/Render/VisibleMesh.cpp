@@ -103,14 +103,11 @@ bool VisibleMesh::DrawMesh(VisibleFrame* frame, UActor* actor, UActor* lightLoca
 
 	if (animFrame >= 0.0f)
 	{
-		int frame0 = (int)animFrame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		t0 = animFrame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
+		t0 = frames.T0;
 		t1 = 0.0f;
-		vertexOffsets[0] = (seq->StartFrame + frame0) * mesh->FrameVerts;
-		vertexOffsets[1] = (seq->StartFrame + frame1) * mesh->FrameVerts;
+		vertexOffsets[0] = frames.V0;
+		vertexOffsets[1] = frames.V1;
 		vertexOffsets[2] = 0;
 	}
 	else // Tween from old animation
@@ -252,14 +249,11 @@ bool VisibleMesh::DrawLodMesh(VisibleFrame* frame, UActor* actor, UActor* lightL
 
 	if (animFrame >= 0.0f)
 	{
-		int frame0 = (int)animFrame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		t0 = animFrame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
+		t0 = frames.T0;
 		t1 = 0.0f;
-		vertexOffsets[0] = (seq->StartFrame + frame0) * mesh->FrameVerts;
-		vertexOffsets[1] = (seq->StartFrame + frame1) * mesh->FrameVerts;
+		vertexOffsets[0] = frames.V0;
+		vertexOffsets[1] = frames.V1;
 		vertexOffsets[2] = 0;
 	}
 	else // Tween from old animation
@@ -580,14 +574,11 @@ bool VisibleMesh::DrawMeshDX(VisibleFrame* frame, UActor* actor, UActor* lightLo
 
 	if (animFrame >= 0.0f)
 	{
-		int frame0 = (int)animFrame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		t0 = animFrame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
+		t0 = frames.T0;
 		t1 = 0.0f;
-		vertexOffsets[0] = (seq->StartFrame + frame0) * mesh->FrameVerts;
-		vertexOffsets[1] = (seq->StartFrame + frame1) * mesh->FrameVerts;
+		vertexOffsets[0] = frames.V0;
+		vertexOffsets[1] = frames.V1;
 		vertexOffsets[2] = 0;
 	}
 	else // Tween from old animation
@@ -617,17 +608,13 @@ bool VisibleMesh::DrawMeshDX(VisibleFrame* frame, UActor* actor, UActor* lightLo
 
 		if (frame >= 0.0f)
 		{
-			int f0 = (int)frame;
-			int f1 = f0 + 1;
+			MeshFrameOffsets frames = ComputeMeshFrameOffsets(frame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
 
-			f0 %= seq->NumFrames;
-			f1 %= seq->NumFrames;
-
-			b.t0 = frame - f0;
+			b.t0 = frames.T0;
 			b.t1 = 0.0f;
 
-			b.offsets[0] = (seq->StartFrame + f0) * mesh->FrameVerts;
-			b.offsets[1] = (seq->StartFrame + f1) * mesh->FrameVerts;
+			b.offsets[0] = frames.V0;
+			b.offsets[1] = frames.V1;
 			b.offsets[2] = 0;
 
 			b.weight = 1.0f;
@@ -810,14 +797,11 @@ bool VisibleMesh::DrawLodMeshDX(VisibleFrame* frame, UActor* actor, UActor* ligh
 
 	if (animFrame >= 0.0f)
 	{
-		int frame0 = (int)animFrame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		t0 = animFrame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
+		t0 = frames.T0;
 		t1 = 0.0f;
-		vertexOffsets[0] = (seq->StartFrame + frame0) * mesh->FrameVerts;
-		vertexOffsets[1] = (seq->StartFrame + frame1) * mesh->FrameVerts;
+		vertexOffsets[0] = frames.V0;
+		vertexOffsets[1] = frames.V1;
 		vertexOffsets[2] = 0;
 	}
 	else // Tween from old animation
@@ -854,17 +838,13 @@ bool VisibleMesh::DrawLodMeshDX(VisibleFrame* frame, UActor* actor, UActor* ligh
 
 		if (frame >= 0.0f)
 		{
-			int f0 = (int)frame;
-			int f1 = f0 + 1;
+			MeshFrameOffsets frames = ComputeMeshFrameOffsets(frame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
 
-			f0 %= seq->NumFrames;
-			f1 %= seq->NumFrames;
-
-			b.t0 = frame - f0;
+			b.t0 = frames.T0;
 			b.t1 = 0.0f;
 
-			b.offsets[0] = (seq->StartFrame + f0) * mesh->FrameVerts;
-			b.offsets[1] = (seq->StartFrame + f1) * mesh->FrameVerts;
+			b.offsets[0] = frames.V0;
+			b.offsets[1] = frames.V1;
 			b.offsets[2] = 0;
 
 			b.weight = 1.0f;

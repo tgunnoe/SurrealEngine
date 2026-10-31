@@ -557,7 +557,7 @@ void RenderSubsystem::DrawTimedemoStats()
 		Canvas.framesDrawn = 0;
 	}
 
-	if (ShowTimedemoStats || engine->LaunchInfo.IsDeusEx())
+	if (ShouldDrawTimedemoStats(ShowTimedemoStats, engine->LaunchInfo.IsDeusEx()))
 	{
 		Array<std::string> lines;
 		lines.push_back(std::to_string(Canvas.fps) + " FPS");
