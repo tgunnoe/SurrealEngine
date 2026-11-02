@@ -50,6 +50,8 @@ std::string USurrealAudioDevice::GetPropertyAsString(const NameString& propertyN
 		return IniPropertyConverter<uint8_t>::ToString(MusicVolume);
 	else if (propertyName == "SoundVolume")
 		return IniPropertyConverter<uint8_t>::ToString(SoundVolume);
+	else if (propertyName == "SpeechVolume")
+		return IniPropertyConverter<uint8_t>::ToString(SpeechVolume);
 	else if (propertyName == "AmbientFactor")
 		return IniPropertyConverter<float>::ToString(AmbientFactor);
 
@@ -89,6 +91,8 @@ void USurrealAudioDevice::SetPropertyFromString(const NameString& propertyName, 
 		MusicVolume = IniPropertyConverter<uint8_t>::FromString(value);
 	else if (propertyName == "SoundVolume")
 		SoundVolume = IniPropertyConverter<uint8_t>::FromString(value);
+	else if (propertyName == "SpeechVolume")
+		SpeechVolume = IniPropertyConverter<uint8_t>::FromString(value);
 	else if (propertyName == "AmbientFactor")
 		AmbientFactor = IniPropertyConverter<float>::FromString(value);
 	else
@@ -119,6 +123,8 @@ void USurrealAudioDevice::LoadProperties(const NameString& from)
 	Channels = IniPropertyConverter<int>::FromIniFile(*engine->packages->GetIniFile("System"), name_from, "Channels", Channels);
 	MusicVolume = IniPropertyConverter<uint8_t>::FromIniFile(*engine->packages->GetIniFile("System"), name_from, "MusicVolume", MusicVolume);
 	SoundVolume = IniPropertyConverter<uint8_t>::FromIniFile(*engine->packages->GetIniFile("System"), name_from, "SoundVolume", SoundVolume);
+	if (engine->LaunchInfo.IsDeusEx())
+		SpeechVolume = IniPropertyConverter<uint8_t>::FromIniFile(*engine->packages->GetIniFile("System"), name_from, "SpeechVolume", SpeechVolume);
 	AmbientFactor = IniPropertyConverter<float>::FromIniFile(*engine->packages->GetIniFile("System"), name_from, "AmbientFactor", AmbientFactor);
 }
 
@@ -139,6 +145,8 @@ void USurrealAudioDevice::SaveConfig()
 	engine->packages->SetIniValue("System", Class, "Channels", IniPropertyConverter<int>::ToString(Channels));
 	engine->packages->SetIniValue("System", Class, "MusicVolume", IniPropertyConverter<uint8_t>::ToString(MusicVolume));
 	engine->packages->SetIniValue("System", Class, "SoundVolume", IniPropertyConverter<uint8_t>::ToString(SoundVolume));
+	if (engine->LaunchInfo.IsDeusEx())
+		engine->packages->SetIniValue("System", Class, "SpeechVolume", IniPropertyConverter<uint8_t>::ToString(SpeechVolume));
 	engine->packages->SetIniValue("System", Class, "AmbientFactor", IniPropertyConverter<float>::ToString(AmbientFactor));
 }
 
@@ -149,8 +157,7 @@ void USurrealAudioDevice::InitDevice()
 	// TODO: Add option for number of sound channels
 	// TODO: Add option for music buffer count
 	// TODO: Add option for music buffer size
-	// m_Device = AudioDevice::Create(48000, 256, 16, 256);
-	m_Device = AudioDevice::Create(OutputRate.frequency, 256, 16, 256);
+	m_Device = AudioDevice::Create(OutputRate.frequency, Channels, 16, 256);
 	LogMessage("Audio device initialized");
 }
 
@@ -178,16 +185,41 @@ void USurrealAudioDevice::SetViewport(UViewport* InViewport)
 	}
 }
 
-void USurrealAudioDevice::Update(const mat4& listener)
+void USurrealAudioDevice::Update()
 {
 	StartAmbience();
 	UpdateAmbience();
-	UpdateSounds(listener);
+	UpdateSounds();
 	UpdateMusic();
-
-	m_Device->SetMusicVolume(MusicVolume / 255.0f);
-	m_Device->SetSoundVolume(SoundVolume / 255.0f * 0.5f);
 	m_Device->Update();
+}
+
+void USurrealAudioDevice::SetInstantMusicVolume(uint8_t newMusicVolume)
+{
+	MusicVolume = newMusicVolume;
+	Update();
+}
+
+void USurrealAudioDevice::SetInstantSoundVolume(uint8_t newSoundVolume)
+{
+	SoundVolume = newSoundVolume;
+	Update();
+}
+
+void USurrealAudioDevice::SetInstantSpeechVolume(uint8_t newSpeechVolume)
+{
+	SpeechVolume = newSpeechVolume;
+	Update();
+}
+
+void USurrealAudioDevice::PlayMusic(std::unique_ptr<AudioSource> source)
+{
+	GetDevice()->PlayMusic(std::move(source));
+}
+
+void USurrealAudioDevice::StopMusic()
+{
+	GetDevice()->PlayMusic({});
 }
 
 void USurrealAudioDevice::StartAmbience()
@@ -195,29 +227,27 @@ void USurrealAudioDevice::StartAmbience()
 	if (!m_Viewport || !m_Viewport->Actor())
 		return;
 
-	bool Realtime = m_Viewport->IsRealtime() && m_Viewport->Actor()->Level()->Pauser() == "";
-	if (Realtime)
+	bool realtime = m_Viewport->IsRealtime() && m_Viewport->Actor()->Level()->Pauser() == "";
+	if (realtime)
 	{
-		UActor* ViewActor = m_Viewport->Actor()->ViewTarget() ? m_Viewport->Actor()->ViewTarget() : m_Viewport->Actor();
-		int actorIndex = 0;
+		UActor* viewActor = m_Viewport->Actor()->ViewTarget() ? m_Viewport->Actor()->ViewTarget() : m_Viewport->Actor();
 		for (UActor* Actor : m_Viewport->Actor()->XLevel()->Actors)
 		{
-			if (Actor && Actor->AmbientSound() && dist_squared(ViewActor->Location(), Actor->Location()) <= square(Actor->WorldSoundRadius()))
+			if (Actor && Actor->AmbientSound() && dist_squared(viewActor->Location(), Actor->Location()) <= square(Actor->WorldSoundRadius()))
 			{
-				int Id = actorIndex * 16 + SLOT_Ambient * 2;
+				int id = CreateSoundId(Actor, SLOT_Ambient, false);
 				bool foundSound = false;
 				for (size_t j = 0; j < PlayingSounds.size(); j++)
 				{
-					if (PlayingSounds[j].Id == Id)
+					if (PlayingSounds[j].Id == id)
 					{
 						foundSound = true;
 						break;
 					}
 				}
 				if (!foundSound)
-					PlaySound(Actor, Id, Actor->AmbientSound(), Actor->Location(), AmbientFactor * Actor->SoundVolume() / 255.0f, Actor->WorldSoundRadius(), Actor->SoundPitch() / 64.0f, false);
+					PlaySound(Actor, id, Actor->AmbientSound(), Actor->Location(), AmbientFactor * Actor->SoundVolume() / 255.0f, Actor->WorldSoundRadius(), Actor->SoundPitch() / 64.0f);
 			}
-			actorIndex++;
 		}
 	}
 }
@@ -232,7 +262,7 @@ void USurrealAudioDevice::UpdateAmbience()
 	for (size_t i = 0; i < PlayingSounds.size(); i++)
 	{
 		PlayingSound& Playing = PlayingSounds[i];
-		if ((Playing.Id & 14) == SLOT_Ambient * 2)
+		if (GetSoundSlot(Playing.Id) == SLOT_Ambient)
 		{
 			if (Playing.Actor->bDeleteMe() || dist_squared(ViewActor->Location(), Playing.Actor->Location()) > square(Playing.Actor->WorldSoundRadius()) || Playing.Actor->AmbientSound() != Playing.Sound || !Realtime)
 			{
@@ -250,24 +280,13 @@ void USurrealAudioDevice::UpdateAmbience()
 	}
 }
 
-//
-// Deliberately stores no state on PlayingSound. The slot is already packed into Id by
-// NActor::PlaySound as (slot << 1), and this file already decodes it that way for
-// SLOT_Ambient, so SLOT_Talk is recoverable the same way.
-//
-// PropertyOffsets only resolves the lip-sync properties inside its IsDeusEx() branch, so an
-// unset offset doubles as the "this game has no lip sync" test: other games return on the
-// first line and observe no behaviour change at all.
-static bool HasLipSync()
-{
-	return PropOffsets_Pawn.nextPhoneme.DataOffset != ~(size_t)0;
-}
-
 void USurrealAudioDevice::UpdateLipSync(PlayingSound& Playing)
 {
-	if (!HasLipSync() || !Playing.Actor || !engine->LevelInfo)
+	if (!engine->LaunchInfo.IsDeusEx())
 		return;
-	if ((Playing.Id & 14) != SLOT_Talk * 2)
+	if (!Playing.Actor || !engine->LevelInfo)
+		return;
+	if (GetSoundSlot(Playing.Id) != SLOT_Talk)
 		return;
 
 	UPawn* pawn = UObject::TryCast<UPawn>(Playing.Actor);
@@ -287,9 +306,11 @@ void USurrealAudioDevice::UpdateLipSync(PlayingSound& Playing)
 // Called wherever a slot is torn down, so the mouth does not freeze mid-vowel.
 void USurrealAudioDevice::ClearLipSync(PlayingSound& Playing)
 {
-	if (!HasLipSync() || !Playing.Actor)
+	if (!engine->LaunchInfo.IsDeusEx())
 		return;
-	if ((Playing.Id & 14) != SLOT_Talk * 2)
+	if (!Playing.Actor)
+		return;
+	if (GetSoundSlot(Playing.Id) != SLOT_Talk)
 		return;
 
 	if (UPawn* pawn = UObject::TryCast<UPawn>(Playing.Actor))
@@ -299,12 +320,11 @@ void USurrealAudioDevice::ClearLipSync(PlayingSound& Playing)
 	}
 }
 
-void USurrealAudioDevice::UpdateSounds(const mat4& listener)
+void USurrealAudioDevice::UpdateSounds()
 {
 	if (!m_Viewport || !m_Viewport->Actor())
 		return;
 
-	UActor* ViewActor = m_Viewport->Actor()->ViewTarget() ? m_Viewport->Actor()->ViewTarget() : m_Viewport->Actor();
 	for (size_t i = 0; i < PlayingSounds.size(); i++)
 	{
 		PlayingSound& Playing = PlayingSounds[i];
@@ -315,33 +335,36 @@ void USurrealAudioDevice::UpdateSounds(const mat4& listener)
 			if (Playing.Actor)
 				Playing.Location = Playing.Actor->Location();
 
+			// Global volume for the sound type. Talk in Deus Ex follows the speech
+			// setting instead of the sound setting; SpeechScaledVolume applies it
+			// once, before the cap.
+			float globalVolume = SoundVolume / 255.0f * 0.5f;
+			float volume = Playing.Volume;
+			if (engine->LaunchInfo.IsDeusEx() && GetSoundSlot(Playing.Id) == SLOT_Talk)
+			{
+				globalVolume = 0.5f;
+				volume = SpeechScaledVolume(volume, SpeechVolume);
+			}
+
 			// Update the priority
-			Playing.Priority = SoundPriority(m_Viewport, Playing.Location, Playing.Volume, Playing.Radius);
+			Playing.Priority = SoundPriority(m_Viewport, Playing.Location, volume * globalVolume, Playing.Radius);
 
 			UpdateLipSync(Playing);
 
-			// Actor.SetInstantSpeechVolume scales talk sounds without touching the stored volume
-			float volume = Playing.Volume;
-			if ((Playing.Id & 14) == SLOT_Talk * 2)
-				volume = SpeechScaledVolume(volume, SpeechVolume);
-
-			// Update the sound.
-			if (Playing.IsActive)
+			// Update the device sound channels to match our configuration
+			if (!Playing.IsActive)
 			{
-				if (m_Device->IsPlaying((int)i))
-				{
-					m_Device->UpdateSound((int)i, Playing.Sound, Playing.Location, volume, Playing.Radius, Playing.Pitch);
-				}
-				else
-				{
-					ClearLipSync(Playing);
-					PlayingSounds[i] = {};
-				}
+				m_Device->PlaySound((int)i, Playing.Sound, Playing.Location, volume * globalVolume, Playing.Radius, Playing.Pitch);
+				Playing.IsActive = true;
 			}
 			else
 			{
-				m_Device->PlaySound((int)i, Playing.Sound, Playing.Location, volume, Playing.Radius, Playing.Pitch);
-				Playing.IsActive = true;
+				m_Device->UpdateSound((int)i, Playing.Location, volume * globalVolume, Playing.Radius, Playing.Pitch);
+				if (!m_Device->IsPlaying((int)i))
+				{
+					ClearLipSync(Playing);
+					Playing = {};
+				}
 			}
 		}
 	}
@@ -349,6 +372,8 @@ void USurrealAudioDevice::UpdateSounds(const mat4& listener)
 
 void USurrealAudioDevice::UpdateMusic()
 {
+	m_Device->SetMusicVolume(MusicVolume / 255.0f);
+
 	if (m_Viewport && m_Viewport->Actor() && m_Viewport->Actor()->Transition() != MTRAN_None)
 	{
 		// To do: this needs to fade out the old song before switching
@@ -384,7 +409,30 @@ void USurrealAudioDevice::UpdateMusic()
 	}
 }
 
-bool USurrealAudioDevice::PlaySound(UActor* Actor, int Id, USound* Sound, vec3 Location, float Volume, float Radius, float Pitch, bool isTalk)
+int USurrealAudioDevice::CreateSoundId(UActor* actor, ESoundSlot slot, bool noOverride)
+{
+	if (slot == SLOT_None)
+		return ((--FreeSlot) << 4) | (int)noOverride;
+	else
+		return (int)((((uint32_t)(ptrdiff_t)actor) << 4) | ((int)slot << 1) | (int)noOverride);
+}
+
+bool USurrealAudioDevice::IsSoundInterruptable(int id)
+{
+	return (id & 1) == 0;
+}
+
+ESoundSlot USurrealAudioDevice::GetSoundSlot(int id)
+{
+	return (ESoundSlot)((id >> 1) & 7);
+}
+
+bool USurrealAudioDevice::IsSameSoundId(int id1, int id2)
+{
+	return (id1 & ~1) == (id2 & ~1);
+}
+
+bool USurrealAudioDevice::PlaySound(UActor* Actor, int Id, USound* Sound, vec3 Location, float Volume, float Radius, float Pitch)
 {
 	if (Radius <= 0.0) // Seems we have zero radius values. Lovely.
 		Radius = 1500.0f;
@@ -392,9 +440,9 @@ bool USurrealAudioDevice::PlaySound(UActor* Actor, int Id, USound* Sound, vec3 L
 	// Talk in Deus Ex and ambient sounds are boosted relative to the rest; every path shares
 	// one curve and one cap (see SoundVolume.h).
 	float boost = 1.0f;
-	if (isTalk && engine->LaunchInfo.IsDeusEx())
+	if (GetSoundSlot(Id) == SLOT_Talk && engine->LaunchInfo.IsDeusEx())
 		boost = DeusExTalkBoost;
-	else if ((Id & 14) == 2 * SLOT_Ambient)
+	else if (GetSoundSlot(Id) == SLOT_Ambient)
 		boost = AmbientBoost;
 	Volume = BoostedSoundVolume(Volume, boost);
 
@@ -402,8 +450,8 @@ bool USurrealAudioDevice::PlaySound(UActor* Actor, int Id, USound* Sound, vec3 L
 		return false;
 
 	// Allocate a new slot if requested
-	if ((Id & 14) == 2 * SLOT_None)
-		Id = 16 * --FreeSlot;
+	if (GetSoundSlot(Id) == SLOT_None)
+		Id = CreateSoundId(Actor, SLOT_None, false);
 
 	float Priority = SoundPriority(m_Viewport, Location, Volume, Radius);
 
@@ -413,10 +461,10 @@ bool USurrealAudioDevice::PlaySound(UActor* Actor, int Id, USound* Sound, vec3 L
 	for (size_t i = 0; i < PlayingSounds.size(); i++)
 	{
 		PlayingSound& Playing = PlayingSounds[i];
-		if ((Playing.Id & ~1) == (Id & ~1))
+		if (IsSameSoundId(Playing.Id, Id))
 		{
 			// Skip if not interruptable.
-			if (Id & 1)
+			if (!IsSoundInterruptable(Id))
 				return 0;
 
 			// Stop the sound.
@@ -434,7 +482,7 @@ bool USurrealAudioDevice::PlaySound(UActor* Actor, int Id, USound* Sound, vec3 L
 	if (Index == PlayingSounds.size())
 		return 0;
 
-	Sound->GetSound();
+	Sound->CheckSoundSamples();
 
 	// Put the sound on the play-list
 	StopSound(Index);
@@ -442,11 +490,6 @@ bool USurrealAudioDevice::PlaySound(UActor* Actor, int Id, USound* Sound, vec3 L
 	PlayingSounds[Index].StartTime = engine->LevelInfo->TimeSeconds();
 
 	return true;
-}
-
-void USurrealAudioDevice::SetSpeechVolume(uint8_t volume)
-{
-	SpeechVolume = volume;
 }
 
 void USurrealAudioDevice::ActorDestroyed(UActor* Actor)
@@ -508,8 +551,13 @@ void USurrealAudioDevice::BreakpointTriggered()
 {
 	if (m_Device)
 	{
-		m_Device->SetSoundVolume(0.0f);
+		uint8_t oldSound = SoundVolume;
+		uint8_t oldSpeech = SpeechVolume;
+		SoundVolume = 0;
+		UpdateSounds();
 		m_Device->Update();
+		SoundVolume = oldSound;
+		SpeechVolume = oldSpeech;
 	}
 }
 
@@ -526,10 +574,7 @@ void USurrealAudioDevice::AddStats(Array<std::string>& lines)
 		}
 		else
 		{
-			if (index >= 10)
-				std::snprintf(buffer, bufsize - 1, "Channel %i:  None", index);
-			else
-				std::snprintf(buffer, bufsize - 1, "Channel %i: None", index);
+			std::snprintf(buffer, bufsize - 1, "Channel %2i: None", index);
 		}
 		buffer[bufsize - 1] = 0;
 		lines.push_back(buffer);

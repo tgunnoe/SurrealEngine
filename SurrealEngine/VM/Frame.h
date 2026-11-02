@@ -57,6 +57,13 @@ struct TraceFilter
 // object with no name, which is what `new` makes when the script gives none.
 std::string ObjectLabel(UObject* obj);
 
+struct Trace
+{
+	NameString Function;
+	std::function<void(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args)> Callback;
+	bool Enabled = true;
+};
+
 class Frame
 {
 public:
@@ -66,16 +73,19 @@ public:
 	static std::string FormatTraceArgs(const ArrayView<ExpressionValue>& args);
 
 	static bool AddBreakpoint(const NameString& cls, const NameString& func, const NameString& state = {}, int statementIndex = 0);
+	static void AddTrace(const NameString& func, std::function<void(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args)> callback);
 
 	static Array<TraceFilter> TraceEntries;
 
 	static std::function<void()> RunDebugger;
 	static Array<Breakpoint> Breakpoints;
+	static Array<Trace> Traces;
 	static Array<Frame*> Callstack;
 	static FrameRunState RunState;
 	static Frame* StepFrame;
 	static Expression* StepExpression;
 	static std::string ExceptionText;
+	static bool BreakOnError;
 
 	static void Break();
 	static void Resume();
@@ -119,6 +129,7 @@ private:
 	static ExpressionEvalResult RunExpr(Expression* expr, UObject* self, UObject* context, void* variables);
 	static ExpressionValue CallNative(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args);
 	static void TraceCall(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args);
+	static void TraceScriptCall(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args);
 
 	struct ActiveCallStackFrame
 	{

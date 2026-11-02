@@ -19,51 +19,51 @@ namespace
 TEST(CollisionTraceAABBNullModel)
 {
 	TraceAABBModel tracer;
-	CHECK(tracer.Trace(nullptr, Origin, 0.0, Direction, 100.0, Extents, false).empty());
+	CHECK(tracer.Trace(nullptr, nullptr, Origin, 0.0, Direction, 100.0, Extents, false).empty());
 }
 
 TEST(CollisionTraceRayNullModel)
 {
 	TraceRayModel tracer;
-	CHECK(tracer.Trace(nullptr, Origin, 0.0, Direction, 100.0, false).empty());
+	CHECK(tracer.Trace(nullptr, nullptr, Origin, 0.0, Direction, 100.0, false).empty());
 }
 
 TEST(CollisionTraceRayAnyHitNullModel)
 {
 	TraceRayModel tracer;
-	CHECK(!tracer.TraceAnyHit(nullptr, Origin, 0.0, Direction, 100.0, false));
+	CHECK(!tracer.TraceAnyHit(nullptr, nullptr, Origin, 0.0, Direction, 100.0, false));
 }
 
 TEST(CollisionOverlapAABBNullModel)
 {
 	OverlapAABBModel tester;
-	CHECK(tester.TestOverlap(nullptr, vec3(0.0f), vec3(16.0f), false).empty());
+	CHECK(tester.TestOverlap(nullptr, nullptr, vec3(0.0f), vec3(16.0f), false).empty());
 }
 
 TEST(CollisionTraceAABBEmptyModel)
 {
 	UModel* model = GC::Alloc<UModel>("EmptyModel", nullptr, ObjectFlags::NoFlags);
 	TraceAABBModel tracer;
-	CHECK(tracer.Trace(model, Origin, 0.0, Direction, 100.0, Extents, false).empty());
+	CHECK(tracer.Trace(nullptr, model, Origin, 0.0, Direction, 100.0, Extents, false).empty());
 }
 
 TEST(CollisionTraceRayEmptyModel)
 {
 	UModel* model = GC::Alloc<UModel>("EmptyModel", nullptr, ObjectFlags::NoFlags);
 	TraceRayModel tracer;
-	CHECK(tracer.Trace(model, Origin, 0.0, Direction, 100.0, false).empty());
+	CHECK(tracer.Trace(nullptr, model, Origin, 0.0, Direction, 100.0, false).empty());
 }
 
 TEST(CollisionTraceRayAnyHitEmptyModel)
 {
 	UModel* model = GC::Alloc<UModel>("EmptyModel", nullptr, ObjectFlags::NoFlags);
 	TraceRayModel tracer;
-	CHECK(!tracer.TraceAnyHit(model, Origin, 0.0, Direction, 100.0, false));
+	CHECK(!tracer.TraceAnyHit(nullptr, model, Origin, 0.0, Direction, 100.0, false));
 }
 
 TEST(CollisionOverlapAABBEmptyModel)
 {
 	UModel* model = GC::Alloc<UModel>("EmptyModel", nullptr, ObjectFlags::NoFlags);
 	OverlapAABBModel tester;
-	CHECK(tester.TestOverlap(model, vec3(0.0f), vec3(16.0f), false).empty());
+	CHECK(tester.TestOverlap(nullptr, model, vec3(0.0f), vec3(16.0f), false).empty());
 }

@@ -271,7 +271,8 @@ static std::string FormatVec3(const vec3& v)
 // BSP node the test matched: the hull bounds, the node plane and the surface (and brush) it came from.
 static std::string DescribeBlockingHit(UModel* model, const CollisionHit& hit)
 {
-	if (hit.Actor)
+	// A world hit carries the level's LevelInfo as its actor
+	if (hit.Actor && !UObject::TryCast<ULevelInfo>(hit.Actor))
 		return hit.Actor->Name.ToString() + " (" + hit.Actor->Class->Name.ToString() + ")";
 
 	if (!hit.Node)
@@ -557,9 +558,9 @@ bool UActor::TraceThisActor(vec3& TraceEnd, vec3 TraceStart, vec3* HitLocation, 
 		.world = true
 	};
 
-	const auto hit = XLevel()->Collision.TraceFirstHit(TraceStart, TraceEnd, this, Extent ? *Extent : vec3(), flags);
+	const auto hit = XLevel()->Collision.TraceFirstHit(TraceStart, TraceEnd, this, Extent ? *Extent : vec3(0.0f), flags);
 
-	if (!hit.Node && !hit.Actor)
+	if (hit.Fraction == 1.0f)
 		return false;
 
 	if (HitLocation)
@@ -571,11 +572,12 @@ bool UActor::TraceThisActor(vec3& TraceEnd, vec3 TraceStart, vec3* HitLocation, 
 	return true;
 }
 
-// What the trace and the touch filter make of a hit: the level when there is no actor, a mover's brush
-// for a mover that has one, and an actor otherwise.
-static HitKind KindOfHit(UActor* actor)
+// What the trace and the touch filter make of a hit: the level for a world hit, which carries the
+// level's LevelInfo as its actor (or no actor), a mover's brush for a mover that has one, and an
+// actor otherwise.
+static HitKind KindOfHit(UActor* actor, UActor* levelInfo)
 {
-	if (!actor)
+	if (!actor || actor == levelInfo)
 		return HitKind::Level;
 
 	UMover* mover = UObject::TryCast<UMover>(actor);
@@ -586,7 +588,7 @@ static HitTarget TargetOf(UActor* actor, HitKind kind, bool isBaseOfMoving, bool
 {
 	HitTarget target;
 	target.kind = kind;
-	if (actor)
+	if (kind != HitKind::Level)
 	{
 		target.isPlayerOrProjectile = UObject::TryCast<UPlayerPawn>(actor) || UObject::TryCast<UProjectile>(actor);
 		target.blocksPlayers = actor->bBlockPlayers();
@@ -634,9 +636,9 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 			for (auto& hit : hits)
 			{
 				// We never hit ourselves or anything moving along with us
-				bool isBaseOfMoving = hit.Actor && hit.Actor->IsBasedOn(this);
-				bool isBasedOnMoving = hit.Actor && IsBasedOn(hit.Actor);
-				if (HitBlocks(movingActor(), TargetOf(hit.Actor, KindOfHit(hit.Actor), isBaseOfMoving, isBasedOnMoving), isOwnBaseBlocking))
+				bool isBaseOfMoving = hit.Actor->IsBasedOn(this);
+				bool isBasedOnMoving = IsBasedOn(hit.Actor);
+				if (HitBlocks(movingActor(), TargetOf(hit.Actor, KindOfHit(hit.Actor, Level()), isBaseOfMoving, isBasedOnMoving), isOwnBaseBlocking))
 				{
 					blockingHit = hit;
 					break;
@@ -720,7 +722,7 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 	}
 
 	// Send bump notification if we hit an actor
-	if (blockingHit.Actor)
+	if (blockingHit.Actor && blockingHit.Actor != Level())
 	{
 		if (!blockingHit.Actor->IsBasedOn(this))
 		{
@@ -735,10 +737,10 @@ CollisionHit UActor::TryMove(const vec3& delta, bool dryRun, bool isOwnBaseBlock
 		if (hit.Fraction >= blockingHit.Fraction)
 			break;
 
-		if (hit.Actor && !hit.Actor->IsBasedOn(this) && !IsBasedOn(hit.Actor) && bCollideActors() && hit.Actor->bCollideActors())
+		if (hit.Actor != Level() && !hit.Actor->IsBasedOn(this) && !IsBasedOn(hit.Actor) && bCollideActors() && hit.Actor->bCollideActors())
 		{
 			// We can't touch stuff we are blocked by
-			if (!HitBlocks(movingActor(), TargetOf(hit.Actor, KindOfHit(hit.Actor), false, false), false))
+			if (!HitBlocks(movingActor(), TargetOf(hit.Actor, KindOfHit(hit.Actor, Level()), false, false), false))
 				Touch(hit.Actor);
 		}
 	}

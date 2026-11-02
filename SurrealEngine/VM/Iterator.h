@@ -297,7 +297,7 @@ private:
 class TraceVisibleActorsIterator : public Iterator
 {
 public:
-	TraceVisibleActorsIterator(const std::vector<ULevel*>& Levels, UObject* BaseClass, UObject** OutActor, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent);
+	TraceVisibleActorsIterator(const std::vector<ULevel*>& Levels, ULevelInfo* LevelInfo, UObject* BaseClass, UObject** OutActor, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent);
 	bool Next() override;
 
 	UObject* BaseClass = nullptr;
@@ -309,6 +309,7 @@ public:
 	vec3 Extent = vec3(0, 0, 0);
 
 private:
+	ULevelInfo* LevelInfo = nullptr;
 	CollisionHitList m_CollList;
 	CollisionHitList::const_iterator m_Iterator;
 };

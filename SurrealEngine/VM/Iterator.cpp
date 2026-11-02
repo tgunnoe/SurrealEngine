@@ -340,7 +340,7 @@ TraceActorsIterator::TraceActorsIterator(UActor* SelfActor, UObject* BaseClass, 
 
 	for (auto& hit : SelfActor->XLevel()->Collision.Trace(traceStart, traceEnd, Extent.z, Extent.x, flags.traceActors(), flags.traceWorld(), false))
 	{
-		if (hit.Actor && hit.Actor != SelfActor && hit.Actor->IsA(BaseClass->Name))
+		if (hit.Actor != SelfActor->Level() && hit.Actor != SelfActor && hit.Actor->IsA(BaseClass->Name))
 		{
 			vec3 hitNormal = hit.Normal;
 			vec3 hitLocation = traceStart + (traceEnd - traceStart) * hit.Fraction;
@@ -492,9 +492,6 @@ bool TraceTextureIterator::Next()
 		uint32_t foundFlags = 0;
 
 		UActor* actor = m_Iterator->Actor;
-		if (!actor)
-			actor = LevelInfo;
-
 		*OutActor = actor;
 		const auto node = m_Iterator->Node;
 
@@ -555,8 +552,8 @@ bool TraceTextureIterator::Next()
 
 /////////////////////////////////////////////////////////////////////////////
 
-TraceVisibleActorsIterator::TraceVisibleActorsIterator(const std::vector<ULevel*>& Levels, UObject* BaseClass, UObject** OutActor, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent)
-	: BaseClass(BaseClass), OutActor(OutActor), HitLoc(HitLoc), HitNorm(HitNorm), End(End), Start(Start), Extent(Extent)
+TraceVisibleActorsIterator::TraceVisibleActorsIterator(const std::vector<ULevel*>& Levels, ULevelInfo* LevelInfo, UObject* BaseClass, UObject** OutActor, vec3* HitLoc, vec3* HitNorm, const vec3& End, const vec3& Start, const vec3& Extent)
+	: BaseClass(BaseClass), OutActor(OutActor), HitLoc(HitLoc), HitNorm(HitNorm), End(End), Start(Start), Extent(Extent), LevelInfo(LevelInfo)
 {
 	float radius = length(Extent.xy());
 	float height = Extent.z < 0 ? -Extent.z : Extent.z;
@@ -579,7 +576,7 @@ bool TraceVisibleActorsIterator::Next()
 
 		++m_Iterator;
 
-		if (foundActor && foundActor->IsA(BaseClass->Name) && !foundActor->bHidden())
+		if (foundActor != LevelInfo && foundActor->IsA(BaseClass->Name) && !foundActor->bHidden())
 		{
 			*OutActor = foundActor;
 			return true;

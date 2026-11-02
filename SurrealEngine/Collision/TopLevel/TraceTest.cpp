@@ -5,6 +5,7 @@
 #include "Collision/BottomLevel/TraceRayModel.h"
 #include "Packages/Engine/Actors/UActor.h"
 #include "Packages/Engine/Actors/Brush/UMover.h"
+#include "Packages/Engine/Actors/Info/ULevelInfo.h"
 
 CollisionHitList TraceTester::Trace(const vec3& from, const vec3& to, float height, float radius, bool traceActors, bool traceWorld, bool visibilityOnly)
 {
@@ -16,6 +17,8 @@ CollisionHitList TraceTester::Trace(const vec3& from, const vec3& to, float heig
 	dvec3 direction = to_dvec3(to) - origin;
 	double tmin = 0.0f; // if this goes above 0.0, you will be able to walk through walls!
 	double tmax = length(direction);
+	if (std::isnan(tmax))
+		return {};
 	if (tmax < tmin)
 		return {};
 	direction *= 1.0f / tmax;
@@ -59,7 +62,7 @@ CollisionHitList TraceTester::Trace(const vec3& from, const vec3& to, float heig
 		{
 			// Line/triangle intersect
 			TraceRayModel tracemodel;
-			CollisionHitList worldHits = tracemodel.Trace(GetLevel()->Model, origin, tmin, direction, tmax, visibilityOnly);
+			CollisionHitList worldHits = tracemodel.Trace(GetLevelInfo(), GetLevel()->Model, origin, tmin, direction, tmax, visibilityOnly);
 			hits.push_back(worldHits);
 		}
 		else
@@ -67,7 +70,7 @@ CollisionHitList TraceTester::Trace(const vec3& from, const vec3& to, float heig
 			// AABB/Triangle intersect
 			TraceAABBModel tracemodel;
 			dvec3 extents = { (double)radius, (double)radius, (double)height };
-			CollisionHitList worldHits = tracemodel.Trace(GetLevel()->Model, origin, tmin, direction, tmax, extents, visibilityOnly);
+			CollisionHitList worldHits = tracemodel.Trace(GetLevelInfo(), GetLevel()->Model, origin, tmin, direction, tmax, extents, visibilityOnly);
 			hits.push_back(worldHits);
 		}
 	}
@@ -152,7 +155,7 @@ bool TraceTester::TraceAnyHit(vec3 from, vec3 to, UActor* tracingActor, bool tra
 	if (traceWorld)
 	{
 		TraceRayModel tracemodel;
-		return tracemodel.TraceAnyHit(GetLevel()->Model, origin, tmin, direction, tmax, visibilityOnly);
+		return tracemodel.TraceAnyHit(GetLevelInfo(), GetLevel()->Model, origin, tmin, direction, tmax, visibilityOnly);
 	}
 
 	return false;
@@ -222,7 +225,7 @@ void TraceTester::TraceActor(UActor* actor, const dvec3& origin, double tmin, co
 		{
 			// Line/triangle intersect
 			TraceRayModel tracemodel;
-			brushHits = tracemodel.Trace(mover->Brush(), localOrigin, localTMin, localDirection, localTMax, visibilityOnly);
+			brushHits = tracemodel.Trace(mover, mover->Brush(), localOrigin, localTMin, localDirection, localTMax, visibilityOnly);
 		}
 		else
 		{
@@ -230,12 +233,11 @@ void TraceTester::TraceActor(UActor* actor, const dvec3& origin, double tmin, co
 			TraceAABBModel tracemodel;
 			dvec3 extents = { (double)radius, (double)radius, (double)height };
 			extents /= dvec3(std::abs(scale.x), std::abs(scale.y), std::abs(scale.z));
-			brushHits = tracemodel.Trace(mover->Brush(), localOrigin, localTMin, localDirection, localTMax, extents, visibilityOnly);
+			brushHits = tracemodel.Trace(mover, mover->Brush(), localOrigin, localTMin, localDirection, localTMax, extents, visibilityOnly);
 		}
 
 		for (auto& hit : brushHits)
 		{
-			hit.Actor = actor;
             /* hit.Normal is in local coords; callers of TraceActor expect normal in world coords. Normals need special
 			 * handling when doing non-uniform scaling
 			 * (see: https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals.html).

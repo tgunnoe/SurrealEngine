@@ -364,6 +364,7 @@ void Engine::Run()
 			if (EntryLevel && Level != EntryLevel)
 			{
 				LogMessage("Client travel to entry");
+				audiodev->StopSounds();
 				UnloadMap();
 				LevelPackage = EntryLevelPackage;
 				Level = EntryLevel;
@@ -545,7 +546,7 @@ UnrealMipmap* Engine::PlayVideo(VideoPlayer* video, UnrealMipmap* background)
 	}
 
 	audiodev->SetViewport(nullptr);
-	audiodev->GetDevice()->PlayMusic(video->GetAudio());
+	audiodev->PlayMusic(video->GetAudio());
 
 	float timestamp = 0.0f;
 	int curframe = -1;
@@ -578,7 +579,7 @@ UnrealMipmap* Engine::PlayVideo(VideoPlayer* video, UnrealMipmap* background)
 		if (done)
 			break;
 
-		audiodev->GetDevice()->Update();
+		audiodev->Update();
 		GameWindow::ProcessEvents();
 
 		if (frame)
@@ -592,7 +593,7 @@ UnrealMipmap* Engine::PlayVideo(VideoPlayer* video, UnrealMipmap* background)
 		}
 	}
 
-	audiodev->GetDevice()->PlayMusic(nullptr);
+	audiodev->StopMusic();
 
 	if (quit || skipAvi)
 		return nullptr;
@@ -619,11 +620,8 @@ UConversationList* Engine::GetDeusExMission()
 
 void Engine::UpdateAudio()
 {
-	mat4 translate = mat4::translate(vec3(0.0f) - CameraLocation);
-	mat4 listener = Coords::ViewToAudioDev().ToMatrix() * Coords::Rotation(CameraRotation).ToMatrix() * translate;
-
 	audiodev->SetViewport(viewport);
-	audiodev->Update(listener);
+	audiodev->Update();
 }
 
 void Engine::ClientTravel(const std::string& newURL, ETravelType travelType, bool transferItems)
@@ -753,9 +751,11 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 
 	LevelPackage = packages->LoadMap(url.Map);
 
-	// The level info is the level's first actor, so it can only be picked once the level is loaded
+	// The level info is the level's first actor, so it can only be picked once the level is loaded.
+	// World hits carry the level info as their actor, so the collision gets it after that.
 	GetLevelObject();
 	GetLevelInfoObject();
+	Level->SetOwner(LevelInfo);
 
 	LevelInfo->ComputerName() = "MyComputer";
 	LevelInfo->HubStackLevel() = 0; // To do: handle level hubs
@@ -816,26 +816,25 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 		auto stringProp = GC::Alloc<UStringProperty>("", nullptr, ObjectFlags::NoFlags);
 		std::string error;
 
-		// Only call PreBegin/Begin/PostBegin/SetInitialState for loaded objects. Spawned objects are added at the end of the Actors array.
-		size_t loadActorCount = Level->Actors.size();
-
 		LevelInfo->bStartup() = true;
 		CallEvent(GameInfo, EventName::InitGame, { ExpressionValue::StringValue(options), ExpressionValue::Variable(&error, stringProp) });
 		if (!error.empty())
 			Exception::Throw("InitGame failed: " + error);
 
 		// Note: the events may spawn actors. We can't use iterators here.
-		for (size_t i = 0; i < loadActorCount; i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::PreBeginPlay); }
-		for (size_t i = 0; i < loadActorCount; i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::BeginPlay); }
-		for (size_t i = 0; i < loadActorCount; i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::PostBeginPlay); }
-		for (size_t i = 0; i < loadActorCount; i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::SetInitialState); }
+		// Spawned objects must be initialized twice.
+		// DX breaks if SetInitialState isn't called a second time on the spawned inventory after DeusExCarcass.PostBeginPlay finishes.
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::PreBeginPlay); }
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::BeginPlay); }
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::PostBeginPlay); }
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::SetInitialState); }
 
 		if (engine->LaunchInfo.IsDeusEx())
 		{
-			for (size_t i = 0; i < loadActorCount; i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], "PostPostBeginPlay"); }
+			for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], "PostPostBeginPlay"); }
 		}
 
-		for (size_t i = 0; i < loadActorCount; i++) { if (Level->Actors[i]) Level->Actors[i]->InitBase(); }
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) Level->Actors[i]->InitBase(); }
 		LevelInfo->bStartup() = false;
 	}
 
@@ -872,9 +871,11 @@ bool Engine::LoadFromSaveFile(const UnrealURL& url)
 
 	LevelPackage = savefilePackage;
 
-	// The level info is the level's first actor, so it can only be picked once the level is loaded
+	// The level info is the level's first actor, so it can only be picked once the level is loaded.
+	// World hits carry the level info as their actor, so the collision gets it after that.
 	GetLevelObject();
 	GetLevelInfoObject();
+	Level->SetOwner(LevelInfo);
 
 	// Same as LoadMap: these are session/engine identity, not save data, and must be
 	// re-established on every load regardless of what the package/save file contains.
@@ -1499,10 +1500,13 @@ std::string Engine::ConsoleCommand(UObject* context, const std::string& commandl
 	}
 	else if (command == "stat" && args.size() == 2)
 	{
-		render->ShowRenderStats = 0;
+		render->ShowRenderStats = false;
+		render->ShowAudioStats = false;
 
 		if (args[1] == "render")
-			render->ShowRenderStats = 1;
+			render->ShowRenderStats = true;
+		else if (args[1] == "audio")
+			render->ShowAudioStats = true;
 	}
 	else if (command == "collisiondebug" && args.size() == 2)
 	{

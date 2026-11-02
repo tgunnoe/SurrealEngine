@@ -4,6 +4,7 @@
 #include "Collision/BottomLevel/OverlapAABBModel.h"
 #include "Encroachment.h"
 #include "Packages/Engine/Actors/UActor.h"
+#include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Actors/Brush/UMover.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
 
@@ -56,7 +57,7 @@ CollisionHitList OverlapTester::TestOverlap(const vec3& location, float height, 
 		if (extents != vec3(0.0f))
 		{
 			OverlapAABBModel overlapmodel;
-			CollisionHitList worldHits = overlapmodel.TestOverlap(GetLevel()->Model, location, extents, visibilityOnly);
+			CollisionHitList worldHits = overlapmodel.TestOverlap(GetLevelInfo(), GetLevel()->Model, location, extents, visibilityOnly);
 			hits.push_back(worldHits);
 		}
 	}
@@ -244,7 +245,7 @@ Array<UActor*> OverlapTester::EncroachingActors(UActor* actor)
 		testExtents /= mainScale;
 
 		OverlapAABBModel test;
-		return !test.TestOverlap(brush, localOrigin, testExtents, false).empty();
+		return !test.TestOverlap(actor, brush, localOrigin, testExtents, false).empty();
 	};
 
 	Array<UActor*> hits;
