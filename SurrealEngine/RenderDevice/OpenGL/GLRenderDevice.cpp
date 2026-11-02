@@ -3,6 +3,7 @@
 #include "GLRenderDevice.h"
 #include "GLCachedTexture.h"
 #include "GLFileResource.h"
+#include "GLShutdownStep.h"
 #include "Utils/UTF16.h"
 #include "Utils/Logger.h"
 #include "Math/halffloat.h"
@@ -16,6 +17,83 @@ extern "C"
 	void* IntGetProcAddress(const GLubyte* name)
 	{
 		return reinterpret_cast<void*>(InitGLWidget->GetGLProcAddress((const char*)name));
+	}
+}
+
+namespace
+{
+	std::string GLString(GLenum name)
+	{
+		const GLubyte* value = glGetString(name);
+		return value ? reinterpret_cast<const char*>(value) : "(null)";
+	}
+
+	std::string GLEnumHex(GLenum value)
+	{
+		char buffer[16];
+		snprintf(buffer, sizeof(buffer), "0x%X", (unsigned int)value);
+		return buffer;
+	}
+
+	std::string GLDebugSourceName(GLenum source)
+	{
+		switch (source)
+		{
+		case GL_DEBUG_SOURCE_API: return "API";
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM: return "WINDOW_SYSTEM";
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: return "SHADER_COMPILER";
+		case GL_DEBUG_SOURCE_THIRD_PARTY: return "THIRD_PARTY";
+		case GL_DEBUG_SOURCE_APPLICATION: return "APPLICATION";
+		case GL_DEBUG_SOURCE_OTHER: return "OTHER";
+		default: return GLEnumHex(source);
+		}
+	}
+
+	std::string GLDebugTypeName(GLenum type)
+	{
+		switch (type)
+		{
+		case GL_DEBUG_TYPE_ERROR: return "ERROR";
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: return "DEPRECATED_BEHAVIOR";
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: return "UNDEFINED_BEHAVIOR";
+		case GL_DEBUG_TYPE_PORTABILITY: return "PORTABILITY";
+		case GL_DEBUG_TYPE_PERFORMANCE: return "PERFORMANCE";
+		case GL_DEBUG_TYPE_MARKER: return "MARKER";
+		case GL_DEBUG_TYPE_PUSH_GROUP: return "PUSH_GROUP";
+		case GL_DEBUG_TYPE_POP_GROUP: return "POP_GROUP";
+		case GL_DEBUG_TYPE_OTHER: return "OTHER";
+		default: return GLEnumHex(type);
+		}
+	}
+
+	std::string GLDebugSeverityName(GLenum severity)
+	{
+		switch (severity)
+		{
+		case GL_DEBUG_SEVERITY_HIGH: return "HIGH";
+		case GL_DEBUG_SEVERITY_MEDIUM: return "MEDIUM";
+		case GL_DEBUG_SEVERITY_LOW: return "LOW";
+		case GL_DEBUG_SEVERITY_NOTIFICATION: return "NOTIFICATION";
+		default: return GLEnumHex(severity);
+		}
+	}
+
+	// userParam is the device, but it is not used: the context outlives the device, so a message
+	// during teardown must not depend on the device still being alive.
+	void APIENTRY GLDebugMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
+	{
+		// An exception must not unwind through the driver's frames, and a failing log leaves nothing
+		// to report the failure to.
+		try
+		{
+			std::string text = message ? (length >= 0 ? std::string(message, (size_t)length) : std::string(message)) : std::string();
+			while (!text.empty() && (text.back() == '\n' || text.back() == '\r'))
+				text.pop_back();
+			LogMessage("GLDrv debug: source=" + GLDebugSourceName(source) + " type=" + GLDebugTypeName(type) + " id=" + std::to_string(id) + " severity=" + GLDebugSeverityName(severity) + ": " + text);
+		}
+		catch (...)
+		{
+		}
 	}
 }
 
@@ -58,6 +136,24 @@ bool GLRenderDevice::Init(int NewX, int NewY, bool Fullscreen)
 		if (result == ogl_LOAD_FAILED)
 			throw std::runtime_error("ogl_LoadFunctions failed");
 
+		LogMessage("GLDrv: " + GLString(GL_VERSION) + " / " + GLString(GL_RENDERER));
+
+		if (UseDebugLayer)
+		{
+			if (glDebugMessageCallback)
+			{
+				// Synchronous, so a message is logged at the call that caused it instead of later on a driver thread.
+				glEnable(GL_DEBUG_OUTPUT);
+				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+				glDebugMessageCallback(GLDebugMessage, this);
+				LogMessage("GLDrv: debug output enabled");
+			}
+			else
+			{
+				LogMessage("GLDrv: debug output requested but glDebugMessageCallback is not available");
+			}
+		}
+
 		CreateScenePass();
 		CreatePresentPass();
 		CreateBloomPass();
@@ -97,14 +193,17 @@ void GLRenderDevice::Exit()
 {
 	LogMessage("GLDrv: exit called");
 
-	UnmapVertices();
-
-	Uploads.reset();
-	Textures.reset();
-	ReleasePresentPass();
-	ReleaseBloomPass();
-	ReleaseScenePass();
-	ReleaseSceneBuffers();
+	// The destructor runs this while a failed frame's exception may still be unwinding, and a
+	// second exception from here would end the process before the first one is reported. Each
+	// step is therefore guarded on its own, so one failing step does not skip the ones after it.
+	auto log = [](const std::string& message) { LogMessage("GLDrv: shutdown step failed: " + message); };
+	GLShutdownStep("UnmapVertices", [&] { UnmapVertices(); }, log);
+	GLShutdownStep("Uploads.reset", [&] { Uploads.reset(); }, log);
+	GLShutdownStep("Textures.reset", [&] { Textures.reset(); }, log);
+	GLShutdownStep("ReleasePresentPass", [&] { ReleasePresentPass(); }, log);
+	GLShutdownStep("ReleaseBloomPass", [&] { ReleaseBloomPass(); }, log);
+	GLShutdownStep("ReleaseScenePass", [&] { ReleaseScenePass(); }, log);
+	GLShutdownStep("ReleaseSceneBuffers", [&] { ReleaseSceneBuffers(); }, log);
 }
 
 void GLRenderDevice::ResizeSceneBuffers(int width, int height, int multisample)
@@ -1870,7 +1969,7 @@ void GLRenderDevice::ReadPixels(TextureColor* Pixels)
 
 void GLRenderDevice::EndFlash()
 {
-	if (FlashScale != vec4(0.5f, 0.5f, 0.5f, 0.0f) || FlashFog != vec4(0.0f, 0.0f, 0.0f, 0.0f))
+	if (!FlashIsNeutral(FlashScale, FlashFog))
 	{
 		DrawBatches();
 
@@ -2101,6 +2200,11 @@ void GLRenderDevice::DrawBatches(bool nextBuffer)
 	QueuedBatches.clear();
 
 	ThrowIfGLError("DrawBatches failed (after draw)");
+
+	// glMapBufferRange rejects a zero-length range, and a buffer filled to its last element has no
+	// range left to map. Everything queued has just been drawn, so continue in a fresh buffer.
+	if (GLSceneVertexPos >= (size_t)SceneVertexBufferSize || SceneIndexPos >= (size_t)SceneIndexBufferSize)
+		nextBuffer = true;
 
 	MapVertices(nextBuffer);
 

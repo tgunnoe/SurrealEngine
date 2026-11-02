@@ -162,7 +162,7 @@ void ExportCommandlet::ExportScripts(DebuggerApp* console, Array<std::string>& p
 		std::string& name = pkgobject.second;
 
 		std::string pkgname = package->GetPackageName().ToString();
-		auto pkgpath = fs::path(engine->LaunchInfo.gameRootFolder) / name;
+		auto pkgpath = engine->packages->GetDataFolderPath() / "Export" / name; // Never inside the game folder
 		std::string classespath = (pkgpath / "Classes").string();
 		bool pkgpathcreated = false;
 
@@ -254,7 +254,7 @@ void ExportCommandlet::ExportTextures(DebuggerApp* console, Array<std::string>& 
 		std::string& name = pkgobject.second;
 
 		std::string pkgname = package->GetPackageName().ToString();
-		auto pkgpath = fs::path(engine->LaunchInfo.gameRootFolder) / name;
+		auto pkgpath = engine->packages->GetDataFolderPath() / "Export" / name; // Never inside the game folder
 		std::string texturespath = (pkgpath / "Textures").string();
 		bool pkgpathcreated = false;
 

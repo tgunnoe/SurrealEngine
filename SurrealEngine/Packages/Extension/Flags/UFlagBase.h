@@ -48,6 +48,8 @@ public:
 
 	UFlag* GetFlag(const NameString& flagName, uint8_t flagType);
 
+	static int BucketOf(const NameString& flagName);
+
 	template<typename T>
 	T* GetOrCreateFlag(const NameString& FlagName, std::optional<bool> bAdd, std::optional<int> expiration, EFlagType flagType, const char* flagClassName);
 
@@ -57,6 +59,7 @@ public:
 	struct FlagIterator
 	{
 		int HashPos = 0;
+		UFlag* Flag = nullptr;
 		uint8_t FlagType = 0;
 		bool FlagTypeSet = false;
 	};

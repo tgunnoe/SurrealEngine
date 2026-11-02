@@ -103,14 +103,11 @@ bool VisibleMesh::DrawMesh(VisibleFrame* frame, UActor* actor, UActor* lightLoca
 
 	if (animFrame >= 0.0f)
 	{
-		int frame0 = (int)animFrame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		t0 = animFrame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
+		t0 = frames.T0;
 		t1 = 0.0f;
-		vertexOffsets[0] = (seq->StartFrame + frame0) * mesh->FrameVerts;
-		vertexOffsets[1] = (seq->StartFrame + frame1) * mesh->FrameVerts;
+		vertexOffsets[0] = frames.V0;
+		vertexOffsets[1] = frames.V1;
 		vertexOffsets[2] = 0;
 	}
 	else // Tween from old animation
@@ -252,14 +249,11 @@ bool VisibleMesh::DrawLodMesh(VisibleFrame* frame, UActor* actor, UActor* lightL
 
 	if (animFrame >= 0.0f)
 	{
-		int frame0 = (int)animFrame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		t0 = animFrame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
+		t0 = frames.T0;
 		t1 = 0.0f;
-		vertexOffsets[0] = (seq->StartFrame + frame0) * mesh->FrameVerts;
-		vertexOffsets[1] = (seq->StartFrame + frame1) * mesh->FrameVerts;
+		vertexOffsets[0] = frames.V0;
+		vertexOffsets[1] = frames.V1;
 		vertexOffsets[2] = 0;
 	}
 	else // Tween from old animation
@@ -580,14 +574,11 @@ bool VisibleMesh::DrawMeshDX(VisibleFrame* frame, UActor* actor, UActor* lightLo
 
 	if (animFrame >= 0.0f)
 	{
-		int frame0 = (int)animFrame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		t0 = animFrame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
+		t0 = frames.T0;
 		t1 = 0.0f;
-		vertexOffsets[0] = (seq->StartFrame + frame0) * mesh->FrameVerts;
-		vertexOffsets[1] = (seq->StartFrame + frame1) * mesh->FrameVerts;
+		vertexOffsets[0] = frames.V0;
+		vertexOffsets[1] = frames.V1;
 		vertexOffsets[2] = 0;
 	}
 	else // Tween from old animation
@@ -617,17 +608,13 @@ bool VisibleMesh::DrawMeshDX(VisibleFrame* frame, UActor* actor, UActor* lightLo
 
 		if (frame >= 0.0f)
 		{
-			int f0 = (int)frame;
-			int f1 = f0 + 1;
+			MeshFrameOffsets frames = ComputeMeshFrameOffsets(frame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
 
-			f0 %= seq->NumFrames;
-			f1 %= seq->NumFrames;
-
-			b.t0 = frame - f0;
+			b.t0 = frames.T0;
 			b.t1 = 0.0f;
 
-			b.offsets[0] = (seq->StartFrame + f0) * mesh->FrameVerts;
-			b.offsets[1] = (seq->StartFrame + f1) * mesh->FrameVerts;
+			b.offsets[0] = frames.V0;
+			b.offsets[1] = frames.V1;
 			b.offsets[2] = 0;
 
 			b.weight = 1.0f;
@@ -810,14 +797,11 @@ bool VisibleMesh::DrawLodMeshDX(VisibleFrame* frame, UActor* actor, UActor* ligh
 
 	if (animFrame >= 0.0f)
 	{
-		int frame0 = (int)animFrame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		t0 = animFrame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
+		t0 = frames.T0;
 		t1 = 0.0f;
-		vertexOffsets[0] = (seq->StartFrame + frame0) * mesh->FrameVerts;
-		vertexOffsets[1] = (seq->StartFrame + frame1) * mesh->FrameVerts;
+		vertexOffsets[0] = frames.V0;
+		vertexOffsets[1] = frames.V1;
 		vertexOffsets[2] = 0;
 	}
 	else // Tween from old animation
@@ -843,28 +827,24 @@ bool VisibleMesh::DrawLodMeshDX(VisibleFrame* frame, UActor* actor, UActor* ligh
 
 		float frame = animSource->BlendAnimFrame()[i] * seq->NumFrames;
 
-		static bool loggedBlend[4] = {};
+		/*static bool loggedBlend[4] = {};
 		if (!loggedBlend[i])
 		{
 			LogMessage("DrawLodMeshDX blend[" + std::to_string(i) + "]: seq='" + seq->Name.ToString() + "' frame=" + std::to_string(frame) + " StartFrame=" + std::to_string(seq->StartFrame) + " NumFrames=" + std::to_string(seq->NumFrames) + " FrameVerts=" + std::to_string(mesh->FrameVerts) + " weight=1.0");
 			loggedBlend[i] = true;
-		}
+		}*/
 
 		BlendInfo& b = blends[blendCount++];
 
 		if (frame >= 0.0f)
 		{
-			int f0 = (int)frame;
-			int f1 = f0 + 1;
+			MeshFrameOffsets frames = ComputeMeshFrameOffsets(frame, seq->StartFrame, seq->NumFrames, mesh->FrameVerts, mesh->AnimFrames);
 
-			f0 %= seq->NumFrames;
-			f1 %= seq->NumFrames;
-
-			b.t0 = frame - f0;
+			b.t0 = frames.T0;
 			b.t1 = 0.0f;
 
-			b.offsets[0] = (seq->StartFrame + f0) * mesh->FrameVerts;
-			b.offsets[1] = (seq->StartFrame + f1) * mesh->FrameVerts;
+			b.offsets[0] = frames.V0;
+			b.offsets[1] = frames.V1;
 			b.offsets[2] = 0;
 
 			b.weight = 1.0f;
@@ -1075,19 +1055,20 @@ void VisibleMesh::DrawDebugInfo(VisibleFrame* frame, UActor* actor)
 	// Draw debug line to where pawn is trying to go
 	{
 		vec3 end;
-		if (pawn->StateFrame->LatentState == LatentRunState::MoveTo)
+		LatentRunState latentState = pawn->StateFrame->GetLatentState();
+		if (latentState == LatentRunState::MoveTo)
 		{
 			end = pawn->Destination();
 		}
-		else if (pawn->StateFrame->LatentState == LatentRunState::MoveToward && pawn->MoveTarget())
+		else if (latentState == LatentRunState::MoveToward && pawn->MoveTarget())
 		{
 			end = pawn->MoveTarget()->Location();
 		}
-		else if (pawn->StateFrame->LatentState == LatentRunState::StrafeTo)
+		else if (latentState == LatentRunState::StrafeTo)
 		{
 			end = pawn->Destination();
 		}
-		else if (pawn->StateFrame->LatentState == LatentRunState::StrafeFacing)
+		else if (latentState == LatentRunState::StrafeFacing)
 		{
 			end = pawn->Destination();
 		}

@@ -2,11 +2,15 @@
 #include "Precomp.h"
 #include "UActor.h"
 #include "Packages/Core/UClass.h"
+#include "Packages/Core/UFunction.h"
+#include "Packages/DeusEx/UScriptedPawn.h"
 #include "Packages/Engine/UViewport.h"
+#include "Packages/Engine/Actors/AIEventManager.h"
 #include "Packages/Engine/Actors/USpawnNotify.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Actors/Info/UGameInfo.h"
 #include "Packages/Engine/Actors/Pawn/UPlayerPawn.h"
+#include "Packages/Engine/Actors/Pawn/UPawn_AIMath.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
 #include "Packages/Engine/Subsystems/USurrealAudioDevice.h"
@@ -14,6 +18,9 @@
 #include "Engine.h"
 #include "VM/ScriptCall.h"
 #include "VM/Frame.h"
+#include <cstddef>
+#include <cstdio>
+#include <set>
 
 UActor* UActor::Spawn(UClass* SpawnClass, std::optional<UActor*> SpawnOwner, std::optional<NameString> SpawnTag, std::optional<vec3> SpawnLocation, std::optional<Rotator> SpawnRotation)
 {
@@ -122,7 +129,35 @@ bool UActor::Destroy()
 
 	bDeleteMe() = true;
 
-	//GotoState({}, {}); // What should happen to function calls after Destroy() has been called? Razor2 calls SetRoll afterwards!
+	// Run the current state's EndState so that whatever the state started (a screen tint, a display
+	// change) is undone. The state itself is kept: script such as Razor2 calls a state function after
+	// destroying its actor. The call is composed here instead of using CallEvent, because CallEvent
+	// passes only Destroyed to an actor already marked deleted, so a plain CallEvent would do nothing.
+	// Where it runs matters. It follows bDeleteMe = true, so an EndState that destroys the actor again
+	// (UDamage's does) returns at once at the check above instead of destroying twice. It precedes
+	// SetBase and the rest of the teardown, so the owner is still set (Destroyed clears it through the
+	// inventory, and an EndState such as Invisibility's needs it), and so whatever the EndState
+	// registers again, such as a collision entry through SetCollision or a sound, is removed by the
+	// steps that follow instead of outliving the actor.
+	if (!GetStateName().IsNone() && SkipReasonFor(this, IsEventEnabled(EventName::EndState), true) == ScriptCallSkip::None)
+	{
+		if (UFunction* endState = FindEventFunction(this, ToNameString(EventName::EndState)))
+		{
+			try
+			{
+				Frame::Call(endState, this, ArrayView<ExpressionValue>());
+			}
+			catch (const std::exception& e)
+			{
+				LogMessage("Script error: EndState of " + Name.ToString() + " threw while it was destroyed: " + e.what());
+			}
+			catch (...)
+			{
+				LogMessage("Script error: EndState of " + Name.ToString() + " threw an unknown error while it was destroyed");
+			}
+		}
+	}
+
 	SetBase(nullptr, true);
 
 	engine->audiodev->ActorDestroyed(this);
@@ -133,6 +168,10 @@ bool UActor::Destroy()
 	level->Collision.RemoveFromCollision(this);
 
 	CallEvent(this, EventName::Destroyed);
+
+	// Deus Ex: whatever this actor was telling AI listeners, or listening to, ends with it.
+	if (Level() && Level()->EventManager)
+		Level()->EventManager->Forget(this);
 
 	if (engine->LaunchInfo.IsUnrealTournament_469())
 	{
@@ -184,19 +223,20 @@ void UActor::Tick(float elapsed)
 
 	if (StateFrame)
 	{
-		if (StateFrame->LatentState == LatentRunState::Sleep)
+		LatentRunState latentState = StateFrame->GetLatentState();
+		if (latentState == LatentRunState::Sleep)
 		{
 			SleepTimeLeft = std::max(SleepTimeLeft - elapsed, 0.0f);
 			if (SleepTimeLeft == 0.0f)
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 		}
-		else if (StateFrame->LatentState == LatentRunState::FinishInterpolation)
+		else if (latentState == LatentRunState::FinishInterpolation)
 		{
 			if (!bInterpolating())
-				StateFrame->LatentState = LatentRunState::Continue;
+				StateFrame->SetLatentState(LatentRunState::Continue);
 		}
 
-		if (Role() >= ROLE_SimulatedProxy && StateFrame->LatentState == LatentRunState::Continue)
+		if (Role() >= ROLE_SimulatedProxy && StateFrame->GetLatentState() == LatentRunState::Continue)
 		{
 			StateFrame->Tick();
 		}
@@ -350,6 +390,161 @@ bool UActor::IsOSVer2kOrXP()
 	return true;
 }
 
+// Deus Ex AI events: the engine's half of AIEventManager, which knows nothing about actors itself.
+namespace
+{
+	// A class that lacks a callback it registered would otherwise be reported at every event.
+	void ReportAIEventCallbackOnce(UActor* listener, const NameString& function, const std::string& problem)
+	{
+		static std::set<std::string> reported;
+		std::string key = listener->Class->Name.ToString() + "." + function.ToString();
+		if (reported.insert(key).second)
+			LogMessage("AI event callback " + key + ": " + problem);
+	}
+
+	// The script struct is read through the C++ XAIParams, so refuse a package whose struct is laid out differently.
+	bool IsXAIParamsLayout(UStruct* type)
+	{
+		struct Field { const char* name; size_t offset; };
+		static const Field fields[] = {
+			{ "BestActor", offsetof(XAIParams, BestActor) }, { "Score", offsetof(XAIParams, Score) },
+			{ "Visibility", offsetof(XAIParams, Visibility) }, { "Volume", offsetof(XAIParams, Volume) },
+			{ "Smell", offsetof(XAIParams, Smell) } };
+
+		if (type->StructSize != sizeof(XAIParams) || type->Properties.size() != std::size(fields))
+			return false;
+		for (const Field& field : fields)
+		{
+			bool found = false;
+			for (UProperty* prop : type->Properties)
+				found = found || (prop->Name == field.name && prop->DataOffset.DataOffset == field.offset);
+			if (!found)
+				return false;
+		}
+		return true;
+	}
+
+	bool DeliverAIEvent(UActor* listener, const NameString& callback, const NameString& event, EAIEventState state, const AIEventParams& params)
+	{
+		UFunction* func = FindEventFunction(listener, callback);
+		if (!func)
+		{
+			ReportAIEventCallbackOnce(listener, callback, "the class has no such function, so its registration is removed");
+			return false;
+		}
+
+		// Callbacks are (Name event, EAIEventState state, XAIParams params); the struct type comes from the function itself.
+		UStructProperty* paramsProperty = nullptr;
+		int parmIndex = 0;
+		for (UProperty* prop : func->Properties)
+		{
+			if (!AllFlags(prop->PropFlags, PropertyFlags::Parm) || AllFlags(prop->PropFlags, PropertyFlags::ReturnParm))
+				continue;
+			if (parmIndex++ == 2)
+			{
+				if (prop->ValueType == ExpressionValueType::ValueStruct)
+					paramsProperty = static_cast<UStructProperty*>(prop);
+				break;
+			}
+		}
+		if (!paramsProperty || !paramsProperty->Struct || !IsXAIParamsLayout(paramsProperty->Struct))
+		{
+			ReportAIEventCallbackOnce(listener, callback, "its third parameter is not an XAIParams, so its registration is removed");
+			return false;
+		}
+
+		if (state != EAIEventState::EAISTATE_Pulse)
+		{
+			static const char* const stateNames[] = { "Begin", "End", "Pulse", "ChangeBest" };
+			char score[32];
+			snprintf(score, sizeof(score), "%.2f", params.score);
+			LogMessage("AIEvent: " + (params.bestActor ? params.bestActor->Name.ToString() : std::string("None")) + " " + event.ToString() + " " +
+				stateNames[(int)state] + " -> " + listener->Name.ToString() + " (" + listener->Class->Name.ToString() + ")." +
+				callback.ToString() + " score=" + score);
+		}
+
+		// The struct is passed as a variable that lives in scriptParams. Variable() places a property at its
+		// offset inside a frame, so give it the address of the frame that puts the parameter on scriptParams.
+		XAIParams scriptParams = { params.bestActor, params.score, params.visibility, params.volume, params.smell };
+		void* frame = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(&scriptParams) - paramsProperty->DataOffset.DataOffset);
+
+		Array<ExpressionValue> args;
+		args.push_back(ExpressionValue::NameValue(event));
+		args.push_back(ExpressionValue::ByteValue((uint8_t)state));
+		args.push_back(ExpressionValue::Variable(frame, paramsProperty));
+		CallEvent(listener, callback, std::move(args));
+		return true;
+	}
+
+	float ScoreAIEvent(UActor* listener, const NameString& scoreCallback, UActor* sender, float rawScore)
+	{
+		if (!FindEventFunction(listener, scoreCallback))
+		{
+			ReportAIEventCallbackOnce(listener, scoreCallback, "the class has no such score function, so scores are used as they are");
+			return rawScore;
+		}
+		ExpressionValue result = CallEvent(listener, scoreCallback, { ExpressionValue::ObjectValue(listener), ExpressionValue::ObjectValue(sender), ExpressionValue::FloatValue(rawScore) });
+		return result.GetType() == ExpressionValueType::Nothing ? rawScore : result.ToFloat();
+	}
+
+	bool AIEventVisible(UActor* listener, UActor* sender, const AIEventRegistration& registration)
+	{
+		UPawn* pawn = UObject::TryCast<UPawn>(listener);
+		if (!pawn)
+		{
+			// Turrets and sensors have no eyes, so every sight flag comes down to a clear line between the two.
+			bool anyCheck = registration.bCheckVisibility || registration.bCheckDir || registration.bCheckCylinder || registration.bCheckLOS;
+			return !anyCheck || listener->FastTrace(sender->Location(), listener->Location());
+		}
+
+		if (registration.bCheckLOS && !pawn->LineOfSightTo(sender, true))
+			return false;
+
+		// A cylinder test is a visibility test of the whole body.
+		if (registration.bCheckVisibility || registration.bCheckCylinder)
+			return pawn->AICanSee(sender, 1.0f, true, registration.bCheckDir, registration.bCheckCylinder, true) > 0.0f;
+
+		if (registration.bCheckDir)
+		{
+			vec3 eye = pawn->Location();
+			eye.z += pawn->BaseEyeHeight();
+			const Rotator facing = pawn->Rotation();
+			const Rotator added = pawn->AIAddViewRotation();
+			return AIMath::InViewCone(eye, facing.Pitch, facing.Yaw, added.Pitch, added.Yaw, sender->Location(), pawn->PeripheralVision());
+		}
+		return true;
+	}
+
+	// The manager of this actor's level, set up to ask the engine its questions, or null in a level whose
+	// scripts never created one.
+	AIEventManager* AIEventManagerFor(UActor* actor, const char* native)
+	{
+		ULevelInfo* level = actor->Level();
+		if (!level || !level->EventManager)
+		{
+			static bool reported = false;
+			if (!reported)
+			{
+				reported = true;
+				LogMessage(std::string("Actor.") + native + " ignored: this level never created an AI event manager");
+			}
+			return nullptr;
+		}
+
+		AIEventManager* manager = level->EventManager.get();
+		if (!manager->Hooks.Deliver)
+		{
+			manager->Hooks.Deliver = &DeliverAIEvent;
+			manager->Hooks.Score = &ScoreAIEvent;
+			manager->Hooks.Visible = &AIEventVisible;
+			manager->Hooks.Position = [](UActor* a) { return a->Location(); };
+			manager->Hooks.Alive = [](UActor* a) { return !a->bDeleteMe(); };
+			manager->Hooks.Now = [level]() { return (double)level->TimeSeconds(); };
+		}
+		return manager;
+	}
+}
+
 void UActor::AIClearEvent(const NameString& eventName)
 {
 	LogUnimplemented("Actor.AIClearEvent");
@@ -357,12 +552,14 @@ void UActor::AIClearEvent(const NameString& eventName)
 
 void UActor::AIClearEventCallback(const NameString& eventName)
 {
-	LogUnimplemented("Actor.AIClearEventCallback");
+	if (AIEventManager* manager = AIEventManagerFor(this, "AIClearEventCallback"))
+		manager->ClearCallback(this, eventName);
 }
 
 void UActor::AIEndEvent(const NameString& eventName, uint8_t eventType)
 {
-	LogUnimplemented("Actor.AIEndEvent");
+	if (AIEventManager* manager = AIEventManagerFor(this, "AIEndEvent"))
+		manager->EndEvent(this, eventName, (EAIEventType)eventType);
 }
 
 float UActor::AIGetLightLevel(const vec3& Location)
@@ -373,20 +570,31 @@ float UActor::AIGetLightLevel(const vec3& Location)
 
 void UActor::AISendEvent(const NameString& eventName, uint8_t eventType, std::optional<float> Value, std::optional<float> Radius)
 {
-	LogUnimplemented("Actor.AISendEvent");
-	//LogUnimplemented(Name.ToString() + ": AISendEvent('" + eventName.ToString() + "')");
+	if (AIEventManager* manager = AIEventManagerFor(this, "AISendEvent"))
+		manager->SendEvent(this, eventName, (EAIEventType)eventType, Value.value_or(1.0f), Radius.value_or(0.0f));
 }
 
 void UActor::AISetEventCallback(const NameString& eventName, const NameString& callback, std::optional<NameString> scoreCallback, std::optional<bool> bCheckVisibility, std::optional<bool> bCheckDir, std::optional<bool> bCheckCylinder, std::optional<bool> bCheckLOS)
 {
-	LogUnimplemented("Actor.AISetEventCallback");
-	//LogMessage(Name.ToString() + ": AISetEventCallback('" + eventName.ToString() + "')");
+	AIEventManager* manager = AIEventManagerFor(this, "AISetEventCallback");
+	if (!manager)
+		return;
+
+	AIEventRegistration registration;
+	registration.Event = eventName;
+	registration.Callback = callback;
+	registration.ScoreCallback = scoreCallback.value_or(NameString());
+	registration.bCheckVisibility = bCheckVisibility.value_or(false);
+	registration.bCheckDir = bCheckDir.value_or(false);
+	registration.bCheckCylinder = bCheckCylinder.value_or(false);
+	registration.bCheckLOS = bCheckLOS.value_or(false);
+	manager->SetCallback(this, registration);
 }
 
 void UActor::AIStartEvent(const NameString& eventName, uint8_t eventType, std::optional<float> Value, std::optional<float> Radius)
 {
-	LogUnimplemented("Actor.AIStartEvent");
-	//LogUnimplemented(Name.ToString() + ": AIStartEvent('" + eventName.ToString() + "')");
+	if (AIEventManager* manager = AIEventManagerFor(this, "AIStartEvent"))
+		manager->StartEvent(this, eventName, (EAIEventType)eventType, Value.value_or(1.0f), Radius.value_or(0.0f));
 }
 
 float UActor::AIVisibility(std::optional<bool> bIncludeVelocity)

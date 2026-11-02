@@ -2,8 +2,10 @@
 #include "Precomp.h"
 #include "OverlapTest.h"
 #include "Collision/BottomLevel/OverlapAABBModel.h"
+#include "Encroachment.h"
 #include "Packages/Engine/Actors/UActor.h"
 #include "Packages/Engine/Actors/Brush/UMover.h"
+#include "Packages/Engine/Resources/Level/UModel.h"
 
 CollisionHitList OverlapTester::TestOverlap(const vec3& location, float height, float radius, bool testActors, bool testWorld, bool visibilityOnly)
 {
@@ -201,12 +203,7 @@ Array<UActor*> OverlapTester::EncroachingActors(UActor* actor)
 	if (!brush)
 		return CollidingActors(actor->Location(), actor->CollisionHeight(), actor->CollisionRadius());
 
-	// To do: is radius and height correct for a mover? Should it use the brush bounding box?
-
 	vec3 origin = actor->Location();
-	float height = actor->CollisionHeight();
-	float radius = actor->CollisionRadius();
-	vec3 extents = { radius, radius, height };
 
 	mat4 rotateObjToWorld = Coords::Rotation(actor->Rotation()).ToMatrix();
 	mat4 rotateWorldToObj = mat4::transpose(rotateObjToWorld);
@@ -218,65 +215,42 @@ Array<UActor*> OverlapTester::EncroachingActors(UActor* actor)
 		mainScale = mover->MainScale().Scale;
 	}
 
-	Array<UActor*> hits;
+	EncroachCellRange cells = EncroachWindow({ brush->BoundingBox, origin, rotateObjToWorld, mainScale, prePivot });
+	if (!(cells.end.x - cells.start.x < 100 && cells.end.y - cells.start.y < 100 && cells.end.z - cells.start.z < 100))
+		return {};
 
-	int checkCounter = NextCheckCounter();
-	ivec3 start = GetStartExtents(origin, extents);
-	ivec3 end = GetEndExtents(origin, extents);
-	if (end.x - start.x < 100 && end.y - start.y < 100 && end.z - start.z < 100)
+	std::vector<EncroachCandidate<UActor*>> candidates;
+	for (int z = cells.start.z; z < cells.end.z; z++)
 	{
-		for (int z = start.z; z < end.z; z++)
+		for (int y = cells.start.y; y < cells.end.y; y++)
 		{
-			for (int y = start.y; y < end.y; y++)
+			for (int x = cells.start.x; x < cells.end.x; x++)
 			{
-				for (int x = start.x; x < end.x; x++)
+				for (UActor* testActor : GetActors(x, y, z))
 				{
-					for (UActor* testActor : GetActors(x, y, z))
-					{
-						if (actor->Collision.CheckCounter != checkCounter)
-						{
-							actor->Collision.CheckCounter = checkCounter;
-							if (testActor == actor || testActor->Brush())
-								continue;
-
-							vec3 localOrigin = (rotateWorldToObj * vec4(testActor->Location() - origin, 1.0f)).xyz() / mainScale + prePivot;
-
-							float testHeight = testActor->CollisionHeight();
-							float testRadius = testActor->CollisionRadius();
-							vec3 testExtents = { testRadius, testRadius, testHeight };
-							testExtents /= mainScale;
-
-							OverlapAABBModel test;
-							auto modelHits = test.TestOverlap(brush, localOrigin, testExtents, false);
-							if (!modelHits.empty())
-								hits.push_back(testActor);
-						}
-					}
+					candidates.push_back({ testActor, testActor == actor, testActor->Brush() != nullptr });
 				}
 			}
 		}
 	}
 
-	std::set<UActor*> seenActors;
-	Array<UActor*> uniqueHits;
-	uniqueHits.reserve(hits.size());
-	for (auto& hit : hits)
+	auto overlapsBrush = [&](UActor* testActor)
 	{
-		if (hit)
-		{
-			if (seenActors.find(hit) == seenActors.end())
-			{
-				seenActors.insert(hit);
-				uniqueHits.push_back(hit);
-			}
-		}
-		else
-		{
-			uniqueHits.push_back(hit);
-		}
-	}
+		vec3 localOrigin = (rotateWorldToObj * vec4(testActor->Location() - origin, 1.0f)).xyz() / mainScale + prePivot;
 
-	return uniqueHits;
+		float testHeight = testActor->CollisionHeight();
+		float testRadius = testActor->CollisionRadius();
+		vec3 testExtents = { testRadius, testRadius, testHeight };
+		testExtents /= mainScale;
+
+		OverlapAABBModel test;
+		return !test.TestOverlap(brush, localOrigin, testExtents, false).empty();
+	};
+
+	Array<UActor*> hits;
+	for (UActor* hit : GatherEncroaching(candidates, overlapsBrush))
+		hits.push_back(hit);
+	return hits;
 }
 
 bool OverlapTester::IsOverlapping(UActor* actor1, UActor* actor2)

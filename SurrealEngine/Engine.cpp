@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "Engine.h"
 #include "Utils/File.h"
+#include "Utils/UserDirs.h"
 #include "Utils/StrTools.h"
 #include "Utils/SHA1Sum.h"
 #include "Render/RenderSubsystem.h"
@@ -48,8 +49,11 @@
 #include "Packages/ConSys/Events/UConEvent.h"
 #include "Packages/ConSys/Events/UConEventTransferObject.h"
 #include "Packages/ConSys/Events/UConEventCheckObject.h"
+#include "Packages/DeusEx/UDeusExDecoration.h"
 #include "Packages/DeusEx/UDeusExLevelInfo.h"
+#include "Packages/DeusEx/UDeusExPlayer.h"
 #include "Packages/DeusEx/UDeusExSaveInfo.h"
+#include "Packages/DeusEx/UScriptedPawn.h"
 #include "ObjectTravelInfo.h"
 #include "Math/quaternion.h"
 #include "Math/FrustumPlanes.h"
@@ -59,13 +63,50 @@
 #include "VM/ScriptCall.h"
 #include "Video/VideoPlayer.h"
 #include "Utils/Convert.h"
+#include <cctype>
+#include <cerrno>
 #include <chrono>
+#include <cmath>
+#include <cstdlib>
+#include <iostream>
 #include <set>
+#include <utility>
 
 Engine* engine = nullptr;
 
+// A skipped save or load goes to the engine log and, as a WARNING, to the smoke log, so an unattended
+// run shows that it did not happen.
+static void LogSkipped(const std::string& text)
+{
+	LogMessage(text);
+	SmokeLog::Get()->Event("WARNING", text);
+}
+
+// Runs from the destructor, where an exception would end the process: a log that cannot be written
+// is reported and the shutdown carries on.
+static void SaveLastRunLog() noexcept
+{
+	try
+	{
+		const fs::path directory = UserDirs::appConfigDir();
+		Directory::create(directory.string());
+		Logger::Get()->SaveLogAsPlaintext((directory / "SE-Log-LastRun.txt").string());
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "SurrealEngine: could not save SE-Log-LastRun.txt: " << e.what() << "\n";
+	}
+	catch (...)
+	{
+		std::cerr << "SurrealEngine: could not save SE-Log-LastRun.txt\n";
+	}
+}
+
 Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 {
+	// Every entry point constructs the engine once the game is chosen, so this covers them all
+	WritePolicy::setForbiddenRoot(LaunchInfo.gameRootFolder);
+
 	engine = this;
 
 	packages = std::make_unique<PackageManager>(LaunchInfo);
@@ -91,7 +132,6 @@ Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 		deusExPackage = packages->GetPackage("DeusEx");
 		dxgc = UObject::Cast<UGC>(transientpkg->NewObject("gc", extpkg->GetClass("GC"), ObjectFlags::Transient));
 		dxgc->Canvas() = canvas;
-		dxSaveInfo = UObject::Cast<UDXSaveInfo>(transientpkg->NewObject("DeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::Transient));
 		dxConMissionList = UObject::Cast<UConversationMissionList>(packages->GetPackage("DeusExConText")->GetUObject("ConversationMissionList", "ConMissionList"));
 	}
 
@@ -110,14 +150,17 @@ Engine::~Engine()
 	if (audiodev)
 		audiodev->ShutdownDevice();
 
-	Logger::Get()->SaveLogAsPlaintext((Directory::localAppData() / "SurrealEngine/SE-Log-LastRun.txt").string());
+	SaveLastRunLog();
 
 	engine = nullptr;
 }
 
 void Engine::Run()
 {
+	SmokeLog::Get()->Event("GAME", LaunchInfo.gameName + " " + LaunchInfo.gameVersionString);
+
 	LogMessage("Game: " + LaunchInfo.gameName + " (Version: " + LaunchInfo.gameVersionString + ")");
+	LogMessage("User directories: config=" + packages->GetConfigFolderPath().string() + " data=" + packages->GetDataFolderPath().string());
 	LoadEngineSettings();
 	LogMessage("Loaded Engine settings");
 	LoadKeybindings();
@@ -238,12 +281,19 @@ void Engine::Run()
 		viewport->SetViewportRect(0, 0, engine->window->GetPixelWidth(), engine->window->GetPixelHeight());
 		render->DrawGame(levelElapsed);
 
-		// Save the game if there is a request for it
-		if (SaveGameInfo.SaveGameSlot != DONT_SAVE_GAME)
-		{
-			SaveGameToSlot(SaveGameInfo.SaveGameSlot, SaveGameInfo.SaveGameDescription);
+		// Before the exit-after check, so a command due at the exit time still runs
+		RunDueExecCommands();
+		NoteStateChanges();
 
-			SaveGameInfo.SaveGameSlot = DONT_SAVE_GAME;
+		if (SmokeLog::Get()->OnFrame(LaunchInfo.exitAfterSeconds))
+			quit = true;
+
+		// Save the game if there is a request for it
+		if (SaveGameInfo.SaveGameSlot)
+		{
+			SaveGameToSlot(*SaveGameInfo.SaveGameSlot, SaveGameInfo.SaveGameDescription);
+
+			SaveGameInfo.SaveGameSlot.reset();
 			SaveGameInfo.SaveGameDescription.clear();
 		}
 
@@ -270,7 +320,8 @@ void Engine::Run()
 				else if (LevelInfo->bNextItems())
 				{
 					ClientTravelInfo.TravelType = ETravelType::TRAVEL_Relative;
-					LoadMap(UnrealURL(LevelInfo->URL, LevelInfo->NextURL()), CreateTravelInfo(true));
+					UnrealURL url(LevelInfo->URL, LevelInfo->NextURL());
+					LoadMap(url, CreateTravelInfo(true, url));
 					LoginPlayer();
 				}
 				else
@@ -289,11 +340,12 @@ void Engine::Run()
 			LoginPlayer();
 		}
 
-		if (ClientTravelInfo.URL.HasOption("load"))
+		// Deus Ex scripts ask for "loadgame" where the others ask for "load"
+		if (LoadOptionText(ClientTravelInfo.URL))
 		{
 			UnrealURL url(ClientTravelInfo.URL);
-			LoadFromSaveFile(url);
-			PossessSavedPlayer();
+			if (LoadFromSaveFile(url))
+				PossessSavedPlayer();
 		}
 
 		if (!ClientTravelInfo.URL.Map.empty())
@@ -302,7 +354,7 @@ void Engine::Run()
 
 			UnrealURL url(ClientTravelInfo.URL);
 			LogMessage("Client travel to " + url.ToString());
-			LoadMap(url, CreateTravelInfo(ClientTravelInfo.TransferItems));
+			LoadMap(url, CreateTravelInfo(ClientTravelInfo.TransferItems, url));
 			LoginPlayer();
 		}
 
@@ -334,7 +386,9 @@ void Engine::Run()
 		renderdev->SaveConfig();
 	}
 	packages->SetIniValue("System", "Engine.SurrealWindowSystem", "WindowSystem", windowingSystemName);
-	packages->SaveAllIniFiles();
+	// Unattended runs write no ini unless they were given a directory for it
+	if (LaunchInfo.CanWriteUserFiles())
+		packages->SaveAllIniFiles();
 
 	LogMessage("Closing window...");
 	CloseWindow();
@@ -699,6 +753,8 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 
 	LevelPackage = packages->LoadMap(url.Map);
 
+	// The level info is the level's first actor, so it can only be picked once the level is loaded
+	GetLevelObject();
 	GetLevelInfoObject();
 
 	LevelInfo->ComputerName() = "MyComputer";
@@ -711,8 +767,6 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 	LevelInfo->DefaultTexture() = engine->DefaultTexture;
 
 	LevelInfo->URL = url;
-
-	GetLevelObject();
 
 	Level->TravelInfo = travelInfo; // Initially used travel info for level restart
 
@@ -789,30 +843,37 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 		CallEvent(LevelInfo->Game(), "DetailChange", {});
 }
 
-void Engine::LoadFromSaveFile(const UnrealURL& url)
+bool Engine::LoadFromSaveFile(const UnrealURL& url)
 {
+	// The request is consumed even when it cannot be met, or the main loop would ask again every frame
 	ClientTravelInfo.URL.Clear();
+
+	const std::string slotText = LoadOptionText(url).value_or("");
+	const std::optional<int> slot = ParseSaveSlot(slotText);
+	if (!slot)
+	{
+		LogSkipped("Load game skipped: slot '" + slotText + "' is not a number");
+		return false;
+	}
+
+	const int slotNum = *slot;
+	Package* savefilePackage = packages->LoadSaveSlot(slotNum);
+	if (!savefilePackage)
+	{
+		LogSkipped("Load game skipped: no save in slot " + std::to_string(slotNum));
+		return false;
+	}
 
 	if (Level)
 		CallEvent(console, EventName::NotifyLevelChange);
-
-	Package* savefilePackage = nullptr;
-	uint32_t slotNum = 0;
-
-	if (url.HasOption("load"))
-	{
-		slotNum = Convert::to_uint32(url.GetOption("load"));
-		savefilePackage = packages->LoadSaveSlot(slotNum);
-	}
-
-	if (!savefilePackage)
-		return;
 
 	audiodev->StopSounds();
 	UnloadMap();
 
 	LevelPackage = savefilePackage;
 
+	// The level info is the level's first actor, so it can only be picked once the level is loaded
+	GetLevelObject();
 	GetLevelInfoObject();
 
 	// Same as LoadMap: these are session/engine identity, not save data, and must be
@@ -833,8 +894,6 @@ void Engine::LoadFromSaveFile(const UnrealURL& url)
 		realMapName = LevelPackage->GetPackageName().ToString();
 	LevelInfo->URL = UnrealURL(realMapName);
 
-	GetLevelObject();
-
 	LinkActorsToLevel();
 
 	// engine->GameInfo is otherwise only assigned in LoadMap, so without this it keeps
@@ -843,6 +902,11 @@ void Engine::LoadFromSaveFile(const UnrealURL& url)
 	GameInfo = UObject::Cast<UGameInfo>(LevelInfo->Game());
 	if (!GameInfo)
 		Exception::Throw("Save file has no GameInfo actor for " + LevelPackage->GetPackageName().ToString() + "!");
+
+	RebindConversations();
+
+	LogMessage("Loaded game from slot " + std::to_string(slotNum) + ": " + realMapName);
+	return true;
 }
 
 void Engine::PossessSavedPlayer()
@@ -867,12 +931,13 @@ void Engine::PossessSavedPlayer()
 
 	if (auto pawnExt = UObject::TryCast<UPlayerPawnExt>(pawn))
 	{
-		// FlagBase is Transient (not saved), so it needs the same reconstruction LoginPlayer
-		// does for a fresh spawn.
+		// The flag base is saved with the level, so a loaded pawn normally has one. A save made without
+		// one (older, or before any flag existed) gets the same fresh base LoginPlayer gives a new spawn.
 		if (!pawnExt->FlagBase())
 		{
 			auto flagBaseCls = packages->FindClass("Extension.FlagBase");
-			pawnExt->FlagBase() = UObject::Cast<UFlagBase>(packages->GetTransientPackage()->NewObject("FlagBase", flagBaseCls, ObjectFlags::Transient));
+			pawnExt->FlagBase() = UObject::Cast<UFlagBase>(pawn->package->NewObject("FlagBase", flagBaseCls, ObjectFlags::NoFlags));
+			pawnExt->FlagBase()->Outer() = pawn;
 		}
 	}
 
@@ -881,75 +946,155 @@ void Engine::PossessSavedPlayer()
 	CallEvent(viewport->Actor(), EventName::Possess);
 
 	render->OnMapLoaded();
+	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+	NotePlayerLogin();
+
+	// A load never runs a login, so the level holds no travel info and its URL no player name. A restart
+	// hands LoadMap the level's travel info and looks the player up in it by the URL's name, so give it the
+	// loaded player and items under the name they are stored by
+	LevelInfo->URL.AddOrReplaceOption("Name=" + TravelPlayerName(pawn));
+	Level->TravelInfo = CreateTravelInfo(true, LevelInfo->URL);
 }
 
 void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const
 {
-	if (slotNum < -1 || (!packages->IsDeusEx() && slotNum < 0))
-		Exception::Throw("Invalid save slot: " + std::to_string(slotNum));
+	// Saves go to the per-user data directory. Unattended runs write there only when given a directory of their own.
+	if (!LaunchInfo.CanWriteUserFiles())
+	{
+		LogMessage("Save game skipped: --autostart without --user-dir does not write saves");
+		SmokeLog::Get()->Event("WARNING", "save to slot " + std::to_string(slotNum) + " skipped under --autostart");
+		return;
+	}
+
+	// A slot the game has no use for is the script's or the console's mistake, not the engine's
+	if (const std::optional<std::string> refusal = SaveSlotRefusal(packages->IsDeusEx(), slotNum))
+	{
+		LogSkipped("Save game skipped: " + *refusal);
+		return;
+	}
 
 	// First and foremost ensure the Save folder exists
 	const auto saveFolderPath = packages->GetSaveFolderPath();
-	if (!fs::exists(saveFolderPath))
-		fs::create_directory(saveFolderPath);
+	Directory::create(saveFolderPath.string());
+
+	// After a load the level's package is the save package, which Unreal and Unreal Tournament name after
+	// the slot, so the map name comes from the level's URL
+	const std::string mapName = MapNameOf(LevelInfo->URL, packages->GetMapExtension());
+
+	fs::path savedFile;
 
 	if (packages->IsDeusEx())
 	{
+		// The scripts pass 0 for a new save and expect the next free slot, never Save0000
+		if (slotNum == 0)
+		{
+			slotNum = NextFreeDeusExSaveIndex(saveFolderPath);
+			if (slotNum == 0)
+			{
+				LogSkipped("Save game skipped: every save slot is taken");
+				return;
+			}
+		}
+
 		// Saving a game on Deus Ex does the following:
 		// - Create a folder using the slotNum (e.g. 1 -> "Save0001")
 		// - Save the level package using the name [MapName].dxs
 		// - Save the associated DeusExSaveInfo class as SaveInfo.dxs within that same folder,
 		// in which saveDescription parameter will be used in DeusExSaveInfo.Description
-		auto slotNumStr = std::to_string(slotNum);
-		slotNumStr.insert(0, 4 - slotNumStr.length(), '0'); // Pad it with 0s
-		auto saveFolder = "Save" + slotNumStr;
+		const auto saveSlotFolder = SaveSlotPath(true, slotNum, saveFolderPath, packages->GetSaveExtension());
+		Directory::create(saveSlotFolder.string());
 
-		auto saveSlotFolder = saveFolderPath / saveFolder;
-		if (!fs::exists(saveSlotFolder) || !fs::is_directory(saveSlotFolder))
-			fs::create_directory(saveSlotFolder);
+		savedFile = saveSlotFolder / (mapName + "." + packages->GetSaveExtension());
+		const auto saveInfoFile = saveSlotFolder / ("SaveInfo." + packages->GetSaveExtension());
+		LevelPackage->Save(Level, savedFile.string());
 
-		auto levelName = Level->package->GetPackageName().ToString() + "." + packages->GetSaveExtension();
-		auto saveInfoName = "SaveInfo." + packages->GetSaveExtension();
-		auto saveFileFullPath = (saveSlotFolder / levelName).string();
-		auto saveInfoFullPath = (saveSlotFolder / saveInfoName).string();
-		LevelPackage->Save(Level, saveFileFullPath);
+		// The save info is made in the level's package, the one the writer is saving: it refuses an object
+		// of another package, and it exports the class of an object of the package it saves, so a save info
+		// from the DeusEx package would write the whole DeusExSaveInfo class into the file. The object is named
+		// as the original game names it, which is the name the game directory's reader looks it up by.
+		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage->NewObject("MyDeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
+		saveInfo->DirectoryIndex() = slotNum;
+		saveInfo->Description() = saveDescription;
+		saveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
+		saveInfo->MapName() = mapName;
+		saveInfo->UpdateTimeStamp();
+		LevelPackage->Save(saveInfo, saveInfoFile.string());
 
-		dxSaveInfo->DirectoryIndex() = slotNum;
-		dxSaveInfo->Description() = saveDescription;
-		dxSaveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
-		dxSaveInfo->MapName() = Level->package->GetPackageName().ToString();
-		dxSaveInfo->UpdateTimeStamp();
-		deusExPackage->Save(dxSaveInfo, saveInfoFullPath);
+		// The package manager read the save infos once at startup, so the game directory would not list this one
+		packages->RegisterSaveInfo(DeusExSaveFolderName(slotNum));
 	}
 	else
 	{
-		const std::string saveFileName = "Save" + std::to_string(slotNum) + "." + packages->GetSaveExtension();
-		const std::string saveFileFullPath = (saveFolderPath / saveFileName).string();
-		LevelPackage->Save(Level, saveFileFullPath);
+		savedFile = SaveSlotPath(false, slotNum, saveFolderPath, packages->GetSaveExtension());
+		LevelPackage->Save(Level, savedFile.string());
 
 		// The save package is later reloaded by its slot filename ("SaveN"), not by the original
 		// map name, so record the real map name here for LoadFromSaveFile() to recover.
-		packages->SetIniValue("user", "SaveGame", "MapName" + std::to_string(slotNum), Level->package->GetPackageName().ToString());
+		packages->SetIniValue("user", "SaveGame", "MapName" + std::to_string(slotNum), mapName);
 	}
+
+	// The data folder is one game's subdirectory of the user directory, so this names the game too
+	LogMessage("Saved game to " + savedFile.lexically_relative(packages->GetDataFolderPath().parent_path()).generic_string());
 }
 
-std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems)
+std::string TravelRecordName(const std::string& urlName, const std::string& iniName, const std::string& replicationName)
 {
+	if (!urlName.empty())
+		return urlName;
+	if (!iniName.empty())
+		return iniName;
+	return replicationName;
+}
+
+std::string LevelInfoName(bool firstActorIsLevelInfo, const std::string& firstActorName, const std::vector<std::string>& levelInfoNames, int ue1Version)
+{
+	if (firstActorIsLevelInfo)
+		return firstActorName;
+
+	auto isPresent = [&](const std::string& name) { return std::find(levelInfoNames.begin(), levelInfoNames.end(), name) != levelInfoNames.end(); };
+
+	if (isPresent("LevelInfo0"))
+		return "LevelInfo0";
+
+	if (ue1Version < 300) // Unknown when this changed
+	{
+		for (int grr = 1; grr < 20; grr++)
+		{
+			std::string name = "LevelInfo" + std::to_string(grr);
+			if (isPresent(name))
+				return name;
+		}
+	}
+	return {};
+}
+
+std::map<std::string, std::string> Engine::CreateTravelInfo(bool transferItems, const UnrealURL& destination)
+{
+	// The login of the destination looks the record up by the URL's name, else the ini's. A game may have
+	// renamed the player since (Unreal Tournament turns the default name into Player1 at every login), so
+	// the replication name is only the last resort.
+	const std::string urlName = destination.GetOption("Name");
+	const std::string iniName = packages->GetIniValue("system", "URL", "Name");
+
 	auto travelInfo = Level->TravelInfo;
 	for (UActor* actor : Level->Actors)
 	{
 		UPlayerPawn* pawn = UObject::TryCast<UPlayerPawn>(actor);
 		if (pawn && pawn->Player())
-		{
-			std::string playerName = engine->LaunchInfo.ue1Version > 219 ? pawn->PlayerReplicationInfo()->PlayerName() : std::string("Player"); // To do: how to get the travel player name?
-			travelInfo[playerName] = ActorTravelInfo::Create(pawn, transferItems);
-		}
+			travelInfo[TravelRecordName(urlName, iniName, TravelPlayerName(pawn))] = ActorTravelInfo::Create(pawn, transferItems);
 	}
 	return travelInfo;
 }
 
+std::string Engine::TravelPlayerName(UPlayerPawn* pawn) const
+{
+	return LaunchInfo.ue1Version > 219 ? pawn->PlayerReplicationInfo()->PlayerName() : std::string("Player");
+}
+
 void Engine::LoginPlayer()
 {
+	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+
 	UnrealURL url = LevelInfo->URL;
 	std::map<std::string, std::string> travelInfo = Level->TravelInfo;
 
@@ -989,11 +1134,13 @@ void Engine::LoginPlayer()
 
 	if (auto pawnExt = UObject::TryCast<UPlayerPawnExt>(pawn))
 	{
-		// Unclear if this is how DeusEx spawned this object
+		// Unclear if this is how DeusEx spawned this object. It belongs to the pawn's package with the pawn
+		// as its outer, so a save exports it with the pawn.
 		if (!pawnExt->FlagBase())
 		{
 			auto flagBaseCls = packages->FindClass("Extension.FlagBase");
-			pawnExt->FlagBase() = UObject::Cast<UFlagBase>(packages->GetTransientPackage()->NewObject("FlagBase", flagBaseCls, ObjectFlags::Transient));
+			pawnExt->FlagBase() = UObject::Cast<UFlagBase>(pawn->package->NewObject("FlagBase", flagBaseCls, ObjectFlags::NoFlags));
+			pawnExt->FlagBase()->Outer() = pawn;
 		}
 	}
 
@@ -1041,6 +1188,7 @@ void Engine::LoginPlayer()
 	CallEvent(LevelInfo->Game(), EventName::PostLogin, { ExpressionValue::ObjectValue(pawn) });
 
 	render->OnMapLoaded();
+	NotePlayerLogin();
 }
 
 UZoneInfo* Engine::GetZoneActor(int zoneIndex)
@@ -1115,6 +1263,216 @@ std::string Engine::ParseClassName(std::string className)
 	}
 
 	return packages->GetIniValue("system", sectionName, keyName);
+}
+
+void InputHoldSchedule::Add(Kind kind, const std::string& name, float value, double until)
+{
+	for (Hold& existing : holds)
+	{
+		if (existing.kind == kind && existing.name == name)
+		{
+			existing = Hold{ kind, name, value, until };
+			return;
+		}
+	}
+	holds.push_back(Hold{ kind, name, value, until });
+}
+
+Array<InputHoldSchedule::Hold> InputHoldSchedule::TakeExpired(double now)
+{
+	Array<Hold> expired;
+	Array<Hold> kept;
+	for (Hold& hold : holds)
+		(hold.until <= now ? expired : kept).push_back(std::move(hold));
+	holds = std::move(kept);
+	return expired;
+}
+
+Array<InputHoldSchedule::Hold> InputHoldSchedule::TakeAll()
+{
+	return std::exchange(holds, {});
+}
+
+namespace
+{
+	// The whole text as a finite number: strtod alone would take a prefix, "nan" and "inf"
+	bool ParseFiniteNumber(const std::string& text, double& value)
+	{
+		if (text.empty())
+			return false;
+		char* end = nullptr;
+		value = std::strtod(text.c_str(), &end);
+		return end == text.c_str() + text.size() && std::isfinite(value);
+	}
+}
+
+HoldParseResult ParseHoldCommand(const Array<std::string>& args, double now)
+{
+	const char* usage = "hold takes 'button <name> <seconds>' or 'axis <name> <speed> <seconds>'";
+
+	if (args.size() < 2)
+		return { {}, usage };
+
+	std::string what = args[1];
+	for (char& c : what) c = std::tolower(c);
+
+	InputHoldSchedule::Hold hold;
+	size_t secondsIndex;
+	if (what == "button" && args.size() == 4)
+	{
+		hold.kind = InputHoldSchedule::Kind::Button;
+		secondsIndex = 3;
+	}
+	else if (what == "axis" && args.size() == 5)
+	{
+		hold.kind = InputHoldSchedule::Kind::Axis;
+		secondsIndex = 4;
+
+		double speed;
+		if (!ParseFiniteNumber(args[3], speed) || !std::isfinite((float)speed))
+			return { {}, "hold speed '" + args[3] + "' is not a number" };
+		hold.value = (float)speed;
+	}
+	else
+	{
+		return { {}, usage };
+	}
+	hold.name = args[2];
+
+	double seconds;
+	if (!ParseFiniteNumber(args[secondsIndex], seconds) || seconds <= 0.0)
+		return { {}, "hold duration '" + args[secondsIndex] + "' is not a positive number of seconds" };
+	hold.until = now + seconds;
+
+	return { hold, {} };
+}
+
+std::string HoldPropertyRefusal(InputHoldSchedule::Kind kind, const std::string& name, ExpressionValueType type, PropertyFlags flags)
+{
+	if (!AllFlags(flags, PropertyFlags::Input))
+		return "the player's property '" + name + "' is not an input";
+
+	const bool isButton = kind == InputHoldSchedule::Kind::Button;
+	const bool typeFits = isButton ? (type == ExpressionValueType::ValueByte || type == ExpressionValueType::ValueBool) : type == ExpressionValueType::ValueFloat;
+	if (!typeFits)
+		return "the player's property '" + name + "' is not " + (isButton ? "a byte or bool button" : "a float axis");
+
+	return {};
+}
+
+namespace
+{
+	// A float can run to 39 digits, so the text is sized by the longest one rather than by the
+	// levels' range
+	std::string OneDecimal(float value)
+	{
+		char text[64];
+		std::snprintf(text, sizeof(text), "%.1f", value);
+		return text;
+	}
+
+	std::string FormatPoint(const vec3& point)
+	{
+		return "(" + OneDecimal(point.x) + ", " + OneDecimal(point.y) + ", " + OneDecimal(point.z) + ")";
+	}
+}
+
+PlaceParseResult ParsePlaceCommand(const Array<std::string>& args)
+{
+	const char* usage = "place takes '<x> <y> <z> [<yaw>]'";
+
+	if (args.size() != 4 && args.size() != 5)
+		return { {}, usage };
+
+	static const char* const names[] = { "x", "y", "z", "yaw" };
+	const size_t operands = args.size() - 1;
+	double values[4];
+	for (size_t i = 0; i < operands; i++)
+	{
+		if (!ParseFiniteNumber(args[i + 1], values[i]) || !std::isfinite((float)values[i]))
+			return { {}, std::string("place ") + names[i] + " '" + args[i + 1] + "' is not a number" };
+	}
+
+	PlaceCommand place;
+	place.location = vec3((float)values[0], (float)values[1], (float)values[2]);
+	place.hasYaw = operands == 4;
+	if (place.hasYaw)
+		place.yawDegrees = (float)values[3];
+	return { place, {} };
+}
+
+std::string FormatPlaceLine(const vec3& requested, const vec3& ended, bool hasYaw, float yawDegrees)
+{
+	std::string line = FormatPoint(requested) + " -> " + FormatPoint(ended);
+	if (hasYaw)
+		line += " yaw " + OneDecimal(yawDegrees);
+	return line;
+}
+
+void Engine::NotePlayerLogin()
+{
+	SmokeLog::Get()->Event("LOGIN");
+	if (execLoginSeconds < 0.0)
+		execLoginSeconds = SmokeLog::Get()->SecondsSinceStart();
+
+	// A new map's player may reuse the old player's address and state name, so the pointer alone
+	// cannot tell the two apart
+	stateSeenActor = nullptr;
+}
+
+void Engine::RunDueExecCommands()
+{
+	if (execLoginSeconds < 0.0)
+		return;
+
+	const size_t end = DueCommands(LaunchInfo.execSchedule, SmokeLog::Get()->SecondsSinceStart() - execLoginSeconds, execCursor);
+	while (execCursor < end)
+	{
+		// Advance first: a command that quits or travels must not run again on a later frame
+		const ExecItem& item = LaunchInfo.execSchedule[execCursor++];
+
+		ExpressionValue found = ExpressionValue::BoolValue(false);
+		ConsoleCommand(viewport->Actor(), item.command, found.ToType<BitfieldBool&>());
+		SmokeLog::Get()->Event(found.ToType<BitfieldBool&>() ? "EXEC" : "EXEC_FAILED", FormatExecItem(item));
+	}
+}
+
+void Engine::NoteStateChanges()
+{
+	if (!SmokeLog::Get()->IsOpen() || execLoginSeconds < 0.0)
+		return;
+
+	UPlayerPawn* actor = viewport->Actor();
+	if (!actor)
+		return;
+
+	NameString stateName = actor->GetStateName();
+	if (actor == stateSeenActor && stateName == stateSeenName)
+		return;
+
+	// The clock is the --exec one, so STATE and EXEC times agree and stay monotonic across maps
+	char seconds[32];
+	std::snprintf(seconds, sizeof(seconds), "%.1f", SmokeLog::Get()->SecondsSinceStart() - execLoginSeconds);
+	std::string text = std::string(seconds) + " " + stateName.ToString();
+	if (actor != stateSeenActor)
+	{
+		const vec3& location = actor->Location();
+		char at[96];
+		std::snprintf(at, sizeof(at), " at (%.1f, %.1f, %.1f)", location.x, location.y, location.z);
+		text += at;
+	}
+	SmokeLog::Get()->Event("STATE", text);
+
+	stateSeenActor = actor;
+	stateSeenName = stateName;
+}
+
+Array<ExecItem> Engine::UnrunExecCommands() const
+{
+	Array<ExecItem> unrun;
+	for (size_t i = execCursor; i < LaunchInfo.execSchedule.size(); i++)
+		unrun.push_back(LaunchInfo.execSchedule[i]);
+	return unrun;
 }
 
 std::string Engine::ConsoleCommand(UObject* context, const std::string& commandline, BitfieldBool& found)
@@ -1263,26 +1621,54 @@ std::string Engine::ConsoleCommand(UObject* context, const std::string& commandl
 	}
 	else if (command == "savegame" && (args.size() == 2 || args.size() == 3))
 	{
-
-		int32_t slotNum;
-		// slotNum not being parsable shouldn't cause a crash
-		try
+		// The main loop saves once the frame is drawn
+		const std::optional<int> slotNum = ParseSaveSlot(args[1]);
+		if (!slotNum)
 		{
-			slotNum = Convert::to_int32(args[1]);
-		}
-		catch (...)
-		{
+			LogSkipped("Save game skipped: slot '" + args[1] + "' is not a number");
 			return {};
 		}
 
-		SaveGameInfo.SaveGameSlot = slotNum;
+		SaveGameInfo.SaveGameSlot = *slotNum;
 
 		if (args.size() == 3)
 			SaveGameInfo.SaveGameDescription = args[2];
 
-		// SaveGameToSlot(slotNum, "");
+		return {};
+	}
+	else if (command == "deletegame" && args.size() == 2)
+	{
+		// The Deus Ex load screen's delete button sends this with the row's slot
+		const std::optional<int> slotNum = ParseSaveSlot(args[1]);
+		if (!slotNum)
+		{
+			LogSkipped("Delete game skipped: slot '" + args[1] + "' is not a number");
+			return {};
+		}
 
-		//LogMessage("SaveGame command not fully implemented yet!");
+		if (const std::optional<std::string> refusal = SaveSlotDeleteRefusal(*slotNum))
+		{
+			LogSkipped("Delete game skipped: " + *refusal);
+			return {};
+		}
+
+		if (!LaunchInfo.CanWriteUserFiles())
+		{
+			LogSkipped("Delete game skipped: --autostart without --user-dir does not change saves");
+			return {};
+		}
+
+		if (const std::optional<std::string> skipped = RemoveSaveSlot(packages->IsDeusEx(), *slotNum, packages->GetSaveFolderPath(), packages->GetSaveExtension()))
+		{
+			LogSkipped("Delete game skipped: " + *skipped);
+			return {};
+		}
+
+		// The save info is of the save that is gone, and the game directory would still offer it
+		if (packages->IsDeusEx())
+			packages->RemoveSaveInfoPackage(DeusExSaveFolderName(*slotNum));
+
+		LogMessage("Deleted save slot " + std::to_string(*slotNum));
 		return {};
 	}
 	else if (command == "get" && args.size() == 3)
@@ -1335,6 +1721,14 @@ std::string Engine::ConsoleCommand(UObject* context, const std::string& commandl
 		// Special input setting handling
 		if (className == "input")
 		{
+			keybindings[propertyName.ToString()] = value;
+			packages->SetIniValue("user", "Engine.Input", propertyName, value);
+			return {};
+		}
+
+		if (LaunchInfo.IsDeusEx() && className == "inputext")
+		{
+			// DeusEx version of input handling. How does this differ from the other one?
 			keybindings[propertyName.ToString()] = value;
 			packages->SetIniValue("user", "Engine.Input", propertyName, value);
 			return {};
@@ -1551,18 +1945,146 @@ void Engine::UpdateInput(float timeElapsed)
 	if (!viewport->Actor())
 		return;
 
-	for (auto& it : activeInputButtons)
-		viewport->Actor()->SetBool(it.first, true);
-	for (auto& it : activeInputAxes)
+	// A hold that has ended is released before the key tables are applied, so a key still held on
+	// the same button or axis keeps it
+	ReleaseHolds(inputHolds.TakeExpired(LoginClockSeconds()));
+
+	auto setAxis = [&](const std::string& name, float value)
 	{
-		if (it.first == "aMouseX" || it.first == "aMouseY")
+		if (name == "aMouseX" || name == "aMouseY")
 		{
-			viewport->Actor()->SetFloat(it.first, it.second.Value / (timeElapsed * 150.0f));
+			viewport->Actor()->SetFloat(name, value / (timeElapsed * 150.0f));
 		}
 		else
 		{
-			viewport->Actor()->SetFloat(it.first, it.second.Value);
+			viewport->Actor()->SetFloat(name, value);
 		}
+	};
+
+	for (auto& it : activeInputButtons)
+		viewport->Actor()->SetBool(it.first, true);
+	for (auto& it : activeInputAxes)
+		setAxis(it.first, it.second.Value);
+
+	// Held last, so a hold wins over a key bound to the same axis
+	for (const InputHoldSchedule::Hold& hold : inputHolds.Active())
+	{
+		if (hold.kind == InputHoldSchedule::Kind::Button)
+			viewport->Actor()->SetBool(hold.name, true);
+		else
+			setAxis(hold.name, hold.value);
+	}
+}
+
+double Engine::LoginClockSeconds() const
+{
+	return SmokeLog::Get()->SecondsSinceStart() - execLoginSeconds;
+}
+
+bool Engine::HoldInput(const Array<std::string>& args)
+{
+	UPlayerPawn* actor = viewport->Actor();
+	if (!actor || execLoginSeconds < 0.0)
+	{
+		LogMessage("hold: there is no player to hold input for");
+		return false;
+	}
+
+	HoldParseResult parsed = ParseHoldCommand(args, LoginClockSeconds());
+	if (!parsed.ok())
+	{
+		LogMessage("hold: " + parsed.error);
+		return false;
+	}
+
+	// UpdateInput writes the property every frame, so a name that is missing, not an input or of
+	// the wrong type must be refused here rather than throw in the middle of a frame or leave a
+	// property such as GroundSpeed at the held value. Buttons such as bFire are bytes in the
+	// scripts, and SetBool reaches them the way a key press does.
+	const InputHoldSchedule::Hold& hold = parsed.hold;
+	if (!actor->HasProperty(hold.name))
+	{
+		LogMessage("hold: the player has no property named '" + hold.name + "'");
+		return false;
+	}
+	UProperty* prop = actor->GetMemberProperty(hold.name);
+
+	// The schedule compares names exactly and the player finds properties without regard to case,
+	// so a hold is kept under the declared name: "aforward" and "aForward" are one hold, and
+	// aMouseX is recognised for its scaling
+	const std::string declaredName = prop->Name.ToString();
+	const std::string refusal = HoldPropertyRefusal(hold.kind, declaredName, prop->ValueType, prop->PropFlags);
+	if (!refusal.empty())
+	{
+		LogMessage("hold: " + refusal);
+		return false;
+	}
+
+	inputHolds.Add(hold.kind, declaredName, hold.value, hold.until);
+	return true;
+}
+
+bool Engine::PlacePlayer(const Array<std::string>& args)
+{
+	PlaceParseResult parsed = ParsePlaceCommand(args);
+	if (!parsed.ok())
+	{
+		LogMessage("place: " + parsed.error);
+		return false;
+	}
+	const PlaceCommand& place = parsed.place;
+
+	// Written to the smoke log and, with the engine log's level-time stamp, to the engine log, where
+	// the probes' answers are: a line that is to be read against them has to be in that file
+	auto report = [](const std::string& kind, const std::string& text)
+	{
+		SmokeLog::Get()->Event(kind, text);
+		LogMessage("place: " + kind + " " + text);
+	};
+
+	UPlayerPawn* actor = viewport->Actor();
+	if (!actor)
+	{
+		report("PLACE_FAILED", FormatPoint(place.location) + " no player");
+		return false;
+	}
+
+	// The engine's own placement, so a spot inside the level's solid space is shifted or refused as
+	// it would be for the game's scripts. It reports only whether the actor moved; where it ended
+	// is read back from the actor
+	if (!actor->SetLocation(place.location))
+	{
+		report("PLACE_FAILED", FormatPoint(place.location) + " refused");
+		return false;
+	}
+
+	if (place.hasYaw)
+	{
+		// The player's next move takes the body yaw from the view and the pawn's tick takes the view
+		// from the body in the other direction, so both are written to leave them agreeing. Folding
+		// the turns away first keeps a huge finite yaw within what the rounding can represent
+		const int yaw = (int)std::lround(std::fmod((double)place.yawDegrees, 360.0) * 65536.0 / 360.0) & 0xFFFF;
+		actor->Rotation().Yaw = yaw;
+		actor->ViewRotation().Yaw = yaw;
+	}
+
+	report("PLACE", FormatPlaceLine(place.location, actor->Location(), place.hasYaw, place.yawDegrees));
+	return true;
+}
+
+void Engine::ReleaseHolds(const Array<InputHoldSchedule::Hold>& holds)
+{
+	UPlayerPawn* actor = viewport->Actor();
+	if (!actor)
+		return;
+
+	// The same values a key release writes
+	for (const InputHoldSchedule::Hold& hold : holds)
+	{
+		if (hold.kind == InputHoldSchedule::Kind::Button)
+			actor->SetBool(hold.name, false);
+		else
+			actor->SetFloat(hold.name, 0.0f);
 	}
 }
 
@@ -1851,6 +2373,27 @@ void Engine::InputEvent(EInputKey key, EInputType type, int delta)
 
 bool Engine::ExecCommand(const Array<std::string>& args)
 {
+	// The harness's own commands come first: the player has no script exec function for them
+	std::string command = args[0];
+	for (char& c : command) c = std::tolower(c);
+	if (command == "hold")
+	{
+		return HoldInput(args);
+	}
+	else if (command == "release")
+	{
+		ReleaseHolds(inputHolds.TakeAll());
+		return true;
+	}
+	else if (command == "call")
+	{
+		return CallFunction(args);
+	}
+	else if (command == "place")
+	{
+		return PlacePlayer(args);
+	}
+
 	for (UObject* target : { static_cast<UObject*>(viewport->Actor()), static_cast<UObject*>(console) })
 	{
 		if (!target)
@@ -1917,6 +2460,536 @@ bool Engine::ExecCommand(const Array<std::string>& args)
 	return false;
 }
 
+namespace
+{
+	// The whole text as a decimal integer: strtoll alone would take a prefix
+	bool ParseInteger(const std::string& text, long long& value)
+	{
+		if (text.empty() || std::isspace((unsigned char)text[0]))
+			return false;
+		errno = 0;
+		char* end = nullptr;
+		value = std::strtoll(text.c_str(), &end, 10);
+		return errno == 0 && end == text.c_str() + text.size();
+	}
+
+	std::string LowerCase(std::string text)
+	{
+		for (char& c : text)
+			c = (char)std::tolower((unsigned char)c);
+		return text;
+	}
+
+	const char* CallObjectLabel(const std::string& kind)
+	{
+		return kind == "name" ? "actor name" : kind == "class" ? "class name" : "BindName";
+	}
+}
+
+UObject* ResolveCallObject(const std::string& kind, const std::string& value, const Array<CallActorRecord>& actors, bool isDeusEx, std::string& error, std::string& resolution)
+{
+	if (kind == "bind" && !isDeusEx)
+	{
+		error = "bind: needs a Deus Ex game";
+		return nullptr;
+	}
+
+	const std::string wanted = LowerCase(value);
+	Array<std::string> offered;
+	std::set<std::string> offeredLower;
+	for (const CallActorRecord& actor : actors)
+	{
+		// A script call to an actor being deleted is skipped, so it is not what anyone is looking for
+		if (actor.deleted)
+			continue;
+
+		const std::string& have = kind == "name" ? actor.name : kind == "class" ? actor.className : actor.bindName;
+		const std::string haveLower = LowerCase(have);
+		if (haveLower == wanted)
+		{
+			char where[96];
+			std::snprintf(where, sizeof(where), "(%.1f, %.1f, %.1f)", actor.location.x, actor.location.y, actor.location.z);
+			resolution = "call: " + kind + ":" + value + " resolved to " + actor.name + " at " + where;
+			return actor.object;
+		}
+		if (!have.empty() && offeredLower.insert(haveLower).second)
+			offered.push_back(have);
+	}
+
+	constexpr size_t maxOffered = 20;
+	std::string list;
+	for (size_t i = 0; i < offered.size() && i < maxOffered; i++)
+		list += (i ? ", " : "") + offered[i];
+	if (offered.size() > maxOffered)
+		list += ", ... (" + std::to_string(offered.size() - maxOffered) + " more)";
+	error = "no actor in the level has the " + std::string(CallObjectLabel(kind)) + " '" + value + "'; the level offers: " + (list.empty() ? "none" : list);
+	return nullptr;
+}
+
+CallArgsResult MarshalCallArgs(UFunction* func, const Array<std::string>& args, UObject* self, const CallObjectResolver& resolve)
+{
+	CallArgsResult result;
+	auto refuse = [&](const std::string& name, const std::string& reason) -> CallArgsResult
+	{
+		return { {}, "parameter '" + name + "': " + reason };
+	};
+
+	size_t paramCount = 0;
+	for (UField* field = func->Children; field != nullptr; field = field->Next)
+	{
+		// The same walk, in the same order, as the console's exec functions
+		UProperty* prop = UObject::TryCast<UProperty>(field);
+		if (!prop || !AllFlags(prop->PropFlags, PropertyFlags::Parm) || AllFlags(prop->PropFlags, PropertyFlags::ReturnParm))
+			continue;
+
+		const std::string name = prop->Name.ToString();
+		if (AllFlags(prop->PropFlags, PropertyFlags::OutParm))
+			return refuse(name, "it is an out parameter, which a call cannot return");
+
+		if (paramCount >= args.size())
+		{
+			if (!AllFlags(prop->PropFlags, PropertyFlags::OptionalParm))
+				return refuse(name, "no argument was given for this required parameter");
+			result.values.push_back(ExpressionValue::NothingValue());
+			paramCount++;
+			continue;
+		}
+
+		// Only an argument has to be passable: an omitted optional is Nothing whatever its type
+		switch (prop->ValueType)
+		{
+		case ExpressionValueType::ValueByte:
+		case ExpressionValueType::ValueInt:
+		case ExpressionValueType::ValueBool:
+		case ExpressionValueType::ValueFloat:
+		case ExpressionValueType::ValueString:
+		case ExpressionValueType::ValueName:
+		case ExpressionValueType::ValueObject:
+			break;
+		default:
+			return refuse(name, "its type is not one a call can pass (byte, int, bool, float, string, name or object)");
+		}
+
+		const std::string& arg = args[paramCount++];
+		long long number = 0;
+		switch (prop->ValueType)
+		{
+		case ExpressionValueType::ValueByte:
+			if (!ParseInteger(arg, number) || number < 0 || number > 255)
+				return refuse(name, "'" + arg + "' is not a byte (an integer from 0 to 255)");
+			result.values.push_back(ExpressionValue::ByteValue((uint8_t)number));
+			break;
+		case ExpressionValueType::ValueInt:
+			if (!ParseInteger(arg, number) || number < INT32_MIN || number > INT32_MAX)
+				return refuse(name, "'" + arg + "' is not an int");
+			result.values.push_back(ExpressionValue::IntValue((int32_t)number));
+			break;
+		case ExpressionValueType::ValueBool:
+		{
+			const std::string word = LowerCase(arg);
+			if (word != "0" && word != "1" && word != "true" && word != "false")
+				return refuse(name, "'" + arg + "' is not a bool (0, 1, true or false)");
+			result.values.push_back(ExpressionValue::BoolValue(word == "1" || word == "true"));
+			break;
+		}
+		case ExpressionValueType::ValueFloat:
+		{
+			double value = 0.0;
+			if (!ParseFiniteNumber(arg, value) || !std::isfinite((float)value))
+				return refuse(name, "'" + arg + "' is not a float");
+			result.values.push_back(ExpressionValue::FloatValue((float)value));
+			break;
+		}
+		case ExpressionValueType::ValueString:
+			result.values.push_back(ExpressionValue::StringValue(arg));
+			break;
+		case ExpressionValueType::ValueName:
+			result.values.push_back(ExpressionValue::NameValue(arg));
+			break;
+		default: // ValueObject, the one other type the switch above let through
+		{
+			const std::string word = LowerCase(arg);
+			if (word == "self")
+			{
+				if (!self)
+					return refuse(name, "'self' has no object to stand for");
+				result.values.push_back(ExpressionValue::ObjectValue(self));
+			}
+			else if (word == "none")
+			{
+				result.values.push_back(ExpressionValue::ObjectValue(nullptr));
+			}
+			else
+			{
+				const size_t colon = arg.find(':');
+				const std::string kind = colon == std::string::npos ? std::string() : LowerCase(arg.substr(0, colon));
+				if (kind != "name" && kind != "class" && kind != "bind")
+				{
+					const std::string what = colon == std::string::npos ? "'" + arg + "'" : "the prefix '" + arg.substr(0, colon + 1) + "'";
+					return refuse(name, what + " is not an object form (self, none, name:<ObjectName>, class:<ClassName> or bind:<BindName>)");
+				}
+
+				const std::string value = arg.substr(colon + 1);
+				if (value.empty())
+					return refuse(name, "'" + arg + "' has nothing after the prefix");
+
+				std::string error;
+				UObject* object = resolve(kind, value, error);
+				if (!object)
+					return refuse(name, error.empty() ? "'" + arg + "' resolved to no object" : error);
+				result.values.push_back(ExpressionValue::ObjectValue(object));
+			}
+			break;
+		}
+		}
+	}
+
+	if (args.size() > paramCount)
+		return { {}, func->Name.ToString() + " takes " + std::to_string(paramCount) + " argument(s) but " + std::to_string(args.size()) + " were given" };
+
+	return result;
+}
+
+namespace
+{
+	std::string FormatCallResult(const ExpressionValue& value)
+	{
+		switch (value.GetType())
+		{
+		case ExpressionValueType::Nothing: return "nothing";
+		case ExpressionValueType::ValueBool: return value.ToBool() ? "True" : "False";
+		case ExpressionValueType::ValueByte: return std::to_string((int)value.ToByte());
+		case ExpressionValueType::ValueInt: return std::to_string(value.ToInt());
+		case ExpressionValueType::ValueFloat:
+		{
+			char text[48];
+			std::snprintf(text, sizeof(text), "%g", value.ToFloat());
+			return text;
+		}
+		case ExpressionValueType::ValueString: return value.ToString();
+		case ExpressionValueType::ValueName: return value.ToName().ToString();
+		case ExpressionValueType::ValueObject: return ObjectLabel(value.ToObject());
+		default: return "<unprinted type>";
+		}
+	}
+}
+
+namespace
+{
+	CallTarget MalformedCallTarget(const char* error)
+	{
+		CallTarget target;
+		target.kind = CallTarget::Kind::Malformed;
+		target.error = error;
+		return target;
+	}
+
+	// Reads one hop of a path, "<Name>" or "<Name>[<index>]". Sets error and returns false when the hop
+	// has no name, an index that is not one to nine digits (more would not fit an int), or a bracket
+	// out of place. Each fault has its own text, and none names the hop: the log line that carries the
+	// error already holds the whole name as typed.
+	bool ParseCallHop(const std::string& text, CallHop& hop, const char*& error)
+	{
+		const size_t open = text.find('[');
+		const size_t close = text.find(']');
+		if (close != std::string::npos && (open == std::string::npos || close < open))
+		{
+			error = "a ']' has no '[' before it";
+			return false;
+		}
+
+		hop.property = text.substr(0, open);
+		if (hop.property.empty())
+		{
+			error = "no property name before a '.' or '['";
+			return false;
+		}
+		if (open == std::string::npos)
+			return true;
+
+		if (close == std::string::npos)
+		{
+			error = "a '[' has no closing ']'";
+			return false;
+		}
+
+		const std::string digits = text.substr(open + 1, close - open - 1);
+		if (digits.empty() || digits.find_first_not_of("0123456789") != std::string::npos)
+		{
+			error = "an index is digits only, as [0]";
+			return false;
+		}
+		if (digits.size() > 9)
+		{
+			error = "an index has at most nine digits";
+			return false;
+		}
+		if (close + 1 != text.size())
+		{
+			error = "a property name and its index end at the ']', as <Property>[<index>]";
+			return false;
+		}
+
+		int index = 0;
+		for (char digit : digits)
+			index = index * 10 + (digit - '0');
+		hop.index = index;
+		return true;
+	}
+}
+
+CallTarget SplitCallTarget(const std::string& text)
+{
+	const size_t lastDot = text.rfind('.');
+	if (lastDot == std::string::npos)
+	{
+		if (text.find_first_of("[]") != std::string::npos)
+			return MalformedCallTarget("an index needs a path to its property: <Property>[<index>].<Function>");
+
+		CallTarget target;
+		target.function = text;
+		return target;
+	}
+
+	// Everything before the last '.' is the path, one hop to each '.'
+	CallTarget target;
+	target.kind = CallTarget::Kind::Qualified;
+	const std::string pathText = text.substr(0, lastDot);
+	for (size_t start = 0;;)
+	{
+		const size_t dot = pathText.find('.', start);
+		CallHop hop;
+		const char* error = nullptr;
+		if (!ParseCallHop(pathText.substr(start, dot == std::string::npos ? dot : dot - start), hop, error))
+			return MalformedCallTarget(error);
+		target.path.push_back(std::move(hop));
+
+		if (dot == std::string::npos)
+			break;
+		start = dot + 1;
+	}
+
+	target.function = text.substr(lastDot + 1);
+	if (target.function.empty())
+		return MalformedCallTarget("no function name after the '.'");
+	if (target.function.find_first_of("[]") != std::string::npos)
+		return MalformedCallTarget("a function name takes no index: put it on a property");
+	return target;
+}
+
+namespace
+{
+	// The first count hops of a path as written in a call name
+	std::string CallPathText(const std::vector<CallHop>& path, size_t count)
+	{
+		std::string text;
+		for (size_t i = 0; i < count; i++)
+		{
+			if (i > 0)
+				text += '.';
+			text += path[i].property;
+			if (path[i].index)
+				text += "[" + std::to_string(*path[i].index) + "]";
+		}
+		return text;
+	}
+
+	// The object that a path of properties leads to from the player, for the call command's
+	// qualified names. Returns null and sets error when there is no player, a hop names a property
+	// its object lacks, holds no object, or takes the wrong form of index (a static array needs one
+	// and any other property refuses one), or the element it reaches is None.
+	UObject* ResolveCallPath(UPlayerPawn* player, const std::vector<CallHop>& path, std::string& error)
+	{
+		if (!player)
+		{
+			error = "no player";
+			return nullptr;
+		}
+
+		UObject* object = player;
+		for (size_t i = 0; i < path.size(); i++)
+		{
+			const CallHop& hop = path[i];
+			const std::string through = CallPathText(path, i + 1);
+
+			if (!object->HasProperty(hop.property))
+			{
+				const std::string owner = i == 0 ? "the player" : "the " + UObject::GetUClassName(object).ToString() + " in " + CallPathText(path, i);
+				error = owner + " has no property " + hop.property;
+				return nullptr;
+			}
+
+			UProperty* property = object->GetMemberProperty(hop.property);
+			if (property->ValueType != ExpressionValueType::ValueObject)
+			{
+				error = through + " is not an object property";
+				return nullptr;
+			}
+
+			const int dimension = property->ArrayDimension;
+			size_t element = 0;
+			if (hop.index)
+			{
+				if (dimension <= 1)
+				{
+					error = through + " is not an array";
+					return nullptr;
+				}
+				if (*hop.index >= dimension)
+				{
+					error = through + " has " + std::to_string(dimension) + " elements; " + std::to_string(*hop.index) + " is out of range";
+					return nullptr;
+				}
+				element = static_cast<size_t>(*hop.index);
+			}
+			else if (dimension > 1)
+			{
+				error = through + " is an array of " + std::to_string(dimension) + "; give an index";
+				return nullptr;
+			}
+
+			object = *static_cast<UObject**>(property->GetElement(object->GetProperty(property), element));
+			if (!object)
+			{
+				error = through + " is None";
+				return nullptr;
+			}
+		}
+		return object;
+	}
+}
+
+// "call <Function> [arg ...]": runs a function of the player, then of the console, whatever its
+// flags, so a scripted run can start game logic that no exec function exposes. "call
+// <Property>[.<Property>...].<Function>" runs a function of the object that a path of properties
+// leads to from the player instead, each hop a name or a name and an index into a static array,
+// which reaches the Deus Ex root window and its menus and the buttons of a conversation's choice
+// window. Every refusal returns false, which the --exec runner logs as EXEC_FAILED, and the console
+// then adds its "Unknown command" line.
+bool Engine::CallFunction(const Array<std::string>& args)
+{
+	if (args.size() < 2)
+	{
+		LogMessage("call refused: no function name was given");
+		return false;
+	}
+
+	const CallTarget callTarget = SplitCallTarget(args[1]);
+	if (callTarget.kind == CallTarget::Kind::Malformed)
+	{
+		LogMessage("call " + args[1] + " refused: " + callTarget.error);
+		return false;
+	}
+
+	UPlayerPawn* player = viewport->Actor();
+	const bool qualified = callTarget.kind == CallTarget::Kind::Qualified;
+
+	// A qualified name is for the object its path leads to alone: the console is not tried for it
+	Array<UObject*> targets;
+	if (qualified)
+	{
+		std::string error;
+		UObject* held = ResolveCallPath(player, callTarget.path, error);
+		if (!held)
+		{
+			LogMessage("call " + args[1] + " refused: " + error);
+			return false;
+		}
+		targets.push_back(held);
+	}
+	else
+	{
+		targets.push_back(player);
+		targets.push_back(console);
+	}
+
+	for (UObject* target : targets)
+	{
+		if (!target)
+			continue;
+
+		UFunction* func = FindEventFunction(target, callTarget.function);
+		if (!func)
+			continue;
+
+		// The log names a plain call by the function as the script declares it, a qualified one as typed
+		const std::string funcName = qualified ? args[1] : func->Name.ToString();
+
+		// What CallEvent would silently skip is reported instead
+		std::string skipReason;
+		switch (SkipReasonFor(target, func->Name))
+		{
+		case ScriptCallSkip::EventDisabled:
+			skipReason = "the " + UObject::GetUClassName(target).ToString() + " ignores it in its state " + target->GetStateName().ToString();
+			break;
+		case ScriptCallSkip::LevelNotBegun:
+			skipReason = "the level has not begun play";
+			break;
+		case ScriptCallSkip::Deleting:
+			skipReason = "the " + UObject::GetUClassName(target).ToString() + " is being deleted";
+			break;
+		case ScriptCallSkip::None:
+			break;
+		}
+		if (!skipReason.empty())
+		{
+			LogMessage("call " + funcName + " skipped: " + skipReason);
+			return false;
+		}
+
+		CallObjectResolver resolve = [this](const std::string& kind, const std::string& value, std::string& error) -> UObject*
+		{
+			if (!Level)
+			{
+				error = "no level is loaded to look for the " + std::string(CallObjectLabel(kind)) + " '" + value + "' in";
+				return nullptr;
+			}
+
+			const bool isDeusEx = LaunchInfo.IsDeusEx();
+			Array<CallActorRecord> records;
+			for (UActor* actor : Level->Actors)
+			{
+				if (!actor)
+					continue;
+
+				CallActorRecord record;
+				record.object = actor;
+				record.name = actor->Name.ToString();
+				record.className = UObject::GetUClassName(actor).ToString();
+				if (kind == "bind" && isDeusEx)
+					record.bindName = actor->BindName();
+				record.location = actor->Location();
+				record.deleted = actor->bDeleteMe();
+				records.push_back(std::move(record));
+			}
+
+			std::string resolution;
+			UObject* object = ResolveCallObject(kind, value, records, isDeusEx, error, resolution);
+			if (!resolution.empty())
+				LogMessage(resolution);
+			return object;
+		};
+
+		Array<std::string> callArgs(args.begin() + 2, args.end());
+		CallArgsResult marshalled = MarshalCallArgs(func, callArgs, player, resolve);
+		if (!marshalled.ok())
+		{
+			LogMessage("call " + funcName + " refused: " + marshalled.error);
+			return false;
+		}
+
+		ExpressionValue result = CallEvent(target, func->Name, marshalled.values);
+		LogMessage("call " + funcName + " returned " + FormatCallResult(result));
+		return true;
+	}
+
+	if (qualified)
+		LogMessage("call " + args[1] + " refused: the " + UObject::GetUClassName(targets[0]).ToString() + " in " + CallPathText(callTarget.path, callTarget.path.size()) + " has no function " + callTarget.function);
+	else
+		LogMessage("call " + args[1] + " refused: neither the player nor the console has a function of that name");
+	return false;
+}
+
 void Engine::InputCommand(const std::string& commands, EInputKey key, int delta)
 {
 	for (const std::string& commandline : GetSubcommands(commands))
@@ -1978,14 +3051,38 @@ void Engine::LogGamePackageSHA1Sums() const
 
 void Engine::GetLevelInfoObject()
 {
-	LevelInfo = UObject::Cast<ULevelInfo>(LevelPackage->GetUObject("LevelInfo", "LevelInfo0"));
-	if (LaunchInfo.ue1Version < 300) // Unknown when this changed
+	// The actors of a loaded map keep the level info the map saved, which is the level's first actor, so
+	// the game, the clock and the session fields must go on that one. A map can hold other level infos,
+	// some saved as deleted, and the name search alone can land on one of those.
+	UActor* firstActor = Level->Actors.empty() ? nullptr : Level->Actors.front();
+	ULevelInfo* firstLevelInfo = UObject::TryCast<ULevelInfo>(firstActor);
+
+	std::vector<std::string> levelInfoNames;
+	if (!firstLevelInfo)
 	{
-		for (int grr = 1; !LevelInfo && grr < 20; grr++)
-			LevelInfo = UObject::Cast<ULevelInfo>(LevelPackage->GetUObject("LevelInfo", "LevelInfo" + std::to_string(grr)));
+		for (int grr = 0; grr < 20; grr++)
+		{
+			std::string name = "LevelInfo" + std::to_string(grr);
+			if (UObject::TryCast<ULevelInfo>(LevelPackage->GetUObject("LevelInfo", name)))
+				levelInfoNames.push_back(name);
+		}
 	}
-	if (!LevelInfo)
-		Exception::Throw("Could not find the LevelInfo object for " + LevelPackage->GetPackageName().ToString() + "!");
+
+	const std::string packageName = LevelPackage->GetPackageName().ToString();
+	const std::string name = LevelInfoName(firstLevelInfo != nullptr, firstLevelInfo ? firstLevelInfo->Name.ToString() : std::string(), levelInfoNames, LaunchInfo.ue1Version);
+	if (firstLevelInfo)
+	{
+		LevelInfo = firstLevelInfo;
+		LogMessage("Level info: " + name + " (the level's first actor) in " + packageName);
+		return;
+	}
+
+	if (name.empty())
+		Exception::Throw("Could not find the LevelInfo object for " + packageName + "!");
+
+	LevelInfo = UObject::Cast<ULevelInfo>(LevelPackage->GetUObject("LevelInfo", name));
+	const std::string firstActorClass = firstActor ? UObject::GetUClassName(firstActor).ToString() : "none";
+	LogMessage("Level info: " + name + " (by name; the first actor is " + firstActorClass + ") in " + packageName);
 }
 
 void Engine::GetLevelObject()
@@ -2089,6 +3186,25 @@ void Engine::LinkActorsToLevel()
 	{
 		if (actor)
 			actor->RelinkBasedActor();
+	}
+}
+
+void Engine::RebindConversations()
+{
+	if (!LaunchInfo.IsDeusEx())
+		return;
+
+	// ConListItems is a transient property, so a save never holds it, and the scripts of these three classes
+	// fill it only from PostPostBeginPlay, which a load does not run. Without this no conversation can start
+	// on a loaded level. Needs the level's DeusExLevelInfo, which GetLevelObject has found by now.
+	for (UActor* actor : Level->Actors)
+	{
+		if (auto player = UObject::TryCast<UDeusExPlayer>(actor))
+			player->ConBindEvents();
+		else if (auto pawn = UObject::TryCast<UScriptedPawn>(actor))
+			pawn->ConBindEvents();
+		else if (auto decoration = UObject::TryCast<UDeusExDecoration>(actor))
+			decoration->ConBindEvents();
 	}
 }
 

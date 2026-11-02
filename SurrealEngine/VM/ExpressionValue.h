@@ -419,16 +419,33 @@ inline void ExpressionValue::Store(const ExpressionValue& rvalue)
 	case ExpressionValueType::ValueStruct:
 		if (UStruct* Struct = VariableProperty ? static_cast<UStructProperty*>(VariableProperty)->Struct : GetStructValue()->Struct)
 		{
+			// A Nothing rvalue has no storage to copy from. It arrives from a None context and from
+			// a call that yielded no value (Frame::Call's handling of a Nothing argument lists the
+			// sources). Either way the target is reset; for a None context this matches the original
+			// interpreter, which zeroes such a result.
+			const bool reset = rvalue.Type == ExpressionValueType::Nothing;
 			for (UProperty* prop : Struct->Properties)
-				prop->CopyArray(
-					static_cast<uint8_t*>(Ptr) + prop->DataOffset.DataOffset,
-					static_cast<uint8_t*>(rvalue.Ptr) + prop->DataOffset.DataOffset);
+			{
+				uint8_t* dest = static_cast<uint8_t*>(Ptr) + prop->DataOffset.DataOffset;
+				if (reset)
+				{
+					prop->DestructArray(dest);
+					prop->ConstructArray(dest);
+				}
+				else
+				{
+					prop->CopyArray(dest, static_cast<uint8_t*>(rvalue.Ptr) + prop->DataOffset.DataOffset);
+				}
+			}
 		}
 		break;
 	case ExpressionValueType::ValueArray:
 		if (UArrayProperty* Array = VariableProperty ? static_cast<UArrayProperty*>(VariableProperty) : GetArrayValue()->Type)
 		{
-			Array->CopyArray(Ptr, rvalue.Ptr);
+			if (rvalue.Type == ExpressionValueType::Nothing)
+				static_cast<ScriptArray*>(Ptr)->Clear();
+			else
+				Array->CopyArray(Ptr, rvalue.Ptr);
 		}
 		break;
 	case ExpressionValueType::ValueCoords: *PtrCoords = rvalue.ToCoords(); break;

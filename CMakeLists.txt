@@ -58,6 +58,8 @@ set(SURREALCOMMON_SOURCES
 	SurrealEngine/Utils/File.h
 	SurrealEngine/Utils/Logger.cpp
 	SurrealEngine/Utils/Logger.h
+	SurrealEngine/Utils/UserDirs.cpp
+	SurrealEngine/Utils/UserDirs.h
 	SurrealEngine/Utils/JsonValue.cpp
 	SurrealEngine/Utils/JsonValue.h
 	SurrealEngine/Utils/SHA1Sum.cpp
@@ -509,6 +511,7 @@ set(SURREALCOMMON_SOURCES
 	SurrealEngine/Packages/Engine/USurrealClient.cpp
 	SurrealEngine/Packages/Engine/USurrealClient.h
 	SurrealEngine/Packages/Engine/UViewport.h
+	SurrealEngine/Packages/Engine/Actors/AIEventManager.cpp
 	SurrealEngine/Packages/Engine/Actors/UActor.cpp
 	SurrealEngine/Packages/Engine/Actors/UActor.h
 	SurrealEngine/Packages/Engine/Actors/UActor_Animation.cpp
@@ -1157,6 +1160,9 @@ set_target_properties(SurrealEditor PROPERTIES CXX_STANDARD 20)
 add_executable(SurrealDebugger ${SURREALDEBUGGER_SOURCES})
 target_link_libraries(SurrealDebugger SurrealCommon ${SURREALCOMMON_LIBS})
 set_target_properties(SurrealDebugger PROPERTIES CXX_STANDARD 20)
+
+enable_testing()
+add_subdirectory(tests)
 
 function( create_zip_source_groups FOLDER_NAME ZIP_DIR )
 	file(GLOB ZIP_SRCS ${ZIP_DIR}/*)

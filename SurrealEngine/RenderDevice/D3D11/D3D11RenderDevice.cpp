@@ -2400,7 +2400,7 @@ void D3D11RenderDevice::ReadPixels(TextureColor* Pixels)
 
 void D3D11RenderDevice::EndFlash()
 {
-	if (FlashScale != vec4(0.5f, 0.5f, 0.5f, 0.0f) || FlashFog != vec4(0.0f, 0.0f, 0.0f, 0.0f))
+	if (!FlashIsNeutral(FlashScale, FlashFog))
 	{
 		DrawBatches();
 

@@ -2,11 +2,33 @@
 #include "Precomp.h"
 #include "UGameDirectory.h"
 #include "Utils/Logger.h"
+#include "Utils/File.h"
 #include "Engine.h"
 #include "Package/PackageManager.h"
+#include <algorithm>
+#include <vector>
+
+namespace
+{
+	// The save info a folder's package holds, or null when the package manager has none for it
+	UDXSaveInfo* SaveInfoOfFolder(const std::string& folderName)
+	{
+		auto pkg = engine->packages->GetSaveInfoPackage(folderName);
+
+		if (!pkg)
+			return nullptr;
+
+		return UObject::Cast<UDXSaveInfo>(pkg->GetUObject("DeusExSaveInfo", "MyDeusExSaveInfo"));
+	}
+}
 
 void UDXGameDirectory::GetGameDirectory()
 {
+	// The player keeps one directory object and its scripts never free it, so a new listing replaces
+	// what the last one left
+	DirectoryList().Array->Clear();
+	LoadedSaveInfoPointers().Array->Clear();
+
 	if (GameDirectoryType() == EGameDirectoryTypes::GD_Maps)
 	{
 		currentDirectory = fs::path(engine->LaunchInfo.gameRootFolder) / "Maps";
@@ -21,22 +43,12 @@ void UDXGameDirectory::GetGameDirectory()
 
 int UDXGameDirectory::GetNewSaveFileIndex()
 {
-	const auto saveFolder = engine->packages->GetSaveFolderPath();
-
-	// Save folders being formatted like Save0001 implies that the number can go up to 9999
-	for (int i = 1; i < 10000; i++)
-	{
-		auto folderPath = saveFolder / GetSaveIndexFolderName(i);
-		if (!fs::exists(folderPath) || (fs::exists(folderPath) && !fs::is_directory(folderPath)))
-			return i;
-	}
-
-	return 0;
+	return NextFreeDeusExSaveIndex(engine->packages->GetSaveFolderPath());
 }
 
 std::string UDXGameDirectory::GenerateSaveFilename(int saveIndex)
 {
-	return GetSaveIndexFolderName(saveIndex);
+	return DeusExSaveFolderName(saveIndex);
 }
 
 std::string UDXGameDirectory::GenerateNewSaveFileName(std::optional<int> newIndex)
@@ -46,22 +58,16 @@ std::string UDXGameDirectory::GenerateNewSaveFileName(std::optional<int> newInde
 
 int UDXGameDirectory::GetDirCount()
 {
-	int count = 0;
-
-	if (fs::exists(currentDirectory) && fs::is_directory(currentDirectory))
-		for (auto& p : fs::directory_iterator(currentDirectory))
-			count++;
-
-	return count;
+	return static_cast<int>(DirectoryList().size());
 }
 
 std::string UDXGameDirectory::GetDirFilename(int fileIndex)
 {
-#if 0
-	return DirectoryList()[fileIndex];
-#else
-	return {};
-#endif
+	auto names = DirectoryList();
+	if (fileIndex < 0 || static_cast<size_t>(fileIndex) >= names.size())
+		return {};
+
+	return names[fileIndex];
 }
 
 void UDXGameDirectory::SetDirType(EGameDirectoryTypes newDirType)
@@ -80,44 +86,46 @@ UDXSaveInfo* UDXGameDirectory::GetSaveInfo(int fileIndex)
 		// We're not in the Save folder
 		return nullptr;
 
-	auto pkg = engine->packages->GetSaveInfoPackage(GetSaveIndexFolderName(fileIndex));
-
-	if (!pkg)
-		return nullptr;
-
-	return Cast<UDXSaveInfo>(pkg->GetUObject("DeusExSaveInfo", "MyDeusExSaveInfo"));
+	return SaveInfoOfFolder(DeusExSaveFolderName(fileIndex));
 }
 
 UDXSaveInfo* UDXGameDirectory::GetSaveInfoFromDirectoryIndex(int DirectoryIndex)
 {
-	for (const auto& dxSaveInfo : LoadedSaveInfoPointers())
-		if (dxSaveInfo->DirectoryIndex() == DirectoryIndex)
-			return dxSaveInfo;
+	// The scripts pass the position in the listing and release each save info they were given inside
+	// their loop, so the folder's name is looked up rather than a position in the loaded pointers,
+	// which shrink as they are released
+	auto names = DirectoryList();
+	if (GameDirectoryType() != EGameDirectoryTypes::GD_SaveGames || DirectoryIndex < 0 || static_cast<size_t>(DirectoryIndex) >= names.size())
+		return nullptr;
 
-	return nullptr;
+	return SaveInfoOfFolder(names[DirectoryIndex]);
 }
 
 UDXSaveInfo* UDXGameDirectory::GetTempSaveInfo()
 {
+	// The save screen fills this in for a game that has no slot yet, and nothing is ever saved from it
+	if (!TempSaveInfo())
+	{
+		auto cls = engine->packages->FindClass("DeusEx.DeusExSaveInfo");
+		TempSaveInfo() = Cast<UDXSaveInfo>(engine->packages->GetTransientPackage()->NewObject("TempSaveInfo", cls, ObjectFlags::Transient));
+	}
+
 	return TempSaveInfo();
 }
 
 void UDXGameDirectory::DeleteSaveInfo(UDXSaveInfo& saveInfo)
 {
-	const auto saveFolderName = GetSaveIndexFolderName(saveInfo.DirectoryIndex());
-
-#if 0
-	for (auto it = LoadedSaveInfoPointers().cbegin(); it != LoadedSaveInfoPointers().cend(); it++)
+	// The scripts call this to release each save info they add to a screen, so it only forgets the entry:
+	// the slot's folder is deleted by the console command of the screens' delete button
+	auto pointers = LoadedSaveInfoPointers();
+	for (size_t i = 0; i < pointers.size(); i++)
 	{
-		if (*it == &saveInfo)
+		if (pointers[i] == &saveInfo)
 		{
-			LoadedSaveInfoPointers().erase(it);
-			engine->packages->RemoveSaveInfoPackage(saveFolderName);
-			fs::remove_all(engine->packages->GetSaveFolderPath() / saveFolderName); // Also delete the folder
+			pointers.Array->Remove(i, 1);
 			return;
 		}
 	}
-#endif
 }
 
 void UDXGameDirectory::PurgeAllSaveInfo()
@@ -125,17 +133,42 @@ void UDXGameDirectory::PurgeAllSaveInfo()
 	if (GameDirectoryType() == EGameDirectoryTypes::GD_Maps)
 		return;
 
-	if (fs::exists(currentDirectory) && fs::is_directory(currentDirectory))
-		for (auto& p : fs::directory_iterator(currentDirectory))
-			// We're not using remove_all() as we don't want to remove the Save folder itself
-			fs::remove(p.path());
+	// Scripts can reach this with any directory selected; only the player's own save folder may be emptied
+	if (currentDirectory != engine->packages->GetSaveFolderPath())
+	{
+		LogMessage("PurgeAllSaveInfo ignored: the selected directory is not the save folder");
+		return;
+	}
+
+	if (!engine->LaunchInfo.CanWriteUserFiles())
+	{
+		LogMessage("PurgeAllSaveInfo skipped: --autostart without --user-dir does not change saves");
+		return;
+	}
+
+	if (!fs::is_directory(currentDirectory))
+		return;
+
+	// Collected first so that removing entries cannot disturb the iteration
+	Array<std::string> entries;
+	for (auto& p : fs::directory_iterator(currentDirectory))
+		entries.push_back(p.path().string());
+
+	// Save slots are folders; the Save folder itself stays
+	for (const std::string& entry : entries)
+		Directory::remove_all(entry);
 }
 
 int UDXGameDirectory::GetSaveFreeSpace()
 {
 	// Returns a value in KBs, which limits us to ~2TB of "free space" max.
 	// Should be enough but still
-	const auto freeSpaceInKBs = static_cast<int>(fs::space(currentDirectory).free / 1024);
+	// The save folder does not exist until the first save; the space that matters is that of the nearest folder that does
+	fs::path folder = currentDirectory;
+	while (folder.has_parent_path() && folder != folder.parent_path() && !fs::exists(folder))
+		folder = folder.parent_path();
+
+	const auto freeSpaceInKBs = static_cast<int>(fs::space(folder).free / 1024);
 	// Capped at 1TB
 	return std::min(freeSpaceInKBs, 1000 * 1024 * 1024);
 }
@@ -148,42 +181,38 @@ int UDXGameDirectory::GetSaveDirectorySize(int saveIndex)
 
 	int size = 0;
 
-	for (auto& p : fs::directory_iterator(currentDirectory / GetSaveIndexFolderName(saveIndex)))
+	for (auto& p : fs::directory_iterator(currentDirectory / DeusExSaveFolderName(saveIndex)))
 		size += (int)p.file_size();
 
 	return size;
 }
 
-std::string UDXGameDirectory::GetSaveIndexFolderName(int saveIndex)
-{
-	std::string folderName = std::to_string(saveIndex);
-	folderName.insert(0, 4 - folderName.length(), '0'); // Pad with 0s
-	return "Save" + folderName;
-}
-
 void UDXGameDirectory::PopulateDirectoryList()
 {
-#if 0
-	Array<std::string> newList;
+	// Sorted, as the original game's directory listing is
+	std::vector<std::string> names;
 
-	for (auto& p : fs::directory_iterator(currentDirectory))
-		if (p.is_regular_file())
-			newList.push_back(p.path().filename().string());
+	std::error_code error;
+	for (fs::directory_iterator it{ currentDirectory, error }, end; !error && it != end; it.increment(error))
+	{
+		std::error_code entryError;
+		if (it->is_regular_file(entryError))
+			names.push_back(it->path().filename().string());
+	}
 
-	DirectoryList() = newList;
-#endif
+	std::sort(names.begin(), names.end());
+	for (const std::string& name : names)
+		DirectoryList().push_back(name);
 }
 
 void UDXGameDirectory::PopulateSaveInfoPointers()
 {
-#if 0
-	Array<UDXSaveInfo*> saveInfos;
-
-	for (const auto& saveInfoPackage : engine->packages->GetSaveInfoPackages())
+	// A folder without a save info stays in the listing, so the screens show it as missing
+	for (const auto& slot : ListDeusExSaveSlots(currentDirectory))
 	{
-		saveInfos.push_back(Cast<UDXSaveInfo>(saveInfoPackage.second->GetUObject("DeusExSaveInfo", "MyDeusExSaveInfo")));
-	}
+		DirectoryList().push_back(slot.second);
 
-	LoadedSaveInfoPointers() = saveInfos;
-#endif
+		if (UDXSaveInfo* saveInfo = SaveInfoOfFolder(slot.second))
+			LoadedSaveInfoPointers().push_back(saveInfo);
+	}
 }

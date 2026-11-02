@@ -14,4 +14,8 @@ public:
 	Array<PortalSpan> Spans;
 	USkyZoneInfo* SkyZone = nullptr;
 	UWarpZoneInfo* WarpZone = nullptr;
+
+	// The plane (normal, offset) a mirror portal reflects about; meaningful when IsMirror is set.
+	bool IsMirror = false;
+	vec4 MirrorPlane = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 };
