@@ -119,3 +119,26 @@ TEST(BlockingMoverFlagDecidesForNonPlayerPawn)
 	CHECK(HitBlocks(pawn, MoverBrush(false, true), false));
 	CHECK(!HitBlocks(pawn, MoverBrush(true, false), false));
 }
+
+// A world hit carries the level's LevelInfo as its actor, and the LevelInfo can lie on the moving
+// actor's base chain (in the games before version 400 every actor without a base is based on it,
+// and a landing bases an actor on what it lands on), so a hit on the level can carry either based
+// flag. Neither lets the level through: it stops whatever collides with the world.
+TEST(BlockingLevelBasedOnMovingStillBlocks)
+{
+	MovingActor mover = WorldColliderWithNoFlags(false);
+	HitTarget level;
+	level.isBasedOnMoving = true;
+	CHECK(HitBlocks(mover, level, false));
+	CHECK(HitBlocks(mover, level, true));
+}
+
+TEST(BlockingLevelUnderPassengerStillBlocks)
+{
+	// A passenger move passes isOwnBaseBlocking false, which lets its own base through, but the level
+	// it is based on is still the world.
+	MovingActor passenger = WorldColliderWithNoFlags(false);
+	HitTarget level;
+	level.isBaseOfMoving = true;
+	CHECK(HitBlocks(passenger, level, false));
+}
