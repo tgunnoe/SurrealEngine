@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math/vec.h"
+#include <set>
 
 class UActor;
 class BspNode;
@@ -136,3 +137,19 @@ private:
 	size_t count;
 	size_t capacity;
 };
+
+// The hits of a trace or an overlap test, one per actor: the first hit of each actor in the order
+// given (a trace sorts by fraction, so that is its nearest), but every hit on the level's LevelInfo
+// and every hit with no actor. A world hit carries the LevelInfo as its actor, and each world hit is
+// a different surface, which the texture trace and the ladder test read.
+inline CollisionHitList UniqueActorHits(const CollisionHitList& hits, const UActor* levelInfo)
+{
+	std::set<const UActor*> seenActors;
+	CollisionHitList uniqueHits;
+	for (const CollisionHit& hit : hits)
+	{
+		if (!hit.Actor || hit.Actor == levelInfo || seenActors.insert(hit.Actor).second)
+			uniqueHits.push_back(hit);
+	}
+	return uniqueHits;
+}

@@ -75,26 +75,10 @@ CollisionHitList TraceTester::Trace(const vec3& from, const vec3& to, float heig
 		}
 	}
 
-	// Sort by closest hit and only include the first hit for each actor
+	// Sort by closest hit and only include the first hit for each actor, but every world hit
 
 	std::stable_sort(hits.begin(), hits.end(), [](const auto& a, const auto& b) { return a.Fraction < b.Fraction; });
-	std::set<UActor*> seenActors;
-	CollisionHitList uniqueHits;
-	for (auto& hit : hits)
-	{
-		if (hit.Actor)
-		{
-			if (seenActors.find(hit.Actor) == seenActors.end())
-			{
-				seenActors.insert(hit.Actor);
-				uniqueHits.push_back(hit);
-			}
-		}
-		else
-		{
-			uniqueHits.push_back(hit);
-		}
-	}
+	CollisionHitList uniqueHits = UniqueActorHits(hits, GetLevelInfo());
 
 	tmax -= margin;
 	for (auto& hit : uniqueHits)

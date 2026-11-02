@@ -62,29 +62,11 @@ CollisionHitList OverlapTester::TestOverlap(const vec3& location, float height, 
 		}
 	}
 
-	// Only include each actor once
+	// Only include each actor once, but every world overlap
 
 	std::stable_sort(hits.begin(), hits.end(), [](const auto& a, const auto& b) { return a.Actor < b.Actor; });
 
-	UActor* prevActor = nullptr;
-	CollisionHitList uniqueHits;
-	for (auto& hit : hits)
-	{
-		if (hit.Actor)
-		{
-			if (hit.Actor != prevActor)
-			{
-				prevActor = hit.Actor;
-				uniqueHits.push_back(hit);
-			}
-		}
-		else
-		{
-			uniqueHits.push_back(hit);
-		}
-	}
-
-	return uniqueHits;
+	return UniqueActorHits(hits, GetLevelInfo());
 }
 
 Array<UActor*> OverlapTester::CollidingActors(const vec3& origin, float radius)
