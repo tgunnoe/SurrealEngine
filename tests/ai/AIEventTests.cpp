@@ -212,29 +212,29 @@ TEST(AIEventOneShotHonoursRangeSightAndSelf)
 {
 	World w;
 	UActor* sender = Actor(1);
-	UActor* near = Actor(2);
-	UActor* far = Actor(3);
+	UActor* nearActor = Actor(2);
+	UActor* farActor = Actor(3);
 	UActor* blinded = Actor(4);
 	UActor* otherName = Actor(5);
 	w.Place(sender, 0);
-	w.Place(near, 100);
-	w.Place(far, 2000);
+	w.Place(nearActor, 100);
+	w.Place(farActor, 2000);
 	w.Place(blinded, 100);
 	w.Place(otherName, 100);
 	w.blind.insert({ blinded, sender });
 	// Registered in this order on purpose: delivery follows registration order.
-	w.manager.SetCallback(near, Reg("LoudNoise", "OnNoise"));
+	w.manager.SetCallback(nearActor, Reg("LoudNoise", "OnNoise"));
 	w.manager.SetCallback(sender, Reg("LoudNoise", "OnNoise"));
-	w.manager.SetCallback(far, Reg("LoudNoise", "OnNoise"));
+	w.manager.SetCallback(farActor, Reg("LoudNoise", "OnNoise"));
 	w.manager.SetCallback(blinded, Reg("LoudNoise", "OnNoise"));
 	w.manager.SetCallback(otherName, Reg("Distress", "OnDistress"));
 
 	w.manager.SendEvent(sender, "LoudNoise", Audio, 1.0f, 500.0f);
 
 	CHECK_EQ(w.log.size(), (size_t)1);
-	CHECK_EQ(w.Trace(near), "Begin(1)");
+	CHECK_EQ(w.Trace(nearActor), "Begin(1)");
 	CHECK_EQ(w.Trace(sender), "");
-	CHECK_EQ(w.Trace(far), "");
+	CHECK_EQ(w.Trace(farActor), "");
 	CHECK_EQ(w.Trace(blinded), "");
 	CHECK_EQ(w.Trace(otherName), "");
 }
