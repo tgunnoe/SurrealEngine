@@ -43,6 +43,9 @@ public:
 	int GetStatementLine(Expression* statement);
 	FunctionDebugInfo* GetDebugInfo();
 
+protected:
+	GCAllocation* Mark(GCAllocation* marklist) override;
+
 private:
 	ExprToken ReadToken(ObjectStream* stream, int depth);
 	void PushBytes(const void* data, size_t size);

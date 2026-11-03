@@ -37,9 +37,9 @@ namespace
 		return count;
 	}
 
-	// Builds the classes, properties and instances the tests collect. Nothing reaches a class's
-	// property list or a struct's member list by itself, since those are C++ members that no
-	// mark visits, so everything of that kind is held by a root here. Instances are not.
+	// Builds the classes, properties and instances the tests collect. The classes and their
+	// properties are held by a root here, which is simply no longer the only way to keep them: a
+	// held struct marks its property list and its base. Instances are not held.
 	class Fixture
 	{
 	public:
