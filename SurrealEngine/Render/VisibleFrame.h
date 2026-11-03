@@ -73,7 +73,7 @@ inline MirrorFrameView MirrorFrameViewOf(const vec3& parentEye, const vec3& zone
 // or behind it sees the surface from the side that is not a mirror.
 inline bool MirrorPortalFacesEye(const vec4& plane, const vec3& eye)
 {
-	return true;
+	return dot(plane, vec4(eye, 1.0f)) > 0.0f;
 }
 
 // The index of the held mirror portal that a new mirror surface of this plane joins, or -1.
