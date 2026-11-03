@@ -547,6 +547,8 @@ void UObject::GotoState(NameString stateName, const NameString& labelName)
 
 GCAllocation* UObject::Mark(GCAllocation* marklist)
 {
+	// An object that survives a collection keeps its package, so it never points at a freed one
+	marklist = GC::MarkObject(marklist, package);
 	if (Class)
 	{
 		marklist = GC::MarkObject(marklist, Class);
