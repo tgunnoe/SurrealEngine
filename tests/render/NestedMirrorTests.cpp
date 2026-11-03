@@ -130,3 +130,129 @@ TEST(FacingMirrorsStillNest)
 	CHECK(MirrorPortalFacesEye(MirrorSurfacePlane(wallY, origin), MirrorFrameViewOf(c, c, wallX, origin).Eye));
 	CHECK(MirrorPortalFacesEye(MirrorSurfacePlane(wallX, origin), MirrorFrameViewOf(c, c, wallY, origin).Eye));
 }
+
+TEST(ReflectPointAboutPlane)
+{
+	// The first case is the training stair, the player's eye reflected in the second tread.
+	CHECK(NearV(ReflectPoint(vec3(1494.0f, 834.0f, -62.1f), MirrorSurfacePlane(vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 0.0f, -144.0f))), vec3(1494.0f, 834.0f, -225.9f), 1e-2f));
+	CHECK(NearV(ReflectPoint(vec3(50.0f, 3.0f, 4.0f), MirrorSurfacePlane(vec3(1.0f, 0.0f, 0.0f), vec3(10.0f, 0.0f, 0.0f))), vec3(-30.0f, 3.0f, 4.0f), 1e-2f));
+	CHECK(NearV(ReflectPoint(vec3(5.0f, 5.0f, 1.0f), MirrorSurfacePlane(vec3(0.6f, 0.8f, 0.0f), vec3(0.0f, 0.0f, 0.0f))), vec3(-3.4f, -6.2f, 1.0f), 1e-2f));
+	CHECK(NearV(ReflectPoint(vec3(7.0f, -300.0f, 1.0f), MirrorSurfacePlane(vec3(0.0f, -1.0f, 0.0f), vec3(0.0f, -62.0f, 0.0f))), vec3(7.0f, 176.0f, 1.0f), 1e-2f));
+}
+
+TEST(ReflectPointMatchesTheMirrorMatrix)
+{
+	std::mt19937 rng(97);
+	int checked = 0;
+	for (int i = 0; i < 200; i++)
+	{
+		vec3 n = RandomUnit(rng);
+		vec3 v = RandomPoint(rng, 1000.0f);
+		vec3 p = RandomPoint(rng, 1000.0f);
+		vec4 plane = MirrorSurfacePlane(n, v);
+		if (std::fabs(Distance(plane, p)) < 5.0f)
+			continue;
+
+		mat4 m = mat4::translate(v) * mat4::mirror(n) * mat4::translate(-v);
+		vec4 r = m * vec4(p, 1.0f);
+		CHECK(NearV(vec3(r.x, r.y, r.z), ReflectPoint(p, plane), 2e-2f));
+		checked++;
+	}
+	CHECK(checked > 150);
+}
+
+TEST(MirrorFrameEyeIsTheReflectedEye)
+{
+	MirrorFrameView tread = MirrorFrameViewOf(StairEye, StairEye, vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 0.0f, -144.0f));
+	CHECK(NearV(tread.Eye, vec3(1494.0f, 834.0f, -225.9f), 1e-2f));
+
+	vec3 wallEye(50.0f, 3.0f, 4.0f);
+	MirrorFrameView wall = MirrorFrameViewOf(wallEye, wallEye, vec3(1.0f, 0.0f, 0.0f), vec3(10.0f, 0.0f, 0.0f));
+	CHECK(NearV(wall.Eye, vec3(-30.0f, 3.0f, 4.0f), 1e-2f));
+}
+
+TEST(MirrorFrameEyeFollowsTheViewMatrices)
+{
+	// Three oblique planes, none symmetric to another, so the order they are applied in shows.
+	struct Mirror { vec3 normal, point; };
+	const Mirror path[3] =
+	{
+		{ normalize(vec3(0.6f, 0.8f, 0.0f)), vec3(100.0f, 50.0f, 0.0f) },
+		{ normalize(vec3(0.0f, 0.28f, 0.96f)), vec3(-200.0f, 0.0f, 300.0f) },
+		{ normalize(vec3(-0.8f, 0.36f, 0.48f)), vec3(400.0f, -100.0f, 50.0f) }
+	};
+	const vec3 root(120.0f, -60.0f, 170.0f);
+
+	// A mirror frame's view matrix is its parent's times the reflection about its mirror, so the
+	// product below maps the last frame's eye back to the root eye.
+	vec3 eye = root;
+	mat4 chain = mat4::identity();
+	for (const Mirror& m : path)
+	{
+		eye = MirrorFrameViewOf(eye, root, m.normal, m.point).Eye;
+		chain = chain * (mat4::translate(m.point) * mat4::mirror(m.normal) * mat4::translate(-m.point));
+	}
+	vec4 back = chain * vec4(eye, 1.0f);
+	CHECK(NearV(vec3(back.x, back.y, back.z), root, 5e-2f));
+
+	// Reflecting in the opposite order must not satisfy it, or these planes could not tell the orders apart.
+	vec3 reversed = root;
+	for (int i = 2; i >= 0; i--)
+		reversed = ReflectPoint(reversed, MirrorSurfacePlane(path[i].normal, path[i].point));
+	vec4 wrong = chain * vec4(reversed, 1.0f);
+	CHECK(!NearV(vec3(wrong.x, wrong.y, wrong.z), root, 1.0f));
+}
+
+TEST(MirrorFrameClipPlaneFacesTheParentEye)
+{
+	// The stair in two links: the tread's frame, then the landing seen from the tread frame's eye.
+	MirrorFrameView tread = MirrorFrameViewOf(StairEye, StairEye, vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 0.0f, -144.0f));
+	MirrorFrameView landing = MirrorFrameViewOf(tread.Eye, StairEye, vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 0.0f, -128.0f));
+	CHECK(Distance(landing.ClipPlane, tread.Eye) > 0.0f);
+	CHECK(Distance(landing.ClipPlane, vec3(1494.0f, 834.0f, -100.0f)) < 0.0f);
+	CHECK(Near(landing.ClipPlane.x, 0.0f, 1e-3f) && Near(landing.ClipPlane.y, 0.0f, 1e-3f) && Near(landing.ClipPlane.z, -1.0f, 1e-3f) && Near(landing.ClipPlane.w, -129.0f, 1e-3f));
+
+	std::mt19937 rng(7);
+	int checked = 0;
+	for (int i = 0; i < 200; i++)
+	{
+		vec3 n = RandomUnit(rng);
+		vec3 q = RandomPoint(rng, 1000.0f);
+		vec3 e = RandomPoint(rng, 1000.0f);
+		if (std::fabs(Distance(MirrorSurfacePlane(n, q), e)) < 5.0f)
+			continue;
+
+		MirrorFrameView view = MirrorFrameViewOf(e, e, n, q);
+		CHECK(Distance(view.ClipPlane, e) > 0.0f);
+		CHECK(Distance(view.ClipPlane, view.Eye) < 0.0f);
+		checked++;
+	}
+	CHECK(checked > 150);
+}
+
+TEST(MirrorPortalBehindTheEyeIsNotPortalled)
+{
+	const vec4 landing(0.0f, 0.0f, 1.0f, 128.0f);
+	CHECK(!MirrorPortalFacesEye(landing, vec3(1494.0f, 834.0f, -194.0f)));
+	CHECK(!MirrorPortalFacesEye(landing, vec3(1494.0f, 834.0f, -128.0f)));
+	CHECK(!MirrorPortalFacesEye(vec4(1.0f, 0.0f, 0.0f, -10.0f), vec3(-50.0f, 3.0f, 4.0f)));
+	CHECK(!MirrorPortalFacesEye(vec4(0.0f, -1.0f, 0.0f, -62.0f), vec3(0.0f, 0.0f, 0.0f)));
+}
+
+TEST(TrainingStairsHaveNoNestedPortal)
+{
+	for (float z : { -61.9f, -62.1f })
+	{
+		vec3 eye(1494.0f, 834.0f, z);
+		for (float b : StairHeights)
+			CHECK(MirrorPortalFacesEye(StairPlane(b), eye));
+
+		// Seen from the eye reflected in any one stair mirror, none of the four faces it.
+		for (float a : StairHeights)
+		{
+			vec3 reflected = MirrorFrameViewOf(eye, eye, vec3(0.0f, 0.0f, 1.0f), vec3(0.0f, 0.0f, a)).Eye;
+			for (float b : StairHeights)
+				CHECK(!MirrorPortalFacesEye(StairPlane(b), reflected));
+		}
+	}
+}

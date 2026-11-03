@@ -1,0 +1,8 @@
+# Nested mirror tests that fail until the seams are real.
+ReflectPointAboutPlane
+ReflectPointMatchesTheMirrorMatrix
+MirrorFrameEyeIsTheReflectedEye
+MirrorFrameEyeFollowsTheViewMatrices
+MirrorFrameClipPlaneFacesTheParentEye
+MirrorPortalBehindTheEyeIsNotPortalled
+TrainingStairsHaveNoNestedPortal
