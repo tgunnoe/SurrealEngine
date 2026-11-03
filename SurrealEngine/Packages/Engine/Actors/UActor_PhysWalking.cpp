@@ -104,9 +104,9 @@ void UActor::TickLadder(float elapsed)
 	CollisionHitList hits = XLevel()->Collision.Trace(Location(), Location() + LadderDirection * (CollisionRadius() * 2.0f), CollisionHeight(), CollisionRadius(), bCollideActors(), bCollideWorld(), false);
 	for (auto& hit : hits)
 	{
-		if (!hit.Actor && hit.Node && hit.Node->Surf >= 0)
+		if (hit.Actor == Level() && hit.Node && hit.Node->Surf >= 0)
 		{
-			const BspSurface& surface = engine->Level->Model->Surfaces[hit.Node->Surf];
+			const BspSurface& surface = XLevel()->Model->Surfaces[hit.Node->Surf];
 			if (surface.Material && surface.Material->Outer() && surface.Material->Outer()->Name == "Ladder")
 			{
 				foundLadder = true;
@@ -179,7 +179,7 @@ void UActor::TickWalking(float elapsed)
 			timeLeft -= timeLeft * hit.Fraction;
 			moveDelta = vel * timeLeft;
 
-			if (engine->LaunchInfo.IsDeusEx() && !hit.Actor && hit.Node && hit.Node->Surf >= 0)
+			if (engine->LaunchInfo.IsDeusEx() && hit.Actor == Level() && hit.Node && hit.Node->Surf >= 0)
 			{
 				const BspSurface& surface = engine->Level->Model->Surfaces[hit.Node->Surf];
 				if (surface.Material && surface.Material->Outer() && surface.Material->Outer()->Name == "Ladder")
@@ -223,7 +223,10 @@ void UActor::TickWalking(float elapsed)
 
 					//why does hitting a pushable decoration set the teleport flag?
 					bJustTeleported() = true;
-					vel = Velocity() = Velocity() * Mass() / (Mass() + hit.Actor->Mass());
+					if (Mass() > 0.0f)
+						vel = Velocity() = Velocity() * Mass() / (Mass() + hit.Actor->Mass());
+					else
+						vel = vec3(0.0f);
 					FireHitWall(hit);
 					timeLeft = 0.0f;
 				}

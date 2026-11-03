@@ -2,12 +2,14 @@
 
 #include "UAudioSubsystem.h"
 #include "Packages/Engine/Resources/USound.h"
+#include "Packages/Engine/Actors/UActor.h"
 #include "Audio/AudioDevice.h"
 
 class UActor;
 class UMusic;
 class UViewport;
 class AudioDevice;
+enum ESoundSlot;
 
 struct PlayingSound
 {
@@ -31,7 +33,64 @@ class USurrealAudioDevice : public UAudioSubsystem
 public:
 	using UAudioSubsystem::UAudioSubsystem;
 
+	void LoadProperties(const NameString& from = "") override;
+	void SaveConfig() override;
+
+	std::string GetPropertyAsString(const NameString& propertyName) const override;
+	void SetPropertyFromString(const NameString& propertyName, const std::string& value) override;
+
 	std::string Class = "Engine.SurrealAudioDevice";
+
+	void InitDevice();
+	void ShutdownDevice();
+	void SetViewport(UViewport* InViewport);
+	void Update();
+
+	bool PlaySound(UActor* Actor, int Id, USound* Sound, vec3 Location, float Volume, float Radius, float Pitch);
+	void StopSound(UActor* Actor, int Id);
+	void ActorDestroyed(UActor* Actor);
+	void StopSounds();
+
+	void BreakpointTriggered();
+	void AddStats(Array<std::string>& lines);
+
+	void SetInstantMusicVolume(uint8_t newMusicVolume);
+	void SetInstantSoundVolume(uint8_t newSoundVolume);
+	void SetInstantSpeechVolume(uint8_t newSpeechVolume);
+
+	void PlayMusic(std::unique_ptr<AudioSource> source);
+	void StopMusic();
+
+	int CreateSoundId(UActor* actor, ESoundSlot slot, bool noOverride);
+	static bool IsSoundInterruptable(int id);
+	static ESoundSlot GetSoundSlot(int id);
+	static bool IsSameSoundId(int id1, int id2);
+
+private:
+	AudioDevice* GetDevice() { return m_Device.get(); } // DO NOT MAKE THIS PUBLIC!!!!
+	friend class USound; // To do: figure out what USound::GetSound() is doing and why it wants to talk directly to the device (it shouldn't)
+
+	UViewport* GetViewport() { return m_Viewport; }
+
+	void StartAmbience();
+	void UpdateAmbience();
+	void UpdateSounds();
+
+	void UpdateLipSync(PlayingSound& Playing);
+	void ClearLipSync(PlayingSound& Playing);
+	void UpdateMusic();
+	void StopSound(size_t index);
+
+	static float SoundPriority(UViewport* Viewport, vec3 Location, float Volume, float Radius);
+
+	UViewport* m_Viewport = nullptr;
+
+	std::unique_ptr<AudioDevice> m_Device;
+	Array<PlayingSound> PlayingSounds;
+	UMusic* CurrentSong = nullptr;
+	int CurrentSection = 255;
+	int FreeSlot = 0x07ffffff;
+
 	bool UseFilter = true;
 	bool UseSurround = true;
 	bool UseStereo = true;
@@ -47,50 +106,6 @@ public:
 	int Channels = 16;
 	uint8_t MusicVolume = 160;
 	uint8_t SoundVolume = 200;
+	uint8_t SpeechVolume = 200;
 	float AmbientFactor = 0.7f;
-
-	void LoadProperties(const NameString& from = "") override;
-	void SaveConfig() override;
-
-	std::string GetPropertyAsString(const NameString& propertyName) const override;
-	void SetPropertyFromString(const NameString& propertyName, const std::string& value) override;
-
-	void InitDevice();
-	void ShutdownDevice();
-	void SetViewport(UViewport* InViewport);
-	UViewport* GetViewport() { return m_Viewport; }
-
-	void Update(const mat4& listener);
-
-	bool PlaySound(UActor* Actor, int Id, USound* Sound, vec3 Location, float Volume, float Radius, float Pitch, bool isTalk);
-	void StopSound(UActor* Actor, int Id);
-	void SetSpeechVolume(uint8_t volume);
-	void ActorDestroyed(UActor* Actor);
-	void StopSounds();
-
-	void BreakpointTriggered();
-	void AddStats(Array<std::string>& lines);
-
-	AudioDevice* GetDevice() { return m_Device.get(); }
-
-private:
-	void StartAmbience();
-	void UpdateAmbience();
-	void UpdateSounds(const mat4& listener);
-
-	void UpdateLipSync(PlayingSound& Playing);
-	void ClearLipSync(PlayingSound& Playing);
-	void UpdateMusic();
-	void StopSound(size_t index);
-
-	static float SoundPriority(UViewport* Viewport, vec3 Location, float Volume, float Radius);
-
-	UViewport* m_Viewport = nullptr;
-
-	std::unique_ptr<AudioDevice> m_Device;
-	Array<PlayingSound> PlayingSounds;
-	UMusic* CurrentSong = nullptr;
-	int CurrentSection = 255;
-	uint8_t SpeechVolume = 255; // talk-slot multiplier (x/255) set by Actor.SetInstantSpeechVolume
-	int FreeSlot = 0x07ffffff;
 };

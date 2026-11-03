@@ -40,13 +40,15 @@ inline bool ActorBlocks(const MovingActor& moving, const HitTarget& hit)
 
 // Whether a hit stops the moving actor. Nothing that rides the moving actor stops it, and what it
 // rides does not either unless the caller asks for its own base to block (it does when it checks
-// whether it can stand). The level stops an actor that collides with the world.
+// whether it can stand). The level stops an actor that collides with the world, whatever the base
+// flags say: a world hit carries the level's LevelInfo, which can lie on the moving actor's base
+// chain.
 //
 // A mover's brush is world geometry to whatever collides with the world, so the mover's own flag
 // decides, whatever flags the moving actor carries.
 inline bool HitBlocks(const MovingActor& moving, const HitTarget& hit, bool isOwnBaseBlocking)
 {
-	if (hit.isBasedOnMoving || (hit.isBaseOfMoving && !isOwnBaseBlocking))
+	if (hit.kind != HitKind::Level && (hit.isBasedOnMoving || (hit.isBaseOfMoving && !isOwnBaseBlocking)))
 		return false;
 
 	switch (hit.kind)

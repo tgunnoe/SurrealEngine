@@ -79,7 +79,7 @@ UActor* UActor::Spawn(UClass* SpawnClass, std::optional<UActor*> SpawnOwner, std
 
 		if (actor->bDeleteMe())
 		{
-			LogMessage("Object deleted itself during Spawn!");
+			//LogMessage("Object destroyed itself during Spawn!");
 			return nullptr;
 		}
 

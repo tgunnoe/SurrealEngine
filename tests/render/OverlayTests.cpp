@@ -4,12 +4,18 @@
 
 TEST(TimedemoOverlayOffInDeusEx)
 {
-	CHECK(!ShouldDrawTimedemoStats(false, true));
-	CHECK(!ShouldDrawTimedemoStats(false, false));
+	CHECK(!ShouldDrawTimedemoStats(false, true, false));
+	CHECK(!ShouldDrawTimedemoStats(false, false, false));
 }
 
 TEST(TimedemoOverlayOnWithTimedemo)
 {
-	CHECK(ShouldDrawTimedemoStats(true, true));
-	CHECK(ShouldDrawTimedemoStats(true, false));
+	CHECK(ShouldDrawTimedemoStats(true, true, false));
+	CHECK(ShouldDrawTimedemoStats(true, false, false));
+}
+
+TEST(TimedemoOverlayOnWithRenderStats)
+{
+	CHECK(ShouldDrawTimedemoStats(false, true, true));
+	CHECK(ShouldDrawTimedemoStats(false, false, true));
 }

@@ -4,6 +4,7 @@
 #include "Collision/BottomLevel/OverlapAABBModel.h"
 #include "Encroachment.h"
 #include "Packages/Engine/Actors/UActor.h"
+#include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Actors/Brush/UMover.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
 
@@ -56,34 +57,16 @@ CollisionHitList OverlapTester::TestOverlap(const vec3& location, float height, 
 		if (extents != vec3(0.0f))
 		{
 			OverlapAABBModel overlapmodel;
-			CollisionHitList worldHits = overlapmodel.TestOverlap(GetLevel()->Model, location, extents, visibilityOnly);
+			CollisionHitList worldHits = overlapmodel.TestOverlap(GetLevelInfo(), GetLevel()->Model, location, extents, visibilityOnly);
 			hits.push_back(worldHits);
 		}
 	}
 
-	// Only include each actor once
+	// Only include each actor once, but every world overlap
 
 	std::stable_sort(hits.begin(), hits.end(), [](const auto& a, const auto& b) { return a.Actor < b.Actor; });
 
-	UActor* prevActor = nullptr;
-	CollisionHitList uniqueHits;
-	for (auto& hit : hits)
-	{
-		if (hit.Actor)
-		{
-			if (hit.Actor != prevActor)
-			{
-				prevActor = hit.Actor;
-				uniqueHits.push_back(hit);
-			}
-		}
-		else
-		{
-			uniqueHits.push_back(hit);
-		}
-	}
-
-	return uniqueHits;
+	return UniqueActorHits(hits, GetLevelInfo());
 }
 
 Array<UActor*> OverlapTester::CollidingActors(const vec3& origin, float radius)
@@ -244,7 +227,7 @@ Array<UActor*> OverlapTester::EncroachingActors(UActor* actor)
 		testExtents /= mainScale;
 
 		OverlapAABBModel test;
-		return !test.TestOverlap(brush, localOrigin, testExtents, false).empty();
+		return !test.TestOverlap(actor, brush, localOrigin, testExtents, false).empty();
 	};
 
 	Array<UActor*> hits;

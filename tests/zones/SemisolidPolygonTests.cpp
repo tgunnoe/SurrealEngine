@@ -58,10 +58,14 @@ namespace
 			leafHulls.push_back(FloatBits(value));
 	}
 
+	// A world hit carries the trace's owner, the level's LevelInfo, as its actor. The trace only
+	// copies the pointer, so a stand-in that is not null is enough.
+	UActor* const LevelOwner = reinterpret_cast<UActor*>(uintptr_t(0x10000));
+
 	CollisionHitList SweepDown(UModel* model, double x, double y, double z)
 	{
 		TraceAABBModel tracer;
-		return tracer.Trace(model, dvec3(x, y, z), 0.0, Down, 100.0, PlayerExtents, false);
+		return tracer.Trace(LevelOwner, model, dvec3(x, y, z), 0.0, Down, 100.0, PlayerExtents, false);
 	}
 }
 

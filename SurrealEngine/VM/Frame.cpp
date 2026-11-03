@@ -16,11 +16,13 @@
 Array<TraceFilter> Frame::TraceEntries;
 std::function<void()> Frame::RunDebugger;
 Array<Breakpoint> Frame::Breakpoints;
+Array<Trace> Frame::Traces;
 Array<Frame*> Frame::Callstack;
 FrameRunState Frame::RunState = FrameRunState::Running;
 Frame* Frame::StepFrame = nullptr;
 Expression* Frame::StepExpression = nullptr;
 std::string Frame::ExceptionText;
+bool Frame::BreakOnError;
 std::unique_ptr<Iterator> Frame::CreatedIterator;
 
 Frame::Frame(UObject* instance, UStruct* func, size_t statementIndex, bool isStateFrame) :
@@ -118,6 +120,14 @@ void Frame::DeinitVariables()
 			VMFreeVariables();
 		Variables = nullptr;
 	}
+}
+
+void Frame::AddTrace(const NameString& func, std::function<void(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args)> callback)
+{
+	Trace trace;
+	trace.Function = func;
+	trace.Callback = callback;
+	Traces.push_back(trace);
 }
 
 bool Frame::AddBreakpoint(const NameString& clsName, const NameString& funcName, const NameString& stateName, int statementIndex)
@@ -272,12 +282,24 @@ std::string Frame::GetCallstack()
 		std::string name = frame->GetName();
 		if (UStruct* func = frame->Func)
 		{
-			name += " line " + std::to_string(func->Line);
-
 			if (frame->StatementIndex > 0) // StatementIndex points at the NEXT statement to be executed
 			{
+				int line = func->GetStatementLine(func->Code->Statements[frame->StatementIndex - 1]);
+				if (line > 0)
+				{
+					name += " line " + std::to_string(line);
+				}
+				else
+				{
+					name += " line " + std::to_string(func->Line) + " [debug info failed]";
+					line = func->GetStatementLine(func->Code->Statements[frame->StatementIndex - 1]);
+				}
 				name += ": ";
 				name += GetDisassembly(func->Code->Statements[frame->StatementIndex - 1]);
+			}
+			else
+			{
+				name += " line " + std::to_string(func->Line);
 			}
 		}
 		if (!result.empty()) result += newline;
@@ -545,6 +567,18 @@ std::string Frame::FormatTraceArgs(const ArrayView<ExpressionValue>& args)
 
 void Frame::TraceCall(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args)
 {
+	for (const auto& trace : Traces)
+	{
+		if (trace.Enabled && trace.Function == func->Name)
+			trace.Callback(func, instance, args);
+	}
+
+	TraceScriptCall(func, instance, args);
+}
+
+// The --trace-script log: one line for each call that a TraceEntries filter selects
+void Frame::TraceScriptCall(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args)
+{
 	if (TraceEntries.empty())
 		return;
 
@@ -651,7 +685,10 @@ ExpressionEvalResult Frame::Run()
 		if (result.ContextWasNone)
 		{
 			LogMessage("Accessed None in " + Object->Class->Name.ToString() + "." + Func->Name.ToString());
-			LogMessage(Frame::GetCallstack());
+			if (BreakOnError)
+				Break();
+			else
+				LogMessage(Frame::GetCallstack());
 		}
 
 		switch (result.Result)
@@ -832,8 +869,6 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 
 	try
 	{
-		auto oldExpr = Frame::StepExpression;
-
 		ExpressionEvalResult result;
 
 		PushExpr(statementExpr);
@@ -842,7 +877,16 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 		{
 			Expression* expr = vmstack.expr[vmstack.exprEnd - 1];
 			int pass = vmstack.pass[vmstack.exprEnd - 1]++;
+
 			Frame::StepExpression = expr;
+			for (const Breakpoint& bp : Breakpoints)
+			{
+				if (bp.Expr == expr && bp.Enabled)
+				{
+					Frame::Break();
+				}
+			}
+
 			switch (expr->Type)
 			{
 			default:
@@ -2138,7 +2182,6 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 			}
 		}
 
-		Frame::StepExpression = oldExpr;
 		if (vmstack.valueEnd > enterValueEnd)
 			result.Value = std::move(PopValue());
 
