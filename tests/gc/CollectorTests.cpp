@@ -245,3 +245,58 @@ TEST(GcCountersFollowTheSweep)
 	CHECK_EQ(before.memoryUsage - after.memoryUsage, sweptSize);
 	CHECK_EQ(CountLive(), after.numObjects);
 }
+
+
+TEST(GcMarksTheMembersOfAStruct)
+{
+	Fixture fixture;
+
+	// A struct keeps its property list and its base as C++ members, which no property data reaches. The struct
+	// is held; its base, its base's own base and the properties of both are not.
+	UStruct* grandBase = GC::Alloc<UStruct>("GcGrandBase", nullptr, ObjectFlags::NoFlags);
+	UStruct* base = GC::Alloc<UStruct>("GcBase", nullptr, ObjectFlags::NoFlags);
+	UStruct* derived = fixture.Hold(GC::Alloc<UStruct>("GcDerived", nullptr, ObjectFlags::NoFlags));
+	UObjectProperty* ownProperty = GC::Alloc<UObjectProperty>("Own", nullptr, ObjectFlags::NoFlags);
+	UObjectProperty* inheritedProperty = GC::Alloc<UObjectProperty>("Inherited", nullptr, ObjectFlags::NoFlags);
+	derived->BaseStruct = base;
+	base->BaseStruct = grandBase;
+	derived->Properties.push_back(ownProperty);
+	base->Properties.push_back(inheritedProperty);
+	UObject* unreferenced = GC::Alloc<UObject>("Unreferenced", nullptr, ObjectFlags::NoFlags);
+
+	const size_t before = GC::GetStats().numObjects;
+	GC::Collect();
+	const size_t after = GC::GetStats().numObjects;
+	const bool baseLive = IsLive(base);
+	const bool grandBaseLive = IsLive(grandBase);
+	const bool ownLive = IsLive(ownProperty);
+	const bool inheritedLive = IsLive(inheritedProperty);
+	const bool unreferencedLive = IsLive(unreferenced);
+
+	CHECK_MSG(baseLive, "the base of a held struct was swept");
+	CHECK_MSG(grandBaseLive, "the base of a base of a held struct was swept");
+	CHECK_MSG(ownLive, "a property in the list of a held struct was swept");
+	CHECK_MSG(inheritedLive, "a property in the list of the base of a held struct was swept");
+	CHECK_MSG(!unreferencedLive, "an object reachable from no root survived");
+	CHECK_EQ(before - after, size_t{ 1 });
+}
+
+TEST(GcMarksTheMembersOfAClass)
+{
+	Fixture fixture;
+
+	// A class is a struct whose property list a loaded game fills with the property objects of its base, among them
+	// the ones the engine builds for Object, which belong to no package. Same shape, through a held class.
+	UClass* baseClass = GC::Alloc<UClass>("GcBaseClass", nullptr, ObjectFlags::NoFlags);
+	UClass* cls = fixture.Hold(GC::Alloc<UClass>("GcMemberClass", nullptr, ObjectFlags::NoFlags));
+	UObjectProperty* nativeProperty = GC::Alloc<UObjectProperty>("Outer", nullptr, ObjectFlags::Native);
+	cls->BaseStruct = baseClass;
+	cls->Properties.push_back(nativeProperty);
+
+	GC::Collect();
+	const bool baseLive = IsLive(baseClass);
+	const bool propertyLive = IsLive(nativeProperty);
+
+	CHECK_MSG(baseLive, "the base class of a held class was swept");
+	CHECK_MSG(propertyLive, "a property in the list of a held class was swept");
+}
