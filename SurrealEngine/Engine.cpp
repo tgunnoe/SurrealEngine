@@ -721,6 +721,20 @@ void Engine::LoadEntryMap()
 	viewport->Actor() = nullptr;
 }
 
+// The collector's object count is a line of its own after the MAP line, not part of it: the sweep runner compares the MAP
+// text with the requested map, so a longer text would make every sweep read as idle.
+static void LogObjectCount()
+{
+	const GCStats stats = GC::GetStats();
+	size_t listed = 0;
+	for (GCObject* live : GC::GetObjects())
+	{
+		(void)live;
+		listed++;
+	}
+	SmokeLog::Get()->Event("GC_STATS", "objects=" + std::to_string(stats.numObjects) + " memory=" + std::to_string(stats.memoryUsage) + " listed=" + std::to_string(listed));
+}
+
 void Engine::UnloadMap()
 {
 	if (LevelPackage && LevelPackage != EntryLevelPackage)
@@ -948,6 +962,7 @@ void Engine::PossessSavedPlayer()
 
 	render->OnMapLoaded();
 	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+	LogObjectCount();
 	NotePlayerLogin();
 
 	// A load never runs a login, so the level holds no travel info and its URL no player name. A restart
@@ -1095,6 +1110,7 @@ std::string Engine::TravelPlayerName(UPlayerPawn* pawn) const
 void Engine::LoginPlayer()
 {
 	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+	LogObjectCount();
 
 	UnrealURL url = LevelInfo->URL;
 	std::map<std::string, std::string> travelInfo = Level->TravelInfo;
