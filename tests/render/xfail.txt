@@ -1,3 +1,0 @@
-# Nested mirror tests that fail until the seams are real.
-MirrorPortalBehindTheEyeIsNotPortalled
-TrainingStairsHaveNoNestedPortal
