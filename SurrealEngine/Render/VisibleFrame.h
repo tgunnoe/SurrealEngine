@@ -46,10 +46,10 @@ inline vec4 MirrorSurfacePlane(const vec3& normal, const vec3& pointOnPlane)
 }
 
 // The reflection of a point about a plane (unit normal, offset): the camera a mirror frame
-// really looks from, given its parent's camera.
+// really looks from, given its parent's camera. The plane's normal must be unit length.
 inline vec3 ReflectPoint(const vec3& point, const vec4& plane)
 {
-	return point;
+	return point - plane.xyz() * (2.0f * dot(plane, vec4(point, 1.0f)));
 }
 
 // What a mirror frame takes from the mirror it is made from. The eye is where its view is taken
@@ -64,7 +64,9 @@ struct MirrorFrameView
 
 inline MirrorFrameView MirrorFrameViewOf(const vec3& parentEye, const vec3& zoneLocation, const vec3& normal, const vec3& pointOnPlane)
 {
-	return { parentEye, zoneLocation, MirrorClipPlane(normal, pointOnPlane, parentEye) };
+	// The plane is oriented from the parent's eye, the one that faces the mirror: the reflected eye
+	// is behind it and would keep the wrong side.
+	return { ReflectPoint(parentEye, MirrorSurfacePlane(normal, pointOnPlane)), zoneLocation, MirrorClipPlane(normal, pointOnPlane, parentEye) };
 }
 
 // Whether a mirror surface of this plane has the frame's eye in front of it. An eye on the plane
