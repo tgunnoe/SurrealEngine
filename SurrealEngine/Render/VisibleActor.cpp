@@ -9,6 +9,22 @@
 #include "Packages/Engine/Actors/Pawn/UPawn.h"
 #include "Packages/Engine/Actors/Pawn/UPlayerPawn.h"
 #include "Packages/Engine/Actors/Brush/UMover.h"
+#include "Packages/Engine/Actors/Info/ULevelInfo.h"
+
+// Only Deus Ex's Actor declares LastRenderTime. PropertyOffsets leaves the offset unset for the
+// other games, and reading through an unset offset throws.
+static bool HasRenderStamp()
+{
+	return PropOffsets_Actor.LastRenderTime.DataOffset != ~(size_t)0;
+}
+
+// Scripts read the stamp through Actor.LastRendered. Process runs once per VisibleFrame, so an
+// actor collected by several sub-frames in one engine frame is stamped with the same time.
+static void StampRenderTime(UActor* actor)
+{
+	if (HasRenderStamp())
+		actor->LastRenderTime() = engine->LevelInfo->TimeSeconds();
+}
 
 void VisibleActor::Process(VisibleFrame* frame, UActor* actor)
 {
@@ -56,23 +72,29 @@ void VisibleActor::Process(VisibleFrame* frame, UActor* actor)
 	if (!frame->Clipper.IsAABBVisible(actor->BspInfo.BoundingBox))
 		return;
 
+	if (frame->IsMirrorFrame && MirrorPlaneCullsBox(actor->BspInfo.BoundingBox, frame->ClipPlane))
+		return;
+
 	EDrawType dt = (EDrawType)actor->DrawType();
 	if (dt == DT_Mesh && actor->Mesh())
 	{
 		Type = dt;
 		Actor = actor;
+		StampRenderTime(actor);
 		frame->Actors.push_back(*this);
 	}
 	else if ((dt == DT_Sprite || dt == DT_SpriteAnimOnce) && actor->Texture())
 	{
 		Type = dt;
 		Actor = actor;
+		StampRenderTime(actor);
 		frame->Actors.push_back(*this);
 	}
 	else if (dt == DT_Brush && actor->Brush() && UActor::TryCast<UMover>(actor))
 	{
 		Type = dt;
 		Actor = actor;
+		StampRenderTime(actor);
 		frame->Actors.push_back(*this);
 	}
 }

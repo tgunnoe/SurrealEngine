@@ -57,6 +57,13 @@ jobs:
         export MAKEFLAGS=--keep-going
         cmake --build build --config ${{ matrix.config.build_type }} --parallel 3
 
+    - name: Run Tests
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        cd build
+        ctest --output-on-failure --no-tests=error -C ${{ matrix.config.build_type }}
+
     - name: Create Package
       if: (runner.os == 'Windows' || matrix.config.name == 'Linux GCC 12' || runner.os == 'macOS') && matrix.config.build_type == 'RelWithDebInfo'
       shell: bash

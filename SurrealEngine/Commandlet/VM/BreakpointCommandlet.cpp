@@ -46,7 +46,11 @@ void BreakpointCommandlet::OnCommand(DebuggerApp* console, const std::string& ar
 	}
 
 	Array<std::string> params = SplitString(args);
-	if (params.size() == 2)
+	if (params.size() == 1 && params[0] == "error")
+	{
+		Frame::BreakOnError = true;
+	}
+	else if (params.size() == 2)
 	{
 		if (Frame::AddBreakpoint(params[0], params[1]))
 		{
@@ -87,6 +91,7 @@ void BreakpointCommandlet::OnCommand(DebuggerApp* console, const std::string& ar
 void BreakpointCommandlet::OnPrintHelp(DebuggerApp* console)
 {
 	console->WriteOutput("Syntax: break <package.class> <function> [state] [statement]" + NewLine());
+	console->WriteOutput("Syntax: break error" + NewLine());
 	console->WriteOutput("Example: break Botpack.TeamGamePlus FindPlayerStart None 18" + NewLine());
 }
 
@@ -158,13 +163,15 @@ void DeleteBreakpointCommandlet::OnPrintHelp(DebuggerApp* console)
 ClearBreakpointsCommandlet::ClearBreakpointsCommandlet()
 {
 	SetLongFormName("clear");
-	SetShortDescription("Remove all breakpoints");
+	SetShortDescription("Remove all breakpoints and traces");
 }
 
 void ClearBreakpointsCommandlet::OnCommand(DebuggerApp* console, const std::string& args)
 {
 	Frame::Breakpoints.clear();
-	console->WriteOutput("Removed all breakpoints" + NewLine());
+	Frame::Traces.clear();
+	Frame::BreakOnError = false;
+	console->WriteOutput("Removed all breakpoints and traces" + NewLine());
 }
 
 void ClearBreakpointsCommandlet::OnPrintHelp(DebuggerApp* console)

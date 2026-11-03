@@ -68,6 +68,9 @@ uint8_t UScriptedPawn::GetPawnAllianceType(UPawn* QueryPawn)
 			return (uint8_t)EAllianceType::ALLIANCE_Hostile;
 		}
 	}
+	// The stock distress handler passes None when the distressed pawn has no enemy.
+	if (!QueryPawn)
+		return GetAllianceType(NameString());
 	return GetAllianceType(QueryPawn->Alliance());
 }
 
@@ -83,18 +86,30 @@ bool UScriptedPawn::HaveSeenCarcass(const NameString& CarcassName)
 	return false;
 }
 
+namespace
+{
+	// bDetectable is declared by the Deus Ex Actor and is not part of the engine's property tables.
+	// Any other game has no such property, and there everything is detectable.
+	bool IsDetectable(UPawn* pawn)
+	{
+		const NameString name = "bDetectable";
+		if (!pawn->HasProperty(name))
+			return true;
+		return pawn->BoolValue(pawn->GetPropertyDataOffset(name)).Get();
+	}
+}
+
 bool UScriptedPawn::IsValidEnemy(UPawn* TestEnemy, std::optional<bool> bCheckAlliance)
 {
-	if (!UObject::TryCast<UScriptedPawn>(TestEnemy) || TestEnemy == this || !bBlockSight() || bDeleteMe() || UObject::TryCast<UScriptedPawn>(TestEnemy)->KillCount() < 1)
-		return false;
-	if (bCheckAlliance)
-	{
-		uint8_t retval = GetPawnAllianceType(TestEnemy);
-		if (retval != (uint8_t)EAllianceType::ALLIANCE_Hostile)
-		{
-			return false;
-		}
-		return true;
-	}
-	return false;
+	// The scripts call this with the flag left out to mean "and hostile to me" (LoudNoiseScore and SetEnemy
+	// rely on it to cull friends); only an explicit false skips the alliance.
+	bool checkAlliance = bCheckAlliance.value_or(true);
+
+	bool candidateExists = TestEnemy != nullptr;
+	bool isSelf = TestEnemy == this;
+	bool alive = candidateExists && TestEnemy->Health() > 0 && !TestEnemy->bDeleteMe();
+	bool detectable = candidateExists && IsDetectable(TestEnemy);
+	bool hostile = candidateExists && checkAlliance && GetPawnAllianceType(TestEnemy) == (uint8_t)EAllianceType::ALLIANCE_Hostile;
+
+	return EnemyValidity(candidateExists, isSelf, alive, detectable, checkAlliance, hostile);
 }

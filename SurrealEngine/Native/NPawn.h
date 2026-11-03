@@ -1,6 +1,25 @@
 #pragma once
 
 #include "Packages/Core/UObject.h"
+#include "VM/Iterator.h"
+
+class UNavigationPoint;
+
+// Backs the foreach over Pawn.ReachablePathnodes: yields each reached navigation point of the given
+// class, writing it and its path distance through the script's out parameters.
+class ReachablePathnodesIterator : public Iterator
+{
+public:
+	ReachablePathnodesIterator(UObject* baseClass, UObject** outNavPoint, float* outDistance, std::vector<std::pair<UNavigationPoint*, int>> nodes);
+	bool Next() override;
+
+private:
+	UObject* baseClass = nullptr;
+	UObject** outNavPoint = nullptr;
+	float* outDistance = nullptr;
+	std::vector<std::pair<UNavigationPoint*, int>> nodes;
+	size_t nextNode = 0;
+};
 
 class NPawn
 {

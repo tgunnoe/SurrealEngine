@@ -6,7 +6,10 @@
 #include "IniFile.h"
 #include "PackageWriter.h"
 #include "Utils/File.h"
+#include "Utils/Logger.h"
 #include "Utils/StrTools.h"
+#include "Utils/UserDirs.h"
+#include "UnrealURL.h"
 #include "VM/NativeFunc.h"
 #include "Packages/ConSys/UConAudioList.h"
 #include "Packages/ConSys/UConCamera.h"
@@ -309,12 +312,174 @@
 #include "Native/NWebRequest.h"
 #include "Native/NWebResponse.h"
 #include "Native/NWindow.h"
+#include <algorithm>
+
+std::string DeusExSaveFolderName(int slot)
+{
+	// The original game keeps the scripts' quick save (slot -1) in a folder of its own
+	if (slot == -1)
+		return "QuickSave";
+
+	std::string digits = std::to_string(slot);
+	if (digits.size() < 4)
+		digits.insert(0, 4 - digits.size(), '0');
+	return "Save" + digits;
+}
+
+fs::path SaveSlotPath(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension)
+{
+	if (deusEx)
+		return saveFolder / DeusExSaveFolderName(slot);
+
+	return saveFolder / ("Save" + std::to_string(slot) + "." + saveExtension);
+}
+
+std::optional<std::string> SaveSlotRefusal(bool deusEx, int slot)
+{
+	if (slot < -1 || (!deusEx && slot < 0))
+		return "slot " + std::to_string(slot) + " is not allowed";
+
+	return std::nullopt;
+}
+
+std::optional<std::string> SaveSlotDeleteRefusal(int slot)
+{
+	if (slot < 1)
+		return "slot " + std::to_string(slot) + " is not allowed";
+
+	return std::nullopt;
+}
+
+std::optional<std::string> RemoveSaveSlot(bool deusEx, int slot, const fs::path& saveFolder, const std::string& saveExtension)
+{
+	if (const std::optional<std::string> refusal = SaveSlotDeleteRefusal(slot))
+		return refusal;
+
+	const fs::path path = SaveSlotPath(deusEx, slot, saveFolder, saveExtension);
+
+	// Only what a save is: a Deus Ex slot is a folder and the other games' slots are files
+	std::error_code error;
+	const bool isSave = deusEx ? fs::is_directory(path, error) : fs::is_regular_file(path, error);
+	if (!isSave)
+		return "no save in slot " + std::to_string(slot);
+
+	// A link in the save folder may lead anywhere, and so may a save folder that is itself a link; the
+	// slot goes only when it lies inside the folder once both are resolved. A path that cannot be
+	// resolved is not shown to lie inside.
+	const auto resolve = [](const fs::path& unresolved) -> std::optional<fs::path>
+	{
+		std::error_code resolveError;
+		const fs::path absolute = fs::absolute(unresolved, resolveError);
+		if (resolveError)
+			return std::nullopt;
+
+		fs::path resolved = fs::weakly_canonical(absolute, resolveError);
+		if (resolveError)
+			return std::nullopt;
+
+		return resolved;
+	};
+
+	const std::optional<fs::path> root = resolve(saveFolder);
+	const std::optional<fs::path> target = resolve(path);
+	const fs::path relative = root && target ? target->lexically_relative(*root) : fs::path();
+	if (relative.empty() || relative == "." || relative.begin()->string() == "..")
+		return "slot " + std::to_string(slot) + " is outside the save folder";
+
+	try
+	{
+		Directory::remove_all(path.string());
+	}
+	catch (const std::runtime_error& e)
+	{
+		return std::string(e.what());
+	}
+
+	return std::nullopt;
+}
+
+int NextFreeDeusExSaveIndex(const fs::path& saveFolder)
+{
+	// Save folders being formatted like Save0001 implies that the number can go up to 9999
+	for (int i = 1; i < 10000; i++)
+	{
+		std::error_code error;
+		if (!fs::is_directory(saveFolder / DeusExSaveFolderName(i), error))
+			return i;
+	}
+
+	return 0;
+}
+
+std::vector<std::pair<int, std::string>> ListDeusExSaveSlots(const fs::path& saveFolder)
+{
+	std::vector<std::pair<int, std::string>> slots;
+
+	// The save folder does not exist until the first save, and a listing is no place to fail
+	std::error_code error;
+	for (fs::directory_iterator it{ saveFolder, error }, end; !error && it != end; it.increment(error))
+	{
+		std::error_code entryError;
+		if (!it->is_directory(entryError))
+			continue;
+
+		// Only the exact spelling of a slot's folder is a slot, so that a folder of the player's own
+		// (or the quick save, which the scripts ask for separately) never reaches the menus
+		const std::string name = it->path().filename().string();
+		if (name.compare(0, 4, "Save") != 0)
+			continue;
+
+		const std::optional<int> slot = ParseSaveSlot(name.substr(4));
+		if (!slot || *slot < 1 || name != DeusExSaveFolderName(*slot))
+			continue;
+
+		slots.emplace_back(*slot, name);
+	}
+
+	std::sort(slots.begin(), slots.end());
+	return slots;
+}
+
+std::optional<fs::path> NewestDeusExSaveLevel(const fs::path& slotFolder, const std::string& saveExtension)
+{
+	std::error_code error;
+	if (!fs::is_directory(slotFolder, error))
+		return std::nullopt;
+
+	const std::string levelExtension = "." + saveExtension;
+	const std::string saveInfoName = "SaveInfo" + levelExtension;
+
+	std::optional<fs::path> newest;
+	fs::file_time_type newestTime;
+	for (const auto& entry : fs::directory_iterator{ slotFolder })
+	{
+		const fs::path& path = entry.path();
+		if (!entry.is_regular_file() || path.extension() != levelExtension || path.filename() == saveInfoName)
+			continue;
+
+		// The name settles files written in the same instant, so the same folder always gives the same level
+		const fs::file_time_type time = entry.last_write_time();
+		if (!newest || time > newestTime || (time == newestTime && path > *newest))
+		{
+			newest = path;
+			newestTime = time;
+		}
+	}
+
+	return newest;
+}
 
 PackageManager::PackageManager(const GameLaunchInfo& launchInfo) : launchInfo(launchInfo)
 {
 	gameRootFolderPath = fs::path(launchInfo.gameRootFolder);
 	gameSystemFolderPath = gameRootFolderPath / "System";
 
+	const UserDirs::GameDirs userDirs = UserDirs::gameDirs(launchInfo, UserDirs::processEnv());
+	gameConfigFolderPath = userDirs.config;
+	gameDataFolderPath = userDirs.data;
+	gameSaveFolderPath = gameDataFolderPath / "Save";
+
+	NativeFunctions::Reset();
 	RegisterNativeClasses();
 	CreateTransientPackage();
 	RegisterFunctions();
@@ -398,9 +563,18 @@ Package* PackageManager::LoadMap(const std::string& path)
 	return GC::Alloc<Package>(this, mapFilename.stem().string(), absolute_path.string());
 }
 
+GCRoot<Package> PackageManager::LoadMapHeld(const std::string& path)
+{
+	return GCRoot<Package>(LoadMap(path));
+}
+
 void PackageManager::UnloadPackage(Package* package)
 {
-	// Remove package from open streams cache:
+	ForgetStreams(package);
+}
+
+void PackageManager::ForgetStreams(Package* package)
+{
 	auto streamit = openStreams.begin();
 	while (streamit != openStreams.end())
 	{
@@ -420,22 +594,28 @@ void PackageManager::CloseStreams()
 	openStreams.clear();
 }
 
-Package* PackageManager::LoadSaveFile(const std::string& path)
+Package* PackageManager::LoadSaveSlot(int slotNum)
 {
-	auto fullPath = gameSaveFolderPath / fs::path(path);
+	fs::path file = SaveSlotPath(IsDeusEx(), slotNum, gameSaveFolderPath, GetSaveExtension());
 
-	if (!fullPath.has_extension() || (fullPath.extension().string() != GetSaveExtension()))
-		fullPath.replace_extension(GetSaveExtension());
+	if (IsDeusEx())
+	{
+		// A Deus Ex slot is a folder: the level package beside SaveInfo
+		const std::optional<fs::path> level = NewestDeusExSaveLevel(file, GetSaveExtension());
+		if (!level)
+			return nullptr;
+		file = *level;
+	}
 
-	if (fs::exists(fullPath))
-		return GC::Alloc<Package>(this, fullPath.stem().string(), fullPath.string());
+	if (!fs::exists(file))
+		return nullptr;
 
-	return nullptr;
+	return GC::Alloc<Package>(this, file.stem().string(), file.string());
 }
 
-Package* PackageManager::LoadSaveSlot(const uint32_t slotNum)
+GCRoot<Package> PackageManager::LoadSaveSlotHeld(int slotNum)
 {
-	return LoadSaveFile("Save" + std::to_string(slotNum) + "." + GetSaveExtension());
+	return GCRoot<Package>(LoadSaveSlot(slotNum));
 }
 
 void PackageManager::ScanForMaps()
@@ -502,10 +682,7 @@ void PackageManager::ScanPaths()
 		paths = GetIniValues("system", "Core.System", "Paths");
 	}
 
-	// Handle SavePath and CachePath
-	const auto savePath = convert_path_separators(GetIniValue("System", "Core.System", "SavePath"));
-	gameSaveFolderPath = (gameSystemFolderPath / savePath).lexically_normal();
-
+	// The ini SavePath is ignored: saves live in the per-user data directory, never in the install
 	const auto cachePath = convert_path_separators(GetIniValue("System", "Core.System", "CachePath"));
 	gameCacheFolderPath = (gameSystemFolderPath / cachePath).lexically_normal();
 
@@ -560,6 +737,10 @@ void PackageManager::ScanPaths()
 
 void PackageManager::ScanSaveInfos()
 {
+	// The save folder only exists once something has been saved
+	if (!fs::is_directory(gameSaveFolderPath))
+		return;
+
 	for (const auto& entry : fs::directory_iterator{gameSaveFolderPath})
 	{
 		if (!entry.is_directory())
@@ -600,9 +781,26 @@ Package* PackageManager::GetSaveInfoPackage(const NameString& saveFolderName)
 	auto idx = saveInfos.find(saveFolderName);
 
 	if (idx != saveInfos.end())
-		return idx->second;
+		return idx->second.get();
 
 	return nullptr;
+}
+
+void PackageManager::RegisterSaveInfo(const std::string& saveFolderName)
+{
+	const auto save = gameSaveFolderPath / saveFolderName / ("SaveInfo." + saveExtension);
+
+	// Runs from the main loop, which has no handler: a save info that cannot be read is the slot's loss,
+	// not the run's. The entry it would replace describes a save that is no longer there.
+	try
+	{
+		saveInfos[saveFolderName] = GC::Alloc<Package>(this, saveFolderName, save.string());
+	}
+	catch (const std::exception&)
+	{
+		LogMessage("Save info unreadable: " + saveFolderName);
+		saveInfos.erase(saveFolderName);
+	}
 }
 
 void PackageManager::RemoveSaveInfoPackage(const NameString& saveFolderName)
@@ -711,8 +909,10 @@ std::unique_ptr<IniFile>& PackageManager::LoadIniFile(NameString iniName)
 	auto& ini = iniFiles[iniName];
 	if (!ini)
 	{
-		const auto iniFilePath = gameSystemFolderPath / (iniName.ToString() + ".ini");
-		ini = std::make_unique<IniFile>(iniFilePath.string());
+		// The per-user copy wins; the install's own file is read when there is none (and is the one reported when neither exists)
+		const auto userIniPath = gameConfigFolderPath / ("SE-" + iniName.ToString() + ".ini");
+		const auto installIniPath = gameSystemFolderPath / (iniName.ToString() + ".ini");
+		ini = std::make_unique<IniFile>((fs::is_regular_file(userIniPath) ? userIniPath : installIniPath).string());
 	}
 
 	return ini;
@@ -737,13 +937,7 @@ std::unique_ptr<IniFile>& PackageManager::LoadUserIniFile()
 	auto& ini = iniFiles["User"];
 
 	if (!ini)
-	{
-		// Case sensitivity check
-		if (fs::exists(gameSystemFolderPath / "User.ini"))
-			ini = std::make_unique<IniFile>((gameSystemFolderPath / "User.ini").string());
-		else
-			ini = std::make_unique<IniFile>((gameSystemFolderPath/ "user.ini").string());
-	}
+		ini = std::make_unique<IniFile>(ResolveUserIniPath().string());
 
 	return ini;
 }
@@ -814,17 +1008,20 @@ void PackageManager::SetIniValues(NameString iniName, const NameString& sectionN
 
 void PackageManager::SaveAllIniFiles()
 {
+	// Everything is written beside the other per-user files as SE-<name>.ini, never over the file it was
+	// read from: the install is not ours to write to, and a legacy SE- file there is only a starting point.
+	Directory::create(gameConfigFolderPath.string());
+
 	for (auto& iniFile: iniFiles)
 	{
-		if (iniFile.first == launchInfo.gameExecutableName || iniFile.first == "System")
-		{
-			const std::string engineIniName = "SE-" + iniFile.first.ToString() + ".ini";
-			iniFile.second->UpdateIfExists((gameSystemFolderPath / engineIniName).string());
-		}
-		else if (iniFile.first == "User")
-			iniFile.second->UpdateIfExists((gameSystemFolderPath / "SE-User.ini").string());
-		else
-			iniFile.second->UpdateFile();
+		const bool isEngineIni = iniFile.first == launchInfo.gameExecutableName || iniFile.first == "System" || iniFile.first == "User";
+
+		// The engine inis are always written so the per-user copy exists after the first run; any other ini
+		// only when something changed it
+		if (!isEngineIni && !iniFile.second->IsModified())
+			continue;
+
+		iniFile.second->UpdateIfExists((gameConfigFolderPath / ("SE-" + iniFile.first.ToString() + ".ini")).string());
 	}
 }
 
@@ -838,38 +1035,46 @@ void PackageManager::LoadPackageRemaps()
 	}
 }
 
+fs::path PackageManager::ResolveUserIniPath() const
+{
+	return UserDirs::firstExistingFile(UserDirs::userIniChain(gameConfigFolderPath, gameSystemFolderPath));
+}
+
 void PackageManager::LoadEngineIniFiles()
 {
-	// Load SE-[GameName].ini and SE-User.ini from the appropriate places
+	// Load SE-[GameName].ini and SE-User.ini from the per-user directory first, then from the install
 	// If they do not exist, import the appropriate [GameName].ini and User.ini files
 	// If those also do not exist, import Default.ini and DefUser.ini files
 	const auto systemIniName = IsCliveBarkersUndying() ? "System" : launchInfo.gameExecutableName;
-	std::string systemIniFileName = "SE-" + systemIniName + ".ini";
-	std::string userIniName = "SE-User.ini";
+	const std::string seSystemIniFileName = "SE-" + systemIniName + ".ini";
+	const fs::path userSystemIniPath = gameConfigFolderPath / seSystemIniFileName;
+	const fs::path installSystemIniPath = gameSystemFolderPath / seSystemIniFileName;
 
-	if ( !File::try_open_existing((gameSystemFolderPath / systemIniFileName).string()) )
+	fs::path systemIniPath;
+	if (fs::is_regular_file(userSystemIniPath))
+	{
+		systemIniPath = userSystemIniPath;
+	}
+	else if (fs::is_regular_file(installSystemIniPath))
+	{
+		systemIniPath = installSystemIniPath;
+	}
+	else
 	{
 		missing_se_system_ini = true;
-		systemIniFileName = systemIniFileName.substr(3); // Trim off the "SE-" part
-		if (!File::try_open_existing((gameSystemFolderPath / systemIniFileName).string()))
-			systemIniFileName = "Default.ini"; // use the default ini as a last resort
+		systemIniPath = gameSystemFolderPath / (systemIniName + ".ini");
+		if (!fs::is_regular_file(systemIniPath))
+			systemIniPath = gameSystemFolderPath / "Default.ini"; // use the default ini as a last resort
 	}
 
 	// Also load Default.ini, so that we can reset values.
 	defaultIniFile = std::make_unique<IniFile>((gameSystemFolderPath / "Default.ini").string());
 
-	iniFiles[systemIniName] = std::make_unique<IniFile>((gameSystemFolderPath / systemIniFileName).string());
+	iniFiles[systemIniName] = std::make_unique<IniFile>(systemIniPath.string());
 
 	if (launchInfo.ue1Version > 219)
 	{
-		if (!File::try_open_existing((gameSystemFolderPath / userIniName).string()))
-		{
-			userIniName = userIniName.substr(3); // Trim off the "SE-" part
-			if (!File::try_open_existing((gameSystemFolderPath / userIniName).string()))
-				userIniName = "DefUser.ini";
-		}
-
-		iniFiles["User"] = std::make_unique<IniFile>((gameSystemFolderPath / userIniName).string());
+		iniFiles["User"] = std::make_unique<IniFile>(ResolveUserIniPath().string());
 		defaultUserFile = std::make_unique<IniFile>((gameSystemFolderPath / "DefUser.ini").string());
 	}
 }
@@ -1118,6 +1323,7 @@ void PackageManager::RegisterFunctions()
 	NScriptedTexture::RegisterFunctions();
 	NStatLog::RegisterFunctions();
 	NStatLogFile::RegisterFunctions();
+	NTimeDemo::RegisterFunctions();
 	NWarpZoneInfo::RegisterFunctions();
 	NZoneInfo::RegisterFunctions();
 	NInternetLink::RegisterFunctions();
@@ -1150,6 +1356,10 @@ void PackageManager::RegisterFunctions()
 		NCheckboxWindow::RegisterFunctions();
 		NClipWindow::RegisterFunctions();
 		NComputerWindow::RegisterFunctions();
+		// ConEvent.GetSoundLength and Conversation.ClearBindEvents both declare index 2054. The
+		// shipped scripts call ClearBindEvents through the opcode and never call GetSoundLength,
+		// so the opcode means the Conversation function.
+		NativeFunctions::ShareIndex(2054, "Conversation");
 		NConEvent::RegisterFunctions();
 		NConEventRandomLabel::RegisterFunctions();
 		NConversation::RegisterFunctions();
@@ -1170,7 +1380,6 @@ void PackageManager::RegisterFunctions()
 		NTextLogWindow::RegisterFunctions();
 		NTextWindow::RegisterFunctions();
 		NTileWindow::RegisterFunctions();
-		NTimeDemo::RegisterFunctions();
 		NToggleWindow::RegisterFunctions();
 		NViewportWindow::RegisterFunctions();
 		NWebRequest::RegisterFunctions();

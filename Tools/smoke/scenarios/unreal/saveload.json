@@ -1,0 +1,346 @@
+{
+  "game": "<game folder>",
+  "chain": "unreal",
+  "seconds": 60,
+  "steps": [
+    {
+      "step": "save1",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "Vortex2"
+      ],
+      "loaded_slot": null,
+      "loaded_map": null,
+      "saved_to": "Unreal-226b-Unreal_Gold/Save/Save1.usa",
+      "checks": [
+        {
+          "where": "after-state",
+          "map": "Vortex2",
+          "items": [
+            {
+              "package": "Vortex2",
+              "instance": "StingerAmmo0",
+              "class": "StingerAmmo"
+            },
+            {
+              "package": "Vortex2",
+              "instance": "Stinger0",
+              "class": "Stinger"
+            }
+          ],
+          "calls": [],
+          "weapon": "UnrealShare.Stinger"
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [
+        "UnrealShare.Stinger"
+      ],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "6:summon UnrealShare.Stinger;7:hold axis aForward 300 1.5;12:ShowInventory;22:savegame 1",
+      "trace": null,
+      "log": "save1.log",
+      "stdout": "save1.stdout",
+      "engine_log": "save1.engine.txt",
+      "problem": null
+    },
+    {
+      "step": "load1-travel",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "Vortex2",
+        "Vortex2",
+        "Nyleve"
+      ],
+      "loaded_slot": 1,
+      "loaded_map": "Vortex2",
+      "saved_to": "Unreal-226b-Unreal_Gold/Save/Save2.usa",
+      "checks": [
+        {
+          "where": "after-load",
+          "map": "Vortex2",
+          "items": [
+            {
+              "package": "Save1",
+              "instance": "StingerAmmo0",
+              "class": "StingerAmmo"
+            },
+            {
+              "package": "Save1",
+              "instance": "Stinger0",
+              "class": "Stinger"
+            }
+          ],
+          "calls": [],
+          "weapon": "UnrealShare.Stinger"
+        },
+        {
+          "where": "after-travel",
+          "map": "Nyleve",
+          "items": [
+            {
+              "package": "NyLeve",
+              "instance": "DefaultAmmo0",
+              "class": "DefaultAmmo"
+            },
+            {
+              "package": "NyLeve",
+              "instance": "DispersionPistol0",
+              "class": "DispersionPistol"
+            },
+            {
+              "package": "NyLeve",
+              "instance": "Stinger0",
+              "class": "Stinger"
+            },
+            {
+              "package": "NyLeve",
+              "instance": "StingerAmmo0",
+              "class": "StingerAmmo"
+            }
+          ],
+          "calls": [],
+          "weapon": "UnrealShare.Stinger"
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:call ClientTravel ?load=1 0 0;10:ShowInventory;15:call ClientTravel Nyleve 2 1;20:ShowInventory;30:savegame 2",
+      "trace": null,
+      "log": "load1-travel.log",
+      "stdout": "load1-travel.stdout",
+      "engine_log": "load1-travel.engine.txt",
+      "problem": null
+    },
+    {
+      "step": "load2-travel",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "Vortex2",
+        "Nyleve",
+        "Dig"
+      ],
+      "loaded_slot": 2,
+      "loaded_map": "Nyleve",
+      "saved_to": "Unreal-226b-Unreal_Gold/Save/Save3.usa",
+      "checks": [
+        {
+          "where": "after-load",
+          "map": "Nyleve",
+          "items": [
+            {
+              "package": "Save2",
+              "instance": "DefaultAmmo0",
+              "class": "DefaultAmmo"
+            },
+            {
+              "package": "Save2",
+              "instance": "DispersionPistol0",
+              "class": "DispersionPistol"
+            },
+            {
+              "package": "Save2",
+              "instance": "Stinger0",
+              "class": "Stinger"
+            },
+            {
+              "package": "Save2",
+              "instance": "StingerAmmo0",
+              "class": "StingerAmmo"
+            }
+          ],
+          "calls": [],
+          "weapon": "UnrealShare.Stinger"
+        },
+        {
+          "where": "after-travel",
+          "map": "Dig",
+          "items": [
+            {
+              "package": "Dig",
+              "instance": "StingerAmmo0",
+              "class": "StingerAmmo"
+            },
+            {
+              "package": "Dig",
+              "instance": "DispersionPistol0",
+              "class": "DispersionPistol"
+            },
+            {
+              "package": "Dig",
+              "instance": "Stinger0",
+              "class": "Stinger"
+            },
+            {
+              "package": "Dig",
+              "instance": "DefaultAmmo0",
+              "class": "DefaultAmmo"
+            }
+          ],
+          "calls": [],
+          "weapon": "UnrealShare.Stinger"
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:call ClientTravel ?load=2 0 0;10:ShowInventory;15:call ClientTravel Dig 2 1;20:ShowInventory;30:savegame 3",
+      "trace": null,
+      "log": "load2-travel.log",
+      "stdout": "load2-travel.stdout",
+      "engine_log": "load2-travel.engine.txt",
+      "problem": null
+    },
+    {
+      "step": "load3",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "Vortex2",
+        "Dig"
+      ],
+      "loaded_slot": 3,
+      "loaded_map": "Dig",
+      "saved_to": null,
+      "checks": [
+        {
+          "where": "after-load",
+          "map": "Dig",
+          "items": [
+            {
+              "package": "Save3",
+              "instance": "StingerAmmo0",
+              "class": "StingerAmmo"
+            },
+            {
+              "package": "Save3",
+              "instance": "DispersionPistol0",
+              "class": "DispersionPistol"
+            },
+            {
+              "package": "Save3",
+              "instance": "Stinger0",
+              "class": "Stinger"
+            },
+            {
+              "package": "Save3",
+              "instance": "DefaultAmmo0",
+              "class": "DefaultAmmo"
+            }
+          ],
+          "calls": [],
+          "weapon": "UnrealShare.Stinger"
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:call ClientTravel ?load=3 0 0;10:ShowInventory",
+      "trace": null,
+      "log": "load3.log",
+      "stdout": "load3.stdout",
+      "engine_log": "load3.engine.txt",
+      "problem": null
+    }
+  ],
+  "hops": [
+    {
+      "from": "save1/after-state",
+      "to": "load1-travel/after-load",
+      "map_from": "Vortex2",
+      "map_to": "Vortex2",
+      "by": "load",
+      "kept": [
+        "StingerAmmo",
+        "Stinger"
+      ],
+      "lost": [],
+      "gained": []
+    },
+    {
+      "from": "load1-travel/after-load",
+      "to": "load1-travel/after-travel",
+      "map_from": "Vortex2",
+      "map_to": "Nyleve",
+      "by": "travel",
+      "kept": [
+        "StingerAmmo",
+        "Stinger"
+      ],
+      "lost": [],
+      "gained": [
+        "DefaultAmmo",
+        "DispersionPistol"
+      ],
+      "offered": [],
+      "travel_skipped": false
+    },
+    {
+      "from": "load1-travel/after-travel",
+      "to": "load2-travel/after-load",
+      "map_from": "Nyleve",
+      "map_to": "Nyleve",
+      "by": "load",
+      "kept": [
+        "DefaultAmmo",
+        "DispersionPistol",
+        "Stinger",
+        "StingerAmmo"
+      ],
+      "lost": [],
+      "gained": []
+    },
+    {
+      "from": "load2-travel/after-load",
+      "to": "load2-travel/after-travel",
+      "map_from": "Nyleve",
+      "map_to": "Dig",
+      "by": "travel",
+      "kept": [
+        "DefaultAmmo",
+        "DispersionPistol",
+        "Stinger",
+        "StingerAmmo"
+      ],
+      "lost": [],
+      "gained": [],
+      "offered": [],
+      "travel_skipped": false
+    },
+    {
+      "from": "load2-travel/after-travel",
+      "to": "load3/after-load",
+      "map_from": "Dig",
+      "map_to": "Dig",
+      "by": "load",
+      "kept": [
+        "StingerAmmo",
+        "DispersionPistol",
+        "Stinger",
+        "DefaultAmmo"
+      ],
+      "lost": [],
+      "gained": []
+    }
+  ]
+}

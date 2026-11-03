@@ -1,0 +1,286 @@
+#include "Precomp.h"
+#include "TestRunner.h"
+#include "VM/Frame.h"
+#include "VM/Bytecode.h"
+#include "VM/Expression.h"
+#include "VM/NativeFunc.h"
+#include "VM/NativeFunctionFixture.h"
+#include "Native/NObject.h"
+#include "Packages/Core/UClass.h"
+#include "Packages/Core/UFunction.h"
+#include <chrono>
+#include <thread>
+
+// The registry is process-global; every test starts from an empty one.
+//
+// Owners, names and indices below are made up on purpose: the registry must treat natives
+// alike whichever they are, so a test that used real ones could pass on a hard-coded
+// exception for them.
+
+namespace
+{
+	// A native declared the way the loader leaves it: Native flag, owning class, index and frame
+	// layout set.
+	UFunction* MakeNative(const char* owner, const char* name, int index)
+	{
+		UClass* ownerClass = GC::Alloc<UClass>(owner, nullptr, ObjectFlags::NoFlags);
+		return MakeNativeFunction(name, ownerClass, {}, index);
+	}
+
+	UObject* MakeInstance()
+	{
+		UClass* cls = GC::Alloc<UClass>("NativesTestClass", nullptr, ObjectFlags::NoFlags);
+		return GC::Alloc<UObject>("NativesTestInstance", cls, ObjectFlags::NoFlags);
+	}
+
+	// Registration reports a collision by throwing; a test wants that as a failed check.
+	template<typename Registration>
+	bool Succeeds(Registration registration)
+	{
+		try
+		{
+			registration();
+			return true;
+		}
+		catch (const std::exception&)
+		{
+			return false;
+		}
+	}
+
+	bool RegisterCounting(const char* owner, const char* name, int index, int& calls)
+	{
+		return Succeeds([&] { NativeFunctions::RegisterHandler(owner, name, index, [&calls](UObject*, ExpressionValue*) { calls++; }); });
+	}
+
+	// A script function whose body calls the native opcode carrying nativeIndex, as compiled
+	// script does.
+	UFunction* MakeOpcodeCaller(int nativeIndex)
+	{
+		UClass* cls = GC::Alloc<UClass>("OpcodeCallerClass", nullptr, ObjectFlags::NoFlags);
+		UFunction* func = GC::Alloc<UFunction>("OpcodeCaller", cls, ObjectFlags::NoFlags);
+		func->Code = std::make_shared<Bytecode>(Array<uint8_t>(), nullptr);
+
+		// Statements holds raw pointers, so the expressions must outlive the function.
+		static std::vector<std::unique_ptr<Expression>> expressions;
+		auto call = std::make_unique<NativeFunctionExpression>();
+		call->nativeindex = nativeIndex;
+		call->StatementIndex = 0;
+		auto ret = std::make_unique<ReturnExpression>();
+		ret->StatementIndex = 1;
+		func->Code->Statements.push_back(call.get());
+		func->Code->Statements.push_back(ret.get());
+		expressions.push_back(std::move(call));
+		expressions.push_back(std::move(ret));
+		return func;
+	}
+
+	void CallNoArgs(UFunction* func, UObject* instance)
+	{
+		Frame::Call(func, instance, ArrayView<ExpressionValue>());
+	}
+}
+
+// The loader sizes a native function's frame as one ExpressionValue per property (none here)
+// and the call path writes ExpressionValues into it, so a function built for these tests must
+// carry the same layout.
+TEST(NativesFixtureSizesFrameLikeTheLoader)
+{
+	UFunction* func = MakeNative("Left", "First", 3001);
+
+	CHECK(func->IsNativeFunc);
+	CHECK_EQ(func->StructSize, func->Properties.size() * sizeof(ExpressionValue));
+	CHECK_EQ(func->StructAlignment, alignof(ExpressionValue));
+}
+
+TEST(NativesSharedIndexRunsEachOwnersHandler)
+{
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	int leftCalls = 0;
+	int rightCalls = 0;
+	CHECK_MSG(RegisterCounting("Left", "First", 3001, leftCalls), "a shared index must accept its first native");
+	CHECK_MSG(RegisterCounting("Right", "Second", 3001, rightCalls), "a shared index must accept its second native");
+	UFunction* first = MakeNative("Left", "First", 3001);
+	UFunction* second = MakeNative("Right", "Second", 3001);
+	UObject* instance = MakeInstance();
+
+	CallNoArgs(first, instance);
+	CHECK_EQ(leftCalls, 1);
+	CHECK_EQ(rightCalls, 0);
+
+	CallNoArgs(second, instance);
+	CHECK_EQ(leftCalls, 1);
+	CHECK_EQ(rightCalls, 1);
+}
+
+TEST(NativesSharedIndexHandlersAreFoundByName)
+{
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	int calls = 0;
+	CHECK_MSG(RegisterCounting("Left", "First", 3001, calls), "a shared index must accept its first native");
+	CHECK_MSG(RegisterCounting("Right", "Second", 3001, calls), "a shared index must accept its second native");
+
+	CHECK(NativeFunctions::FindHandler(3001, "First", "Left") != nullptr);
+	CHECK(NativeFunctions::FindHandler(3001, "Second", "Right") != nullptr);
+	// The index alone names no handler, and a name nobody registered must not borrow one.
+	CHECK(NativeFunctions::FindHandler(3001, "Second", "Left") == nullptr);
+	CHECK(NativeFunctions::FindHandler(3001, "Third", "Right") == nullptr);
+}
+
+TEST(NativesSharedIndexOpcodeResolvesToDeclaredOwner)
+{
+	UFunction* first = MakeNative("Left", "First", 3001);
+	UFunction* second = MakeNative("Right", "Second", 3001);
+
+	// Bytecode carries only the index, so which function it means cannot depend on which
+	// class the loader happened to reach first.
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	CHECK_MSG(Succeeds([&] { NativeFunctions::RegisterNativeFunc(first); }), "declared index rejected its first function");
+	CHECK_MSG(Succeeds([&] { NativeFunctions::RegisterNativeFunc(second); }), "declared index rejected its second function");
+	CHECK(NativeFunctions::FuncByIndex[3001] == second);
+
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	CHECK_MSG(Succeeds([&] { NativeFunctions::RegisterNativeFunc(second); }), "declared index rejected its first function");
+	CHECK_MSG(Succeeds([&] { NativeFunctions::RegisterNativeFunc(first); }), "declared index rejected its second function");
+	CHECK(NativeFunctions::FuncByIndex[3001] == second);
+}
+
+// Two natives on one index are a startup error. The error text must be buildable for
+// functions that have no package, like the ones built here.
+TEST(NativesUndeclaredIndexClashStillThrows)
+{
+	NativeFunctions::Reset();
+	int calls = 0;
+	CHECK(RegisterCounting("Left", "First", 3002, calls));
+	CHECK(!RegisterCounting("Right", "Second", 3002, calls));
+
+	UFunction* first = MakeNative("Left", "First", 3002);
+	UFunction* second = MakeNative("Right", "Second", 3002);
+	NativeFunctions::RegisterNativeFunc(first);
+	CHECK_THROWS(NativeFunctions::RegisterNativeFunc(second));
+}
+
+// Positive control for the registry at the index the games declare for Greater_StrStr; the
+// registration itself is covered by the native coverage goldens. The owner is not Object
+// because building that class needs an Engine.
+TEST(NativesHandlerAtGreaterStrStrIndexIsReached)
+{
+	NativeFunctions::Reset();
+	int calls = 0;
+	CHECK(RegisterCounting("StringOps", "Greater_StrStr", 116, calls));
+	UFunction* func = MakeNative("StringOps", "Greater_StrStr", 116);
+
+	CallNoArgs(func, MakeInstance());
+
+	CHECK_EQ(calls, 1);
+}
+
+TEST(NativesCallOfUnregisteredIndexThrows)
+{
+	NativeFunctions::Reset();
+	int calls = 0;
+	CHECK(RegisterCounting("Left", "First", 3003, calls));
+	UObject* instance = MakeInstance();
+
+	// One index lies past everything registered, the other inside it with no handler.
+	CHECK_THROWS(CallNoArgs(MakeNative("Left", "Second", 100000), instance));
+	CHECK_THROWS(CallNoArgs(MakeNative("Left", "Third", 3002), instance));
+	CHECK_EQ(calls, 0);
+}
+
+TEST(NativesOpcodeLookupRejectsUnregisteredIndex)
+{
+	NativeFunctions::Reset();
+	UFunction* func = MakeNative("Left", "First", 3003);
+	NativeFunctions::RegisterNativeFunc(func);
+
+	CHECK(NativeFunctions::OpcodeFunc(3003) == func);
+	// Inside the table with nothing registered, then past its end.
+	CHECK_THROWS(NativeFunctions::OpcodeFunc(3002));
+	CHECK_THROWS(NativeFunctions::OpcodeFunc(100000));
+}
+
+TEST(NativesOpcodeCallReachesDeclaredOwnerHandler)
+{
+	NativeFunctions::Reset();
+	NativeFunctions::ShareIndex(3001, "Right");
+	int leftCalls = 0;
+	int rightCalls = 0;
+	CHECK(RegisterCounting("Left", "First", 3001, leftCalls));
+	CHECK(RegisterCounting("Right", "Second", 3001, rightCalls));
+	NativeFunctions::RegisterNativeFunc(MakeNative("Left", "First", 3001));
+	NativeFunctions::RegisterNativeFunc(MakeNative("Right", "Second", 3001));
+
+	CallNoArgs(MakeOpcodeCaller(3001), MakeInstance());
+
+	CHECK_EQ(leftCalls, 0);
+	CHECK_EQ(rightCalls, 1);
+}
+
+TEST(NativesOpcodeCallOfUnregisteredIndexThrows)
+{
+	NativeFunctions::Reset();
+	NativeFunctions::RegisterNativeFunc(MakeNative("Left", "First", 3003));
+	UObject* instance = MakeInstance();
+
+	// 4095 is the highest index an opcode can carry.
+	CHECK_THROWS(CallNoArgs(MakeOpcodeCaller(3002), instance));
+	CHECK_THROWS(CallNoArgs(MakeOpcodeCaller(4095), instance));
+}
+
+// The error for an unknown opcode index describes the failing statement through code that
+// reads the function table directly; it must find every encodable index in range.
+TEST(NativesFunctionTableSpansEveryOpcodeIndex)
+{
+	NativeFunctions::Reset();
+
+	CHECK(NativeFunctions::FuncByIndex.size() > 4095);
+}
+
+// clock and unclock bracket a span: the first subtracts the counter from the script's int, the
+// second adds it back, leaving the span. The counter counts microseconds and wraps like the
+// 32-bit value scripts hold.
+TEST(NativesClockSubtractsTheCounter)
+{
+	CHECK_EQ(NObject::SubtractCycles(0, 1000), -1000);
+	CHECK_EQ(NObject::SubtractCycles(500, 1000), -500);
+}
+
+TEST(NativesUnclockAddsTheCounter)
+{
+	CHECK_EQ(NObject::AddCycles(-1000, 3500), 2500);
+}
+
+TEST(NativesClockedSpanSurvivesCounterWrap)
+{
+	int cycles = NObject::SubtractCycles(0, 0xFFFFFFF0u);
+	cycles = NObject::AddCycles(cycles, 0x10u);
+
+	CHECK_EQ(cycles, 0x20);
+}
+
+TEST(NativesCyclesToSecondsDividesByMicroseconds)
+{
+	float seconds = -1.0f;
+	NObject::CyclesToSeconds(2500000, seconds);
+	CHECK_EQ(seconds, 2.5f);
+
+	NObject::CyclesToSeconds(-500000, seconds);
+	CHECK_EQ(seconds, -0.5f);
+}
+
+TEST(NativesClockAndUnclockMeasureElapsedTime)
+{
+	int cycles = 0;
+	NObject::clock(cycles);
+	std::this_thread::sleep_for(std::chrono::milliseconds(5));
+	NObject::unclock(cycles);
+
+	// At least the sleep, and well short of five seconds' worth of microseconds.
+	CHECK(cycles >= 5000);
+	CHECK(cycles < 5000000);
+}

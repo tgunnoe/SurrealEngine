@@ -12,5 +12,5 @@ void NZoneInfo::RegisterFunctions()
 
 void NZoneInfo::ZoneActors(UObject* Self, UObject* BaseClass, UObject*& Actor)
 {
-	Frame::CreatedIterator = std::make_unique<ZoneActorsIterator>(UObject::Cast<UZoneInfo>(Self), BaseClass, &Actor);
+	Frame::CreatedIterator = std::make_unique<ZoneActorsIterator>(ActorLevels(Self, "ZoneActors"), UObject::Cast<UZoneInfo>(Self), BaseClass, &Actor);
 }

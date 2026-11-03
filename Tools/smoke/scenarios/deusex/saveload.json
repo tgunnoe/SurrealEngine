@@ -1,0 +1,324 @@
+{
+  "game": "<game folder>",
+  "chain": "deusex",
+  "seconds": 60,
+  "steps": [
+    {
+      "step": "save1",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "01_NYC_UNATCOIsland"
+      ],
+      "loaded_slot": null,
+      "loaded_map": null,
+      "saved_to": "DeusEx-1112fm-Deus_Ex_GOTY/Save/Save0001/01_NYC_UNATCOIsland.dxs",
+      "checks": [
+        {
+          "where": "after-state",
+          "map": "01_NYC_UNATCOIsland",
+          "items": [
+            {
+              "package": "01_NYC_UNATCOIsland",
+              "instance": "NanoKeyRing1",
+              "class": "NanoKeyRing"
+            }
+          ],
+          "calls": [
+            {
+              "function": "FindGoal",
+              "value": "<unnamed DeusExGoal>"
+            },
+            {
+              "function": "GetNote",
+              "value": "<unnamed DeusExNote>"
+            }
+          ],
+          "weapon": null
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:call AddGoal T3Goal 1;6:NoteAdd T3Note;7:call SetBoolFlagFromString T3Flag 1;12:ShowInventory;13:call FindGoal T3Goal;14:call GetNote None;24:savegame 1",
+      "trace": null,
+      "log": "save1.log",
+      "stdout": "save1.stdout",
+      "engine_log": "save1.engine.txt",
+      "problem": null
+    },
+    {
+      "step": "load1-travel",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "01_NYC_UNATCOIsland",
+        "01_NYC_UNATCOIsland",
+        "01_NYC_UNATCOHQ"
+      ],
+      "loaded_slot": 1,
+      "loaded_map": "01_NYC_UNATCOIsland",
+      "saved_to": "DeusEx-1112fm-Deus_Ex_GOTY/Save/Save0002/01_NYC_UNATCOHQ.dxs",
+      "checks": [
+        {
+          "where": "after-load",
+          "map": "01_NYC_UNATCOIsland",
+          "items": [
+            {
+              "package": "01_NYC_UNATCOIsland",
+              "instance": "NanoKeyRing1",
+              "class": "NanoKeyRing"
+            }
+          ],
+          "calls": [
+            {
+              "function": "FindGoal",
+              "value": "<unnamed DeusExGoal>"
+            },
+            {
+              "function": "GetNote",
+              "value": "<unnamed DeusExNote>"
+            }
+          ],
+          "weapon": null
+        },
+        {
+          "where": "after-travel",
+          "map": "01_NYC_UNATCOHQ",
+          "items": [
+            {
+              "package": "01_NYC_UNATCOHQ",
+              "instance": "NanoKeyRing4",
+              "class": "NanoKeyRing"
+            }
+          ],
+          "calls": [
+            {
+              "function": "FindGoal",
+              "value": "<unnamed DeusExGoal>"
+            },
+            {
+              "function": "GetNote",
+              "value": "<unnamed DeusExNote>"
+            }
+          ],
+          "weapon": null
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:LoadGame 1;10:ShowInventory;11:call FindGoal T3Goal;12:call GetNote None;17:call ClientTravel 01_NYC_UNATCOHQ 2 1;22:ShowInventory;23:call FindGoal T3Goal;24:call GetNote None;34:savegame 2",
+      "trace": null,
+      "log": "load1-travel.log",
+      "stdout": "load1-travel.stdout",
+      "engine_log": "load1-travel.engine.txt",
+      "problem": null
+    },
+    {
+      "step": "load2-travel",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "01_NYC_UNATCOIsland",
+        "01_NYC_UNATCOHQ",
+        "02_NYC_BatteryPark"
+      ],
+      "loaded_slot": 2,
+      "loaded_map": "01_NYC_UNATCOHQ",
+      "saved_to": "DeusEx-1112fm-Deus_Ex_GOTY/Save/Save0003/02_NYC_BatteryPark.dxs",
+      "checks": [
+        {
+          "where": "after-load",
+          "map": "01_NYC_UNATCOHQ",
+          "items": [
+            {
+              "package": "01_NYC_UNATCOHQ",
+              "instance": "NanoKeyRing4",
+              "class": "NanoKeyRing"
+            }
+          ],
+          "calls": [
+            {
+              "function": "FindGoal",
+              "value": "<unnamed DeusExGoal>"
+            },
+            {
+              "function": "GetNote",
+              "value": "<unnamed DeusExNote>"
+            }
+          ],
+          "weapon": null
+        },
+        {
+          "where": "after-travel",
+          "map": "02_NYC_BatteryPark",
+          "items": [
+            {
+              "package": "02_NYC_BatteryPark",
+              "instance": "NanoKeyRing4",
+              "class": "NanoKeyRing"
+            }
+          ],
+          "calls": [
+            {
+              "function": "FindGoal",
+              "value": "<unnamed DeusExGoal>"
+            },
+            {
+              "function": "GetNote",
+              "value": "<unnamed DeusExNote>"
+            }
+          ],
+          "weapon": null
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:LoadGame 2;10:ShowInventory;11:call FindGoal T3Goal;12:call GetNote None;17:call ClientTravel 02_NYC_BatteryPark 2 1;22:ShowInventory;23:call FindGoal T3Goal;24:call GetNote None;34:savegame 3",
+      "trace": null,
+      "log": "load2-travel.log",
+      "stdout": "load2-travel.stdout",
+      "engine_log": "load2-travel.engine.txt",
+      "problem": null
+    },
+    {
+      "step": "load3",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "01_NYC_UNATCOIsland",
+        "02_NYC_BatteryPark"
+      ],
+      "loaded_slot": 3,
+      "loaded_map": "02_NYC_BatteryPark",
+      "saved_to": null,
+      "checks": [
+        {
+          "where": "after-load",
+          "map": "02_NYC_BatteryPark",
+          "items": [
+            {
+              "package": "02_NYC_BatteryPark",
+              "instance": "NanoKeyRing4",
+              "class": "NanoKeyRing"
+            }
+          ],
+          "calls": [
+            {
+              "function": "FindGoal",
+              "value": "<unnamed DeusExGoal>"
+            },
+            {
+              "function": "GetNote",
+              "value": "<unnamed DeusExNote>"
+            }
+          ],
+          "weapon": null
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:LoadGame 3;10:ShowInventory;11:call FindGoal T3Goal;12:call GetNote None",
+      "trace": null,
+      "log": "load3.log",
+      "stdout": "load3.stdout",
+      "engine_log": "load3.engine.txt",
+      "problem": null
+    }
+  ],
+  "hops": [
+    {
+      "from": "save1/after-state",
+      "to": "load1-travel/after-load",
+      "map_from": "01_NYC_UNATCOIsland",
+      "map_to": "01_NYC_UNATCOIsland",
+      "by": "load",
+      "kept": [
+        "NanoKeyRing"
+      ],
+      "lost": [],
+      "gained": [],
+      "goal": "found",
+      "note": "found"
+    },
+    {
+      "from": "load1-travel/after-load",
+      "to": "load1-travel/after-travel",
+      "map_from": "01_NYC_UNATCOIsland",
+      "map_to": "01_NYC_UNATCOHQ",
+      "by": "travel",
+      "kept": [
+        "NanoKeyRing"
+      ],
+      "lost": [],
+      "gained": [],
+      "goal": "found",
+      "note": "found",
+      "offered": [],
+      "travel_skipped": false
+    },
+    {
+      "from": "load1-travel/after-travel",
+      "to": "load2-travel/after-load",
+      "map_from": "01_NYC_UNATCOHQ",
+      "map_to": "01_NYC_UNATCOHQ",
+      "by": "load",
+      "kept": [
+        "NanoKeyRing"
+      ],
+      "lost": [],
+      "gained": [],
+      "goal": "found",
+      "note": "found"
+    },
+    {
+      "from": "load2-travel/after-load",
+      "to": "load2-travel/after-travel",
+      "map_from": "01_NYC_UNATCOHQ",
+      "map_to": "02_NYC_BatteryPark",
+      "by": "travel",
+      "kept": [
+        "NanoKeyRing"
+      ],
+      "lost": [],
+      "gained": [],
+      "goal": "found",
+      "note": "found",
+      "offered": [],
+      "travel_skipped": false
+    },
+    {
+      "from": "load2-travel/after-travel",
+      "to": "load3/after-load",
+      "map_from": "02_NYC_BatteryPark",
+      "map_to": "02_NYC_BatteryPark",
+      "by": "load",
+      "kept": [
+        "NanoKeyRing"
+      ],
+      "lost": [],
+      "gained": [],
+      "goal": "found",
+      "note": "found"
+    }
+  ]
+}

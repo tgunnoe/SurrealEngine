@@ -3,6 +3,7 @@
 #include "UZoneInfo.h"
 #include "UnrealURL.h"
 
+class AIEventManager;
 class UGameInfo;
 class UNavigationPoint;
 class UPawn;
@@ -22,6 +23,9 @@ public:
 	PointRegion GetLocZone(const vec3& pos, std::optional<UActor*> InActor);
 
 	UnrealURL URL;
+
+	// Deus Ex only; created by InitEventManager
+	std::shared_ptr<AIEventManager> EventManager;
 
 	FixedArrayView<int, 8> AIProfile() { return FixedArray<int, 8>(PropOffsets_LevelInfo.AIProfile); }
 	std::string& Author() { return Value<std::string>(PropOffsets_LevelInfo.Author); }

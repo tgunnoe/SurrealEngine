@@ -4,7 +4,7 @@
 #include "Engine.h"
 #include "Package/PackageManager.h"
 #include "Packages/DeusEx/UGameDirectory.h"
-#include "Packages/ConSys/History/UConHistory.h"
+#include "Packages/Extension/Flags/UFlagBase.h"
 #include "Utils/Logger.h"
 
 void UDeusExPlayer::ConBindEvents()
@@ -12,20 +12,32 @@ void UDeusExPlayer::ConBindEvents()
 	DeusExConBindEvents();
 }
 
+namespace
+{
+	// What the game keeps for the player (history, log, image notes) is created in the player's package with
+	// the player as its outer, so a save that exports the player exports it too
+	UObject* CreatePlayerObject(UDeusExPlayer* player, const char* className, const char* name)
+	{
+		UClass* cls = engine->packages->FindClass(className);
+		UObject* obj = player->package->NewObject(name, cls, ObjectFlags::NoFlags);
+		obj->Outer() = player;
+		return obj;
+	}
+}
+
 UObject* UDeusExPlayer::CreateDataVaultImageNoteObject()
 {
-	auto cls = engine->packages->FindClass("DeusEx.DataVaultImageNote");
-	return engine->packages->GetTransientPackage()->NewObject("DataVaultImageNote", cls, ObjectFlags::Transient);
+	return CreatePlayerObject(this, "DeusEx.DataVaultImageNote", "DataVaultImageNote");
 }
 
 UObject* UDeusExPlayer::CreateDumpLocationObject()
 {
-	auto cls = engine->packages->FindClass("DeusEx.DumpLocation");
-	return engine->packages->GetTransientPackage()->NewObject("DumpLocation", cls, ObjectFlags::Transient);
+	return CreatePlayerObject(this, "DeusEx.DumpLocation", "DumpLocation");
 }
 
 UObject* UDeusExPlayer::CreateGameDirectoryObject()
 {
+	// The menus' directory has native members and is never saved, so it stays in the transient package
 	if (!m_GameDirectory)
 	{
 		auto cls = engine->packages->FindClass("DeusEx.GameDirectory");
@@ -37,20 +49,17 @@ UObject* UDeusExPlayer::CreateGameDirectoryObject()
 
 UObject* UDeusExPlayer::CreateHistoryEvent()
 {
-	auto cls = engine->packages->FindClass("ConSys.ConHistoryEvent");
-	return engine->packages->GetTransientPackage()->NewObject("ConHistoryEvent", cls, ObjectFlags::Transient);
+	return CreatePlayerObject(this, "ConSys.ConHistoryEvent", "ConHistoryEvent");
 }
 
 UObject* UDeusExPlayer::CreateHistoryObject()
 {
-	auto cls = engine->packages->FindClass("ConSys.ConHistory");
-	return Cast<UConHistory>(engine->packages->GetTransientPackage()->NewObject("ConHistory", cls, ObjectFlags::Transient));
+	return CreatePlayerObject(this, "ConSys.ConHistory", "ConHistory");
 }
 
 UObject* UDeusExPlayer::CreateLogObject()
 {
-	auto cls = engine->packages->FindClass("DeusEx.DeusExLog");
-	return engine->packages->GetTransientPackage()->NewObject("DeusExLog", cls, ObjectFlags::Transient);
+	return CreatePlayerObject(this, "DeusEx.DeusExLog", "DeusExLog");
 }
 
 void UDeusExPlayer::DeleteSaveGameFiles(std::optional<std::string> saveDirectory)
@@ -66,14 +75,15 @@ std::string UDeusExPlayer::GetDeusExVersion()
 void UDeusExPlayer::SaveGame(int saveIndex, std::optional<std::string> saveDesc)
 {
 	engine->SaveGameInfo.SaveGameSlot = saveIndex;
-	engine->SaveGameInfo.SaveGameDescription = *saveDesc;
+	engine->SaveGameInfo.SaveGameDescription = saveDesc.value_or("");
 }
 
 NameString UDeusExPlayer::SetBoolFlagFromString(const std::string& flagNameString, bool bValue)
 {
-	// Not called directly from script
-	LogUnimplemented("DeusExPlayer.SetBoolFlagFromString");
-	return {};
+	NameString flagName(flagNameString);
+	if (UFlagBase* flagBase = FlagBase())
+		flagBase->SetBool(flagName, bValue, {}, {});
+	return flagName;
 }
 
 void UDeusExPlayer::UnloadTexture(UObject* Texture)

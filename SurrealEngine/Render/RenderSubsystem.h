@@ -8,6 +8,14 @@ class UFont;
 class UMover;
 class UViewportWindow;
 
+// Whether the statistics overlay is drawn: only while the timedemo flag or the render statistics
+// flag is on, in every game, so that the console commands that set the flags can also switch the
+// overlay off.
+inline bool ShouldDrawTimedemoStats(bool timedemoFlag, bool /*isDeusEx*/, bool renderStatsFlag)
+{
+	return timedemoFlag || renderStatsFlag;
+}
+
 class RenderSubsystem
 {
 public:
@@ -42,6 +50,7 @@ public:
 
 	bool ShowTimedemoStats = false;
 	bool ShowRenderStats = false;
+	bool ShowAudioStats = false;
 	bool ShowCollisionDebug = false;
 
 	int TextureFrameCounter = 0;

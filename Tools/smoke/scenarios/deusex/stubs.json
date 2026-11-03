@@ -1,0 +1,626 @@
+{
+ "maps": {
+  "00_Intro": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "00_Training": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "00_TrainingCombat": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "00_TrainingFinal": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "01_NYC_UNATCOHQ": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "01_NYC_UNATCOIsland": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "02_NYC_Bar": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "02_NYC_BatteryPark": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "02_NYC_FreeClinic": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "02_NYC_Hotel": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "02_NYC_Smug": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "02_NYC_Street": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "02_NYC_Underground": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "02_NYC_Warehouse": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "03_NYC_747": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "03_NYC_Airfield": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "03_NYC_AirfieldHeliBase": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "03_NYC_BatteryPark": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "03_NYC_BrooklynBridgeStation": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "03_NYC_Hangar": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "03_NYC_MolePeople": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "03_NYC_UNATCOHQ": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "03_NYC_UNATCOIsland": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "04_NYC_Bar": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "04_NYC_BatteryPark": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "04_NYC_Hotel": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "04_NYC_NSFHQ": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "04_NYC_Smug": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "04_NYC_Street": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "04_NYC_UNATCOHQ": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "04_NYC_UNATCOIsland": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "04_NYC_Underground": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "05_NYC_UNATCOHQ": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "05_NYC_UNATCOIsland": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "05_NYC_UNATCOMJ12lab": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_Helibase": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_MJ12lab": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_Storage": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_TongBase": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_VersaLife": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_WanChai_Canal": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_WanChai_Garage": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_WanChai_Market": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_WanChai_Street": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "06_HongKong_WanChai_Underworld": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "08_NYC_Bar": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "08_NYC_FreeClinic": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "08_NYC_Hotel": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "08_NYC_Smug": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "08_NYC_Street": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "08_NYC_Underground": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "09_NYC_Dockyard": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "09_NYC_Graveyard": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "09_NYC_Ship": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "09_NYC_ShipBelow": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "09_NYC_ShipFan": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "10_Paris_Catacombs": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "10_Paris_Catacombs_Tunnels": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "10_Paris_Chateau": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "10_Paris_Club": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "10_Paris_Metro": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "11_Paris_Cathedral": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "11_Paris_Everett": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "11_Paris_Underground": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "12_Vandenberg_Cmd": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "12_Vandenberg_Computer": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "12_Vandenberg_Gas": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "12_Vandenberg_Tunnels": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "14_OceanLab_Lab": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "14_OceanLab_UC": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "14_Oceanlab_Silo": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "14_Vandenberg_Sub": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "15_Area51_Bunker": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "15_Area51_Entrance": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "15_Area51_Final": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "15_Area51_Page": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "99_Endgame1": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "99_Endgame2": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "99_Endgame3": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "99_Endgame4": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "DX": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "DXMP_Area51Bunker": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "DXMP_CMD": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "DXMP_Cathedral": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "DXMP_Silo": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "DXMP_Smuggler": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "DXOnly": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ],
+  "Entry": [
+   {
+    "class": "non-gameplay",
+    "owner": "DumpLocation",
+    "text": "DumpLocation.HasLocationBeenSaved"
+   }
+  ]
+ },
+ "owners": {
+  "DumpLocation": {
+   "class": "non-gameplay",
+   "reason": "DumpLocation descends only from DumpLocation > Object"
+  }
+ }
+}

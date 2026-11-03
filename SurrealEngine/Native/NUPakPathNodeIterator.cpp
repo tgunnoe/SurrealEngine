@@ -9,7 +9,6 @@
 void NUPakPathNodeIterator::RegisterFunctions()
 {
 	RegisterVMNativeFunc_2("PathNodeIterator", "BuildPath", &NUPakPathNodeIterator::BuildPath, 0);
-	RegisterVMNativeFunc_0("PathNodeIterator", "CheckUPak", &NUPakPathNodeIterator::CheckUPak, 0);
 	RegisterVMNativeFunc_1("PathNodeIterator", "GetFirst", &NUPakPathNodeIterator::GetFirst, 0);
 	RegisterVMNativeFunc_1("PathNodeIterator", "GetPrevious", &NUPakPathNodeIterator::GetPrevious, 0);
 	RegisterVMNativeFunc_1("PathNodeIterator", "GetCurrent", &NUPakPathNodeIterator::GetCurrent, 0);
@@ -22,12 +21,6 @@ void NUPakPathNodeIterator::BuildPath(UObject* Self, vec3& Start, vec3& End)
 {
 	UPakPathNodeIterator* PNISelf = UObject::Cast<UPakPathNodeIterator>(Self);
 	PNISelf->BuildPath(Start, End);
-}
-
-void NUPakPathNodeIterator::CheckUPak(UObject* Self)
-{
-	UPakPathNodeIterator* PNISelf = UObject::Cast<UPakPathNodeIterator>(Self);
-	PNISelf->CheckUPak();
 }
 
 void NUPakPathNodeIterator::GetFirst(UObject* Self, UObject*& ReturnValue)

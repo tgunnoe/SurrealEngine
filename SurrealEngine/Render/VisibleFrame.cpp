@@ -11,7 +11,7 @@
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Extension/Windows/TabGroup/URootWindow.h"
 
-void VisibleFrame::Process(const vec3& location, const mat4& worldToView, const Coords& viewRotation, bool mirrorFlag, int portalDepth, const Array<PortalSpan>& portalSpans, const vec4& portalPlane)
+void VisibleFrame::Process(const vec3& location, const mat4& worldToView, const Coords& viewRotation, bool mirrorFlag, int portalDepth, const Array<PortalSpan>& portalSpans, const vec4& portalPlane, bool isMirrorFrame)
 {
 	engine->render->Stats.Frames++;
 
@@ -19,6 +19,8 @@ void VisibleFrame::Process(const vec3& location, const mat4& worldToView, const 
 	FrameCounter = engine->render->FrameCounter++;
 	MirrorFlag = mirrorFlag;
 	PortalDepth = portalDepth;
+	IsMirrorFrame = isMirrorFrame;
+	ClipPlane = portalPlane;
 
 	SetupSceneFrame(worldToView);
 
@@ -256,23 +258,22 @@ void VisibleFrame::ProcessNodeSurface(BspNode* node, bool front)
 		}
 		else if (PolyFlags & PF_Mirrored)
 		{
-			if (PortalDepth > 0) // To do: cull backfacing surfaces so we don't need this hack
-				return;
-
 			Array<PortalSpan> spans = Clipper.CheckPortal(points, numverts);
 			if (!spans.empty())
 			{
-				for (auto& p : Portals)
+				vec4 plane = MirrorSurfacePlane(model->Vectors[surface.vNormal], model->Points[surface.pBase]);
+				int index = FindMirrorPortalToJoin(Portals, plane);
+				if (index >= 0)
 				{
-					if (!p.WarpZone && !p.SkyZone) // To do: how do we best merge mirrors using the same plane?
-					{
-						p.Nodes.push_back(info);
-						p.Spans.insert(p.Spans.end(), spans.begin(), spans.end());
-						return;
-					}
+					VisiblePortal& p = Portals[index];
+					p.Nodes.push_back(info);
+					p.Spans.insert(p.Spans.end(), spans.begin(), spans.end());
+					return;
 				}
 
 				VisiblePortal portal;
+				portal.IsMirror = true;
+				portal.MirrorPlane = plane;
 				portal.Nodes.push_back(info);
 				portal.Spans = std::move(spans);
 				Portals.push_back(std::move(portal));
@@ -432,8 +433,10 @@ void VisibleFrame::DrawPortals()
 			mat4 mirrorRotation = mat4::mirror(n);
 			mat4 mirrorToView = Frame.WorldToView * mat4::translate(v) * mirrorRotation * mat4::translate(-v);
 
+			vec4 clipPlane = MirrorClipPlane(n, v, ViewLocation.xyz());
+
 			VisibleFrame mirrorframe;
-			mirrorframe.Process(ViewLocation.xyz(), mirrorToView, ViewRotation * Coords::FromMatrix(mirrorRotation).Inverse(), !MirrorFlag, PortalDepth + 1, portal.Spans);
+			mirrorframe.Process(ViewLocation.xyz(), mirrorToView, ViewRotation * Coords::FromMatrix(mirrorRotation).Inverse(), !MirrorFlag, PortalDepth + 1, portal.Spans, clipPlane, true);
 			Device->SetSceneNode(&mirrorframe.Frame);
 			mirrorframe.Draw();
 			Device->ClearZ();

@@ -163,7 +163,7 @@ GCAllocation* UStructProperty::MarkPropertyElement(GCAllocation* marklist, void*
 	{
 		for (UProperty* prop : Struct->Properties)
 		{
-			marklist = prop->MarkPropertyElement(marklist, static_cast<uint8_t*>(data) + prop->DataOffset.DataOffset);
+			marklist = prop->MarkProperty(marklist, static_cast<uint8_t*>(data) + prop->DataOffset.DataOffset);
 		}
 	}
 	return marklist;

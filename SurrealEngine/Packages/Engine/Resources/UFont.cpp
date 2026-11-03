@@ -104,14 +104,19 @@ FontGlyph UFont::GetGlyph(char c) const
 
 FontGlyph UFont::FindGlyph(char c) const
 {
-	size_t index = c;
+	return FindFontGlyph(pages, static_cast<unsigned char>(c));
+}
+
+FontGlyph FindFontGlyph(const Array<FontPage>& pages, unsigned char index)
+{
+	size_t offset = index;
 	for (auto& page : pages)
 	{
-		if (index < page.Characters.size())
+		if (offset < page.Characters.size())
 		{
-			return { page.Texture, page.Characters[index] };
+			return { page.Texture, page.Characters[offset] };
 		}
-		index -= page.Characters.size();
+		offset -= page.Characters.size();
 	}
 	return {};
 }

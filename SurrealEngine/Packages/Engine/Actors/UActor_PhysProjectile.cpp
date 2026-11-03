@@ -42,7 +42,7 @@ void UActor::TickProjectile(float elapsed)
 
 	CollisionHit hit = TryMove(Velocity() * elapsed);
 
-	if (hit.Fraction < 1.0f && !hit.Actor && !bDeleteMe() && !bJustTeleported())
+	if (hit.Fraction < 1.0f && !bDeleteMe() && !bJustTeleported())
 	{
 		CallEvent(this, EventName::HitWall, { ExpressionValue::VectorValue(hit.Normal), ExpressionValue::ObjectValue(hit.Actor ? hit.Actor : Level()) });
 	}

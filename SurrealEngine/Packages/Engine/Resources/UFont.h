@@ -33,6 +33,10 @@ public:
 	int VSize = 0;
 };
 
+// The index is a byte rather than a char: where char is signed, a byte of 128 or above would
+// widen to an index that lies beyond every page.
+FontGlyph FindFontGlyph(const Array<FontPage>& pages, unsigned char index);
+
 class UFont : public UTexture
 {
 public:

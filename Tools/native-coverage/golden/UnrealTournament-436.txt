@@ -1,0 +1,10 @@
+UWeb.WebRequest.AddVariable index=0
+UWeb.WebRequest.DecodeBase64 index=0
+UWeb.WebRequest.GetVariable index=0
+UWeb.WebRequest.GetVariableCount index=0
+UWeb.WebRequest.GetVariableNumber index=0
+UWeb.WebResponse.ClearSubst index=0
+UWeb.WebResponse.IncludeBinaryFile index=0
+UWeb.WebResponse.IncludeUHTM index=0
+UWeb.WebResponse.Subst index=0
+MISSING 9

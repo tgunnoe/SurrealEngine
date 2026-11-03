@@ -295,8 +295,8 @@ void NPawn::AICanHear(UObject* Self, UObject* Other, std::optional<float> Volume
 
 void NPawn::AICanSee(UObject* Self, UObject* Other, std::optional<float> Visibility, std::optional<bool> bCheckVisibility, std::optional<bool> bCheckDir, std::optional<bool> bCheckCylinder, std::optional<bool> bCheckLOS, float& ReturnValue)
 {
-	LogUnimplemented("Pawn.AICanSee");
-	ReturnValue = 0.0f;
+	UPawn* selfPawn = UObject::Cast<UPawn>(Self);
+	ReturnValue = selfPawn->AICanSee(UObject::Cast<UActor>(Other), Visibility, bCheckVisibility, bCheckDir, bCheckCylinder, bCheckLOS);
 }
 
 void NPawn::AICanSmell(UObject* Self, UObject* Other, std::optional<float> Smell, float& ReturnValue)
@@ -307,14 +307,14 @@ void NPawn::AICanSmell(UObject* Self, UObject* Other, std::optional<float> Smell
 
 void NPawn::AIDirectionReachable(UObject* Self, const vec3& Focus, int Yaw, int Pitch, float minDist, float maxDist, vec3& bestDest, BitfieldBool& ReturnValue)
 {
-	LogUnimplemented("Pawn.AIDirectionReachable");
-	ReturnValue = false;
+	UPawn* selfPawn = UObject::Cast<UPawn>(Self);
+	ReturnValue = selfPawn->AIDirectionReachable(Focus, Yaw, Pitch, minDist, maxDist, bestDest);
 }
 
 void NPawn::AIPickRandomDestination_Deus(UObject* Self, float minDist, float maxDist, int centralYaw, float yawDistribution, int centralPitch, float pitchDistribution, int tries, float multiplier, vec3& dest, BitfieldBool& ReturnValue)
 {
-	LogUnimplemented("Pawn.AIPickRandomDestination_Deus");
-	ReturnValue = false;
+	UPawn* selfPawn = UObject::Cast<UPawn>(Self);
+	ReturnValue = selfPawn->AIPickRandomDestination(minDist, maxDist, centralYaw, yawDistribution, centralPitch, pitchDistribution, tries, multiplier, dest);
 }
 
 void NPawn::ComputePathnodeDistances(UObject* Self, std::optional<UObject*> startActor)
@@ -331,7 +331,31 @@ void NPawn::LineOfSightTo_Deus(UObject* Self, UObject* Other, std::optional<bool
 
 void NPawn::ReachablePathnodes(UObject* Self, UObject* BaseClass, UObject*& NavPoint, UObject* FromPoint, float& distance, std::optional<bool> bUsePrunedPaths)
 {
-	LogUnimplemented("Pawn.ReachablePathnodes");
+	UPawn* selfPawn = UObject::Cast<UPawn>(Self);
+	Frame::CreatedIterator = std::make_unique<ReachablePathnodesIterator>(BaseClass, &NavPoint, &distance,
+		selfPawn->ReachablePathnodes(UObject::Cast<UActor>(FromPoint), bUsePrunedPaths.value_or(false)));
+}
+
+ReachablePathnodesIterator::ReachablePathnodesIterator(UObject* baseClass, UObject** outNavPoint, float* outDistance, std::vector<std::pair<UNavigationPoint*, int>> nodes)
+	: baseClass(baseClass), outNavPoint(outNavPoint), outDistance(outDistance), nodes(std::move(nodes))
+{
+}
+
+bool ReachablePathnodesIterator::Next()
+{
+	while (nextNode < nodes.size())
+	{
+		auto [navPoint, distance] = nodes[nextNode++];
+		if (!baseClass || navPoint->IsA(baseClass->Name))
+		{
+			*outNavPoint = navPoint;
+			*outDistance = (float)distance;
+			return true;
+		}
+	}
+
+	*outNavPoint = nullptr;
+	return false;
 }
 
 void NPawn::StrafeFacing_Deus(UObject* Self, const vec3& NewDestination, UObject* NewTarget, std::optional<float> speed)

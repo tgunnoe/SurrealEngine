@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "NPlayerPawn.h"
 #include "VM/NativeFunc.h"
+#include "Packages/Engine/UViewport.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/Engine/Actors/Pawn/UPlayerPawn.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
@@ -100,7 +101,15 @@ void NPlayerPawn::PasteFromClipboard(UObject* Self, std::string& ReturnValue)
 
 void NPlayerPawn::ResetKeyboard(UObject* Self)
 {
-	LogUnimplemented("PlayerPawn.ResetKeyboard");
+	// Deus Ex calls this from TravelPostAccept so a key held across a map change does not stay pressed.
+	// Release every held button on the pawn that receives input and forget them, which also stops the
+	// per-frame input loop from setting them again.
+	if (engine->viewport && engine->viewport->Actor())
+	{
+		for (auto& button : engine->activeInputButtons)
+			engine->viewport->Actor()->SetBool(button.first, false);
+	}
+	engine->activeInputButtons.clear();
 }
 
 void NPlayerPawn::UpdateURL(UObject* Self, const std::string& NewOption, const std::string& NewValue, bool bSaveDefault)

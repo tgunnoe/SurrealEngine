@@ -54,6 +54,15 @@ GCAllocation* GC::AllocMemory(size_t size)
 
 void GC::FreeMemory(GCAllocation* allocation)
 {
+	// Gives back a block whose constructor threw: it is already linked and counted, and the
+	// constructor may have allocated after it, so the block is not necessarily the head.
+	GCAllocation** link = &allocations;
+	while (*link != allocation)
+		link = &(*link)->allocklistNext;
+	*link = allocation->allocklistNext;
+
+	stats.memoryUsage -= allocation->memsize;
+	stats.numObjects--;
 	free(allocation);
 }
 
