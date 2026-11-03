@@ -26,7 +26,7 @@ void RenderSubsystem::DrawScene()
 	}
 
 	mat4 worldToView = Coords::ViewToRenderDev().ToMatrix() * Coords::Rotation(engine->CameraRotation).Inverse().ToMatrix() * Coords::Location(engine->CameraLocation).ToMatrix();
-	MainFrame.Process(engine->CameraLocation, worldToView, Coords::Rotation(engine->CameraRotation));
+	MainFrame.Process(engine->CameraLocation, engine->CameraLocation, worldToView, Coords::Rotation(engine->CameraRotation));
 	MainFrame.Draw();
 	MainFrame.DrawCoronas();
 }
@@ -82,7 +82,7 @@ void RenderSubsystem::DrawViewport(UViewportWindow* viewport)
 	rotation += viewport->relRotation();
 
 	mat4 worldToView = Coords::ViewToRenderDev().ToMatrix() * Coords::Rotation(rotation).Inverse().ToMatrix() * Coords::Location(location).ToMatrix();
-	MainFrame.Process(location, worldToView, Coords::Rotation(rotation));
+	MainFrame.Process(location, location, worldToView, Coords::Rotation(rotation));
 	MainFrame.Draw();
 	MainFrame.DrawCoronas();
 

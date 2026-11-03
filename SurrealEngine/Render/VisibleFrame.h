@@ -45,6 +45,37 @@ inline vec4 MirrorSurfacePlane(const vec3& normal, const vec3& pointOnPlane)
 	return vec4(n, -dot(n, pointOnPlane));
 }
 
+// The reflection of a point about a plane (unit normal, offset): the camera a mirror frame
+// really looks from, given its parent's camera. The plane's normal must be unit length.
+inline vec3 ReflectPoint(const vec3& point, const vec4& plane)
+{
+	return point - plane.xyz() * (2.0f * dot(plane, vec4(point, 1.0f)));
+}
+
+// What a mirror frame takes from the mirror it is made from. The eye is where its view is taken
+// from; the zone location is where the zone lookup runs, which must stay inside the level; the
+// clip plane keeps the side of the mirror the parent's eye is on.
+struct MirrorFrameView
+{
+	vec3 Eye;
+	vec3 ZoneLocation;
+	vec4 ClipPlane;
+};
+
+inline MirrorFrameView MirrorFrameViewOf(const vec3& parentEye, const vec3& zoneLocation, const vec3& normal, const vec3& pointOnPlane)
+{
+	// The plane is oriented from the parent's eye, the one that faces the mirror: the reflected eye
+	// is behind it and would keep the wrong side.
+	return { ReflectPoint(parentEye, MirrorSurfacePlane(normal, pointOnPlane)), zoneLocation, MirrorClipPlane(normal, pointOnPlane, parentEye) };
+}
+
+// Whether a mirror surface of this plane has the frame's eye in front of it. An eye on the plane
+// or behind it sees the surface from the side that is not a mirror.
+inline bool MirrorPortalFacesEye(const vec4& plane, const vec3& eye)
+{
+	return dot(plane, vec4(eye, 1.0f)) > 0.0f;
+}
+
 // The index of the held mirror portal that a new mirror surface of this plane joins, or -1.
 inline int FindMirrorPortalToJoin(const Array<VisiblePortal>& portals, const vec4& plane)
 {
@@ -64,7 +95,7 @@ inline int FindMirrorPortalToJoin(const Array<VisiblePortal>& portals, const vec
 class VisibleFrame
 {
 public:
-	void Process(const vec3& location, const mat4& worldToView, const Coords& viewRotation, bool mirrorFlag = false, int portalDepth = 0, const Array<PortalSpan>& portalSpans = {}, const vec4& portalPlane = vec4(0.0f, 0.0f, 0.0f, 1.0f), bool isMirrorFrame = false);
+	void Process(const vec3& location, const vec3& zoneLocation, const mat4& worldToView, const Coords& viewRotation, bool mirrorFlag = false, int portalDepth = 0, const Array<PortalSpan>& portalSpans = {}, const vec4& portalPlane = vec4(0.0f, 0.0f, 0.0f, 1.0f), bool isMirrorFrame = false);
 	void Draw();
 	void DrawCoronas();
 
@@ -73,6 +104,7 @@ public:
 	SceneNode Frame;
 	BspClipper Clipper;
 	vec4 ViewLocation = vec4(0.0f);
+	vec3 ZoneLocation = vec3(0.0f);
 	Coords ViewRotation = {};
 	int ViewZone = 0;
 	//uint64_t ViewZoneMask = 0;
