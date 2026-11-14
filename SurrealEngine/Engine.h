@@ -309,12 +309,12 @@ public:
 
 	double TotalTime = 0.0;
 
-	Package* EntryLevelPackage = nullptr;
+	GCRoot<Package> EntryLevelPackage;
 	ULevel* EntryLevel = nullptr;
 	ULevelInfo* EntryLevelInfo = nullptr;
 	UGameInfo* EntryGameInfo = nullptr;
 
-	Package* LevelPackage = nullptr;
+	GCRoot<Package> LevelPackage;
 	ULevel* Level = nullptr;
 	ULevelInfo* LevelInfo = nullptr;
 	UGameInfo* GameInfo = nullptr;

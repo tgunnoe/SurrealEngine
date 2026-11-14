@@ -107,9 +107,7 @@ public:
 
 	void CloseStreams();
 
-	Package* LoadSaveSlot(int slotNum);
-
-	// The package LoadSaveSlot returns, kept alive by the root for as long as the holder keeps the root;
+	// The save package of a slot, kept alive by the root for as long as the holder keeps the root;
 	// the root is empty when there is no such slot
 	GCRoot<Package> LoadSaveSlotHeld(int slotNum);
 

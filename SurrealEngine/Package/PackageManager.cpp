@@ -594,7 +594,7 @@ void PackageManager::CloseStreams()
 	openStreams.clear();
 }
 
-Package* PackageManager::LoadSaveSlot(int slotNum)
+GCRoot<Package> PackageManager::LoadSaveSlotHeld(int slotNum)
 {
 	fs::path file = SaveSlotPath(IsDeusEx(), slotNum, gameSaveFolderPath, GetSaveExtension());
 
@@ -603,19 +603,14 @@ Package* PackageManager::LoadSaveSlot(int slotNum)
 		// A Deus Ex slot is a folder: the level package beside SaveInfo
 		const std::optional<fs::path> level = NewestDeusExSaveLevel(file, GetSaveExtension());
 		if (!level)
-			return nullptr;
+			return GCRoot<Package>();
 		file = *level;
 	}
 
 	if (!fs::exists(file))
-		return nullptr;
+		return GCRoot<Package>();
 
-	return GC::Alloc<Package>(this, file.stem().string(), file.string());
-}
-
-GCRoot<Package> PackageManager::LoadSaveSlotHeld(int slotNum)
-{
-	return GCRoot<Package>(LoadSaveSlot(slotNum));
+	return GCRoot<Package>(GC::Alloc<Package>(this, file.stem().string(), file.string()));
 }
 
 void PackageManager::ScanForMaps()

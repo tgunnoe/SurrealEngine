@@ -366,7 +366,7 @@ void Engine::Run()
 				LogMessage("Client travel to entry");
 				audiodev->StopSounds();
 				UnloadMap();
-				LevelPackage = EntryLevelPackage;
+				LevelPackage.set(EntryLevelPackage.get());
 				Level = EntryLevel;
 				LevelInfo = EntryLevelInfo;
 				GameInfo = EntryGameInfo;
@@ -710,11 +710,11 @@ void Engine::LoadEntryMap()
 	// The entry map is the map you see in the game when no other map is playing. For example when disconnected from a server. It is always loaded and running.
 	const auto entryMapName = packages->GetIniValue("System", "URL", "EntryMap", "Entry");
 	LoadMap(GetDefaultURL(entryMapName));
-	EntryLevelPackage = LevelPackage;
+	EntryLevelPackage.set(LevelPackage.get());
 	EntryLevel = Level;
 	EntryLevelInfo = LevelInfo;
 	EntryGameInfo = GameInfo;
-	LevelPackage = nullptr;
+	LevelPackage.set(nullptr);
 	Level = nullptr;
 	LevelInfo = nullptr;
 	GameInfo = nullptr;
@@ -737,10 +737,10 @@ static void LogObjectCount()
 
 void Engine::UnloadMap()
 {
-	if (LevelPackage && LevelPackage != EntryLevelPackage)
-		packages->UnloadPackage(LevelPackage);
+	if (LevelPackage && LevelPackage.get() != EntryLevelPackage.get())
+		packages->UnloadPackage(LevelPackage.get());
 
-	LevelPackage = nullptr;
+	LevelPackage.set(nullptr);
 	Level = nullptr;
 	LevelInfo = nullptr;
 	GameInfo = nullptr;
@@ -763,7 +763,7 @@ void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::stri
 
 	// Load map objects
 
-	LevelPackage = packages->LoadMap(url.Map);
+	LevelPackage = packages->LoadMapHeld(url.Map);
 
 	// The level info is the level's first actor, so it can only be picked once the level is loaded.
 	// World hits carry the level info as their actor, so the collision gets it after that.
@@ -870,7 +870,7 @@ bool Engine::LoadFromSaveFile(const UnrealURL& url)
 	}
 
 	const int slotNum = *slot;
-	Package* savefilePackage = packages->LoadSaveSlot(slotNum);
+	GCRoot<Package> savefilePackage = packages->LoadSaveSlotHeld(slotNum);
 	if (!savefilePackage)
 	{
 		LogSkipped("Load game skipped: no save in slot " + std::to_string(slotNum));
@@ -883,7 +883,7 @@ bool Engine::LoadFromSaveFile(const UnrealURL& url)
 	audiodev->StopSounds();
 	UnloadMap();
 
-	LevelPackage = savefilePackage;
+	LevelPackage.set(savefilePackage.get());
 
 	// The level info is the level's first actor, so it can only be picked once the level is loaded.
 	// World hits carry the level info as their actor, so the collision gets it after that.
@@ -1022,19 +1022,19 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 
 		savedFile = saveSlotFolder / (mapName + "." + packages->GetSaveExtension());
 		const auto saveInfoFile = saveSlotFolder / ("SaveInfo." + packages->GetSaveExtension());
-		LevelPackage->Save(Level, savedFile.string());
+		LevelPackage.get()->Save(Level, savedFile.string());
 
 		// The save info is made in the level's package, the one the writer is saving: it refuses an object
 		// of another package, and it exports the class of an object of the package it saves, so a save info
 		// from the DeusEx package would write the whole DeusExSaveInfo class into the file. The object is named
 		// as the original game names it, which is the name the game directory's reader looks it up by.
-		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage->NewObject("MyDeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
+		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage.get()->NewObject("MyDeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
 		saveInfo->DirectoryIndex() = slotNum;
 		saveInfo->Description() = saveDescription;
 		saveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
 		saveInfo->MapName() = mapName;
 		saveInfo->UpdateTimeStamp();
-		LevelPackage->Save(saveInfo, saveInfoFile.string());
+		LevelPackage.get()->Save(saveInfo, saveInfoFile.string());
 
 		// The package manager read the save infos once at startup, so the game directory would not list this one
 		packages->RegisterSaveInfo(DeusExSaveFolderName(slotNum));
@@ -1042,7 +1042,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 	else
 	{
 		savedFile = SaveSlotPath(false, slotNum, saveFolderPath, packages->GetSaveExtension());
-		LevelPackage->Save(Level, savedFile.string());
+		LevelPackage.get()->Save(Level, savedFile.string());
 
 		// The save package is later reloaded by its slot filename ("SaveN"), not by the original
 		// map name, so record the real map name here for LoadFromSaveFile() to recover.
