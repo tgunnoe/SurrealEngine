@@ -57,6 +57,45 @@ The three calibration runs, one per game on the previous binary, gave 1280x720 p
 | flash-invis | flash-invis-base | flash-invis-node | 0.0, 0.0 | 498.1, 485.7 | 1, 1 |
 | ovl-training | ovl-training-base | ovl-training-node | -, - | 308.3, 283.7 | 1, 1 |
 
+## Nested mirrors
+
+Each pair is a run on the binary before the change (previous) and one after it (fixed), 60 s, from the same `place` point; the three captures of a run are `pre`, `a` (3 s after the move) and `b` (6 s after it). The seven mirror pairs above are run again with this change, and Toxic is the one stock oblique pair visible from a single standing point, `place -479 -1376 -384 180`, loaded by its bare name with the Unreal Gold class pin.
+
+| Pair | Previous binary | Fixed binary | Shift of the move (previous, fixed) | Lowest FPS after the move (previous, fixed) | Probe lines (previous, fixed) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| mir-chizra | mir-chizra-base | mir-chizra-node | 0.0, 0.0 | 342.7, 353.0 | 2, 2 |
+| mir-terralift | mir-terralift-base | mir-terralift-node | 39.0, 39.0 | 409.5, 411.9 | 2, 2 |
+| mir-cinder | mir-cinder-base | mir-cinder-node | 0.0, 0.0 | 644.0, 557.4 | 2, 2 |
+| mir-hotel | mir-hotel-base | mir-hotel-node | 0.0, 0.0 | 706.4, 729.0 | 2, 2 |
+| mir-wanchai | mir-wanchai-base | mir-wanchai-node | 0.0, 0.0 | 356.5, 372.7 | 2, 2 |
+| mir-training | mir-training-base | mir-training-node | 0.0, 0.0 | 128.2, 156.9 | 2, 2 |
+| mir-skycaves | mir-skycaves-base | mir-skycaves-node | 39.0, 39.0 | 420.8, 418.7 | 2, 2 |
+| mir-obl-toxic | mir-obl-toxic-base | mir-obl-toxic-node | 0.0, 0.0 | 316.7, 310.2 | 2, 2 |
+
+The stairs of 00_Training are measured, not judged, at pixel column 170 of the `a` and `b` captures. The first tread of the left-hand stair shows the far room's row of lights where the riser's reflection belongs; it does so on the previous binary, on the fixed binary and on an engine that never portals a mirror inside a mirror, so it is not drawn by a nested portal. Compared with that engine, the number of pixels that differ is 0.8 and 3.6 for the fixed binary's `a` and `b` captures and 286.8 and 287.7 for the previous binary's, all on the right-hand stair. The lowest frame rate of the 00_Training pair after the move is 128.2 on the previous binary and 156.9 on the fixed one; the earlier table's 259.0 and 120.3 were taken on binaries that predate the third upstream landing and are not comparable.
+
+The regression sample on the fixed binary, in the columns of the table above:
+
+| Map | Verdict | Script errors | Exceptions | Missing natives | Stub hits | Warnings (run, committed) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Vortex2 | MATCH | 0 | 0 | 0 | 0 | 0, 0 |
+| Dig | MATCH | 0 | 0 | 0 | 0 | 25, 10 |
+| NyLeve | MATCH | 0 | 0 | 0 | 0 | 0, 0 |
+| Chizra | MATCH | 0 | 0 | 0 | 0 | 20, 17 |
+| Harobed | MATCH | 0 | 0 | 0 | 0 | 9, 15 |
+| AS-Frigate | MATCH | 0 | 0 | 0 | 0 | 0, 0 |
+| DM-Deck16][ | MATCH | 0 | 0 | 0 | 0 | 0, 0 |
+| AS-Overlord | MATCH | 0 | 0 | 0 | 0 | 0, 0 |
+| DM-Codex | MATCH | 0 | 0 | 0 | 0 | 0, 0 |
+| CTF-Face | MATCH | 0 | 0 | 0 | 0 | 0, 0 |
+| 00_Training | MATCH | 0 | 0 | 0 | 1 | 0, 0 |
+| 01_NYC_UNATCOIsland | MATCH | 0 | 0 | 0 | 1 | 0, 0 |
+| 02_NYC_BatteryPark | MATCH | 0 | 0 | 0 | 1 | 0, 0 |
+| 03_NYC_UNATCOHQ | MATCH | 0 | 0 | 0 | 1 | 0, 0 |
+| 04_NYC_Hotel | MATCH | 0 | 0 | 0 | 1 | 0, 0 |
+
+The botmatch (Unreal Tournament DM-Deck16][, 300 s, `Fire` at 5 s) logged 107 lines of `GameInfo.Killed:`; its `SUMMARY` line counts 0 script errors, 0 stub hits, 0 missing natives, 0 exceptions and 3 script warnings at a mean of 1178.1 `FPS`.
+
 ## Regression sample
 
 | Map | Verdict | Script errors | Exceptions | Missing natives | Stub hits | Warnings (run, committed) |
@@ -86,3 +125,5 @@ The pictures are judged outside this file. The fixed binary has not been compare
 The CTF-Niven ASMD pair was not observed: with the game type `Botpack.CTFGame` the level has no actor named `ASMD0` or `ASMD1`, so the pickups were not there to look at, and the player died in both runs of the pair. The Unreal Tournament pair of DOM-Cinder needed a third attempt of the fixed-binary run because the player died in the first two.
 
 The flash runs cannot show the flash change. At the frame rates of these runs (485 to 1185 `FPS`) the stock view-flash script sends the device no flash: one easing step from rest is snapped back to rest on every frame, and a step escapes the snap only below about 41 `FPS` for the tint of water, 79 for Invisibility and 205 for a heavy hit flash.
+
+No capture of these pairs frames a mirror seen inside another mirror, the Toxic pair included, where the two oblique mirrors could not be identified in the frames. The terralift and Toxic pairs also differ between the previous and fixed runs by actors that moved, so they do not show the change. The covisibility search over Deus Ex `10_Paris_Club` counted standing points that see two of its mirror planes without naming which two, so it does not show that the oblique pair there is out of view from every standing point; that pair is covered by the census of mirror surfaces and the unit test of oblique planes only.
