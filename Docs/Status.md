@@ -26,7 +26,7 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
 * Movers:
   - Projectiles and other actors can pass through the part of a rotating mover that has swung outside the cells it was registered in, because a mover's collision registration isn't refreshed while it rotates
   - A mover's rotation isn't checked for encroachment, so a swinging door doesn't crush anything or return to its previous position when it swings into something.
-* A mirror seen inside another mirror is placed from the viewer's own position, not from its reflection, so two mirrors on parallel planes at different heights (as on the stairs of Deus Ex's training map) or at an oblique angle can show the wrong side inside the reflection.
+* A mirror frame is now drawn from the viewer reflected through the mirror planes on its path, and a mirror surface seen from behind is skipped, but no mirror seen inside another mirror has been observed yet, at an oblique angle or parallel (as on the stairs of Deus Ex's training map), so how it looks there is unchecked.
 * Portals:
   - They somewhat work, but might end up "pushing" players/projectiles in unexpected directions.
 * Semisolid brushes:
