@@ -751,7 +751,7 @@ void Engine::UnloadMap()
 	// GC::Collect();
 }
 
-void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::string>& travelInfo)
+void Engine::LoadMap(UnrealURL url, std::map<std::string, std::string> travelInfo)
 {
 	ClientTravelInfo.URL.Clear();
 

@@ -234,7 +234,8 @@ public:
 	void ClientTravel(const std::string& URL, ETravelType travelType, bool transferItems);
 	UnrealURL GetDefaultURL(const std::string& map);
 	void LoadEntryMap();
-	void LoadMap(const UnrealURL& url, const std::map<std::string, std::string>& travelInfo = {});
+	// By value: the callers that restart a level pass the level's own URL and travel info, which the unload frees
+	void LoadMap(UnrealURL url, std::map<std::string, std::string> travelInfo = {});
 	// Returns false, with the current level left running, when the request names no slot or a slot with no save
 	bool LoadFromSaveFile(const UnrealURL& url);
 	void SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const;
