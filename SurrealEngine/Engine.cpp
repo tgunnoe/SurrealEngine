@@ -365,7 +365,6 @@ void Engine::Run()
 			if (EntryLevel && Level != EntryLevel)
 			{
 				LogMessage("Client travel to entry");
-				audiodev->StopSounds();
 				UnloadMap();
 				LevelPackage.set(EntryLevelPackage.get());
 				Level = EntryLevel;
@@ -747,15 +746,21 @@ static void LogObjectCount()
 
 void Engine::UnloadMap()
 {
+	// Every route into a map change comes through here. A sound still playing holds the actor it was started for,
+	// and stopping it reads that actor, so this goes first.
+	audiodev->StopSounds();
+
 	if (LevelPackage && LevelPackage.get() != EntryLevelPackage.get())
 		packages->UnloadPackage(LevelPackage.get());
 
+	// Everything below points into the level that is going away, or is read as a raw pointer every frame
 	LevelPackage.set(nullptr);
 	Level = nullptr;
 	LevelInfo = nullptr;
 	GameInfo = nullptr;
 	DeusExLevelInfo = nullptr;
 	dxRootWindow = nullptr;
+	CameraActor = nullptr;
 	viewport->Actor() = nullptr;
 
 	// GC::Collect();
@@ -768,7 +773,6 @@ void Engine::LoadMap(UnrealURL url, std::map<std::string, std::string> travelInf
 	if (Level)
 		CallEvent(console, EventName::NotifyLevelChange);
 
-	audiodev->StopSounds();
 	UnloadMap();
 
 	// Load map objects
@@ -890,7 +894,6 @@ bool Engine::LoadFromSaveFile(const UnrealURL& url)
 	if (Level)
 		CallEvent(console, EventName::NotifyLevelChange);
 
-	audiodev->StopSounds();
 	UnloadMap();
 
 	LevelPackage.set(savefilePackage.get());
