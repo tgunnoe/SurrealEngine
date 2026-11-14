@@ -730,6 +730,37 @@ GCAllocation* EngineRoots::Mark(GCAllocation* marklist)
 	return marklist;
 }
 
+// Collects the level that was just released. Two things must hold here: no script frame is live, since a frame holds
+// objects the collector cannot see, and no GC::Alloc constructor is on the stack, since its half-built object is
+// not marked yet. Every caller of UnloadMap is the main loop or a load it runs, so neither is ever the case; the
+// frame test is kept to say so in the log if that ever changes.
+static void CollectReleasedLevel(Package* released, const std::string& name)
+{
+	if (!Frame::Callstack.empty())
+	{
+		LogMessage("GC: skipped, a script frame is live");
+		SmokeLog::Get()->Event("GC_SKIPPED", "script frame live");
+		return;
+	}
+
+	const GCStats before = GC::GetStats();
+	GC::Collect();
+	const GCStats after = GC::GetStats();
+	SmokeLog::Get()->Event("GC_COLLECT", "before=" + std::to_string(before.numObjects) + " after=" + std::to_string(after.numObjects) +
+		" memory_before=" + std::to_string(before.memoryUsage) + " memory_after=" + std::to_string(after.memoryUsage) + " released=" + name);
+
+	// A released level that is still allocated is held by something the collector reached: only its address is compared
+	for (GCObject* live : GC::GetObjects())
+	{
+		if (live == static_cast<GCObject*>(released))
+		{
+			LogMessage("GC: level package " + name + " survived the collection");
+			SmokeLog::Get()->Event("GC_SURVIVOR", name);
+			break;
+		}
+	}
+}
+
 // The collector's object count is a line of its own after the MAP line, not part of it: the sweep runner compares the MAP
 // text with the requested map, so a longer text would make every sweep read as idle.
 static void LogObjectCount()
@@ -750,8 +781,14 @@ void Engine::UnloadMap()
 	// and stopping it reads that actor, so this goes first.
 	audiodev->StopSounds();
 
+	Package* released = nullptr;
+	std::string releasedName;
 	if (LevelPackage && LevelPackage.get() != EntryLevelPackage.get())
-		packages->UnloadPackage(LevelPackage.get());
+	{
+		released = LevelPackage.get();
+		releasedName = released->GetPackageName().ToString();
+		packages->UnloadPackage(released);
+	}
 
 	// Everything below points into the level that is going away, or is read as a raw pointer every frame
 	LevelPackage.set(nullptr);
@@ -763,7 +800,8 @@ void Engine::UnloadMap()
 	CameraActor = nullptr;
 	viewport->Actor() = nullptr;
 
-	// GC::Collect();
+	if (released)
+		CollectReleasedLevel(released, releasedName);
 }
 
 void Engine::LoadMap(UnrealURL url, std::map<std::string, std::string> travelInfo)
