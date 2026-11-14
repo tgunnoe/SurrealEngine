@@ -443,7 +443,7 @@ PointRegion UModel::FindRegion(const vec3& point, UZoneInfo* levelZoneInfo)
 {
 	// The zone actor comes from this model's own zone table. An actor of the entry level keeps moving while another level
 	// plays, and the engine's current level would hand it that level's zones: the entry pawn would point into the played map.
-	auto zoneActor = [&](int zoneNumber) -> UZoneInfo*
+	auto zoneActorOf = [&](int zoneNumber) -> UZoneInfo*
 	{
 		if (zoneNumber >= 0 && zoneNumber < (int)Zones.size())
 		{
@@ -497,7 +497,7 @@ PointRegion UModel::FindRegion(const vec3& point, UZoneInfo* levelZoneInfo)
 		}
 	}
 
-	region.Zone = zoneActor(region.ZoneNumber);
+	region.Zone = zoneActorOf(region.ZoneNumber);
 	return region;
 }
 
