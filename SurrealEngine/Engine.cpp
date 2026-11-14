@@ -365,6 +365,9 @@ void Engine::Run()
 			if (EntryLevel && Level != EntryLevel)
 			{
 				LogMessage("Client travel to entry");
+				// The console holds state bound to the level being left, and every level change must release it; the map load
+				// and the save load already send this event before they unload
+				CallEvent(console, EventName::NotifyLevelChange);
 				UnloadMap();
 				LevelPackage.set(EntryLevelPackage.get());
 				Level = EntryLevel;
