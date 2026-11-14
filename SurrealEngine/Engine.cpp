@@ -125,6 +125,9 @@ Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 	DefaultTexture = UObject::Cast<UTexture>(packages->GetPackage("Engine")->GetUObject("Texture", "DefaultTexture"));
 
 	floatprop = GC::Alloc<UFloatProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
+	objprop = GC::Alloc<UObjectProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
+	vecprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
+	rotprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
 
 	if (LaunchInfo.IsDeusEx())
 	{
@@ -143,6 +146,8 @@ Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 	console->Viewport() = viewport;
 	canvas->Viewport() = viewport;
 	viewport->Console() = console;
+
+	engineRoots.set(GC::Alloc<EngineRoots>(this));
 }
 
 Engine::~Engine()
@@ -191,10 +196,6 @@ void Engine::Run()
 		LoadMap(UnrealURL(GetDefaultURL(packages->GetIniValue("system", "URL", "LocalMap")), LaunchInfo.url));
 
 	LoginPlayer();
-
-	auto objprop = GC::Alloc<UObjectProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
-	auto vecprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
-	auto rotprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
 
 	bool firstCall = true;
 
@@ -719,6 +720,15 @@ void Engine::LoadEntryMap()
 	LevelInfo = nullptr;
 	GameInfo = nullptr;
 	viewport->Actor() = nullptr;
+}
+
+GCAllocation* EngineRoots::Mark(GCAllocation* marklist)
+{
+	for (UObject* obj : { (UObject*)owner->gameengine, (UObject*)owner->renderdev, (UObject*)owner->audiodev, (UObject*)owner->netdev, (UObject*)owner->client,
+		(UObject*)owner->viewport, (UObject*)owner->canvas, (UObject*)owner->dxgc, (UObject*)owner->console, (UObject*)owner->floatprop,
+		(UObject*)owner->objprop, (UObject*)owner->vecprop, (UObject*)owner->rotprop })
+		marklist = GC::MarkObject(marklist, obj);
+	return marklist;
 }
 
 // The collector's object count is a line of its own after the MAP line, not part of it: the sweep runner compares the MAP
