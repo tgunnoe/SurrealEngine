@@ -84,12 +84,14 @@ void ALSoundSource::SetVelocity(vec3& newVelocity)
 
 void ALSoundSource::SetSound(USound* newSound)
 {
-	if (sound != newSound)
+	const ALint buffer = (ALint)(ptrdiff_t)newSound->handle;
+	if (sound != newSound || boundBuffer != buffer)
 	{
 		sound = newSound;
+		boundBuffer = buffer;
 		alSourcei(id, AL_BUFFER, 0);
 		alGetError();
-		alSourcei(id, AL_BUFFER, (ALint)(ptrdiff_t)sound->handle);
+		alSourcei(id, AL_BUFFER, buffer);
 
 		if (sound->loopInfo.Looped)
 			alSourcei(id, AL_LOOPING, AL_TRUE);

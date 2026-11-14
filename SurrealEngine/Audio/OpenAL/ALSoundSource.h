@@ -39,4 +39,6 @@ private:
 	float pitch = 0.0f;
 	float dopplerFactor = 0.0f;
 	bool bIs3d = false;
+	// The buffer the source is bound to. A sound allocated at a freed sound's address has another buffer, so this tells it from the sound it replaced.
+	ALint boundBuffer = 0;
 };
