@@ -5,6 +5,8 @@
 #include "Packages/Core/UObject.h"
 #include "Packages/Core/Properties/UObjectProperty.h"
 #include "Packages/Core/Properties/UStructProperty.h"
+#include "Packages/Engine/Resources/Level/UModel.h"
+#include "Packages/Engine/Actors/Info/UZoneInfo.h"
 
 // These call the collector and read its statistics and live list directly. Each test runs in its
 // own process, so a collection sweeps only what the test itself allocated; what a test wants to
@@ -299,4 +301,31 @@ TEST(GcMarksTheMembersOfAClass)
 
 	CHECK_MSG(baseLive, "the base class of a held class was swept");
 	CHECK_MSG(propertyLive, "a property in the list of a held class was swept");
+}
+
+TEST(FindRegionTakesTheZoneFromItsOwnModel)
+{
+	// The engine global stays null: a lookup that asked the engine for the zone would dereference it.
+	UModel* model = GC::Alloc<UModel>("ZoneModel", nullptr, ObjectFlags::NoFlags);
+	BspNode node{};
+	node.Front = -1;
+	node.Back = -1;
+	node.PlaneZ = 1.0f;
+	node.Zone0 = 1;
+	node.Zone1 = 1;
+	model->Nodes.push_back(node);
+	model->Zones.resize(2);
+	model->Zones[0].ZoneActor = nullptr;
+	model->Zones[1].ZoneActor = nullptr;
+
+	UZoneInfo* levelZone = GC::Alloc<UZoneInfo>("LevelZone", nullptr, ObjectFlags::NoFlags);
+	UZoneInfo* ownZone = GC::Alloc<UZoneInfo>("OwnZone", nullptr, ObjectFlags::NoFlags);
+
+	PointRegion without = model->FindRegion(vec3(0.0f, 0.0f, 0.0f), levelZone);
+	model->Zones[1].ZoneActor = ownZone;
+	PointRegion with = model->FindRegion(vec3(0.0f, 0.0f, 0.0f), levelZone);
+
+	CHECK_MSG(without.ZoneNumber == 1, "the leaf is not in zone 1");
+	CHECK_MSG(without.Zone == levelZone, "a zone with no zone actor did not fall back to the level's zone");
+	CHECK_MSG(with.Zone == ownZone, "the zone actor of the model's own zone table was not returned");
 }
