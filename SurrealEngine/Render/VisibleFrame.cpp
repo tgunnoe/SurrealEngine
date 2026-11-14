@@ -11,7 +11,7 @@
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Extension/Windows/TabGroup/URootWindow.h"
 
-void VisibleFrame::Process(const vec3& location, const mat4& worldToView, const Coords& viewRotation, bool mirrorFlag, int portalDepth, const Array<PortalSpan>& portalSpans, const vec4& portalPlane, bool isMirrorFrame)
+void VisibleFrame::Process(const vec3& location, const vec3& zoneLocation, const mat4& worldToView, const Coords& viewRotation, bool mirrorFlag, int portalDepth, const Array<PortalSpan>& portalSpans, const vec4& portalPlane, bool isMirrorFrame)
 {
 	engine->render->Stats.Frames++;
 
@@ -30,7 +30,8 @@ void VisibleFrame::Process(const vec3& location, const mat4& worldToView, const 
 	Clipper.Setup(Frame.Projection * Frame.WorldToView * Frame.ObjectToWorld, portalSpans, portalPlane);
 
 	ViewLocation = vec4(location, 1.0f);
-	ViewZone = FindZoneAt(location);
+	ZoneLocation = zoneLocation;
+	ViewZone = FindZoneAt(zoneLocation);
 	//ViewZoneMask = ViewZone ? 1ULL << ViewZone : -1;
 	ViewRotation = viewRotation;
 
@@ -258,10 +259,13 @@ void VisibleFrame::ProcessNodeSurface(BspNode* node, bool front)
 		}
 		else if (PolyFlags & PF_Mirrored)
 		{
+			vec4 plane = MirrorSurfacePlane(model->Vectors[surface.vNormal], model->Points[surface.pBase]);
+			if (!MirrorPortalFacesEye(plane, ViewLocation.xyz()))
+				return;
+
 			Array<PortalSpan> spans = Clipper.CheckPortal(points, numverts);
 			if (!spans.empty())
 			{
-				vec4 plane = MirrorSurfacePlane(model->Vectors[surface.vNormal], model->Points[surface.pBase]);
 				int index = FindMirrorPortalToJoin(Portals, plane);
 				if (index >= 0)
 				{
@@ -396,7 +400,7 @@ void VisibleFrame::DrawPortals()
 				Coords::Location(portal.SkyZone->Location()).ToMatrix();
 
 			VisibleFrame skyframe;
-			skyframe.Process(portal.SkyZone->Location(), skyToView, ViewRotation * Coords::Rotation(portal.SkyZone->Rotation()), MirrorFlag, PortalDepth + 1, portal.Spans);
+			skyframe.Process(portal.SkyZone->Location(), portal.SkyZone->Location(), skyToView, ViewRotation * Coords::Rotation(portal.SkyZone->Rotation()), MirrorFlag, PortalDepth + 1, portal.Spans);
 			Device->SetSceneNode(&skyframe.Frame);
 			skyframe.Draw();
 			Device->ClearZ();
@@ -419,7 +423,7 @@ void VisibleFrame::DrawPortals()
 				portalPlane = -portalPlane;
 
 			VisibleFrame portalframe;
-			portalframe.Process(newLocation, worldToView, rotation, MirrorFlag, PortalDepth + 1, portal.Spans, portalPlane);
+			portalframe.Process(newLocation, newLocation, worldToView, rotation, MirrorFlag, PortalDepth + 1, portal.Spans, portalPlane);
 			Device->SetSceneNode(&portalframe.Frame);
 			portalframe.Draw();
 			Device->ClearZ();
@@ -433,10 +437,10 @@ void VisibleFrame::DrawPortals()
 			mat4 mirrorRotation = mat4::mirror(n);
 			mat4 mirrorToView = Frame.WorldToView * mat4::translate(v) * mirrorRotation * mat4::translate(-v);
 
-			vec4 clipPlane = MirrorClipPlane(n, v, ViewLocation.xyz());
+			MirrorFrameView view = MirrorFrameViewOf(ViewLocation.xyz(), ZoneLocation, n, v);
 
 			VisibleFrame mirrorframe;
-			mirrorframe.Process(ViewLocation.xyz(), mirrorToView, ViewRotation * Coords::FromMatrix(mirrorRotation).Inverse(), !MirrorFlag, PortalDepth + 1, portal.Spans, clipPlane, true);
+			mirrorframe.Process(view.Eye, view.ZoneLocation, mirrorToView, ViewRotation * Coords::FromMatrix(mirrorRotation).Inverse(), !MirrorFlag, PortalDepth + 1, portal.Spans, view.ClipPlane, true);
 			Device->SetSceneNode(&mirrorframe.Frame);
 			mirrorframe.Draw();
 			Device->ClearZ();
