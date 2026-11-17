@@ -91,7 +91,6 @@ def readme_rows():
 
 
 class ReadmeTests(unittest.TestCase):
-    @unittest.expectedFailure
     def test_every_pin_row_matches_the_readme(self):
         rows = readme_rows()
         self.assertEqual(sorted(rows), sorted(pinjudge.PINS))

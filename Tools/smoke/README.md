@@ -23,12 +23,14 @@ Example:
 SurrealEngine --autostart --exit-after=20 --smoke-log=/tmp/ut.log "<game folder>"
 ```
 
-To start an Unreal Tournament botmatch, which otherwise waits for the
+To start an Unreal Tournament match, which otherwise waits for the
 player's ready signal, press fire five seconds after login:
 
 ```
-SurrealEngine --autostart --exit-after=60 --smoke-log=/tmp/ut.log '--url=DM-Deck16][?NumBots=4' --exec=5:Fire "<game folder>"
+SurrealEngine --autostart --exit-after=60 --smoke-log=<log> --url='DM-Deck16][' --exec=5:Fire "<game folder>"
 ```
+
+The number of bots is not a URL option: Unreal Tournament reads `InitialBots` from its ini, and `?NumBots=4` on a URL sets nothing (see "Per-run pins").
 
 With the fire press the log shows `STATE 0.0 PlayerWaiting at (909.3, 1916.3, -634.6)`
 and then `STATE 6.0 PlayerWalking`; without it the player stays in
@@ -315,6 +317,31 @@ same second as a bracketed or `trace:` one, and events that are to be lined up
 (a `place` against the probes after it, say) are lined up by the engine log's
 stamps.
 
+## Per-run pins
+
+A run that is judged against a value recorded on another date pins its environment itself, from the repository, and never edits a game folder. There are three pins and a fourth option, each read back from the engine log of the run.
+
+The player class: every Unreal Gold run's URL carries `?Class=UPak.UPakFemaleOne`, placed after the map and any `?game=` text and before other options. The engine reads the URL's `Class` before the system ini's `[URL] Class`, so it beats the `User.ini` of the folder, which play can rewrite.
+
+The bot count: Unreal Tournament reads `MinPlayers` and `InitialBots` in `[Botpack.DeathMatchPlus]` of its ini and no URL option, and a game class that inherits them (Capture the Flag, say) reads the same keys. A run's own config folder, `<config root>/SurrealEngine/UnrealTournament-436-<install folder>/` (or `<user directory>/UnrealTournament-436-<install folder>/` with `--user-dir`), holds an `SE-UnrealTournament.ini` that the engine reads before the install's ini. `runpins.py prepare` writes it as a copy of the install's ini with exactly those two keys changed, so the install is only read. A run that is not about bots pins `MinPlayers=0` and `InitialBots=0`.
+
+The start: a run whose judgement depends on the first spawn begins with `place <x> <y> <z> <yaw>` at its pinned start, since the first spawn moves with the generator's draw count. In Unreal Tournament the `place` comes at least 0.5 s after the `Fire` that starts the match, because the respawn that the `Fire` causes undoes an earlier one.
+
+The frame limit: every run passes `--frame-limit=0`, and `sweep.py` and `saveload.py` do the same unless given their own `--frame-limit`. An engine option that no binary knows is ignored, so the option does nothing until an engine reads it.
+
+`Tools/smoke/runpins.py` holds the pins:
+
+```
+python3 -I -B Tools/smoke/runpins.py prepare --game "<game folder>" --kind unreal|ut|deusex --config-root <dir> [--bots <n>] [--user-dir <dir>]
+python3 -I -B Tools/smoke/runpins.py check --engine-log <file> --config-root <dir> --kind <kind> [--game "<game folder>"] [--user-dir <dir>] [--class Package.Class] [--bots <n>]
+```
+
+`prepare` creates the config root, copies the host's `Settings.json` into it once (so the same render device runs) and never over a file already there, and for `ut` with `--bots` writes the pin. It refuses a config root inside the game folder or equal to the host's own config folder, and `--bots` for any other kind. `check` prints `CONFIG_DIR ok` when the engine log's `User directories:` line names the run's config folder (a wrong folder key would silently leave the install's value), `CLASS ok` when an `InitGame:` line carries the class, `LEVEL_INFO <n> BY_NAME <m>` and, with `--bots`, `BOTS <n> ok`, and exits non-zero on a mismatch.
+
+`sweep.py` takes `--config-root` (required), `--game-kind` and `--bots` (Unreal Tournament only), `--player-class` and `--frame-limit`. Each map runs with `XDG_CONFIG_HOME` set to the config root, and the engine's own log of the map is copied beside its smoke log as `<map>.engine.txt` (a map whose engine wrote none has no copy and `engine_log` null in its report row). `saveload.py` pins the class on the `unreal` chain's URLs and writes the `ut` chain's bot count 0 into the user directory's ini before every step.
+
+`Tools/smoke/pinjudge.py` holds twelve mover and zone pins with their recipes and judges (`scenarios/movers/README.md` and `scenarios/zones/README.md` carry the same table).
+
 ## Sweep runner
 
 `sweep.py` runs every map under `<game>/Maps` (`.unr` and `.dx`, sorted by
@@ -335,10 +362,10 @@ Options: `--game`, `--out` (required); `--seconds` (default 15); `--limit`
 (first N maps, default all); `--exe` (default `build/SurrealEngine`);
 `--logdir` (default `<out>.d`, holds per-map logs and screenshots);
 `--url-options`, `--exec`, `--portable`, `--map-subdir`, `--game-by-prefix`,
-`--game-by-prefix-except` (below).
+`--game-by-prefix-except` (below); `--config-root` (required), `--game-kind`, `--bots`,
+`--player-class` and `--frame-limit` ("Per-run pins").
 
-`--url-options <text>` appends the text to every `--url=<map>`, for example
-`?NumBots=4`, so a botmatch run starts `--url=DM-Deck16][?NumBots=4`.
+`--url-options <text>` appends the text to every `--url=<map>`, after the game text and the player class, for example `?Difficulty=2`.
 `--exec <text>` passes `--exec=<text>` to every run, for example `5:Fire` to
 press fire five seconds after login. `--portable` writes a report that can be
 committed: `game` is `<game folder>`, each row's `log` is the log file's name
@@ -477,7 +504,7 @@ Each chain is data in `saveload.py`. A time is seconds after the first login, an
 | Chain | Maps | State set in the first map | Load | Checks (each reads) |
 | :--- | :--- | :--- | :--- | :--- |
 | `unreal` | `Vortex2`, `Nyleve`, `Dig` | `summon UnrealShare.Stinger`, then a 1.5 second walk forward | `call ClientTravel ?load=<s> 0 0` | `ShowInventory` |
-| `ut` | `DM-Deck16][`, `DM-Turbine`, `DM-Codex`, each with `?NumBots=0` | `Fire` (starts the match), `IAmTheOne` (cheats on, which `summon` needs), `summon Botpack.ShockRifle`, a walk forward | `call ClientTravel ?load=<s> 0 0` | `ShowInventory`; a `Fire` five seconds after every travel, so the new map's player is ready |
+| `ut` | `DM-Deck16][`, `DM-Turbine`, `DM-Codex`; the bot count 0 is pinned through the user directory's ini | `Fire` (starts the match), `IAmTheOne` (cheats on, which `summon` needs), `summon Botpack.ShockRifle`, a walk forward | `call ClientTravel ?load=<s> 0 0` | `ShowInventory`; a `Fire` five seconds after every travel, so the new map's player is ready |
 | `deusex` | `01_NYC_UNATCOIsland`, `01_NYC_UNATCOHQ`, `02_NYC_BatteryPark` | `call AddGoal T3Goal 1` (primary, so the mission change keeps it), `NoteAdd T3Note`, `call SetBoolFlagFromString T3Flag 1` | `LoadGame <s>` | `ShowInventory`, `call FindGoal T3Goal`, `call GetNote None` |
 
 A travel is `call ClientTravel <map><options> 2 1`, the way a map exit travels
@@ -673,7 +700,7 @@ document ends with exactly one newline.
 
 `scenarios/deusex/` is the reference: `scenario.py` holds its literals.
 `scenarios/ut-bots/` is the Unreal Tournament botmatch sweep (every map
-launched with `?NumBots=4`, fire pressed five seconds after login): a map is
+launched with `?NumBots=4`, an option Unreal Tournament never reads, fire pressed five seconds after login): a map is
 clean only if it is clean by the rules above and its match started
 (`require_match_start`). `scenarios/ut/` is the same game without bots, and
 `scenarios/unreal/` is Unreal Gold.
@@ -686,12 +713,14 @@ did not start) and the second did not. `triage/matchrule.py` holds the
 match-start rule, which `sweep.py` and the comparison both import.
 
 Tests, from the repository root (the second is the sweep unittest, the third the
-three-map save and load one):
+three-map save and load one, the fourth and fifth the per-run pins and the pin judges):
 
 ```
 python3 -I -B -m unittest discover -s Tools/smoke/triage -p 'test_*.py'
 python3 -I -B -m unittest discover -s Tools/smoke -p test_sweep.py
 python3 -I -B -m unittest discover -s Tools/smoke -p test_saveload.py
+python3 -I -B -m unittest discover -s Tools/smoke -p test_runpins.py
+python3 -I -B -m unittest discover -s Tools/smoke -p test_pinjudge.py
 ```
 
 The first includes one identity test per scenario that rebuilds the
