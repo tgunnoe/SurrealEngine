@@ -192,11 +192,18 @@ class SweepRunTests(unittest.TestCase):
         self.exe.chmod(0o755)
         self.logdir = self.root / "logs"
         self.out = self.root / "report.json"
+        # The host's Settings.json is a fixture, and the stand-in engine writes its own log.
+        host = self.root / "home" / ".config" / "SurrealEngine"
+        host.mkdir(parents=True)
+        (host / "Settings.json").write_text("{}\n")
+        self.environ = {"HOME": str(self.root / "home"), "XDG_CONFIG_HOME": "", "FAKE_ENGINE_WRITES_LOG": "1"}
 
     def sweep(self, *flags):
         argv = ["sweep.py", "--game", str(self.game), "--seconds", "2", "--out", str(self.out),
-                "--exe", str(self.exe), "--logdir", str(self.logdir), *flags]
-        with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(io.StringIO()):
+                "--exe", str(self.exe), "--logdir", str(self.logdir),
+                "--config-root", str(self.root / "xdg"), *flags]
+        with mock.patch.object(sys, "argv", argv), mock.patch.dict(os.environ, self.environ), \
+                contextlib.redirect_stdout(io.StringIO()):
             sweep.main()
         report = json.loads(self.out.read_text())
         argv_seen = json.loads((self.logdir / "A.log.argv").read_text())
@@ -401,12 +408,8 @@ class SweepRunTests(unittest.TestCase):
         return argv + list(flags)
 
     def pinned(self, *flags, **env):
-        """A sweep with a config root and a host whose Settings.json is a fixture; the report."""
-        host = self.root / "home" / ".config" / "SurrealEngine"
-        host.mkdir(parents=True, exist_ok=True)
-        (host / "Settings.json").write_text("{}\n")
-        environ = {"HOME": str(self.root / "home"), "XDG_CONFIG_HOME": "", "FAKE_ENGINE_WRITES_LOG": "1", **env}
-        with mock.patch.object(sys, "argv", self.argv(*flags)), mock.patch.dict(os.environ, environ), \
+        """A sweep with a config root; the report."""
+        with mock.patch.object(sys, "argv", self.argv(*flags)), mock.patch.dict(os.environ, {**self.environ, **env}), \
                 contextlib.redirect_stdout(io.StringIO()):
             try:
                 sweep.main()
@@ -417,7 +420,6 @@ class SweepRunTests(unittest.TestCase):
     def seen(self, name):
         return json.loads((self.logdir / f"{name}.log.env").read_text())
 
-    @unittest.expectedFailure
     def test_sweep_is_refused_without_a_config_root(self):
         err = io.StringIO()
         with mock.patch.object(sys, "argv", self.argv(config_root=False)), contextlib.redirect_stderr(err), \
@@ -426,7 +428,6 @@ class SweepRunTests(unittest.TestCase):
         self.assertIn("--config-root", err.getvalue())
         self.assertEqual(list(self.logdir.glob("*.argv")), [])
 
-    @unittest.expectedFailure
     def test_sweep_runs_each_map_in_the_config_root(self):
         self.add_maps(".", "B")
         self.pinned()
@@ -435,7 +436,6 @@ class SweepRunTests(unittest.TestCase):
             self.assertEqual(seen["xdg"], str(self.root / "xdg"))
             self.assertTrue(seen["settings"])
 
-    @unittest.expectedFailure
     def test_sweep_copies_the_engine_log_beside_each_smoke_log(self):
         self.add_maps(".", "B", "C")
         report = self.pinned(FAKE_NO_ENGINE_LOG="B")
@@ -447,7 +447,6 @@ class SweepRunTests(unittest.TestCase):
         self.assertEqual(rows, {"A": str(self.logdir / "A.engine.txt"), "B": None,
                                 "C": str(self.logdir / "C.engine.txt")})
 
-    @unittest.expectedFailure
     def test_sweep_pins_the_bot_count_before_the_engine_starts(self):
         (self.game / "System").mkdir()
         (self.game / "System" / "UnrealTournament.ini").write_bytes(UT_INI.encode("latin-1"))
@@ -458,7 +457,6 @@ class SweepRunTests(unittest.TestCase):
         self.assertTrue(next(iter(inis)).endswith("/SurrealEngine/UnrealTournament-436-Game/SE-UnrealTournament.ini"))
         self.assertNotIn("NumBots", " ".join(self.argv_of("A")))
 
-    @unittest.expectedFailure
     def test_sweep_passes_the_frame_limit(self):
         self.pinned()
         self.assertIn("--frame-limit=0", self.argv_of("A"))
@@ -467,7 +465,6 @@ class SweepRunTests(unittest.TestCase):
         self.assertIn("--frame-limit=30", args)
         self.assertNotIn("--frame-limit=0", args)
 
-    @unittest.expectedFailure
     def test_sweep_appends_the_player_class(self):
         self.pinned("--player-class", "UPak.UPakFemaleOne")
         self.assertIn("--url=A?Class=UPak.UPakFemaleOne", self.argv_of("A"))
@@ -480,7 +477,6 @@ class SweepRunTests(unittest.TestCase):
             sweep.main()
         self.assertIn("--player-class", str(cm.exception.code))
 
-    @unittest.expectedFailure
     def test_sweep_refuses_bots_without_an_unreal_tournament_kind(self):
         for flags in (["--bots", "0"], ["--bots", "0", "--game-kind", "unreal"],
                       ["--bots", "0", "--game-kind", "deusex"]):
