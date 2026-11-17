@@ -144,7 +144,8 @@ class PrepareTests(unittest.TestCase):
         expected = self.config / "SurrealEngine" / "UnrealTournament-436-Unreal_Tournament_GOTY"
         self.assertEqual((folder, pin_file), (expected, expected / "SE-UnrealTournament.ini"))
         self.assertTrue(pin_file.is_file())
-        self.assertEqual(pin_file.read_bytes(), runpins.pin_bots(UT_INI, 2).encode("latin-1"))
+        written = UT_INI.replace("MinPlayers=4", "MinPlayers=0").replace("InitialBots=10", "InitialBots=2")
+        self.assertEqual(pin_file.read_bytes(), written.encode("latin-1"))
         self.assertEqual((self.game / "System" / "UnrealTournament.ini").read_bytes(), self.ini_bytes)
         self.assertEqual(sorted(p.name for p in (self.game / "System").iterdir()), ["UnrealTournament.ini"])
         # A user directory holds the per-game folder instead of the config root.
