@@ -125,6 +125,9 @@ Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 	DefaultTexture = UObject::Cast<UTexture>(packages->GetPackage("Engine")->GetUObject("Texture", "DefaultTexture"));
 
 	floatprop = GC::Alloc<UFloatProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
+	objprop = GC::Alloc<UObjectProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
+	vecprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
+	rotprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
 
 	if (LaunchInfo.IsDeusEx())
 	{
@@ -143,6 +146,8 @@ Engine::Engine(GameLaunchInfo launchinfo) : LaunchInfo(launchinfo)
 	console->Viewport() = viewport;
 	canvas->Viewport() = viewport;
 	viewport->Console() = console;
+
+	engineRoots.set(GC::Alloc<EngineRoots>(this));
 }
 
 Engine::~Engine()
@@ -191,10 +196,6 @@ void Engine::Run()
 		LoadMap(UnrealURL(GetDefaultURL(packages->GetIniValue("system", "URL", "LocalMap")), LaunchInfo.url));
 
 	LoginPlayer();
-
-	auto objprop = GC::Alloc<UObjectProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
-	auto vecprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
-	auto rotprop = GC::Alloc<UStructProperty>(NameString(), nullptr, ObjectFlags::NoFlags);
 
 	bool firstCall = true;
 
@@ -364,9 +365,11 @@ void Engine::Run()
 			if (EntryLevel && Level != EntryLevel)
 			{
 				LogMessage("Client travel to entry");
-				audiodev->StopSounds();
+				// The console holds state bound to the level being left, and every level change must release it; the map load
+				// and the save load already send this event before they unload
+				CallEvent(console, EventName::NotifyLevelChange);
 				UnloadMap();
-				LevelPackage = EntryLevelPackage;
+				LevelPackage.set(EntryLevelPackage.get());
 				Level = EntryLevel;
 				LevelInfo = EntryLevelInfo;
 				GameInfo = EntryGameInfo;
@@ -710,46 +713,112 @@ void Engine::LoadEntryMap()
 	// The entry map is the map you see in the game when no other map is playing. For example when disconnected from a server. It is always loaded and running.
 	const auto entryMapName = packages->GetIniValue("System", "URL", "EntryMap", "Entry");
 	LoadMap(GetDefaultURL(entryMapName));
-	EntryLevelPackage = LevelPackage;
+	EntryLevelPackage.set(LevelPackage.get());
 	EntryLevel = Level;
 	EntryLevelInfo = LevelInfo;
 	EntryGameInfo = GameInfo;
-	LevelPackage = nullptr;
+	LevelPackage.set(nullptr);
 	Level = nullptr;
 	LevelInfo = nullptr;
 	GameInfo = nullptr;
 	viewport->Actor() = nullptr;
 }
 
+GCAllocation* EngineRoots::Mark(GCAllocation* marklist)
+{
+	for (UObject* obj : { (UObject*)owner->gameengine, (UObject*)owner->renderdev, (UObject*)owner->audiodev, (UObject*)owner->netdev, (UObject*)owner->client,
+		(UObject*)owner->viewport, (UObject*)owner->canvas, (UObject*)owner->dxgc, (UObject*)owner->console, (UObject*)owner->floatprop,
+		(UObject*)owner->objprop, (UObject*)owner->vecprop, (UObject*)owner->rotprop })
+		marklist = GC::MarkObject(marklist, obj);
+	return marklist;
+}
+
+// Collects the level that was just released. Two things must hold here: no script frame is live, since a frame holds
+// objects the collector cannot see, and no GC::Alloc constructor is on the stack, since its half-built object is
+// not marked yet. Every caller of UnloadMap is the main loop or a load it runs, so neither is ever the case; the
+// frame test is kept to say so in the log if that ever changes.
+static void CollectReleasedLevel(Package* released, const std::string& name)
+{
+	if (!Frame::Callstack.empty())
+	{
+		LogMessage("GC: skipped, a script frame is live");
+		SmokeLog::Get()->Event("GC_SKIPPED", "script frame live");
+		return;
+	}
+
+	const GCStats before = GC::GetStats();
+	GC::Collect();
+	const GCStats after = GC::GetStats();
+	SmokeLog::Get()->Event("GC_COLLECT", "before=" + std::to_string(before.numObjects) + " after=" + std::to_string(after.numObjects) +
+		" memory_before=" + std::to_string(before.memoryUsage) + " memory_after=" + std::to_string(after.memoryUsage) + " released=" + name);
+
+	// A released level that is still allocated is held by something the collector reached: only its address is compared
+	for (GCObject* live : GC::GetObjects())
+	{
+		if (live == static_cast<GCObject*>(released))
+		{
+			LogMessage("GC: level package " + name + " survived the collection");
+			SmokeLog::Get()->Event("GC_SURVIVOR", name);
+			break;
+		}
+	}
+}
+
+// The collector's object count is a line of its own after the MAP line, not part of it: the sweep runner compares the MAP
+// text with the requested map, so a longer text would make every sweep read as idle.
+static void LogObjectCount()
+{
+	const GCStats stats = GC::GetStats();
+	size_t listed = 0;
+	for (GCObject* live : GC::GetObjects())
+	{
+		(void)live;
+		listed++;
+	}
+	SmokeLog::Get()->Event("GC_STATS", "objects=" + std::to_string(stats.numObjects) + " memory=" + std::to_string(stats.memoryUsage) + " listed=" + std::to_string(listed));
+}
+
 void Engine::UnloadMap()
 {
-	if (LevelPackage && LevelPackage != EntryLevelPackage)
-		packages->UnloadPackage(LevelPackage);
+	// Every route into a map change comes through here. A sound still playing holds the actor it was started for,
+	// and stopping it reads that actor, so this goes first.
+	audiodev->StopSounds();
 
-	LevelPackage = nullptr;
+	Package* released = nullptr;
+	std::string releasedName;
+	if (LevelPackage && LevelPackage.get() != EntryLevelPackage.get())
+	{
+		released = LevelPackage.get();
+		releasedName = released->GetPackageName().ToString();
+		packages->UnloadPackage(released);
+	}
+
+	// Everything below points into the level that is going away, or is read as a raw pointer every frame
+	LevelPackage.set(nullptr);
 	Level = nullptr;
 	LevelInfo = nullptr;
 	GameInfo = nullptr;
 	DeusExLevelInfo = nullptr;
 	dxRootWindow = nullptr;
+	CameraActor = nullptr;
 	viewport->Actor() = nullptr;
 
-	// GC::Collect();
+	if (released)
+		CollectReleasedLevel(released, releasedName);
 }
 
-void Engine::LoadMap(const UnrealURL& url, const std::map<std::string, std::string>& travelInfo)
+void Engine::LoadMap(UnrealURL url, std::map<std::string, std::string> travelInfo)
 {
 	ClientTravelInfo.URL.Clear();
 
 	if (Level)
 		CallEvent(console, EventName::NotifyLevelChange);
 
-	audiodev->StopSounds();
 	UnloadMap();
 
 	// Load map objects
 
-	LevelPackage = packages->LoadMap(url.Map);
+	LevelPackage = packages->LoadMapHeld(url.Map);
 
 	// The level info is the level's first actor, so it can only be picked once the level is loaded.
 	// World hits carry the level info as their actor, so the collision gets it after that.
@@ -856,7 +925,7 @@ bool Engine::LoadFromSaveFile(const UnrealURL& url)
 	}
 
 	const int slotNum = *slot;
-	Package* savefilePackage = packages->LoadSaveSlot(slotNum);
+	GCRoot<Package> savefilePackage = packages->LoadSaveSlotHeld(slotNum);
 	if (!savefilePackage)
 	{
 		LogSkipped("Load game skipped: no save in slot " + std::to_string(slotNum));
@@ -866,10 +935,9 @@ bool Engine::LoadFromSaveFile(const UnrealURL& url)
 	if (Level)
 		CallEvent(console, EventName::NotifyLevelChange);
 
-	audiodev->StopSounds();
 	UnloadMap();
 
-	LevelPackage = savefilePackage;
+	LevelPackage.set(savefilePackage.get());
 
 	// The level info is the level's first actor, so it can only be picked once the level is loaded.
 	// World hits carry the level info as their actor, so the collision gets it after that.
@@ -948,6 +1016,7 @@ void Engine::PossessSavedPlayer()
 
 	render->OnMapLoaded();
 	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+	LogObjectCount();
 	NotePlayerLogin();
 
 	// A load never runs a login, so the level holds no travel info and its URL no player name. A restart
@@ -1007,19 +1076,19 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 
 		savedFile = saveSlotFolder / (mapName + "." + packages->GetSaveExtension());
 		const auto saveInfoFile = saveSlotFolder / ("SaveInfo." + packages->GetSaveExtension());
-		LevelPackage->Save(Level, savedFile.string());
+		LevelPackage.get()->Save(Level, savedFile.string());
 
 		// The save info is made in the level's package, the one the writer is saving: it refuses an object
 		// of another package, and it exports the class of an object of the package it saves, so a save info
 		// from the DeusEx package would write the whole DeusExSaveInfo class into the file. The object is named
 		// as the original game names it, which is the name the game directory's reader looks it up by.
-		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage->NewObject("MyDeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
+		auto saveInfo = UObject::Cast<UDXSaveInfo>(LevelPackage.get()->NewObject("MyDeusExSaveInfo", deusExPackage->GetClass("DeusExSaveInfo"), ObjectFlags::NoFlags));
 		saveInfo->DirectoryIndex() = slotNum;
 		saveInfo->Description() = saveDescription;
 		saveInfo->MissionLocation() = DeusExLevelInfo ? DeusExLevelInfo->MissionLocation() : "";
 		saveInfo->MapName() = mapName;
 		saveInfo->UpdateTimeStamp();
-		LevelPackage->Save(saveInfo, saveInfoFile.string());
+		LevelPackage.get()->Save(saveInfo, saveInfoFile.string());
 
 		// The package manager read the save infos once at startup, so the game directory would not list this one
 		packages->RegisterSaveInfo(DeusExSaveFolderName(slotNum));
@@ -1027,7 +1096,7 @@ void Engine::SaveGameToSlot(int32_t slotNum, const std::string& saveDescription)
 	else
 	{
 		savedFile = SaveSlotPath(false, slotNum, saveFolderPath, packages->GetSaveExtension());
-		LevelPackage->Save(Level, savedFile.string());
+		LevelPackage.get()->Save(Level, savedFile.string());
 
 		// The save package is later reloaded by its slot filename ("SaveN"), not by the original
 		// map name, so record the real map name here for LoadFromSaveFile() to recover.
@@ -1095,6 +1164,7 @@ std::string Engine::TravelPlayerName(UPlayerPawn* pawn) const
 void Engine::LoginPlayer()
 {
 	SmokeLog::Get()->Event("MAP", LevelInfo->URL.Map);
+	LogObjectCount();
 
 	UnrealURL url = LevelInfo->URL;
 	std::map<std::string, std::string> travelInfo = Level->TravelInfo;

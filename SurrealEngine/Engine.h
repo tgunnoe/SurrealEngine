@@ -56,6 +56,9 @@ class UnrealURL;
 class VideoPlayer;
 class UnrealMipmap;
 class UFloatProperty;
+class UObjectProperty;
+class UStructProperty;
+class Engine;
 class UConversationMissionList;
 class UConversationList;
 class UDXSaveInfo;
@@ -221,6 +224,20 @@ std::string TravelRecordName(const std::string& urlName, const std::string& iniN
 // lowest-numbered of LevelInfo1 to LevelInfo19, among levelInfoNames, the names of the map's level infos.
 std::string LevelInfoName(bool firstActorIsLevelInfo, const std::string& firstActorName, const std::vector<std::string>& levelInfoNames, int ue1Version);
 
+// The objects the engine creates for its whole life. None of them is an export of a package, so no mark reaches them
+// and a collection would free them; this root marks them.
+class EngineRoots : public GCObject
+{
+public:
+	explicit EngineRoots(Engine* owner) : owner(owner) { }
+
+protected:
+	GCAllocation* Mark(GCAllocation* marklist) override;
+
+private:
+	Engine* owner = nullptr;
+};
+
 class Engine : public GameWindowHost
 {
 public:
@@ -234,7 +251,8 @@ public:
 	void ClientTravel(const std::string& URL, ETravelType travelType, bool transferItems);
 	UnrealURL GetDefaultURL(const std::string& map);
 	void LoadEntryMap();
-	void LoadMap(const UnrealURL& url, const std::map<std::string, std::string>& travelInfo = {});
+	// By value: the callers that restart a level pass the level's own URL and travel info, which the unload frees
+	void LoadMap(UnrealURL url, std::map<std::string, std::string> travelInfo = {});
 	// Returns false, with the current level left running, when the request names no slot or a slot with no save
 	bool LoadFromSaveFile(const UnrealURL& url);
 	void SaveGameToSlot(int32_t slotNum, const std::string& saveDescription) const;
@@ -306,15 +324,19 @@ public:
 	URootWindow* dxRootWindow = nullptr;
 
 	UFloatProperty* floatprop = nullptr;
+	UObjectProperty* objprop = nullptr;
+	UStructProperty* vecprop = nullptr;
+	UStructProperty* rotprop = nullptr;
+	GCRoot<EngineRoots> engineRoots;
 
 	double TotalTime = 0.0;
 
-	Package* EntryLevelPackage = nullptr;
+	GCRoot<Package> EntryLevelPackage;
 	ULevel* EntryLevel = nullptr;
 	ULevelInfo* EntryLevelInfo = nullptr;
 	UGameInfo* EntryGameInfo = nullptr;
 
-	Package* LevelPackage = nullptr;
+	GCRoot<Package> LevelPackage;
 	ULevel* Level = nullptr;
 	ULevelInfo* LevelInfo = nullptr;
 	UGameInfo* GameInfo = nullptr;

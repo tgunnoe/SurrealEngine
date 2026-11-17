@@ -5,6 +5,8 @@
 #include "Packages/Core/UObject.h"
 #include "Packages/Core/Properties/UObjectProperty.h"
 #include "Packages/Core/Properties/UStructProperty.h"
+#include "Packages/Engine/Resources/Level/UModel.h"
+#include "Packages/Engine/Actors/Info/UZoneInfo.h"
 
 // These call the collector and read its statistics and live list directly. Each test runs in its
 // own process, so a collection sweeps only what the test itself allocated; what a test wants to
@@ -37,9 +39,9 @@ namespace
 		return count;
 	}
 
-	// Builds the classes, properties and instances the tests collect. Nothing reaches a class's
-	// property list or a struct's member list by itself, since those are C++ members that no
-	// mark visits, so everything of that kind is held by a root here. Instances are not.
+	// Builds the classes, properties and instances the tests collect. The classes and their
+	// properties are held by a root here, which is simply no longer the only way to keep them: a
+	// held struct marks its property list and its base. Instances are not held.
 	class Fixture
 	{
 	public:
@@ -244,4 +246,86 @@ TEST(GcCountersFollowTheSweep)
 	CHECK_EQ(before.numObjects - after.numObjects, size_t{ 3 });
 	CHECK_EQ(before.memoryUsage - after.memoryUsage, sweptSize);
 	CHECK_EQ(CountLive(), after.numObjects);
+}
+
+
+TEST(GcMarksTheMembersOfAStruct)
+{
+	Fixture fixture;
+
+	// A struct keeps its property list and its base as C++ members, which no property data reaches. The struct
+	// is held; its base, its base's own base and the properties of both are not.
+	UStruct* grandBase = GC::Alloc<UStruct>("GcGrandBase", nullptr, ObjectFlags::NoFlags);
+	UStruct* base = GC::Alloc<UStruct>("GcBase", nullptr, ObjectFlags::NoFlags);
+	UStruct* derived = fixture.Hold(GC::Alloc<UStruct>("GcDerived", nullptr, ObjectFlags::NoFlags));
+	UObjectProperty* ownProperty = GC::Alloc<UObjectProperty>("Own", nullptr, ObjectFlags::NoFlags);
+	UObjectProperty* inheritedProperty = GC::Alloc<UObjectProperty>("Inherited", nullptr, ObjectFlags::NoFlags);
+	derived->BaseStruct = base;
+	base->BaseStruct = grandBase;
+	derived->Properties.push_back(ownProperty);
+	base->Properties.push_back(inheritedProperty);
+	UObject* unreferenced = GC::Alloc<UObject>("Unreferenced", nullptr, ObjectFlags::NoFlags);
+
+	const size_t before = GC::GetStats().numObjects;
+	GC::Collect();
+	const size_t after = GC::GetStats().numObjects;
+	const bool baseLive = IsLive(base);
+	const bool grandBaseLive = IsLive(grandBase);
+	const bool ownLive = IsLive(ownProperty);
+	const bool inheritedLive = IsLive(inheritedProperty);
+	const bool unreferencedLive = IsLive(unreferenced);
+
+	CHECK_MSG(baseLive, "the base of a held struct was swept");
+	CHECK_MSG(grandBaseLive, "the base of a base of a held struct was swept");
+	CHECK_MSG(ownLive, "a property in the list of a held struct was swept");
+	CHECK_MSG(inheritedLive, "a property in the list of the base of a held struct was swept");
+	CHECK_MSG(!unreferencedLive, "an object reachable from no root survived");
+	CHECK_EQ(before - after, size_t{ 1 });
+}
+
+TEST(GcMarksTheMembersOfAClass)
+{
+	Fixture fixture;
+
+	// A class is a struct whose property list a loaded game fills with the property objects of its base, among them
+	// the ones the engine builds for Object, which belong to no package. Same shape, through a held class.
+	UClass* baseClass = GC::Alloc<UClass>("GcBaseClass", nullptr, ObjectFlags::NoFlags);
+	UClass* cls = fixture.Hold(GC::Alloc<UClass>("GcMemberClass", nullptr, ObjectFlags::NoFlags));
+	UObjectProperty* nativeProperty = GC::Alloc<UObjectProperty>("Outer", nullptr, ObjectFlags::Native);
+	cls->BaseStruct = baseClass;
+	cls->Properties.push_back(nativeProperty);
+
+	GC::Collect();
+	const bool baseLive = IsLive(baseClass);
+	const bool propertyLive = IsLive(nativeProperty);
+
+	CHECK_MSG(baseLive, "the base class of a held class was swept");
+	CHECK_MSG(propertyLive, "a property in the list of a held class was swept");
+}
+
+TEST(FindRegionTakesTheZoneFromItsOwnModel)
+{
+	// The engine global stays null: a lookup that asked the engine for the zone would dereference it.
+	UModel* model = GC::Alloc<UModel>("ZoneModel", nullptr, ObjectFlags::NoFlags);
+	BspNode node{};
+	node.Front = -1;
+	node.Back = -1;
+	node.PlaneZ = 1.0f;
+	node.Zone0 = 1;
+	node.Zone1 = 1;
+	model->Nodes.push_back(node);
+	model->Zones.resize(2);
+	model->Zones[0].ZoneActor = nullptr;
+	model->Zones[1].ZoneActor = nullptr;
+
+	UZoneInfo* levelZone = GC::Alloc<UZoneInfo>("LevelZone", nullptr, ObjectFlags::NoFlags);
+	UZoneInfo* ownZone = GC::Alloc<UZoneInfo>("OwnZone", nullptr, ObjectFlags::NoFlags);
+
+	PointRegion without = model->FindRegion(vec3(0.0f, 0.0f, 0.0f), levelZone);
+	model->Zones[1].ZoneActor = ownZone;
+	PointRegion with = model->FindRegion(vec3(0.0f, 0.0f, 0.0f), levelZone);
+
+	CHECK_MSG(without.ZoneNumber == 1, "the leaf is not in zone 1");
+	CHECK_MSG(without.Zone == levelZone, "a zone with no zone actor did not fall back to the level's zone");
+	CHECK_MSG(with.Zone == ownZone, "the zone actor of the model's own zone table was not returned");
 }
