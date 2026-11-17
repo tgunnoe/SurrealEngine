@@ -51,7 +51,6 @@ def judged(pin_id, extra=(), name="Player0", where=lambda t, form: (0.0, 0.0, 0.
 
 
 class PlayerNameTests(unittest.TestCase):
-    @unittest.expectedFailure
     def test_player_name_from_the_probe_answers(self):
         for leaf, name in [("MaleTwo", "MaleTwo0"), ("UPakFemaleOne", "UPakFemaleOne0"),
                            ("TMale2", "TMale20"), ("JCDentonMale", "JCDentonMale0")]:
@@ -61,7 +60,6 @@ class PlayerNameTests(unittest.TestCase):
             with self.subTest(leaf=leaf):
                 self.assertEqual(pinjudge.player_name(run, leaf), name)
 
-    @unittest.expectedFailure
     def test_player_name_with_two_objects_follows_the_placement(self):
         before = [answer(7.0, "class:TMale2", "TMale2Bot0", (900.0, 900.0, 0.0))]
         after = [answer(8.5, "class:TMale2", "TMale2Bot0", (900.0, 900.0, 0.0)),
@@ -114,7 +112,6 @@ class ReadmeTests(unittest.TestCase):
 
 
 class MoverJudgeTests(unittest.TestCase):
-    @unittest.expectedFailure
     def test_mover_judges_apply_the_recorded_thresholds(self):
         proj = lambda **n: [trace(10.0 + i, "Mover44", "Bump", "UPakFemaleOne0") for i in range(n.get("bump", 2))] + \
             [trace(10.0 + i, "Projectile", "HitWall", "?, Mover44") for i in range(n.get("hit", 2))] + \
@@ -176,7 +173,6 @@ class ZoneJudgeTests(unittest.TestCase):
         where = lambda t, form: (786.8 + gap, -446.5, 487.0) if t > warp else (1186.8, -454.5, 600.0)  # noqa: E731
         return judged("zn-w1", extra, where=where)
 
-    @unittest.expectedFailure
     def test_zone_judges_apply_the_recorded_thresholds(self):
         self.assertEqual(self.pit(), "PIN-HELD")
         self.assertEqual(self.pit(second=4.9), "PIN-BROKEN")
@@ -201,7 +197,6 @@ class ZoneJudgeTests(unittest.TestCase):
 
 
 class NameFromTheRunTests(unittest.TestCase):
-    @unittest.expectedFailure
     def test_judges_read_the_name_of_the_run_not_a_literal(self):
         def crush(probed, counted):
             extra = [trace(14.0, "Mover44", "EncroachingOn", counted), trace(15.0, "Player0", "KilledBy", counted, "Pawn")]
@@ -212,7 +207,6 @@ class NameFromTheRunTests(unittest.TestCase):
 
 
 class VoidRunTests(unittest.TestCase):
-    @unittest.expectedFailure
     def test_a_void_run_is_not_judged(self):
         held = [trace(14.0, "Mover44", "EncroachingOn", "Player0"), trace(15.0, "Player0", "KilledBy", "Player0", "Pawn")]
         self.assertEqual(judged("mv-enc-ug", held), "PIN-HELD")
