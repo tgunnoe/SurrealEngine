@@ -47,18 +47,15 @@ def host_root(root):
 
 
 class ClassOptionTests(unittest.TestCase):
-    @unittest.expectedFailure
     def test_class_option_builds_the_url_option(self):
         self.assertEqual(runpins.class_option("UPak.UPakFemaleOne"), "?Class=UPak.UPakFemaleOne")
 
-    @unittest.expectedFailure
     def test_class_option_refuses_anything_that_could_add_an_option(self):
         for bad in ["UPak.UPakFemaleOne?x=1", "UPak", "a.b.c", "a b.c", "", "&"]:
             with self.subTest(bad=bad):
                 with self.assertRaises(ValueError):
                     runpins.class_option(bad)
 
-    @unittest.expectedFailure
     def test_pinned_url_puts_the_class_after_the_game_text(self):
         self.assertEqual(runpins.pinned_url("Vortex2", "?game=Botpack.CTFGame", "UPak.UPakFemaleOne", "?x=1"),
                          "Vortex2?game=Botpack.CTFGame?Class=UPak.UPakFemaleOne?x=1")
@@ -67,7 +64,6 @@ class ClassOptionTests(unittest.TestCase):
 
 
 class GameKeyTests(unittest.TestCase):
-    @unittest.expectedFailure
     def test_game_key_matches_the_engine_rule(self):
         # Each expected string is the one of tests/userdirs/UserDirsTests.cpp.
         leaf40 = "abcdefghijklmnopqrstuvwxyz0123456789ABCD"
@@ -110,7 +106,6 @@ class GameKeyTests(unittest.TestCase):
 
 
 class BotPinTests(unittest.TestCase):
-    @unittest.expectedFailure
     def test_bot_pin_changes_exactly_two_lines(self):
         for count in (0, 2, 10):
             pinned = runpins.pin_bots(UT_INI, count)
@@ -122,7 +117,6 @@ class BotPinTests(unittest.TestCase):
                                                             pinned.splitlines(keepends=True), strict=True)),
                                  1 if count == 10 else 2)
 
-    @unittest.expectedFailure
     def test_bot_pin_refuses_an_ini_without_the_keys(self):
         for text in ["[Botpack.CTFGame]\r\nMinPlayers=0\r\n",
                      "[Botpack.DeathMatchPlus]\r\nMinPlayers=0\r\n",
@@ -145,7 +139,6 @@ class PrepareTests(unittest.TestCase):
         self.host = host_root(self.root)
         self.config = self.root / "run" / "xdg"
 
-    @unittest.expectedFailure
     def test_prepare_writes_the_pin_in_the_engines_folder(self):
         folder, pin_file = runpins.prepare(self.game, "ut", self.config, bots=2, host_root=self.host)
         expected = self.config / "SurrealEngine" / "UnrealTournament-436-Unreal_Tournament_GOTY"
@@ -161,7 +154,6 @@ class PrepareTests(unittest.TestCase):
         self.assertEqual(folder, user / "UnrealTournament-436-Unreal_Tournament_GOTY")
         self.assertTrue(pin_file.is_file())
 
-    @unittest.expectedFailure
     def test_prepare_copies_settings_once_and_never_overwrites(self):
         runpins.prepare(self.game, "unreal", self.config, host_root=self.host)
         settings = self.config / "SurrealEngine" / "Settings.json"
@@ -173,7 +165,6 @@ class PrepareTests(unittest.TestCase):
         self.assertEqual(settings.read_text(), "kept\n")
         self.assertEqual((self.host / "SurrealEngine" / "Settings.json").read_text(), "changed\n")
 
-    @unittest.expectedFailure
     def test_prepare_refuses_unsafe_roots(self):
         with self.assertRaises(ValueError):
             runpins.prepare(self.game, "ut", self.game / "System" / "xdg", bots=0, host_root=self.host)
@@ -187,7 +178,6 @@ class PrepareTests(unittest.TestCase):
 
 
 class ReadPinsTests(unittest.TestCase):
-    @unittest.expectedFailure
     def test_read_pins_parses_the_engine_log(self):
         pins = runpins.read_pins(ENGINE_LOG)
         self.assertEqual(pins.config_dir, "/x/SurrealEngine/Unreal-226b-Unreal_Gold")
@@ -197,7 +187,6 @@ class ReadPinsTests(unittest.TestCase):
                          [("LevelInfo0 (the level's first actor) in Entry", False),
                           ("LevelInfo1 (by name; the first actor is Brush) in Vortex2", True)])
 
-    @unittest.expectedFailure
     def test_check_reports_a_mismatch(self):
         folder = "/x/SurrealEngine/Unreal-226b-Unreal_Gold"
         ok, report = runpins.check_pins(ENGINE_LOG, folder, "UPak.UPakFemaleOne")
