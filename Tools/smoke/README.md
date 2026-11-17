@@ -268,12 +268,19 @@ Order: the first three lines are `GAME`, `MAP`, `LOGIN`, except that
 transition (restart, next URL, save load, client travel, travel to the entry
 level) writes a new `MAP`/`LOGIN` pair. A single-map run has exactly one of
 each. The entry-map preload is not logged.
+A `GC_STATS` line follows each `MAP` line at once, so it sits between `MAP` and `LOGIN` too.
+
+`GC_COLLECT`, `GC_SKIPPED` and `GC_SURVIVOR` lines are written while a map is unloaded, so they sit after a `LOGIN` and before the next `MAP`.
 
 | Line | Meaning |
 | :--- | :--- |
 | `GAME <name> <version>` | First line. |
 | `MAP <name>` | A map was entered. |
 | `LOGIN` | The player logged in to that map. |
+| `GC_STATS objects=<n> memory=<bytes> listed=<n>` | The collector's counters at a map arrival, written straight after the `MAP` line: the objects it holds, the bytes of its own blocks for them (a header and the object's fixed C++ size each; the property values, arrays and strings an object owns are allocated apart and not counted), and the number of objects a walk of its allocation list finds, which equals the first. A reader takes, for each `MAP` line, the first `GC_STATS` line before the next `MAP` line. |
+| `GC_COLLECT before=<n> after=<n> memory_before=<bytes> memory_after=<bytes> released=<package>` | A collection ran after a played level was unloaded: the object counts before and after it, the bytes of the collector's own blocks before and after it, counted as for `GC_STATS`, and the name of the unloaded level's package. |
+| `GC_SKIPPED <reason>` | A collection was due and did not run; `script frame live` means a script frame was on the stack. |
+| `GC_SURVIVOR <package>` | The unloaded level's package was still allocated after the collection, so something still refers to it. |
 | `WARNING <text>` | The harness could not install a signal handler, a requested save was skipped under `--autostart` or because its slot is not a number or is not allowed (`Save game skipped: ...`, for example `slot -2 is not allowed`), a requested load was skipped because its slot is not a number or holds no save (`Load game skipped: ...`), or a requested delete was skipped (`Delete game skipped: ...`). |
 | `SCRIPT_ERROR <text>` | A native raised an error that the VM logged. |
 | `SCRIPT_WARNING <text>` | A script accessed None; the original games log this as a warning and continue. A native whose non-optional out parameter receives a nothing-value is skipped, and the access is reported once, by the statement path. A None in-parameter still reaches the native; if that native type-checks the argument, the same access is also logged as `SCRIPT_ERROR`. |
