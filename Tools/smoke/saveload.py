@@ -16,7 +16,10 @@ Required environment (read from the caller, never set here):
 
 The driver never touches the caller's configuration: the engine runs with
 XDG_CONFIG_HOME set to --config-root, where it keeps its settings and the
-plaintext engine log. See README.md for the report schema.
+plaintext engine log. The chain's pins are per run: the Unreal Gold chain puts
+the player's class on every URL, and the Unreal Tournament chain writes its bot
+count into that game's own ini under --user-dir before each step. See README.md
+for the report schema.
 """
 import argparse
 import json
@@ -32,6 +35,7 @@ from pathlib import Path
 
 # Isolated mode (python3 -I) puts no directory on sys.path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import runpins  # noqa: E402
 from sweep import KILL_GRACE_SECONDS, MAP_SUFFIXES, PORTABLE_GAME, REPO_ROOT, classify, parse_log  # noqa: E402
 
 STEP_NAMES = ("save1", "load1-travel", "load2-travel", "load3")
@@ -59,31 +63,35 @@ TITLES = {"unreal": "Unreal Gold", "ut": "Unreal Tournament", "deusex": "Deus Ex
 class Chain:
     """One game's chain: three maps and the commands that set and read state."""
     maps: tuple[str, str, str]
-    options: str  # URL options on every map, e.g. ?NumBots=0
+    options: str  # URL options on every map, e.g. ?Class=UPak.UPakFemaleOne
     state: tuple[tuple[float, str], ...]  # (gap, command) after the first login
     load: str  # command template; {slot} is the slot number
     check: tuple[str, ...]  # the commands one check runs
     ready: tuple[str, ...]  # commands between a travel and its check
     trace: str | None  # --trace-script value for the travelling steps
     check_calls: frozenset[str]  # `call` functions a check records
+    kind: str  # the game's kind for runpins: unreal, ut or deusex
+    bots: int | None  # bot count written into the game's ini before each step; None leaves the ini alone
 
 
 CHAINS = {
     "unreal": Chain(
         maps=("Vortex2", "Nyleve", "Dig"),
-        options="",
+        options=runpins.class_option(runpins.PLAYER_CLASS),
         state=((6, "summon UnrealShare.Stinger"), (1, "hold axis aForward 300 1.5")),
         load="call ClientTravel ?load={slot} 0 0",
         check=("ShowInventory",),
         ready=(),
         trace=None,
         check_calls=frozenset(),
+        kind="unreal",
+        bots=None,
     ),
     # A deathmatch waits for the player's ready signal, so Fire starts the match;
     # summon acts only with cheats on, which only IAmTheOne sets.
     "ut": Chain(
         maps=("DM-Deck16][", "DM-Turbine", "DM-Codex"),
-        options="?NumBots=0",
+        options="",
         state=((5, "Fire"), (2, "IAmTheOne"), (1, "summon Botpack.ShockRifle"),
                (2, "hold axis aForward 300 1.5")),
         load="call ClientTravel ?load={slot} 0 0",
@@ -91,6 +99,8 @@ CHAINS = {
         ready=("Fire",),
         trace="Inventory.TravelPreAccept",
         check_calls=frozenset(),
+        kind="ut",
+        bots=0,
     ),
     # The harness reaches no Deus Ex flag value, so the goal (primary, which the
     # mission change keeps) and the note travel as the state witness.
@@ -104,6 +114,8 @@ CHAINS = {
         ready=(),
         trace=None,
         check_calls=frozenset({"FindGoal", "GetNote"}),
+        kind="deusex",
+        bots=None,
     ),
 }
 
@@ -532,7 +544,7 @@ def _step_record(name, chain, index, exec_text, trace, exit_code, timed_out, pat
     return step
 
 
-def run_step(exe, game, chain, index, seconds, user_dir, config_root, logdir, portable):
+def run_step(exe, game, chain, index, seconds, user_dir, config_root, logdir, portable, frame_limit=0):
     name = STEP_NAMES[index]
     smoke_log = logdir / f"{name}.log"
     stdout = logdir / f"{name}.stdout"
@@ -542,9 +554,17 @@ def run_step(exe, game, chain, index, seconds, user_dir, config_root, logdir, po
     # the previous step's file in place; a stale file must never be read as this step's.
     for stale in (smoke_log, engine_log, live_engine_log):
         stale.unlink(missing_ok=True)
+    # The engine reads the ini under the user directory, and may leave its own text there on exit,
+    # so the pin is written again before every step from the install's ini.
+    if chain.bots is not None:
+        try:
+            runpins.prepare(game, chain.kind, config_root, bots=chain.bots, user_dir=user_dir)
+        except ValueError as e:
+            sys.exit(f"saveload: {e}")
     exec_text = build_exec(step_plan(chain, index))
     cmd = [str(exe), "--autostart", f"--exit-after={seconds}", f"--smoke-log={smoke_log}",
-           f"--user-dir={user_dir}", f"--url={chain.maps[0]}{chain.options}", f"--exec={exec_text}"]
+           f"--frame-limit={frame_limit}", f"--user-dir={user_dir}",
+           f"--url={chain.maps[0]}{chain.options}", f"--exec={exec_text}"]
     trace = chain.trace if index in TRAVELLING_STEPS else None
     if trace:
         cmd.append(f"--trace-script={trace}")
@@ -577,20 +597,6 @@ def check_maps(game, chain):
         sys.exit(f"saveload: {game} has no map {', '.join(missing)} that this chain needs")
 
 
-def prepare_config_root(config_root):
-    """Give the scratch config root the host's Settings.json, so the run picks the same renderer."""
-    target = config_root / "SurrealEngine"
-    target.mkdir(parents=True, exist_ok=True)
-    settings = target / "Settings.json"
-    if settings.exists():
-        return
-    host = Path.home() / ".config" / "SurrealEngine" / "Settings.json"
-    if host.is_file():
-        shutil.copyfile(host, settings)
-    else:
-        print(f"saveload: no {host} to copy; the engine will use its default settings", file=sys.stderr)
-
-
 def write_atomically(path, text):
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(text)
@@ -610,6 +616,7 @@ def main():
     ap.add_argument("--seconds", type=int, default=DEFAULT_SECONDS, help="run time per step")
     ap.add_argument("--logdir", help="directory for the per-step logs (default: <out>.d)")
     ap.add_argument("--portable", action="store_true", help="write a report with no host path in it")
+    ap.add_argument("--frame-limit", type=int, default=0, help="passed to every step as --frame-limit=<n>")
     args = ap.parse_args()
 
     chain = CHAINS[args.chain]
@@ -628,7 +635,10 @@ def main():
             sys.exit(f"saveload: step {STEP_NAMES[index]} schedules to {end} s, too late for --seconds {args.seconds}")
     user_dir.mkdir(parents=True, exist_ok=True)
     logdir.mkdir(parents=True, exist_ok=True)
-    prepare_config_root(config_root)
+    try:
+        runpins.prepare(args.game, args.chain, config_root)
+    except ValueError as e:
+        sys.exit(f"saveload: {e}")
 
     steps = []
     report = {"game": PORTABLE_GAME if args.portable else str(args.game), "chain": args.chain,
@@ -636,7 +646,7 @@ def main():
     complete = True
     for index in range(len(STEP_NAMES)):
         step = run_step(args.exe, args.game, chain, index, args.seconds, user_dir, config_root,
-                        logdir, args.portable)
+                        logdir, args.portable, args.frame_limit)
         steps.append(step)
         report["hops"] = build_hops(steps)
         # Rewritten after every step so an interrupted chain keeps the steps made.

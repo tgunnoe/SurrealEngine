@@ -889,7 +889,6 @@ class PinTests(unittest.TestCase):
                               self.config_root, self.logdir, True)
         return json.loads((self.logdir / f"{saveload.STEP_NAMES[index]}.log.seen").read_text())
 
-    @unittest.expectedFailure
     def test_ut_chain_pins_the_count_through_the_folder(self):
         chain = saveload.CHAINS["ut"]
         self.assertEqual(chain.options, "")
@@ -898,7 +897,6 @@ class PinTests(unittest.TestCase):
             commands = [c for _, c in schedule(chain, index)]
             self.assertIn(f"call ClientTravel {target} 2 1", commands)
 
-    @unittest.expectedFailure
     def test_unreal_chain_carries_the_class(self):
         chain = saveload.CHAINS["unreal"]
         self.assertEqual(chain.options, "?Class=UPak.UPakFemaleOne")
@@ -906,7 +904,6 @@ class PinTests(unittest.TestCase):
             commands = [c for _, c in schedule(chain, index)]
             self.assertIn(f"call ClientTravel {target}?Class=UPak.UPakFemaleOne 2 1", commands)
 
-    @unittest.expectedFailure
     def test_saveload_writes_the_pin_before_each_step(self):
         expected = UT_INI.replace("MinPlayers=4", "MinPlayers=0").replace("InitialBots=10", "InitialBots=0")
         for index in (0, 1):
