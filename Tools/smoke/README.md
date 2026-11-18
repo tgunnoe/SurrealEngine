@@ -119,10 +119,12 @@ placement also makes the item `EXEC_FAILED` and adds
 command line that is not `place` followed by three or four finite numbers is
 refused the same way, with `place: <reason>` in the engine log.
 
-The command does only that. The player's zone is refreshed by its next move,
-not by the placement, the teleport flag is not set, nothing is pushed aside and
-the velocity is kept, so a player that was moving keeps moving, and a player
-placed in the air falls to the floor. It
+The command does only that. The player's zone is refreshed by the placement
+itself and the teleport flag is raised, as for any move a script makes, so a
+warp zone or teleporter that the placement lands in does not move the player
+(the stock scripts skip an actor that has just been teleported); nothing is
+pushed aside and the velocity is kept, so a player that was moving keeps
+moving, and a player placed in the air falls to the floor. It
 moves the player only, and like `hold` and `call` it is also reachable through
 `ConsoleCommand` from the console and from a script. To put the player
 somewhere that collision or a touch matters, place it; do not fly there with
