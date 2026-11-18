@@ -11,7 +11,10 @@
 #include "Packages/Engine/Resources/Level/UModel.h"
 #include "Packages/Engine/Actors/Info/UZoneInfo.h"
 #include <set>
-#if defined(__GLIBC__)
+#if defined(__SANITIZE_ADDRESS__)
+// GCC does not ship the header that declares it; the symbol is in its runtime.
+extern "C" size_t __sanitizer_get_current_allocated_bytes();
+#elif defined(__GLIBC__)
 #include <malloc.h>
 #endif
 
@@ -524,13 +527,18 @@ TEST(SweepsAClassBeforeItsInstances)
 	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
 }
 
-#if defined(__GLIBC__)
+// AddressSanitizer replaces malloc, so glibc's counters read zero there; its own counter takes their place.
+#if defined(__SANITIZE_ADDRESS__) || defined(__GLIBC__)
 namespace
 {
 	size_t HeapInUse()
 	{
+#if defined(__SANITIZE_ADDRESS__)
+		return __sanitizer_get_current_allocated_bytes();
+#else
 		struct mallinfo2 info = mallinfo2();
 		return info.uordblks + info.hblkhd;
+#endif
 	}
 }
 #endif
@@ -538,7 +546,7 @@ namespace
 // The tracked type cannot see what a std::string owns, so this one reads the allocator.
 TEST(SweepReleasesTheStringsOfASweptObject)
 {
-#if defined(__GLIBC__)
+#if defined(__SANITIZE_ADDRESS__) || defined(__GLIBC__)
 	Fixture fixture;
 	UStrProperty* text = GC::Alloc<UStrProperty>("Text", nullptr, ObjectFlags::NoFlags);
 	const size_t size = Place({ text });
