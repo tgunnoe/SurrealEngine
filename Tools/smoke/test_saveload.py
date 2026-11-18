@@ -475,7 +475,6 @@ class StepVerdictTests(unittest.TestCase):
         self.assertEqual(saveload.step_verdict(make_info(fatal_signal=True), -11, False, "Vortex2"), "crash")
         self.assertEqual(saveload.step_verdict(make_info(), -9, True, "Vortex2"), "timeout")
 
-    @unittest.expectedFailure
     def test_a_survivor_line_fails_the_step(self):
         self.assertEqual(saveload.step_verdict(make_info(gc_survivors=1), 0, False, "Vortex2"), "fail")
 
@@ -759,7 +758,6 @@ class StepProblemTests(unittest.TestCase):
         self.assertIn("load1-travel", problem)
         self.assertIn("crash", problem)
 
-    @unittest.expectedFailure
     def test_a_survivor_line_is_the_problem_and_is_counted(self):
         steps = self.steps()
         steps[0]["verdict"] = "fail"
@@ -769,7 +767,6 @@ class StepProblemTests(unittest.TestCase):
         self.assertIn("save1", problem)
         self.assertIn("2 GC_SURVIVOR", problem)
 
-    @unittest.expectedFailure
     def test_a_skipped_collection_is_the_problem_with_its_reason(self):
         steps = self.steps()
         steps[0]["verdict"] = "fail"
@@ -835,7 +832,6 @@ class StepRecordGcTests(unittest.TestCase):
             paths = (smoke, root / "stdout.txt", root / "engine.txt", root / "live.txt")
             return saveload._step_record("save1", saveload.CHAINS["unreal"], 0, "", [], 0, False, paths, True)
 
-    @unittest.expectedFailure
     def test_a_survivor_line_reaches_the_record_and_names_the_problem(self):
         step = self.record("GAME x 1", "MAP Vortex2", "LOGIN", "GC_SURVIVOR Vortex2", "FPS 30.0", "SUMMARY x")
         self.assertEqual((step.get("gc_survivors"), step.get("gc_skipped")), (1, 0))
@@ -843,7 +839,6 @@ class StepRecordGcTests(unittest.TestCase):
         self.assertIsNotNone(step["problem"])
         self.assertIn("GC_SURVIVOR", step["problem"])
 
-    @unittest.expectedFailure
     def test_a_skipped_line_reaches_the_record_with_its_reason_and_names_the_problem(self):
         step = self.record("GAME x 1", "MAP Vortex2", "LOGIN", "GC_SKIPPED script frame live", "FPS 30.0",
                            "SUMMARY x")
@@ -854,7 +849,6 @@ class StepRecordGcTests(unittest.TestCase):
         self.assertIn("GC_SKIPPED", step["problem"])
         self.assertIn("script frame live", step["problem"])
 
-    @unittest.expectedFailure
     def test_a_step_with_collect_and_stats_lines_has_no_collector_problem(self):
         step = self.record("GAME x 1", "MAP Vortex2", "GC_STATS objects=10 memory=100 listed=10", "LOGIN",
                            "GC_COLLECT before=10 after=8 memory_before=100 memory_after=80 released=A",

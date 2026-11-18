@@ -61,11 +61,9 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(verdict(make_info(script_warnings=500)), "pass")
         self.assertEqual(verdict(make_info(script_warnings=5, script_errors=1)), "fail")
 
-    @unittest.expectedFailure
     def test_a_survivor_line_fails_an_otherwise_clean_map(self):
         self.assertEqual(verdict(make_info(gc_survivors=1)), "fail")
 
-    @unittest.expectedFailure
     def test_a_skipped_collection_fails_an_otherwise_clean_map(self):
         info = make_info(gc_skipped=1, gc_skipped_reasons=["script frame live"])
         self.assertEqual(verdict(info), "fail")
@@ -147,20 +145,17 @@ class MatchStartedTests(unittest.TestCase):
 class GcLineTests(unittest.TestCase):
     """The collector's defect lines are counted; its information lines are not."""
 
-    @unittest.expectedFailure
     def test_counts_survivor_lines(self):
         info = parse("MAP A\nLOGIN\nGC_SURVIVOR A\nGC_SURVIVOR B\n")
         self.assertEqual(info.get("gc_survivors"), 2)
         self.assertEqual(info.get("gc_skipped"), 0)
 
-    @unittest.expectedFailure
     def test_counts_skipped_lines_with_their_reasons(self):
         info = parse("MAP A\nLOGIN\nGC_SKIPPED script frame live\nGC_SKIPPED constructor on the stack\n")
         self.assertEqual(info.get("gc_skipped"), 2)
         self.assertEqual(info.get("gc_skipped_reasons"), ["script frame live", "constructor on the stack"])
         self.assertEqual(info.get("gc_survivors"), 0)
 
-    @unittest.expectedFailure
     def test_collect_and_stats_lines_are_information_not_problems(self):
         info = parse("GAME x 1\nMAP Bluff\nGC_STATS objects=10 memory=100 listed=10\nLOGIN\n"
                      "GC_COLLECT before=10 after=8 memory_before=100 memory_after=80 released=A\n"
@@ -530,7 +525,6 @@ class SweepRunTests(unittest.TestCase):
                 self.assertIn("--bots needs --game-kind ut", str(cm.exception.code))
                 self.assertEqual(list(self.logdir.glob("*.argv")), [])
 
-    @unittest.expectedFailure
     def test_a_clean_row_carries_zero_collector_counts(self):
         report, _ = self.sweep()
         row = report["maps"][0]
@@ -538,14 +532,12 @@ class SweepRunTests(unittest.TestCase):
                          (0, 0, []))
         self.assertEqual(row["verdict"], "pass")
 
-    @unittest.expectedFailure
     def test_a_survivor_line_reaches_the_row_and_fails_the_map(self):
         self.environ["FAKE_SMOKE_EXTRA"] = "GC_SURVIVOR A\n"
         row = self.sweep()[0]["maps"][0]
         self.assertEqual((row.get("gc_survivors"), row.get("gc_skipped")), (1, 0))
         self.assertEqual(row["verdict"], "fail")
 
-    @unittest.expectedFailure
     def test_a_skipped_line_reaches_the_row_with_its_reason_and_fails_the_map(self):
         self.environ["FAKE_SMOKE_EXTRA"] = "GC_SKIPPED script frame live\n"
         row = self.sweep()[0]["maps"][0]
