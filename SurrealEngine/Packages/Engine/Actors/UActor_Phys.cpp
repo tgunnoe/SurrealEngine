@@ -110,8 +110,9 @@ bool UActor::SetLocation(const vec3& newLocation)
 			}
 		}
 
-		// The stock warp zone and teleporter scripts guard on this flag, so the engine's own move must raise it
-		// before the zone update, or the entry event of the zone the actor lands in would warp it again.
+		// The stock warp zone script skips an actor whose flag is raised, and the physics step keeps the velocity
+		// a teleporter script sets only while it is raised. Raise it before the zone update, so the entry event of
+		// the zone the actor lands in cannot warp it again.
 		bJustTeleported() = true;
 		UpdateActorZone();
 	}

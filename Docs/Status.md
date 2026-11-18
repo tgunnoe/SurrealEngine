@@ -28,7 +28,7 @@ At the time of this writing, SurrealEngine can **detect** the following UE1 game
   - A mover's rotation isn't checked for encroachment, so a swinging door doesn't crush anything or return to its previous position when it swings into something.
 * A mirror frame is now drawn from the viewer reflected through the mirror planes on its path, and a mirror surface seen from behind is skipped, but no mirror seen inside another mirror has been observed yet, at an oblique angle or parallel (as on the stairs of Deus Ex's training map), so how it looks there is unchecked.
 * Portals:
-  - A warp zone or teleporter now moves an actor once and keeps its heading and speed in the three cases run: a pawn walked through DmRadikus's warp doorway, a plasma sphere shot into DM-Fractal's pit and a pawn walked onto DM-HyperBlast's teleporter.
+  - In the three cases run none is pushed along the jump: a pawn walked through DmRadikus's warp doorway keeps its heading and coasts as far as its entry speed predicts, a plasma sphere shot into DM-Fractal's pit goes on straight down, and a pawn walked onto DM-HyperBlast's teleporter leaves on the heading the teleporter gives it.
   - Other maps and the comparison with the original game are unchecked, and so is whether the original moves a held weapon through a warp zone (the pistol's entries in the doorway run were counted and none was warped).
 * Semisolid brushes:
   - A fall all the way through the top face of a semisolid brush was not reproduced (Unreal Tournament's CTF-Nucleus, Unreal's SkyBase; no Deus Ex brush qualified for the runs).
