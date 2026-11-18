@@ -453,7 +453,8 @@ class ChainTests(unittest.TestCase):
 def make_info(**overrides):
     info = {"summary": True, "script_errors": 0, "missing_natives": 0,
             "exceptions": 0, "script_warnings": 0, "fatal_signal": False,
-            "maps_loaded": ["Vortex2"], "fps_avg": 60.0}
+            "maps_loaded": ["Vortex2"], "fps_avg": 60.0,
+            "gc_survivors": 0, "gc_skipped": 0, "gc_skipped_reasons": []}
     info.update(overrides)
     return info
 
@@ -473,6 +474,10 @@ class StepVerdictTests(unittest.TestCase):
     def test_a_crash_and_a_timeout_keep_the_sweep_verdicts(self):
         self.assertEqual(saveload.step_verdict(make_info(fatal_signal=True), -11, False, "Vortex2"), "crash")
         self.assertEqual(saveload.step_verdict(make_info(), -9, True, "Vortex2"), "timeout")
+
+    @unittest.expectedFailure
+    def test_a_survivor_line_fails_the_step(self):
+        self.assertEqual(saveload.step_verdict(make_info(gc_survivors=1), 0, False, "Vortex2"), "fail")
 
 
 def check(where, map_name, class_names, calls=()):
@@ -496,7 +501,8 @@ def make_steps(with_checks=None):
                       "loaded_slot": index if index else None,
                       "saved_to": f"Game/Save/Save{index + 1}" if index < 3 else None,
                       "checks": checks, "offered": [], "travel_skipped": False,
-                      "exec_failed": [], "exec_skipped": [], "engine_log_missing": False})
+                      "exec_failed": [], "exec_skipped": [], "gc_survivors": 0, "gc_skipped": 0,
+                      "gc_skipped_reasons": [], "engine_log_missing": False})
     return steps
 
 
@@ -753,6 +759,27 @@ class StepProblemTests(unittest.TestCase):
         self.assertIn("load1-travel", problem)
         self.assertIn("crash", problem)
 
+    @unittest.expectedFailure
+    def test_a_survivor_line_is_the_problem_and_is_counted(self):
+        steps = self.steps()
+        steps[0]["verdict"] = "fail"
+        steps[0]["gc_survivors"] = 2
+        problem = saveload.step_problem(steps[0], 0)
+        self.assertIsNotNone(problem)
+        self.assertIn("save1", problem)
+        self.assertIn("2 GC_SURVIVOR", problem)
+
+    @unittest.expectedFailure
+    def test_a_skipped_collection_is_the_problem_with_its_reason(self):
+        steps = self.steps()
+        steps[0]["verdict"] = "fail"
+        steps[0]["gc_skipped"] = 1
+        steps[0]["gc_skipped_reasons"] = ["script frame live"]
+        problem = saveload.step_problem(steps[0], 0)
+        self.assertIsNotNone(problem)
+        self.assertIn("1 GC_SKIPPED", problem)
+        self.assertIn("script frame live", problem)
+
     def test_a_step_that_left_no_engine_log_is_reported_as_dead_before_writing_one(self):
         steps = self.steps()
         steps[0]["engine_log_missing"] = True
@@ -795,6 +822,48 @@ class StepProblemTests(unittest.TestCase):
         steps[0]["saved_to"] = None
         self.assertIn("save", saveload.step_problem(steps[0], 0))
         self.assertIsNone(saveload.step_problem(steps[3], 3))
+
+
+class StepRecordGcTests(unittest.TestCase):
+    """A step's smoke log reaches its record, its verdict and its problem text."""
+
+    def record(self, *lines):
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            smoke = root / "smoke.log"
+            smoke.write_text("\n".join(lines) + "\n")
+            paths = (smoke, root / "stdout.txt", root / "engine.txt", root / "live.txt")
+            return saveload._step_record("save1", saveload.CHAINS["unreal"], 0, "", [], 0, False, paths, True)
+
+    @unittest.expectedFailure
+    def test_a_survivor_line_reaches_the_record_and_names_the_problem(self):
+        step = self.record("GAME x 1", "MAP Vortex2", "LOGIN", "GC_SURVIVOR Vortex2", "FPS 30.0", "SUMMARY x")
+        self.assertEqual((step.get("gc_survivors"), step.get("gc_skipped")), (1, 0))
+        self.assertEqual(step["verdict"], "fail")
+        self.assertIsNotNone(step["problem"])
+        self.assertIn("GC_SURVIVOR", step["problem"])
+
+    @unittest.expectedFailure
+    def test_a_skipped_line_reaches_the_record_with_its_reason_and_names_the_problem(self):
+        step = self.record("GAME x 1", "MAP Vortex2", "LOGIN", "GC_SKIPPED script frame live", "FPS 30.0",
+                           "SUMMARY x")
+        self.assertEqual(step.get("gc_skipped"), 1)
+        self.assertEqual(step.get("gc_skipped_reasons"), ["script frame live"])
+        self.assertEqual(step["verdict"], "fail")
+        self.assertIsNotNone(step["problem"])
+        self.assertIn("GC_SKIPPED", step["problem"])
+        self.assertIn("script frame live", step["problem"])
+
+    @unittest.expectedFailure
+    def test_a_step_with_collect_and_stats_lines_has_no_collector_problem(self):
+        step = self.record("GAME x 1", "MAP Vortex2", "GC_STATS objects=10 memory=100 listed=10", "LOGIN",
+                           "GC_COLLECT before=10 after=8 memory_before=100 memory_after=80 released=A",
+                           "FPS 30.0", "SUMMARY x")
+        self.assertEqual((step.get("gc_survivors"), step.get("gc_skipped"), step.get("gc_skipped_reasons")),
+                         (0, 0, []))
+        self.assertEqual(step["verdict"], "pass")
+        self.assertIsNotNone(step["problem"])
+        self.assertNotIn("GC_", step["problem"])
 
 
 class AssembleChecksTests(unittest.TestCase):
