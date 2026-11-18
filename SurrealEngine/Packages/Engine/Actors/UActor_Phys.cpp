@@ -62,6 +62,11 @@ void UActor::SetCollision(bool newColActors, bool newBlockActors, bool newBlockP
 
 bool UActor::SetLocation(const vec3& newLocation)
 {
+	// A destroyed actor stays destroyed: Destroy removed it from the collision hash, and moving it would put it
+	// back there and zone it again.
+	if (bDeleteMe())
+		return false;
+
 	auto result = CheckLocation(newLocation, CollisionRadius(), CollisionHeight(), bCollideWorld() || bCollideWhenPlacing());
 	if (!result.first)
 		return false;
