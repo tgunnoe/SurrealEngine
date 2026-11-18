@@ -170,8 +170,10 @@ def classify(info, exit_code, timed_out, requested_map):
     """Verdict for one map run; `info` is the dict parse_log returns.
 
     Warnings are deliberately absent: whether they count against a clean run is a policy
-    for the reader of the report. A collector survivor or skip is not a warning: it means the
-    engine holds a pointer the collector cannot see, so it fails a run that would pass.
+    for the reader of the report. A collector survivor or skip is not a warning: a survivor
+    means something the collector reached still refers to the released level, and a skip
+    means a level was released where no collection could run, such as with a script frame
+    live. Either breaks the collector's contract, so it fails a run that would pass.
     """
     if timed_out:
         return "timeout"

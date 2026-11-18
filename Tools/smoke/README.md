@@ -457,7 +457,7 @@ screenshot. `verdict` is one of:
 - `timeout`: killed by the sweep.
 - `crash`: the log contains a `FATAL signal` line.
 - `idle`: exit code 0 and a `SUMMARY` line, but the requested map (the map file's stem) is not in `maps_loaded`, or `fps_avg` is `null`: the run exited cleanly without reaching the map or rendering.
-- `pass`: exit code 0, a `SUMMARY` line, the requested map loaded, a sampled `fps_avg`, zero script errors, missing natives and exceptions, and no GC_SURVIVOR line and no GC_SKIPPED line. `script_warnings` does not affect the verdict.
+- `pass`: exit code 0, a `SUMMARY` line, the requested map loaded, a sampled `fps_avg`, zero script errors, missing natives and exceptions, and no `GC_SURVIVOR` line and no `GC_SKIPPED` line. `script_warnings` does not affect the verdict.
 - `fail`: anything else.
 
 `gc_survivors` and `gc_skipped` count the `GC_SURVIVOR` and `GC_SKIPPED` lines of the map's log, and `gc_skipped_reasons` lists the text of each `GC_SKIPPED` line in log order. A map whose run would otherwise be `pass` is `fail` when either count is not zero; `timeout`, `crash` and `idle` keep their verdict and still report the counts. `GC_STATS` and `GC_COLLECT` lines are information and are never counted.
@@ -593,7 +593,7 @@ Unreal Tournament). `problem` is the reason a step stopped the chain, or `null`.
 `log`, `stdout` and `engine_log` are the step's smoke log, captured output and
 engine log, as basenames under `--portable`.
 
-A step whose smoke log holds a `GC_SURVIVOR` or `GC_SKIPPED` line has the verdict `fail` and a problem that gives the counts and the skip reasons; the step records `gc_survivors`, `gc_skipped` and `gc_skipped_reasons` as the sweep report does.
+A step whose smoke log holds a `GC_SURVIVOR` or `GC_SKIPPED` line has the verdict `fail` where it would otherwise pass, and `timeout`, `crash` and `idle` keep their verdict; its problem gives the counts and the skip reasons in every case, and the step records `gc_survivors`, `gc_skipped` and `gc_skipped_reasons` as the sweep report does.
 
 A hop joins two consecutive checks that were both made: five hops for a full
 chain (state to load, load to travel, travel to load, load to travel, travel to
