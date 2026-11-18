@@ -21,6 +21,12 @@ void UActor::TickPhysics(float elapsed)
 	for (float timeLeft = elapsed; timeLeft > 0.0f && !bDeleteMe(); timeLeft -= 0.02f)
 	{
 		float physTimeElapsed = std::min(timeLeft, 0.02f);
+
+		// The flag is read inside the substep that may have raised it: by the velocity recomputation at the end
+		// of the step and by the stock warp guard. A mode with no clear of its own would keep it raised for good
+		// and the guard would skip every later warp of the actor, so clear it at the top of every substep.
+		bJustTeleported() = false;
+
 		int mode = Physics();
 		if (mode != PHYS_None)
 		{
@@ -103,6 +109,11 @@ bool UActor::SetLocation(const vec3& newLocation)
 					UnTouch(actor);
 			}
 		}
+
+		// The stock warp zone and teleporter scripts guard on this flag, so the engine's own move must raise it
+		// before the zone update, or the entry event of the zone the actor lands in would warp it again.
+		bJustTeleported() = true;
+		UpdateActorZone();
 	}
 
 	return true;
