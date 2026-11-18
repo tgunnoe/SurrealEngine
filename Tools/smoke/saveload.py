@@ -308,13 +308,24 @@ def step_verdict(info, exit_code, timed_out, expected_map):
     return classify(info, exit_code, timed_out, spelled)
 
 
+def gc_text(step):
+    """The collector's defect lines of a step as problem text, or the empty string."""
+    parts = []
+    if step["gc_survivors"]:
+        parts.append(f"{step['gc_survivors']} GC_SURVIVOR line(s)")
+    if step["gc_skipped"]:
+        parts.append(f"{step['gc_skipped']} GC_SKIPPED line(s) ({'; '.join(step['gc_skipped_reasons'])})")
+    return ", ".join(parts)
+
+
 def step_problem(step, index):
     """Why step `index` did not do what its schedule said, or None."""
     name = STEP_NAMES[index]
     # The engine writes its log only on exit, so a missing one means the process died first.
     dead = ", no engine log (the process died before writing one)" if step["engine_log_missing"] else ""
     if step["verdict"] != "pass":
-        return f"{name}: verdict {step['verdict']}{dead}"
+        gc = gc_text(step)
+        return f"{name}: verdict {step['verdict']}{dead}" + (f", {gc}" if gc else "")
     if dead:
         return f"{name}: verdict pass{dead}"
     if step["exec_failed"]:
@@ -533,6 +544,9 @@ def _step_record(name, chain, index, exec_text, trace, exit_code, timed_out, pat
         "summoned": parsed["summoned"],
         "exec_failed": execs["failed"],
         "exec_skipped": execs["skipped"],
+        "gc_survivors": info["gc_survivors"],
+        "gc_skipped": info["gc_skipped"],
+        "gc_skipped_reasons": info["gc_skipped_reasons"],
         "engine_log_missing": engine_log_missing,
         "exec": exec_text,
         "trace": trace,

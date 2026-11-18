@@ -16,7 +16,8 @@ import sweep
 def make_info(**overrides):
     info = {"summary": True, "script_errors": 0, "missing_natives": 0,
             "exceptions": 0, "script_warnings": 0, "fatal_signal": False,
-            "maps_loaded": ["Bluff"], "fps_avg": 60.0}
+            "maps_loaded": ["Bluff"], "fps_avg": 60.0,
+            "gc_survivors": 0, "gc_skipped": 0, "gc_skipped_reasons": []}
     info.update(overrides)
     return info
 
@@ -59,6 +60,20 @@ class ClassifyTests(unittest.TestCase):
     def test_warnings_leave_verdict_alone(self):
         self.assertEqual(verdict(make_info(script_warnings=500)), "pass")
         self.assertEqual(verdict(make_info(script_warnings=5, script_errors=1)), "fail")
+
+    def test_a_survivor_line_fails_an_otherwise_clean_map(self):
+        self.assertEqual(verdict(make_info(gc_survivors=1)), "fail")
+
+    def test_a_skipped_collection_fails_an_otherwise_clean_map(self):
+        info = make_info(gc_skipped=1, gc_skipped_reasons=["script frame live"])
+        self.assertEqual(verdict(info), "fail")
+
+    def test_a_collector_line_never_outranks_idle_crash_or_timeout(self):
+        self.assertEqual(verdict(make_info(gc_survivors=1, maps_loaded=[])), "idle")
+        self.assertEqual(verdict(make_info(gc_skipped=1, gc_skipped_reasons=["x"], fatal_signal=True),
+                                 exit_code=-11), "crash")
+        self.assertEqual(verdict(make_info(gc_survivors=1, gc_skipped=1, gc_skipped_reasons=["x"]),
+                                 exit_code=-9, timed_out=True), "timeout")
 
 
 def parse(text):
@@ -127,6 +142,29 @@ class MatchStartedTests(unittest.TestCase):
         self.assertFalse(self.started(WAITING + "EXEC 5 Fire\nSTATE 9.0 PlayerSpectating\n"))
 
 
+class GcLineTests(unittest.TestCase):
+    """The collector's defect lines are counted; its information lines are not."""
+
+    def test_counts_survivor_lines(self):
+        info = parse("MAP A\nLOGIN\nGC_SURVIVOR A\nGC_SURVIVOR B\n")
+        self.assertEqual(info.get("gc_survivors"), 2)
+        self.assertEqual(info.get("gc_skipped"), 0)
+
+    def test_counts_skipped_lines_with_their_reasons(self):
+        info = parse("MAP A\nLOGIN\nGC_SKIPPED script frame live\nGC_SKIPPED constructor on the stack\n")
+        self.assertEqual(info.get("gc_skipped"), 2)
+        self.assertEqual(info.get("gc_skipped_reasons"), ["script frame live", "constructor on the stack"])
+        self.assertEqual(info.get("gc_survivors"), 0)
+
+    def test_collect_and_stats_lines_are_information_not_problems(self):
+        info = parse("GAME x 1\nMAP Bluff\nGC_STATS objects=10 memory=100 listed=10\nLOGIN\n"
+                     "GC_COLLECT before=10 after=8 memory_before=100 memory_after=80 released=A\n"
+                     "FPS 30.0\nSUMMARY script_errors=0\n")
+        self.assertEqual((info.get("gc_survivors"), info.get("gc_skipped"), info.get("gc_skipped_reasons")),
+                         (0, 0, []))
+        self.assertEqual(verdict(info), "pass")
+
+
 class SharedMatchRuleTests(unittest.TestCase):
     """The start rule lives in the triage package, so a re-run and a sweep row
     cannot disagree on what a start is."""
@@ -170,7 +208,7 @@ if os.environ.get("FAKE_ENGINE_WRITES_LOG") and xdg and name not in os.environ.g
     with open(xdg + "/SurrealEngine/SE-Log-LastRun.txt", "w") as f:
         f.write("engine log of " + name + "\\n")
 with open(log, "w") as f:
-    f.write("GAME x 1\\nMAP A\\nLOGIN\\n" + {state!r} + "EXEC 5 Fire\\nSTATE 6.0 PlayerWalking\\n"
+    f.write("GAME x 1\\nMAP A\\nLOGIN\\n" + os.environ.get("FAKE_SMOKE_EXTRA", "") + {state!r} + "EXEC 5 Fire\\nSTATE 6.0 PlayerWalking\\n"
             "FPS 30.0\\nSUMMARY script_errors=0\\n")
 """
 
@@ -486,6 +524,26 @@ class SweepRunTests(unittest.TestCase):
                     sweep.main()
                 self.assertIn("--bots needs --game-kind ut", str(cm.exception.code))
                 self.assertEqual(list(self.logdir.glob("*.argv")), [])
+
+    def test_a_clean_row_carries_zero_collector_counts(self):
+        report, _ = self.sweep()
+        row = report["maps"][0]
+        self.assertEqual((row.get("gc_survivors"), row.get("gc_skipped"), row.get("gc_skipped_reasons")),
+                         (0, 0, []))
+        self.assertEqual(row["verdict"], "pass")
+
+    def test_a_survivor_line_reaches_the_row_and_fails_the_map(self):
+        self.environ["FAKE_SMOKE_EXTRA"] = "GC_SURVIVOR A\n"
+        row = self.sweep()[0]["maps"][0]
+        self.assertEqual((row.get("gc_survivors"), row.get("gc_skipped")), (1, 0))
+        self.assertEqual(row["verdict"], "fail")
+
+    def test_a_skipped_line_reaches_the_row_with_its_reason_and_fails_the_map(self):
+        self.environ["FAKE_SMOKE_EXTRA"] = "GC_SKIPPED script frame live\n"
+        row = self.sweep()[0]["maps"][0]
+        self.assertEqual(row.get("gc_skipped"), 1)
+        self.assertEqual(row.get("gc_skipped_reasons"), ["script frame live"])
+        self.assertEqual(row["verdict"], "fail")
 
 
 if __name__ == "__main__":

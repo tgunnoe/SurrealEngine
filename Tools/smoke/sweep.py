@@ -123,7 +123,8 @@ def list_maps(game, subdirs=()):
 def parse_log(path):
     info = {"script_errors": 0, "stub_hits": 0, "missing_natives": 0,
             "exceptions": 0, "script_warnings": 0, "fps_avg": None, "fatal_signal": False,
-            "summary": False, "maps_loaded": [], "login": False, "match_started": False}
+            "summary": False, "maps_loaded": [], "login": False, "match_started": False,
+            "gc_survivors": 0, "gc_skipped": 0, "gc_skipped_reasons": []}
     fps = []
     try:
         lines = Path(path).read_text(encoding="utf-8", errors="replace").splitlines()
@@ -147,6 +148,11 @@ def parse_log(path):
             info["maps_loaded"].append(rest)
         elif kind == "SUMMARY":
             info["summary"] = True
+        elif kind == "GC_SURVIVOR":
+            info["gc_survivors"] += 1
+        elif kind == "GC_SKIPPED":
+            info["gc_skipped"] += 1
+            info["gc_skipped_reasons"].append(rest)
         elif kind == "FPS":
             try:
                 fps.append(float(rest))
@@ -164,7 +170,10 @@ def classify(info, exit_code, timed_out, requested_map):
     """Verdict for one map run; `info` is the dict parse_log returns.
 
     Warnings are deliberately absent: whether they count against a clean run is a policy
-    for the reader of the report.
+    for the reader of the report. A collector survivor or skip is not a warning: a survivor
+    means something the collector reached still refers to the released level, and a skip
+    means a level was released where no collection could run, such as with a script frame
+    live. Either breaks the collector's contract, so it fails a run that would pass.
     """
     if timed_out:
         return "timeout"
@@ -172,7 +181,9 @@ def classify(info, exit_code, timed_out, requested_map):
         return "crash"
     if exit_code == 0 and info["summary"] and (requested_map not in info["maps_loaded"] or info["fps_avg"] is None):
         return "idle"
-    if exit_code == 0 and info["summary"] and not (info["script_errors"] or info["missing_natives"] or info["exceptions"]):
+    if exit_code == 0 and info["summary"] and not (
+            info["script_errors"] or info["missing_natives"] or info["exceptions"]
+            or info["gc_survivors"] or info["gc_skipped"]):
         return "pass"
     return "fail"
 
@@ -235,6 +246,9 @@ def run_map(exe, game, map_path, seconds, logdir, config_root, url_options="", e
         "missing_natives": info["missing_natives"],
         "exceptions": info["exceptions"],
         "script_warnings": info["script_warnings"],
+        "gc_survivors": info["gc_survivors"],
+        "gc_skipped": info["gc_skipped"],
+        "gc_skipped_reasons": info["gc_skipped_reasons"],
         "fps_avg": info["fps_avg"],
         "maps_loaded": info["maps_loaded"],
         "login": info["login"],
