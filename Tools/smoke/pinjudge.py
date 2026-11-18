@@ -15,6 +15,10 @@ carries none, so the name is the one object the engine log's position probes
 the same class can answer the same probe; the player is then the one whose first answer after
 the `place:` line agrees with the placed point.
 
+Each pin's recorded outcome, the counts and bands its judge reads, is stated in
+scenarios/movers/README.md or scenarios/zones/README.md under the same pin id, which is
+where a reader traces a threshold to its recording.
+
 Command line:
   pinjudge.py list
   pinjudge.py cmd <pin>                          the engine arguments, one shell-quoted line
