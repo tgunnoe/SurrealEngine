@@ -5,8 +5,18 @@
 #include "Packages/Core/UObject.h"
 #include "Packages/Core/Properties/UObjectProperty.h"
 #include "Packages/Core/Properties/UStructProperty.h"
+#include "Packages/Core/Properties/UArrayProperty.h"
+#include "Packages/Core/Properties/UMapProperty.h"
+#include "Packages/Core/Properties/UStrProperty.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
 #include "Packages/Engine/Actors/Info/UZoneInfo.h"
+#include <set>
+#if defined(__SANITIZE_ADDRESS__)
+// GCC does not ship the header that declares it; the symbol is in its runtime.
+extern "C" size_t __sanitizer_get_current_allocated_bytes();
+#elif defined(__GLIBC__)
+#include <malloc.h>
+#endif
 
 // These call the collector and read its statistics and live list directly. Each test runs in its
 // own process, so a collection sweeps only what the test itself allocated; what a test wants to
@@ -328,4 +338,303 @@ TEST(FindRegionTakesTheZoneFromItsOwnModel)
 	CHECK_MSG(without.ZoneNumber == 1, "the leaf is not in zone 1");
 	CHECK_MSG(without.Zone == levelZone, "a zone with no zone actor did not fall back to the level's zone");
 	CHECK_MSG(with.Zone == ownZone, "the zone actor of the model's own zone table was not returned");
+}
+
+namespace
+{
+	// A value whose construction and destruction the tests count. It remembers the address of
+	// every live copy, so a destruct of an address that was never constructed, or one destructed
+	// twice, shows as a bad destruct instead of passing unseen.
+	struct Tracked
+	{
+		static inline std::set<const Tracked*> live;
+		static inline size_t badDestructs = 0;
+		// When positive, counts down on each copy construction and throws on reaching zero.
+		static inline int copiesUntilThrow = 0;
+
+		int id = 0;
+
+		Tracked() { live.insert(this); }
+		Tracked(const Tracked& other) : id(other.id)
+		{
+			if (copiesUntilThrow > 0 && --copiesUntilThrow == 0)
+				throw std::runtime_error("copy threw");
+			live.insert(this);
+		}
+		Tracked& operator=(const Tracked& other) { id = other.id; return *this; }
+		~Tracked()
+		{
+			if (live.erase(this) == 0)
+				badDestructs++;
+		}
+
+		bool operator==(const Tracked& other) const { return id == other.id; }
+		bool operator<(const Tracked& other) const { return id < other.id; }
+	};
+
+	typedef UPropertyT<Tracked> TrackedProperty;
+
+	// Gives each property its own, 16-byte aligned slot and returns the size that covers them.
+	size_t Place(std::initializer_list<UProperty*> properties)
+	{
+		size_t offset = 0;
+		for (UProperty* prop : properties)
+		{
+			offset = (offset + 15) & ~size_t{ 15 };
+			prop->DataOffset.DataOffset = offset;
+			offset += prop->ArraySize();
+		}
+		return (offset + 15) & ~size_t{ 15 };
+	}
+
+	bool AnyLive(std::initializer_list<GCObject*> objects)
+	{
+		for (GCObject* obj : objects)
+		{
+			if (IsLive(obj))
+				return true;
+		}
+		return false;
+	}
+
+	void FillMap(UMapProperty* mapProp, void* data, int firstKey, int count)
+	{
+		auto& map = *static_cast<UMapProperty::Map*>(data);
+		for (int i = 0; i < count; i++)
+		{
+			MapPropertyValue key(mapProp->Key);
+			MapPropertyValue value(mapProp->Value);
+			static_cast<Tracked*>(key.Data)->id = firstKey + i;
+			map.emplace(key, value);
+		}
+	}
+}
+
+TEST(SweepDestructsTheValuesOfASweptObject)
+{
+	Fixture fixture;
+	TrackedProperty* value = GC::Alloc<TrackedProperty>("Value", nullptr, ObjectFlags::NoFlags);
+	value->ArrayDimension = 3;
+	const size_t size = Place({ value });
+	UClass* cls = fixture.NewClass("GcTrackedClass", { value }, size, 16);
+
+	UObject* instances[4];
+	for (UObject*& instance : instances)
+		instance = fixture.NewInstance(cls, "Instance");
+	const size_t before = Tracked::live.size();
+
+	GC::Collect();
+	const size_t after = Tracked::live.size();
+	const bool anyLive = AnyLive({ instances[0], instances[1], instances[2], instances[3] });
+
+	CHECK_EQ(before, size_t{ 15 });
+	CHECK_MSG(!anyLive, "an unreferenced instance survived the collection");
+	CHECK_EQ(after, size_t{ 3 });
+	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
+}
+
+TEST(SweepDestructsArrayElementsAndMapEntries)
+{
+	Fixture fixture;
+	TrackedProperty* element = fixture.Hold(GC::Alloc<TrackedProperty>("Element", nullptr, ObjectFlags::NoFlags));
+	TrackedProperty* key = fixture.Hold(GC::Alloc<TrackedProperty>("Key", nullptr, ObjectFlags::NoFlags));
+	TrackedProperty* mapped = fixture.Hold(GC::Alloc<TrackedProperty>("Mapped", nullptr, ObjectFlags::NoFlags));
+	UArrayProperty* array = GC::Alloc<UArrayProperty>("Array", nullptr, ObjectFlags::NoFlags);
+	array->Inner = element;
+	UMapProperty* map = GC::Alloc<UMapProperty>("Map", nullptr, ObjectFlags::NoFlags);
+	map->Key = key;
+	map->Value = mapped;
+	const size_t size = Place({ array, map });
+	UClass* cls = fixture.NewClass("GcContainerClass", { array, map }, size, 16);
+
+	// The class's own default block holds an element and an entry too, so a collection that
+	// destructs the block of a class it keeps shows as well.
+	static_cast<ScriptArray*>(cls->PropertyData.Ptr(array))->Resize(1);
+	FillMap(map, cls->PropertyData.Ptr(map), 100, 1);
+	const size_t baseline = Tracked::live.size();
+
+	UObject* instances[3];
+	int firstKey = 0;
+	for (UObject*& instance : instances)
+	{
+		instance = fixture.NewInstance(cls, "Instance");
+		static_cast<ScriptArray*>(instance->PropertyData.Ptr(array))->Resize(5);
+		FillMap(map, instance->PropertyData.Ptr(map), firstKey, 2);
+		firstKey += 2;
+	}
+	const size_t filled = Tracked::live.size();
+
+	GC::Collect();
+	const size_t after = Tracked::live.size();
+
+	CHECK_EQ(filled - baseline, size_t{ 3 * (5 + 3 * 2) });
+	CHECK_EQ(after, baseline);
+	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
+}
+
+TEST(SweepDestructsStructMembers)
+{
+	Fixture fixture;
+	TrackedProperty* single = GC::Alloc<TrackedProperty>("Single", nullptr, ObjectFlags::NoFlags);
+	TrackedProperty* pair = GC::Alloc<TrackedProperty>("Pair", nullptr, ObjectFlags::NoFlags);
+	pair->ArrayDimension = 2;
+	UStruct* structType = fixture.Hold(GC::Alloc<UStruct>("GcTrackedStruct", nullptr, ObjectFlags::NoFlags));
+	structType->Properties.push_back(fixture.Hold(single));
+	structType->Properties.push_back(fixture.Hold(pair));
+	structType->StructSize = Place({ single, pair });
+	structType->StructAlignment = 16;
+
+	UStructProperty* holder = GC::Alloc<UStructProperty>("Holder", nullptr, ObjectFlags::NoFlags);
+	holder->Struct = structType;
+	const size_t size = Place({ holder });
+	UClass* cls = fixture.NewClass("GcStructValueClass", { holder }, size, 16);
+	const size_t baseline = Tracked::live.size();
+
+	UObject* instances[3];
+	for (UObject*& instance : instances)
+		instance = fixture.NewInstance(cls, "Instance");
+	const size_t filled = Tracked::live.size();
+
+	GC::Collect();
+	const size_t after = Tracked::live.size();
+
+	CHECK_EQ(filled - baseline, size_t{ 3 * 3 });
+	CHECK_EQ(after, baseline);
+	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
+}
+
+// The instance is allocated before its class and the properties the class lays it out by, and
+// the sweep visits the newest allocation first, so a sweep that destructs an object when it frees
+// it reads a property object it has already freed.
+TEST(SweepsAClassBeforeItsInstances)
+{
+	UObject* instance = GC::Alloc<UObject>("Early", nullptr, ObjectFlags::NoFlags);
+	TrackedProperty* element = GC::Alloc<TrackedProperty>("Element", nullptr, ObjectFlags::NoFlags);
+	UArrayProperty* array = GC::Alloc<UArrayProperty>("Array", nullptr, ObjectFlags::NoFlags);
+	array->Inner = element;
+	UClass* cls = GC::Alloc<UClass>("GcLateClass", nullptr, ObjectFlags::NoFlags);
+	cls->Properties.push_back(array);
+	cls->StructSize = Place({ array });
+	cls->StructAlignment = 16;
+	cls->PropertyData.Init(cls);
+	instance->Class = cls;
+	instance->PropertyData.Init(cls);
+	static_cast<ScriptArray*>(instance->PropertyData.Ptr(array))->Resize(5);
+	const size_t filled = Tracked::live.size();
+
+	GC::Collect();
+	const size_t after = Tracked::live.size();
+	const bool anyLive = AnyLive({ instance, cls, array, element });
+
+	CHECK_EQ(filled, size_t{ 5 });
+	CHECK_MSG(!anyLive, "an unreferenced object, class or property survived the collection");
+	CHECK_EQ(after, size_t{ 0 });
+	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
+}
+
+// AddressSanitizer replaces malloc, so glibc's counters read zero there; its own counter takes their place.
+#if defined(__SANITIZE_ADDRESS__) || defined(__GLIBC__)
+namespace
+{
+	size_t HeapInUse()
+	{
+#if defined(__SANITIZE_ADDRESS__)
+		return __sanitizer_get_current_allocated_bytes();
+#else
+		struct mallinfo2 info = mallinfo2();
+		return info.uordblks + info.hblkhd;
+#endif
+	}
+}
+#endif
+
+// The tracked type cannot see what a std::string owns, so this one reads the allocator.
+TEST(SweepReleasesTheStringsOfASweptObject)
+{
+#if defined(__SANITIZE_ADDRESS__) || defined(__GLIBC__)
+	Fixture fixture;
+	UStrProperty* text = GC::Alloc<UStrProperty>("Text", nullptr, ObjectFlags::NoFlags);
+	const size_t size = Place({ text });
+	UClass* cls = fixture.NewClass("GcStringClass", { text }, size, 16);
+
+	// The class's default string is copied into every instance, and a collection that destructs
+	// the block of a class it keeps would release it.
+	*static_cast<std::string*>(cls->PropertyData.Ptr(text)) = std::string(200000, 'd');
+	const size_t before = HeapInUse();
+
+	for (int i = 0; i < 64; i++)
+	{
+		UObject* instance = fixture.NewInstance(cls, "Instance");
+		static_cast<std::string*>(instance->PropertyData.Ptr(text))->assign(200000, 'x');
+	}
+	const size_t filled = HeapInUse();
+
+	GC::Collect();
+	const size_t after = HeapInUse();
+
+	CHECK_MSG(filled > before + 10 * 1024 * 1024, "the instances did not allocate their strings");
+	CHECK_MSG(after + 100000 > before, "the string of a class that was not swept was released");
+	CHECK_MSG(after < before + 2 * 1024 * 1024, "the strings of the swept instances were not released");
+#endif
+}
+
+TEST(SweepLeavesASurvivorsValuesAlone)
+{
+	Fixture fixture;
+	TrackedProperty* value = GC::Alloc<TrackedProperty>("Value", nullptr, ObjectFlags::NoFlags);
+	UStrProperty* text = GC::Alloc<UStrProperty>("Text", nullptr, ObjectFlags::NoFlags);
+	const size_t size = Place({ value, text });
+	UClass* cls = fixture.NewClass("GcSurvivorClass", { value, text }, size, 16);
+
+	UObject* held = fixture.Hold(fixture.NewInstance(cls, "Held"));
+	fixture.NewInstance(cls, "SweptFirst");
+	fixture.NewInstance(cls, "SweptSecond");
+	Tracked* heldValue = static_cast<Tracked*>(held->PropertyData.Ptr(value));
+	heldValue->id = 7;
+	const std::string written(100, 's');
+	*static_cast<std::string*>(held->PropertyData.Ptr(text)) = written;
+	const size_t before = Tracked::live.size();
+
+	GC::Collect();
+	const size_t after = Tracked::live.size();
+	const bool heldLive = IsLive(held);
+	const bool valueLive = Tracked::live.count(heldValue) == 1;
+
+	CHECK_MSG(heldLive, "the held instance was swept");
+	CHECK_MSG(valueLive, "the value of a surviving instance was destructed");
+	CHECK_MSG(before - after <= 2, "a collection destructed more values than its swept instances held");
+	CHECK_EQ(heldValue->id, 7);
+	CHECK_MSG(*static_cast<std::string*>(held->PropertyData.Ptr(text)) == written, "the string of a surviving instance changed");
+	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
+}
+
+TEST(SweepSkipsABlockWhoseInitThrew)
+{
+	Fixture fixture;
+	TrackedProperty* value = GC::Alloc<TrackedProperty>("Value", nullptr, ObjectFlags::NoFlags);
+	value->ArrayDimension = 3;
+	const size_t size = Place({ value });
+	UClass* cls = fixture.NewClass("GcThrowingClass", { value }, size, 16);
+
+	// The second element's copy throws, leaving a block with one constructed element and two
+	// slots no constructor ever ran in.
+	UObject* instance = GC::Alloc<UObject>("HalfBuilt", nullptr, ObjectFlags::NoFlags);
+	bool threw = false;
+	Tracked::copiesUntilThrow = 2;
+	try
+	{
+		instance->PropertyData.Init(cls);
+	}
+	catch (const std::exception&)
+	{
+		threw = true;
+	}
+	Tracked::copiesUntilThrow = 0;
+
+	GC::Collect();
+	const bool instanceLive = IsLive(instance);
+
+	CHECK_MSG(threw, "the instance's block was built without the copy throwing");
+	CHECK_MSG(!instanceLive, "the half-built instance survived the collection");
+	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
 }

@@ -574,18 +574,28 @@ void UObject::CriticalDelete()
 
 void PropertyDataBlock::Reset()
 {
-	// To do: this crashes as the class might have been destroyed first
-	/*if (Data && Class)
-	{
-		for (auto& it : Class->Properties)
-		{
-			UProperty* prop = it.second;
-			prop->Destruct(Ptr(prop));
-		}
-	}*/
 	AlignedFree(Data);
 	Data = nullptr;
 	Class = nullptr;
+	ValuesConstructed = false;
+}
+
+// Destructing a value can read the property objects of the class (an array's element type, a
+// struct's members), and the collector may free those before this block dies. Reset therefore only
+// frees, and the collector calls this first, while everything it sweeps is still allocated.
+void PropertyDataBlock::DestructValues()
+{
+	if (!ValuesConstructed || !Data || !Class)
+		return;
+
+	ValuesConstructed = false;
+	for (UProperty* prop : Class->Properties)
+		prop->DestructArray(Ptr(prop));
+}
+
+void UObject::Finalize() noexcept
+{
+	PropertyData.DestructValues();
 }
 
 void PropertyDataBlock::Init(UClass* cls)
@@ -622,6 +632,8 @@ void PropertyDataBlock::Init(UClass* cls)
 				prop->ConstructArray(Ptr(prop));
 		}
 	}
+
+	ValuesConstructed = true;
 }
 
 void PropertyDataBlock::Load(ObjectStream* stream)
