@@ -281,8 +281,8 @@ A `GC_STATS` line follows each `MAP` line at once, so it sits between `MAP` and 
 | `LOGIN` | The player logged in to that map. |
 | `GC_STATS objects=<n> memory=<bytes> listed=<n>` | The collector's counters at a map arrival, written straight after the `MAP` line: the objects it holds, the bytes of its own blocks for them (a header and the object's fixed C++ size each; the property values, arrays and strings an object owns are allocated apart and not counted), and the number of objects a walk of its allocation list finds, which equals the first. A reader takes, for each `MAP` line, the first `GC_STATS` line before the next `MAP` line. |
 | `GC_COLLECT before=<n> after=<n> memory_before=<bytes> memory_after=<bytes> released=<package>` | A collection ran after a played level was unloaded: the object counts before and after it, the bytes of the collector's own blocks before and after it, counted as for `GC_STATS`, and the name of the unloaded level's package. |
-| `GC_SKIPPED <reason>` | A collection was due and did not run; `script frame live` means a script frame was on the stack. |
-| `GC_SURVIVOR <package>` | The unloaded level's package was still allocated after the collection, so something still refers to it. |
+| `GC_SKIPPED <reason>` | A collection was due and did not run; `script frame live` means a script frame was on the stack. The sweep and save-and-load runners count it as a problem. |
+| `GC_SURVIVOR <package>` | The unloaded level's package was still allocated after the collection, so something still refers to it. The sweep and save-and-load runners count it as a problem. |
 | `WARNING <text>` | The harness could not install a signal handler, a requested save was skipped under `--autostart` or because its slot is not a number or is not allowed (`Save game skipped: ...`, for example `slot -2 is not allowed`), a requested load was skipped because its slot is not a number or holds no save (`Load game skipped: ...`), or a requested delete was skipped (`Delete game skipped: ...`). |
 | `SCRIPT_ERROR <text>` | A native raised an error that the VM logged. |
 | `SCRIPT_WARNING <text>` | A script accessed None; the original games log this as a warning and continue. A native whose non-optional out parameter receives a nothing-value is skipped, and the access is reported once, by the statement path. A None in-parameter still reaches the native; if that native type-checks the argument, the same access is also logged as `SCRIPT_ERROR`. |
@@ -437,7 +437,8 @@ appears in them, and an occluded engine window renders slowly.
 { "game": "<folder>", "seconds": 15, "url_options": null, "exec": null,
   "game_by_prefix": null, "game_by_prefix_except": null, "map_subdirs": null,
   "maps": [ { "map", "exit_code", "script_errors", "stub_hits",
-              "missing_natives", "exceptions", "script_warnings", "fps_avg", "maps_loaded",
+              "missing_natives", "exceptions", "script_warnings",
+              "gc_survivors", "gc_skipped", "gc_skipped_reasons", "fps_avg", "maps_loaded",
               "login", "match_started", "log", "screenshot", "verdict" } ] }
 ```
 
@@ -456,8 +457,10 @@ screenshot. `verdict` is one of:
 - `timeout`: killed by the sweep.
 - `crash`: the log contains a `FATAL signal` line.
 - `idle`: exit code 0 and a `SUMMARY` line, but the requested map (the map file's stem) is not in `maps_loaded`, or `fps_avg` is `null`: the run exited cleanly without reaching the map or rendering.
-- `pass`: exit code 0, a `SUMMARY` line, the requested map loaded, a sampled `fps_avg`, and zero script errors, missing natives and exceptions. `script_warnings` does not affect the verdict.
+- `pass`: exit code 0, a `SUMMARY` line, the requested map loaded, a sampled `fps_avg`, zero script errors, missing natives and exceptions, and no GC_SURVIVOR line and no GC_SKIPPED line. `script_warnings` does not affect the verdict.
 - `fail`: anything else.
+
+`gc_survivors` and `gc_skipped` count the `GC_SURVIVOR` and `GC_SKIPPED` lines of the map's log, and `gc_skipped_reasons` lists the text of each `GC_SKIPPED` line in log order. A map whose run would otherwise be `pass` is `fail` when either count is not zero; `timeout`, `crash` and `idle` keep their verdict and still report the counts. `GC_STATS` and `GC_COLLECT` lines are information and are never counted.
 
 ## Three-map save and load
 
@@ -570,7 +573,8 @@ first actor is not a level info, which names the object the game binds to; the
                "checks": [ { "where", "map", "items": [ { "package", "instance", "class" } ],
                              "calls": [ { "function", "value" } ], "weapon" } ],
                "offered", "travel_skipped", "skip_lines", "summoned",
-               "exec_failed", "exec_skipped", "engine_log_missing",
+               "exec_failed", "exec_skipped", "gc_survivors", "gc_skipped", "gc_skipped_reasons",
+               "engine_log_missing",
                "exec", "trace", "log", "stdout", "engine_log", "problem" } ],
   "hops": [ { "from", "to", "map_from", "map_to", "by", "kept", "lost", "gained",
               "goal", "note", "offered", "travel_skipped" } ] }
@@ -588,6 +592,8 @@ relative to `--user-dir`. `calls` keeps only the functions the chain checks.
 Unreal Tournament). `problem` is the reason a step stopped the chain, or `null`.
 `log`, `stdout` and `engine_log` are the step's smoke log, captured output and
 engine log, as basenames under `--portable`.
+
+A step whose smoke log holds a `GC_SURVIVOR` or `GC_SKIPPED` line has the verdict `fail` and a problem that gives the counts and the skip reasons; the step records `gc_survivors`, `gc_skipped` and `gc_skipped_reasons` as the sweep report does.
 
 A hop joins two consecutive checks that were both made: five hops for a full
 chain (state to load, load to travel, travel to load, load to travel, travel to
