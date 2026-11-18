@@ -21,6 +21,12 @@ void UActor::TickPhysics(float elapsed)
 	for (float timeLeft = elapsed; timeLeft > 0.0f && !bDeleteMe(); timeLeft -= 0.02f)
 	{
 		float physTimeElapsed = std::min(timeLeft, 0.02f);
+
+		// The flag is read inside the substep that may have raised it: by the velocity recomputation at the end
+		// of the step and by the stock warp guard. A mode with no clear of its own would keep it raised for good
+		// and the guard would skip every later warp of the actor, so clear it at the top of every substep.
+		bJustTeleported() = false;
+
 		int mode = Physics();
 		if (mode != PHYS_None)
 		{
@@ -62,6 +68,11 @@ void UActor::SetCollision(bool newColActors, bool newBlockActors, bool newBlockP
 
 bool UActor::SetLocation(const vec3& newLocation)
 {
+	// A destroyed actor stays destroyed: Destroy removed it from the collision hash, and moving it would put it
+	// back there and zone it again.
+	if (bDeleteMe())
+		return false;
+
 	auto result = CheckLocation(newLocation, CollisionRadius(), CollisionHeight(), bCollideWorld() || bCollideWhenPlacing());
 	if (!result.first)
 		return false;
@@ -98,6 +109,12 @@ bool UActor::SetLocation(const vec3& newLocation)
 					UnTouch(actor);
 			}
 		}
+
+		// The stock warp zone script skips an actor whose flag is raised, and the physics step keeps the velocity
+		// a teleporter script sets only while it is raised. Raise it before the zone update, so the entry event of
+		// the zone the actor lands in cannot warp it again.
+		bJustTeleported() = true;
+		UpdateActorZone();
 	}
 
 	return true;

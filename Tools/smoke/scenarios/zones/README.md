@@ -2,7 +2,7 @@
 
 These runs drive stock maps of Unreal Gold 226b, Unreal Tournament 436 and Deus Ex 1112fm to look at two things the status document listed as buggy: semisolid brushes ("Usually you'll fall through them as if they weren't there") and portals, the warp zones and teleporters ("they somewhat work, but might end up pushing players/projectiles in unexpected directions"). The first part sets a player down over the top face of a semisolid brush, at points chosen from the map's own data, and reads whether it stands or falls. The second part drops a pawn into a warp zone, walks a pawn through a warp doorway, shoots a projectile into a warp zone and walks a pawn onto a teleporter pad, and reads where each ends up and how it moves afterwards. The player is put where a scenario needs it with the harness's `place` command.
 
-In the portal tables, `Unchanged engine` is the engine built from the source of the commit that adds this file, whose engine source is that of d8687f8e (the commit before it adds only a test and changes no engine source). `With the placement change` is a build in which `SetLocation` also raises the actor's teleport flag and updates its zone, and the physics step clears the flag at its start for every physics mode; that change is not in the tree (see "Why the placement change is not in the tree"). The semisolid table has one column, `Binary`: the CTF-Nucleus points gave the same outcome on the unchanged engine and on the build with the placement change, and the SkyBase points were run on the unchanged engine only.
+In the portal tables, `Previous binary` is the engine built from the commit before the change that makes `SetLocation` a teleport (the fifth upstream landing's merge), and `Fixed binary` is the engine with that change: `SetLocation` raises the actor's teleport flag and updates its zone once the level has begun play, the physics step clears the flag at its start for every physics mode, and `SetLocation` on a deleted actor moves nothing and returns false. The semisolid table has one column, `Binary`: the CTF-Nucleus points gave the same outcome on the previous and the fixed binary, and the SkyBase points were run on the unchanged engine only.
 
 ## Recipe
 
@@ -47,7 +47,7 @@ In Unreal Tournament the brush is the slab in the middle of CTF-Nucleus (`Brush1
 | Unreal Gold | SkyBase, platform | (-4288.0, -768.0) | none | not read: the column is outside the level (zone 0) from z 2288 down, and a player placed there dies of falling out of the world at once |
 | Deus Ex | none | | | no brush qualifies |
 
-The CTF-Nucleus outcomes (stand, stand, fall) are the same on the unchanged engine and on the build with the placement change. The fork's owner's hand play of the original game, which covered the ring and the centre, found the same (it is not a run of these three points). The two polygons are held by hulls: a port of the box trace over the level's real hulls lands the box at the top on all 39 top polygons of the slab and on nothing at the centre, and the runs agree. A player placed on a neighbouring floor about 100 units from the hulled point and walked toward it for 2 s crosses the slab's eastern perimeter without sinking and walks off the far side.
+The CTF-Nucleus outcomes (stand, stand, fall) are the same on the previous and the fixed binary. The fork's owner's hand play of the original game, which covered the ring and the centre, found the same (it is not a run of these three points). The two polygons are held by hulls: a port of the box trace over the level's real hulls lands the box at the top on all 39 top polygons of the slab and on nothing at the centre, and the runs agree. A player placed on a neighbouring floor about 100 units from the hulled point and walked toward it for 2 s crosses the slab's eastern perimeter without sinking and walks off the far side.
 
 SkyBase shows the other thing the hull-only trace does: the top face of a polygon with no hull does not stop the box, which goes on until another brush's hull holds it. The same port puts the box at that height on five of the platform's six hull-less top polygons. A fall all the way through a semisolid top face was not found on any map tried, so the status line says so and narrows the symptom to this case. The box trace is unchanged by this work.
 
@@ -67,75 +67,121 @@ Runs: Unreal Tournament, `--url='CTF-Nucleus?game=Botpack.CTFGame'`, trace `Pawn
 
 ## Portals
 
-A warp zone moves an actor that enters it to its paired zone through the stock script (`WarpZoneInfo.ActorEntered`, which turns the actor's location, velocity and rotation by the two zones' coordinate systems); a teleporter does the same from its `Touch` and the destination's `Accept`. Both guard on the actor's `bJustTeleported` flag, which the stock engine raises when a script moves an actor, so that an actor entering the zone it was moved into is not moved again. Three facts decide what the runs below can show.
+A warp zone moves an actor that enters it to its paired zone through the stock script (`WarpZoneInfo.ActorEntered`, which turns the actor's location, velocity and rotation by the two zones' coordinate systems); a teleporter does the same from its `Touch` and the destination's `Accept`. The warp zone's script guards on the actor's `bJustTeleported` flag, so that an actor entering the zone it was moved into is not moved again. The teleporter's script does not read the flag: its destination turns off its own `Touch` while it moves the actor, and it sets the arriving velocity, which the physics step keeps only while the flag is raised. Three facts decide what the runs below can show.
 
 - The warp zones of DM-Fractal cannot be walked into. The zones on the `out` side are closed on every side but the top and the ones on the `in` side on every side but the underside (the vertical pair is open on one z face), so a pawn reaches them only by dropping from the shaft above, and the walked crossing is made in Unreal Gold's DmRadikus, whose warp zone `water-left` is open on its +x face and whose floor goes on through the doorway.
-- In the tree, `SetLocation` raises no flag and updates no zone. The walking and projectile ticks set an actor's velocity to its displacement over the tick unless the flag is raised, so an actor that a warp zone's or a teleporter's script moves inside such a tick is given a velocity of about the jump over the tick, which the next tick cuts to its top speed along the jump: a pawn is thrown along the jump, and a projectile sent along it. The stock guard reads a flag nothing raises, so the entry into the far zone warps the actor back. A falling actor does not recompute its velocity unless it hits a slope, so a drop through a pit is not pushed.
-- The flag is cleared only at the start of a pawn's walking, ladder, swimming and flying ticks and of every falling, rolling and projectile tick. The build with the placement change raises it in `SetLocation` (for every class of actor, once the level has begun play), updates the zone through the actor's own `UpdateActorZone` after the touch loops, and clears the flag at the start of every physics step, so an actor in a mode with no clear of its own does not keep it raised for good.
+- Before the change, `SetLocation` raised no flag and updated no zone. The walking and projectile ticks set an actor's velocity to its displacement over the tick unless the flag is raised, so an actor that a warp zone's or a teleporter's script moves inside such a tick was given a velocity of about the jump over the tick, which the next tick cut to its top speed along the jump: a pawn was thrown along the jump, and a projectile sent along it. The stock guard read a flag nothing raised, so the entry into the far zone warped the actor back. A falling actor does not recompute its velocity unless it hits a slope, so a drop through a pit was not pushed.
+- With the change, `SetLocation` raises the flag (for every class of actor, once the level has begun play) and then updates the zone through the actor's own `UpdateActorZone` after the touch loops, so the zone events fire with the flag already raised. The physics step clears the flag at its start for every mode, so an actor in a mode with no clear of its own does not keep it raised for good. A move that a script makes between two physics steps, from an actor's `Tick` or its state code, computes its next velocity as before but now updates the zone at once with the flag raised; the runs contain such moves (the held weapon that `Weapon.RenderOverlays` moves in the doorway run, and the flies' `meander` state code on Harobed).
 
-The physics step is the frame time, so the pushes below are ranges over the step. A crossing is never made by placing the player inside a zone: the pawn walks, falls or is shot in.
+A crossing is never made by placing the player inside a zone: the pawn walks, falls or is shot in, since the placement itself now raises the flag and the stock warp zone script skips an actor whose flag is raised. A teleporter script does not read the flag, so the flag does not stop a placement that touches a teleporter, or enters a zone that forwards entries to one, from being teleported; no run here places a player on a pad. Every run was made in a headless compositor with no input device, with the per-run pins described under "Pinned runs", on a binary built from the commit named in the column head. The recipes below place the player at the same points as the harness pins and step the probes by 0.25 s (the pit and slab recipes) where the pins step by 0.5 s: `zn-w1` is the right pit, `zn-w2` the left pit, and `zn-ctf1` to `zn-ctf3` the three Nucleus points, each on the same map and at the same placed point with the same trace, so the two recipes read one outcome and are not one recipe.
 
 ### Drops through DM-Fractal's pits
 
-The player is set down in the shaft above a pit with no input held and falls into the pit's warp zone. A falling actor is not pushed, so both binaries must give the same single warp.
+The player is set down in the shaft above a pit with no input held and falls into the pit's warp zone. A falling actor is not pushed, so both binaries must give the same single warp. The right pit sends the player by (-400.0, +8.0, 0.0) to the column (786.8, -446.5) and the left pit by (+400.0, -8.0, 0.0) to the column (-177.6, -449.0); trace `WarpZoneInfo.ActorEntered,WarpZoneInfo.ActorLeaving,WarpZoneInfo.Warp,WarpZoneInfo.UnWarp,ZoneInfo.ActorEntered,Pawn.Died`, a probe of `class:TMale2` every 0.25 s from 7.75 s to 16.25 s, the placements at 8 s after the `5:Fire` that starts the match.
 
-| Pit | Place | Jump | Unchanged engine | With the placement change |
-| :--- | :--- | :--- | :--- | :--- |
-| Right (`WarpZoneInfo2` to `WarpZoneInfo3`) | (1186.8, -454.5, 629.9) | (-400.0, +8.0, 0.0), to the column (786.8, -446.5); the exit is below the far zone (it spans z 568 to 632 there) and the player settles at z 359 on the platform | two runs, each 1 entry of the player on `WarpZoneInfo2` 0.36 s after the placement, 1 `UnWarp` and 1 `Warp`, none on `WarpZoneInfo3`, no second entry; the first probe after the warp is at (786.8, -446.5, 487.6) and (786.8, -446.5, 486.9), 0.0 units from the column | the same count; the first probe is at (786.8, -446.5, 486.7), 0.0 units from the column, and the player rests at (786.8, -446.5, 360.0); `ActorLeaving` for the pit comes inside the warp's own move |
-| Left (`WarpZoneInfo4` to `WarpZoneInfo5`) | (-577.6, -441.0, 630.55) | (+400.0, -8.0, 0.0), to the column (-177.6, -449.0), below the far zone (z 572 to 636) | two runs, each 1 entry 0.35 s after the placement, 1 `UnWarp` and 1 `Warp`, none on `WarpZoneInfo5`, no second entry; the first probe after the warp is 5.6 units east of the column | the same count; every probe from the warp on is at (-177.6, -449.0), and the player rests at z 360.0 |
-
-Bots stand near both exits (a weapon lies on the floor under the right one) and shoot the player as it lands. In every unchanged-engine run the later probes of both drops are moved (the traced re-runs show `RocketDeath` damage to the player within a second of the warp, and in the right pit's first re-run the player lands on a bot), so they are not read; the right pit's drop in the shot run below, where no bot reached the player, rests at (786.8, -446.5, 360.0) on the unchanged engine too. The right pit's run with the change rested at z 360.0 for two probes before a rocket moved the player.
+| Pit | Place | Previous binary | Fixed binary |
+| :--- | :--- | :--- | :--- |
+| Right (`WarpZoneInfo2` to `WarpZoneInfo3`) | (1186.8, -454.5, 629.9) | 1 entry of the player 0.363 s after the placement, 1 `UnWarp` and 1 `Warp`, none on `WarpZoneInfo3`, no second entry in 5 s; the first probe after the warp is 0.0 units from the column | the same count and the same distance |
+| Left (`WarpZoneInfo4` to `WarpZoneInfo5`) | (-577.6, -441.0, 630.55) | 1 entry 0.353 s after the placement, the same events, 0.0 units from the column | the same |
 
 ### Walking through a warp doorway
 
-DmRadikus, Unreal Gold: the warp zone `water-left` (`WarpZoneInfo5`, spanning x -1440 to -1360, y 1728 to 1856, z -64 to 112) is open on its +x face and paired with `balcony` (`WarpZoneInfo6`, spanning x 784 to 864, y -1088 to -960, z 0 to 176, open on its -x face). The stock script moves a walker through the first by (+2144.0, -2816.0, +64.0), azimuth -52.7 degrees, and leaves its heading unchanged. The player is placed at (-1160, 1792, -24) facing west, held at full forward for 0.3 s, released and placed 4 units outside the face at (-1356, 1792, -24); a placement keeps the velocity (about 375 units a second here), so the player enters the zone with no input held. `--url=DmRadikus?Class=UPak.UPakFemaleOne`, trace `WarpZoneInfo.ActorEntered,Pawn.Died`, `--exit-after=14`, a probe of `class:UPakFemaleOne` every 0.1 s from 7.3 s to 12.5 s:
+DmRadikus, Unreal Gold: the warp zone `water-left` (`WarpZoneInfo5`, spanning x -1440 to -1360, y 1728 to 1856, z -64 to 112) is open on its +x face and paired with `balcony` (`WarpZoneInfo6`, spanning x 784 to 864, y -1088 to -960, z 0 to 176, open on its -x face). The stock script moves a walker through the first by (+2144.0, -2816.0, +64.0) and leaves its heading unchanged. The player is placed at (-1160, 1792, -24) facing west, held at full forward for 0.3 s, released and placed 4 units outside the face at (-1356, 1792, -24); a placement keeps the velocity, so the player enters the zone with no input held. `--url=DmRadikus?Class=UPak.UPakFemaleOne`, trace `WarpZoneInfo.ActorEntered,WarpZoneInfo.UnWarp,WarpZoneInfo.Warp,Pawn.Died`, `--exit-after=21`, a probe of `class:UPakFemaleOne` every 0.1 s from 7.3 s to 12.5 s:
 
 ```
 7:place -1160 1792 -24 180;7.05:hold axis aForward 6400 0.3;7.35:release;7.35:place -1356 1792 -24 180
 ```
 
-| | Unchanged engine | With the placement change |
+| | Previous binary | Fixed binary |
 | :--- | :--- | :--- |
-| Entries of the player | 5000 on `WarpZoneInfo5` and 5000 on `WarpZoneInfo6` before the 20000-call cap ends the log 3.9 s after the first, which is 10.6 ms after the placement | 1 on `WarpZoneInfo5`, none after it |
-| Where the player is | alternating between the exit site (x 783.7 to 784.0, y -1024.1 to -1023.7, z 40.0) and the return site (x -1360.0 to -1359.7, y 1791.5 to 1791.9, z -24.0): a jump of (+2144, -2816) at azimuth -52.7 degrees out and 127.3 back | walking west (azimuth 180 degrees, y -1024.0, z 40.0): 12.5 units from the exit point 0.04 s after the entry, and 47.9 units from it after 5 s, still creeping |
+| Entries of the player | 2500 on `WarpZoneInfo5` and 2500 on `WarpZoneInfo6` (4999 after the first) before the 20000-call trace cap ends the log 1.6 s after the first, which is 10.4 ms after the placement | 1 on `WarpZoneInfo5`, none after it |
+| Entry speed from the stamps of the placement and the entry, and the rest the stock friction predicts (speed over 8) | 385.7 units a second, 48.2 | 381.4 units a second, 47.7 |
+| Where the player is | alternating between the exit site and the return site | walking west (azimuth 180.0 degrees), 47.3 units from the exit point (784.0, -1024.0) at the probe 5 s after the entry; the judge's band was 27.0 to 68.4 |
+| Entries of other actors on the two zones | none | 6, all of the player's dispersion pistol (`Weapon.RenderOverlays` moves the held weapon with `SetLocation`), none of them warped |
 
-The code predicts the unchanged engine's ping-pong (1650 to 12465 entries in 5 s over frame times of 3 to 0.4 ms; the run's frame rate gives 12465). The pawn with the change crosses once and keeps its heading. It comes to rest farther from the exit point than the speed the stock acceleration gives at the face predicts (12 to 17 units): the pawn crosses the last 4 units in 10.6 ms, about 375 units a second, not the 100 to 130 predicted, so it coasts about 47 units against a ground friction that takes 8 units a second off for each unit walked.
+The previous binary ping-pongs thousands of times a second; the fixed binary crosses once and keeps its heading. Whether the original game fires the zone events for a held weapon is not known; the weapon's entries are counted and gate nothing.
 
 ### Shooting into a pit
 
-DM-Fractal, Unreal Tournament: the player picks up a pulse gun, pitches its view to -90 degrees, is placed at (1186.8, -454.5, 640) in the shaft above the right pit and fires straight down. The plasma sphere (1450 units a second) leaves the gun 12 units off the pit's column, enters the pit 0.06 s later and is moved by (-400.0, +8.0, 0.0) into the big room. Trace `WarpZoneInfo.ActorEntered,WarpZoneInfo.ActorLeaving,WarpZoneInfo.Warp,WarpZoneInfo.UnWarp,ZoneInfo.ActorEntered,Pawn.Died,Weapon.ProjectileFire,PlayerPawn.Fire,Projectile.Explode`, `--exit-after=60`, a probe of `class:TMale2` every 0.25 s from 6 s to 16 s and of `class:PlasmaSphere` every 0.02 s from 11 s to 12.5 s:
+DM-Fractal, Unreal Tournament: the player picks up a pulse gun, pitches its view to -90 degrees, is placed at (1186.8, -454.5, 640) in the shaft above the right pit and fires straight down. The plasma sphere (1450 units a second) enters the pit and is moved by (-400.0, +8.0, 0.0) into the big room. Trace `WarpZoneInfo.ActorEntered,WarpZoneInfo.ActorLeaving,WarpZoneInfo.Warp,WarpZoneInfo.UnWarp,ZoneInfo.ActorEntered,Pawn.Died,Weapon.ProjectileFire,PlayerPawn.Fire,Projectile.Explode`, `--exit-after=25`, a probe of `class:TMale2` every 0.25 s from 6 s to 16 s and of `class:PlasmaSphere` every 0.02 s from 11 s to 12.5 s:
 
 ```
 5:Fire;6:Summon Botpack.PulseGun;6.5:hold axis aForward 300 1.0;8.5:SwitchWeapon 5;9:hold axis aLookUp -2048 1.5;11:place 1186.8 -454.5 640;11.02:Fire
 ```
 
-| | Unchanged engine | With the placement change |
+| | Previous binary | Fixed binary |
 | :--- | :--- | :--- |
-| Shot after the warp | flies flat along the jump: between its first two probes (0.02 s apart) it travels 39.6 units at azimuth 178.8 degrees and elevation -1.3 degrees, and explodes on the rock 1035 units west at (-237.0, -414.4, 540.0) | goes on straight down (elevation -90.0 degrees, every probe at (798.7, -435.2)) and explodes on the floor of the big room, z 321 |
-
-The unchanged engine's elevation is the step of the tick that carried the shot into the zone over the jump: the code predicts -0.1 to -0.9 degrees over the frame times of these runs, and a -1.3 degree elevation is a 6 ms tick.
+| Shot after the warp | flies flat along the jump: elevation -0.4 degrees, azimuth 178.9 degrees over its first probes after the warp, the sphere 1000.2 units from the exit column at its farthest | goes on straight down: elevation -90.0 degrees, never more than 16.3 units from the exit column |
 
 ### Walking onto a teleporter pad
 
-DM-HyperBlast, Unreal Tournament: the pad `Teleporter0` (tag `32sucks`) at (-477.3, -1902.8) sends the player to `Teleporter1` at (478.2, -1902.0), a jump of (+955.5, +0.8, 0.0). The player is placed in the passage north of the pad, held at full forward for 0.3 s, released and placed 48 units north of the pad's centre, facing south; a placement keeps the velocity, so the player reaches the pad within 0.04 s with no input held. D is the vector from the arrival point to the player's probe 2.0 s after the pad's `Accept`. `--url=DM-HyperBlast`, trace `Teleporter.Touch,Teleporter.Accept,Pawn.Died`, `--exit-after=60`, a probe of `class:TMale2` every 0.1 s from 7.3 s to 12.5 s:
+DM-HyperBlast, Unreal Tournament: the pad `Teleporter0` (tag `32sucks`) at (-477.3, -1902.8) sends the player to `Teleporter1` at (478.2, -1902.0), a jump of (+955.5, +0.8, 0.0). Both pads have yaw 16496 and the class defaults (`bChangesYaw` true, nothing else set), so the stock `Accept` turns an arriving pawn through half a turn and re-points its velocity onto the new heading: a pawn that arrives southbound leaves northbound. The player is placed in the passage north of the pad, held at full forward for 0.3 s, released and placed 48 units north of the pad's centre, facing south; a placement keeps the velocity, so the player reaches the pad within 0.04 s with no input held. D is the vector from the arrival point to the player's probe 2.0 s after the pad's `Accept`. `--url=DM-HyperBlast`, trace `Teleporter.Touch,Teleporter.Accept,Pawn.Died`, `--exit-after=21`, a probe of `class:TMale2` every 0.1 s from 7.3 s to 12.5 s:
 
 ```
 5:Fire;7:place -477.3 -1700 -56 270;7.05:hold axis aForward 6400 0.3;7.35:release;7.35:place -477.3 -1854.8 -56 270
 ```
 
-| | Unchanged engine | With the placement change |
+| | Previous binary | Fixed binary |
 | :--- | :--- | :--- |
-| `Touch` and `Accept` of the player | 1 each, 0.041 s after the placement; none after in 5 s | the same |
-| D | (+24.9, -1.3), length 24.9, azimuth -3 degrees (a second run: (+25.0, -1.3)): thrown along the jump, as the code predicts | (0.0, +13.0), length 13.0 (a second run: (0.0, +12.9)): no push along the jump |
+| `Touch` and `Accept` of the player | 1 each, 0.0413 s after the placement; none after in 5 s | 1 each, 0.0408 s after the placement; none after |
+| D | (+25.0, -1.5), length 25.0, azimuth -3.4 degrees: thrown along the jump | (0.0, +12.8), length 12.8, azimuth 90.2 degrees: coasts north from the arrival point, where the coasting prediction from the stamps is 14.1 |
 
-With the change the player rests 13 units from the arrival point on the side it came from, where the code predicts 11 to 12 units on the side it was heading to. Nothing traced in the pad's events, the player's landing, wall hits and zone changes, or the damage it takes shows why.
+### The CTF-Nucleus pins
 
-### Why the placement change is not in the tree
+The three Nucleus points (28.0, 3516.0), (29.3, 3505.2) and (-16.0, 3504.0), placed 60 units over the slab at z 444 at 8 s: the first two stand (the centre settles at z 424 within 2 units from 1.5 s on) and the third falls (below z 384 and settling at or below z 100), on both binaries.
 
-The build with the change removes the push in every measurement above, and kept the drops and the CTF-Nucleus points as they were. The regression sample (below) did not clear it:
+### A trailer along
 
-- Falls out of the world rose on the build with the change on Harobed, in both runs (0 to 1 and 0 to 5 lines; a fly's death prints two lines, a swarm's one), and in one of two runs on NyLeve (2 to 4) and Chizra (0 to 2). The traces show the following. In both Harobed runs `HorseFlySwarm1` entered `LevelInfo0` (the zone actor of a zone that has none of its own, the outside zone among them) on a line whose source field is `<Surreal Engine>`, not a script, that is, at the end of its own move, and died of the fall 0.6 ms later (22.548 s and 24.585 s). In the second Harobed run `HorseFly22` (33.291 s) and `HorseFly17` (34.478 s) entered `LevelInfo0` on lines whose source field is `HorseFly.meander`, a state of the stock `HorseFly` script that moves the fly with `SetLocation` (`SetLocation(Owner.Location)` when it cannot see its owner, the swarm), and died in the same frame. On NyLeve `BiterFish17` entered `LevelInfo0` by its own move (source `<Surreal Engine>`, state `Flopping`) and died 0.8 ms later (31.027 s), in one run of two. On Chizra `HorseFly28` died at 24.254 s and no traced line names it before that; the trace ended at its 20000-call cap at 27.123 s. Without the change no traced line names `HorseFlySwarm1` in either Harobed run. The change updates the zone of an actor moved by a script at once, inside `SetLocation`, and the stock scripts read as if the engine did that: the warp zone's guard tests the teleport flag before its own `SetLocation`, the biter-fish school reads `Region.Zone` right after its `SetLocation`, and the horse fly declares `ZoneChange` singular around a `SetLocation`. What makes the swarm reach the outside zone only with the change is not established, so the rise in falls is recorded as unattributed.
-- The zone-event counts of NyLeve (all three), Chizra (`FootZoneChange(`) and Harobed (`ActorEntered(` and `HeadZoneChange(`) stayed more than the larger of 20 lines and 25 percent of the unchanged engine's count away from it in a re-run too. The unchanged engine's own two runs differ from each other by more than that on the same maps (Chizra `ActorEntered(` 781 and 9354, Harobed `HeadZoneChange(` 94 and 7881, NyLeve `HeadZoneChange(` 113 and 642), because the creatures' behaviour changes from run to run; those counts alone could not separate a change from the variation, but the falls could.
+W1's recipe with one change: before the placement the player summons `Botpack.UT_ShieldBelt` and walks over it, which spawns a `UT_ShieldBeltEffect` owned by the player. The effect's default physics is `PHYS_Trailer`, whose tick calls `SetLocation(Owner.Location)` on every step, so with the change every trailer tick raises the flag and runs the zone update. Trace as for the pit drops plus `UT_ShieldBeltEffect.ZoneChange,UT_ShieldBeltEffect.Destroyed` (the effect's own `ZoneChange` has no body in the stock scripts, so the call is never traced).
+
+| | Previous binary | Fixed binary |
+| :--- | :--- | :--- |
+| Summon line | at 6.599 s | at 6.599 s |
+| Zone events naming the effect | 0 | 2, entering `LevelInfo0` and then `ZoneInfo0`; 0 entries on the warp zones, the effect going from the level's zone straight to the destination zone at its owner's warp; no `Destroyed` line |
+| The player's pit pin | held | held |
+
+Two runs of each binary gave the same counts. The pair cannot reach everything. Trailer mode has no zone-0 test, so a trailer cannot fall out of the world, and the flag's readers are not in the trailer tick. The stock zone handlers a trailer can now reach are `ZoneInfo.ActorEntered`, which moves only `PHYS_None` effects; `WarpZoneInfo`, guarded by the flag; `CloudZone`, which destroys any non-pawn that enters; `TarZone`, `NitrogenZone` and `VacuumZone`, which act on pawns only; and `TeleporterZone`, which calls its teleporter's `Touch`. The `Effects` subclasses that override `ZoneChange` are three in Unreal (`Bubble`, `Bubble1`, `SparkBit`), five in Unreal Tournament (the same three, `UT_Spark`, `UT_Sparks`) and one in Deus Ex (`FlyGenerator`, which destroys nothing); none is known to be a trailer.
+
+## Falls out of the world
+
+The first version of this change was kept out of the tree because falls out of the world rose on Harobed with it, unattributed. This section is the attribution. The runs are three of each binary on Harobed, NyLeve and Chizra (60 s, Unreal Gold with the class pin), traced for every call of `FellOutOfWorld`, `Died`, `SetPhysics`, `SetLocation` and `Destroyed` of the flock classes and for the zone entries into the zone object that zone 0 maps to (`LevelInfo`), and Harobed's six swarms are probed every 2 s. Chizra's `BiterFish.SetPhysics` alone filled the 20000-call trace cap on a first run (it capped at 52.6 s and again at 48.8 s in a re-run), so its list names the other flock classes' `SetPhysics` and not `BiterFish`'s: a biter fish that falls on Chizra would read its physics mode as unread. Both binaries' Chizra runs use that list.
+
+A fall death is an actor's `FellOutOfWorld` call. Deaths are pooled per map and class and compared by an exact binomial test: for B deaths on the previous binary and N on the fixed one over equal run counts, p is the probability of N or more of the B+N deaths landing on the fixed binary at chance one half. An ambient class (the stock `FlockPawn` and `FlockMasterPawn` families) is judged elevated when p is at most 0.05, and every other class when it has a death on the fixed binary and none on the previous one. A first comparison at three runs a side asks for three more runs a side when an ambient class has p at most 0.25; none did. For a class that is elevated each death that a script's move zoned would need a root, an earlier zone-0 entry of another actor; none was elevated. The rule has an accepted residual: for one ambient class with equal rates on both binaries it calls a false elevation 0.2 to 2.6 percent of the time per class per map and asks for the extension 7 to 16 percent of the time; it detects a class that dies once a run on the fixed binary and never on the previous one 65 percent of the time, a doubling from 1 to 2 a run 27 percent, and a tripling from 1 to 3 a run 67 percent. An effect smaller than that lands as "not shown to differ".
+
+| Map | Class | Deaths, previous binary (3 runs) | Deaths, fixed binary (3 runs) | p | Verdict |
+| :--- | :--- | ---: | ---: | ---: | :--- |
+| Harobed | `HorseFly` | 3 | 0 | 1.0 | not shown to differ |
+| Harobed | `HorseFlySwarm` | 0 | 0 | 1.0 | no death on either binary |
+| NyLeve | `Bird1` | 3 | 3 | 0.656 | not shown to differ |
+| NyLeve | `BiterFish` | 0 | 1 | 0.5 | not shown to differ |
+| Chizra | all | 0 | 0 | 1.0 | no death on either binary |
+
+All three maps end `ATTRIBUTED` at the first comparison. The deaths read: on Harobed the previous binary's three are flies in `meander` in flying physics that entered the zone-0 object by their own move (at 21.65 s, 29.22 s and 5.93 s); the fixed binary has none. Five of the swarms called `SeePlayer` within 0.2 s of the start in every run of both binaries and `DeadBodySwarm0` between 22 and 30 s, so the swarms were active in every run, and none died on either binary: the swarm death of the first version did not recur. On NyLeve `Bird14` is placed in zone 0 and dies at about 0.018 s in every run of both binaries with no entry line; the fixed binary's one `BiterFish` death (`BiterFish21`, `Flopping`, falling physics, 29.9 s) entered the zone-0 object by its own move. Because the swarm shows no death on either binary, the forced-activation pair was not run. What the first version's rise in falls was is not established by these runs: with 3 runs a binary it was not reproduced.
+
+The fork's rule for the event, by physics mode, set against the stock scripts. The stock overrides of `FellOutOfWorld` are eight, read from every package of the three games that holds the name: `Actor` (`SetPhysics(PHYS_None); Destroy();`) and `Pawn` in all three games (Unreal Gold's body is `Health = -1; SetPhysics(PHYS_None); Died(None, 'fell', Location);`; the Unreal Tournament and Deus Ex bodies add lines: Unreal Tournament's returns first when `Role < ROLE_Authority`, clears `Weapon` and uses the damage type `'Fell'`, Deus Ex's sets `Weapon = None` and uses `'Fell'`), and in Unreal Tournament also `BotPack.CTFFlag` twice, its base override (`SendHome()`) and an empty override in its state `Held`, where the flag has `PHYS_None` and no world collision. No stock script calls the event. The census reads the stock scripts and the fork; it does not say where the original raises the event, which stays open. A class's default physics is not in the script dumps, so a mode a class holds by default and never sets is not counted. The deaths columns read the last traced `SetPhysics` of the dying actor: previous binary and fixed binary, three runs of each on Harobed, NyLeve and Chizra.
+
+| Mode | The fork at zone 0 | Unreal Gold `SetPhysics` | Unreal Tournament | Deus Ex | Deaths, previous | Deaths, fixed |
+| :--- | :--- | :--- | :--- | :--- | ---: | ---: |
+| `PHYS_None` | no test | 83 in 55 | 89 in 58 | 24 in 14 | 0 | 0 |
+| `PHYS_Walking` | pawns only, in the pawn prelude | 21 in 14 | 16 in 11 | 2 in 1 | 0 | 0 |
+| `PHYS_Falling` | any actor, at the start of the tick | 104 in 62 | 105 in 65 | 40 in 18 | 0 | 1 |
+| `PHYS_Swimming` | pawns only, in the pawn prelude | 24 in 14 | 24 in 14 | 7 in 2 | 0 | 0 |
+| `PHYS_Flying` | pawns only, in the pawn prelude | 23 in 12 | 25 in 12 | 9 in 4 | 6 | 3 |
+| `PHYS_Rotating` | nothing (the mode does nothing) | 8 in 8 | 10 in 7 | 1 in 1 | 0 | 0 |
+| `PHYS_Projectile` | destroys the actor, no event | 10 in 7 | 8 in 5 | 1 in 1 | 0 | 0 |
+| `PHYS_Rolling` | any actor, at the start of the tick | 0 in 0 | 0 in 0 | 4 in 4 | 0 | 0 |
+| `PHYS_Interpolating` | no test | 3 in 3 | 3 in 3 | 4 in 4 | 0 | 0 |
+| `PHYS_MovingBrush` | no test | 1 in 1 | 1 in 1 | 1 in 1 | 0 | 0 |
+| `PHYS_Spider` | no test | 4 in 2 | 4 in 2 | 0 in 0 | 0 | 0 |
+| `PHYS_Trailer` | no test | 0 in 0 | 0 in 0 | 0 in 0 | 0 | 0 |
+
+(The ladder is walking with a ladder flag.) No death was read in a mode the table does not raise.
+
+The destroyed-actor pin: in every flock log of both binaries no zone or touch line with a script's source field names an actor after its `Destroyed` line (0 lines on the fixed binary's nine logs and 0 on the previous binary's nine, and 0 lines with the engine's own source field in either set).
+
+Counters, never gated: `ZoneInfo.ActorEntered` lines on Harobed were 27, 21 and 173 on the previous binary and 23, 523 and 322 on the fixed one, and `LevelInfo` entries 4, 4, 3 and 2, 5, 4; entries into `LevelInfo` on NyLeve 3, 5, 6 against 4, 6, 7, and on Chizra 63, 394, 10 against 136, 109, 152. The lines of those entries whose source field is not the engine's own were 0 on every previous run and on every fixed run but Chizra's, where each has 1. The counts vary run to run by more than the difference between the binaries.
+
+Nested events: the stock `HorseFlySwarm.ZoneChange`, `HorseFly.ZoneChange` and `BiterFishSchool.ZoneChange` are `singular` around a `SetLocation`, and the VM does not enforce the modifier, so with the zone update inside `SetLocation` the events they would have blocked now nest. Enforcing it belongs to the statement semantics of the VM and is not part of this change.
 
 ## Pinned runs
 
@@ -155,56 +201,27 @@ Run one with `python3 -I -B Tools/smoke/pinjudge.py cmd <pin>` and read it with 
 
 ## Regression sample
 
-Twenty stock maps, 60 seconds each, on both binaries, as the committed sweeps ran them (`--url=<map>`, no other option, except that the Unreal Tournament maps whose prefix the committed sweep mapped to a game ran as `AS-Frigate?game=Botpack.Assault`, `AS-Overlord?game=Botpack.Assault`, `CTF-Face?game=Botpack.CTFGame` and `CTF-High?game=Botpack.CTFGame`), judged with the sweep runner's own `parse_log` and `classify`. `matches` means the verdict and the counts of script errors, exceptions, missing natives and stub hits equal the committed row of the same map. Trace `ZoneInfo.ActorEntered,Pawn.FootZoneChange,Pawn.HeadZoneChange,Pawn.Died`.
+Fifteen stock maps on the fixed binary, 60 seconds each, as the committed sweeps ran them (`--url=<map>` plus the class pin on the Unreal Gold maps, the bot-free config root on the Unreal Tournament maps, and the `?game=` options the committed sweep used for `AS-Frigate`, `AS-Overlord` and `CTF-Face`), judged with the sweep runner's own `parse_log` and `classify`. Every cell reads committed / run. `script_warnings` is shown and not compared: Dig printed 28 where the committed row has 10, and Harobed and Chizra, whose three Stage runs differ from each other as the creatures' behaviour does, printed 6 to 12 and 2 to 17 against 15 and 17. The five other fields equal the committed row on every map (the three flock maps in all three of their runs).
 
-| Game | Map | Verdict | Script errors | Exceptions | Missing natives | Stub hits | Match |
-| :--- | :--- | :--- | ---: | ---: | ---: | ---: | :--- |
-| Unreal Gold | Vortex2 | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Gold | Dig | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Gold | NyLeve | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Gold | Chizra | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Gold | Harobed | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Gold | Bluff | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Gold | SkyTown | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Tournament | AS-Frigate | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Tournament | DM-Deck16][ | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Tournament | AS-Overlord | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Tournament | DM-Codex | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Tournament | CTF-Face | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Tournament | CTF-High | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Unreal Tournament | DM-KGalleon | pass | 0 | 0 | 0 | 0 | matches on both binaries |
-| Deus Ex | 00_Training | pass | 0 | 0 | 0 | 1 | matches on both binaries |
-| Deus Ex | 01_NYC_UNATCOIsland | pass | 0 | 0 | 0 | 1 | matches on both binaries |
-| Deus Ex | 02_NYC_BatteryPark | pass | 0 | 0 | 0 | 1 | matches on both binaries |
-| Deus Ex | 03_NYC_UNATCOHQ | pass | 0 | 0 | 0 | 1 | matches on both binaries |
-| Deus Ex | 04_NYC_Hotel | pass | 0 | 0 | 0 | 1 | matches on both binaries |
-| Deus Ex | 09_NYC_Ship | pass | 0 | 0 | 0 | 1 | matches on both binaries |
+| Game | Map | Verdict | Script errors | Exceptions | Missing natives | Stub hits | Script warnings |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Unreal Gold | Vortex2 | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| Unreal Gold | Dig | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 10 / 28 |
+| Unreal Gold | NyLeve | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0,0,0 (3 runs) |
+| Unreal Gold | Chizra | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 17 / 17,9,2 (3 runs) |
+| Unreal Gold | Harobed | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 15 / 12,9,6 (3 runs) |
+| Unreal Tournament | AS-Frigate | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| Unreal Tournament | DM-Deck16][ | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| Unreal Tournament | AS-Overlord | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| Unreal Tournament | DM-Codex | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| Unreal Tournament | CTF-Face | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| Deus Ex | 00_Training | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 1 / 1 | 0 / 0 |
+| Deus Ex | 01_NYC_UNATCOIsland | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 1 / 1 | 0 / 0 |
+| Deus Ex | 02_NYC_BatteryPark | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 1 / 1 | 0 / 0 |
+| Deus Ex | 03_NYC_UNATCOHQ | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 1 / 1 | 0 / 0 |
+| Deus Ex | 04_NYC_Hotel | pass / pass | 0 / 0 | 0 / 0 | 0 / 0 | 1 / 1 | 0 / 0 |
 
-The zone-event table counts trace lines (a pawn's `Died` and a warp zone's `ActorEntered` print two) for the unchanged engine and the build with the placement change, in that order. Four maps ran twice because a counter or the falls moved; the log of a run is capped at 20000 traced calls, so the counts of a capped run are lower bounds.
 
-| Map | Run | `ActorEntered(` (unchanged engine, with change) | `FootZoneChange(` | `HeadZoneChange(` | Falls (`Died` of damage type fell) |
-| :--- | :--- | ---: | ---: | ---: | ---: |
-| Vortex2 | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| Dig | 1 | 11, 37 | 16, 32 | 4, 4 | 0, 0 |
-| Dig | 2 | 18, 38 | 8, 9 | 4, 4 | 0, 0 |
-| NyLeve | 1 | 110, 189 | 18, 55 | 113, 701 | 2, 4 |
-| NyLeve | 2 | 80, 399 | 14, 259 | 642, 1215 | 2, 2 |
-| Chizra | 1 (log capped) | 781, 4138 | 1005, 3824 | 10528, 12034 | 0, 2 |
-| Chizra | 2 (log capped) | 9354, 8434 | 411, 7237 | 10233, 4327 | 0, 0 |
-| Harobed | 1 | 202, 383 | 16, 18 | 94, 65 | 0, 1 |
-| Harobed | 2 | 49, 335 | 13, 12 | 7881, 2548 | 0, 5 |
-| Bluff | 1 | 2, 8 | 2, 3 | 1, 1 | 2, 2 |
-| SkyTown | 1 | 261, 310 | 186, 70 | 258, 193 | 0, 0 |
-| AS-Frigate | 1 | 17, 10 | 0, 0 | 0, 0 | 0, 0 |
-| DM-Deck16][ | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| AS-Overlord | 1 | 81, 91 | 0, 1 | 0, 1 | 0, 0 |
-| DM-Codex | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| CTF-Face | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| CTF-High | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| DM-KGalleon | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| 00_Training | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| 01_NYC_UNATCOIsland | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| 02_NYC_BatteryPark | 1 | 8, 10 | 1, 1 | 0, 0 | 0, 0 |
-| 03_NYC_UNATCOHQ | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| 04_NYC_Hotel | 1 | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
-| 09_NYC_Ship | 1 | 0, 1 | 0, 1 | 0, 1 | 0, 0 |
+The one fall death among the twelve single-run maps is `Trashbag1` (class `Trashbag2`, never traced in a physics mode) in 02_NYC_BatteryPark at 0.053 s, and a run of the previous binary has the same death at 0.054 s: not shown to differ.
+
+The botmatch guard: DM-Deck16][ with four bots pinned in a config root of its own (`MinPlayers=0`, `InitialBots=4`) and the match started at 5 s, 300 s, traced for `GameInfo.Killed` and `Bot.PostBeginPlay` (four lines, the four bots), gave 31 kills against a floor of 9; the player died once; `script_errors`, `stub_hits`, `missing_natives` and `exceptions` were 0 and `script_warnings` 7.
