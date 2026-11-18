@@ -210,6 +210,7 @@ void UActor::Tick(float elapsed)
 	if (engine->LaunchInfo.IsDeusEx())
 	{
 		DistanceFromPlayer() = length(engine->viewport->Actor()->Location() - Location());
+		AICheckStartedEvents();
 	}
 
 	TickAnimation(elapsed);
@@ -391,6 +392,7 @@ bool UActor::IsOSVer2kOrXP()
 }
 
 // Deus Ex AI events: the engine's half of AIEventManager, which knows nothing about actors itself.
+// The per-actor AI store that UActor.h declares is not filled here: the six AI natives use the level's AIEventManager.
 namespace
 {
 	// A class that lacks a callback it registered would otherwise be reported at every event.
@@ -547,31 +549,18 @@ namespace
 
 void UActor::AIClearEvent(const NameString& eventName)
 {
-	LogUnimplemented("Actor.AIClearEvent");
+	// Upstream ends the started event of that name whatever its type; the manager keeps one record per type.
+	if (AIEventManager* manager = AIEventManagerFor(this, "AIClearEvent"))
+	{
+		for (EAIEventType t : { EAIEventType::EAITYPE_Visual, EAIEventType::EAITYPE_Audio, EAIEventType::EAITYPE_Olifactory })
+			manager->EndEvent(this, eventName, t);
+	}
 }
 
 void UActor::AIClearEventCallback(const NameString& eventName)
 {
 	if (AIEventManager* manager = AIEventManagerFor(this, "AIClearEventCallback"))
 		manager->ClearCallback(this, eventName);
-}
-
-void UActor::AIEndEvent(const NameString& eventName, uint8_t eventType)
-{
-	if (AIEventManager* manager = AIEventManagerFor(this, "AIEndEvent"))
-		manager->EndEvent(this, eventName, (EAIEventType)eventType);
-}
-
-float UActor::AIGetLightLevel(const vec3& Location)
-{
-	LogUnimplemented("Actor.AIGetLightLevel");
-	return 1.0f;
-}
-
-void UActor::AISendEvent(const NameString& eventName, uint8_t eventType, std::optional<float> Value, std::optional<float> Radius)
-{
-	if (AIEventManager* manager = AIEventManagerFor(this, "AISendEvent"))
-		manager->SendEvent(this, eventName, (EAIEventType)eventType, Value.value_or(1.0f), Radius.value_or(0.0f));
 }
 
 void UActor::AISetEventCallback(const NameString& eventName, const NameString& callback, std::optional<NameString> scoreCallback, std::optional<bool> bCheckVisibility, std::optional<bool> bCheckDir, std::optional<bool> bCheckCylinder, std::optional<bool> bCheckLOS)
@@ -591,15 +580,44 @@ void UActor::AISetEventCallback(const NameString& eventName, const NameString& c
 	manager->SetCallback(this, registration);
 }
 
-void UActor::AIStartEvent(const NameString& eventName, uint8_t eventType, std::optional<float> Value, std::optional<float> Radius)
+void UActor::AIStartEvent(const NameString& eventName, EAIEventType eventType, std::optional<float> Value, std::optional<float> Radius)
 {
 	if (AIEventManager* manager = AIEventManagerFor(this, "AIStartEvent"))
-		manager->StartEvent(this, eventName, (EAIEventType)eventType, Value.value_or(1.0f), Radius.value_or(0.0f));
+		manager->StartEvent(this, eventName, eventType, Value.value_or(1.0f), Radius.value_or(0.0f));
+}
+
+void UActor::AIEndEvent(const NameString& eventName, EAIEventType eventType)
+{
+	if (AIEventManager* manager = AIEventManagerFor(this, "AIEndEvent"))
+		manager->EndEvent(this, eventName, eventType);
+}
+
+void UActor::AICheckStartedEvents()
+{
+	for (auto& e : AI.Events)
+	{
+		// To do: find actors in radius, calculate a score for each and then use the score callback to filter
+		// check if best actor changes and send event to new actor if so?
+		// what is the difference between visual and audio event types?
+	}
+}
+
+void UActor::AISendEvent(const NameString& eventName, EAIEventType eventType, std::optional<float> Value, std::optional<float> Radius)
+{
+	if (AIEventManager* manager = AIEventManagerFor(this, "AISendEvent"))
+		manager->SendEvent(this, eventName, eventType, Value.value_or(1.0f), Radius.value_or(0.0f));
 }
 
 float UActor::AIVisibility(std::optional<bool> bIncludeVelocity)
 {
+	// Only used for debugging
 	LogUnimplemented("Actor.AIVisibility");
-	//LogMessage(Name.ToString() + ": AIVisibility");
 	return 0.0f;
+}
+
+float UActor::AIGetLightLevel(const vec3& Location)
+{
+	// Unused by script
+	LogUnimplemented("Actor.AIGetLightLevel");
+	return 1.0f;
 }
