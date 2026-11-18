@@ -1,6 +1,9 @@
+import contextlib
+import io
 import re
 import shlex
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -161,10 +164,10 @@ class MoverJudgeTests(unittest.TestCase):
 
 
 class ZoneJudgeTests(unittest.TestCase):
-    def pit(self, gap=0.0, second=None, far=False, warp=10.0):
+    def pit(self, gap=0.0, second=None, far=False, warp=10.0, unwarps=1, warps=1):
         entered = [trace(warp, "WarpZoneInfo2", "ActorEntered", "Player0", "WarpZoneInfo") for _ in range(2)]
-        extra = entered + [trace(warp, "WarpZoneInfo2", "UnWarp", "Player0", "WarpZoneInfo"),
-                           trace(warp, "WarpZoneInfo2", "Warp", "Player0", "WarpZoneInfo")]
+        extra = entered + [trace(warp, "WarpZoneInfo2", "UnWarp", "Player0", "WarpZoneInfo")] * unwarps + \
+            [trace(warp, "WarpZoneInfo2", "Warp", "Player0", "WarpZoneInfo")] * warps
         if second is not None:
             extra += [trace(warp + second, "WarpZoneInfo2", "ActorEntered", "Player0", "WarpZoneInfo")] * 2
         if far:
@@ -193,6 +196,20 @@ class ZoneJudgeTests(unittest.TestCase):
         self.assertEqual(nucleus("zn-ctf3", falls(100.0)), "PIN-HELD")
         self.assertEqual(nucleus("zn-ctf3", falls(101.0)), "PIN-BROKEN")
         self.assertEqual(nucleus("zn-ctf3", stands(1.5)), "PIN-BROKEN")
+
+
+    def test_the_warp_judge_wants_one_unwarp_and_one_warp(self):
+        self.assertEqual(self.pit(unwarps=2), "PIN-BROKEN")
+        self.assertEqual(self.pit(unwarps=0), "PIN-BROKEN")
+        self.assertEqual(self.pit(warps=2), "PIN-BROKEN")
+
+    def test_the_stand_judge_holds_a_player_to_two_units(self):
+        def stands_at(z):
+            where = lambda t, form: (0.0, 0.0, z if t - 8.0 >= 1.5 else 444.0)  # noqa: E731
+            return judged("zn-ctf1", [place(8.0, (28.0, 3516.0, 444.0))], where=where)
+        self.assertEqual(stands_at(426.0), "PIN-HELD")
+        self.assertEqual(stands_at(426.5), "PIN-BROKEN")
+        self.assertEqual(stands_at(421.5), "PIN-BROKEN")
 
 
 class NameFromTheRunTests(unittest.TestCase):
@@ -243,6 +260,26 @@ class SecondObjectTests(unittest.TestCase):
             [trace(10.0, "WarpZoneInfo2", "UnWarp", "P0", "WarpZoneInfo"),
              trace(10.0, "WarpZoneInfo2", "Warp", "P0", "WarpZoneInfo"), place(8.0, (1186.8, -454.5, 629.9))]
         self.assertNotEqual(self.swap("zn-w1", 10.5, (786.8, -446.5, 0.0), far, warp), "PIN-HELD")
+
+
+class JudgeCommandTests(unittest.TestCase):
+    def run_judge(self, extra, summary=True):
+        lines = scheduled_answers("mv-enc-ug", "Player0") + list(extra)
+        ordered = sorted(lines, key=lambda s: float(s[1:s.index("]")]))
+        with tempfile.TemporaryDirectory() as tmp:
+            smoke_path, engine_path = Path(tmp) / "run.log", Path(tmp) / "engine.txt"
+            smoke_path.write_text(smoke(summary=summary))
+            engine_path.write_text("\n".join(ordered) + "\n")
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = pinjudge.main(["judge", "mv-enc-ug", str(smoke_path), str(engine_path)])
+        return code, out.getvalue().splitlines()[0]
+
+    def test_judge_prints_the_verdict_and_exits_by_it(self):
+        held = [trace(14.0, "Mover44", "EncroachingOn", "Player0"), trace(15.0, "Player0", "KilledBy", "Player0", "Pawn")]
+        self.assertEqual(self.run_judge(held), (0, "PIN-HELD mv-enc-ug"))
+        self.assertEqual(self.run_judge([]), (1, "PIN-BROKEN mv-enc-ug"))
+        self.assertEqual(self.run_judge(held, summary=False), (2, "VOID mv-enc-ug"))
 
 
 if __name__ == "__main__":

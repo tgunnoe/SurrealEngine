@@ -202,5 +202,42 @@ class ReadPinsTests(unittest.TestCase):
         self.assertFalse(runpins.check_pins(ENGINE_LOG, folder, "UPak.UPakFemale")[0])
 
 
+class CheckCommandTests(unittest.TestCase):
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.game, _ = ut_install(self.root)
+        self.config = self.root / "xdg"
+        self.folder = self.config / "SurrealEngine" / "UnrealTournament-436-Unreal_Tournament_GOTY"
+
+    def check(self, *args, folder=None, log_folder=None):
+        log = self.root / "engine.txt"
+        seen = log_folder or self.folder
+        log.write_text(f"[0.000000] <Surreal Engine>: User directories: config={seen} data=/d\n")
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            code = runpins.main(["check", "--engine-log", str(log), "--config-root", str(self.config),
+                                 "--kind", "ut", *args])
+        return code, out.getvalue()
+
+    def test_check_without_a_game_accepts_only_the_kinds_folder_under_the_root(self):
+        self.assertEqual(self.check()[0], 0)
+        self.assertEqual(self.check(log_folder=self.root / "other" / "SurrealEngine" / self.folder.name)[0], 1)
+        self.assertEqual(self.check(log_folder=self.config / "SurrealEngine" / "DeusEx-1112fm-Deus_Ex_GOTY")[0], 1)
+        self.assertEqual(self.check("--game", str(self.game))[0], 0)
+        self.assertEqual(self.check("--game", str(self.root / "Elsewhere"))[0], 1)
+
+    def test_check_bots_reads_the_pin_back_from_the_folder(self):
+        runpins.prepare(self.game, "ut", self.config, bots=0, host_root=host_root(self.root))
+        self.assertEqual(self.check("--bots", "0")[0], 0)
+        code, text = self.check("--bots", "2")
+        self.assertEqual(code, 1)
+        self.assertIn("BOTS MISMATCH", text)
+        # An ini that is the install's own, unpinned, is not a pin either.
+        (self.folder / "SE-UnrealTournament.ini").write_bytes(UT_INI.encode("latin-1"))
+        self.assertEqual(self.check("--bots", "0")[0], 1)
+
+
 if __name__ == "__main__":
     unittest.main()
