@@ -397,10 +397,10 @@ namespace
 		return false;
 	}
 
-	void FillMap(UMapProperty* mapProp, void* data, int firstKey)
+	void FillMap(UMapProperty* mapProp, void* data, int firstKey, int count)
 	{
 		auto& map = *static_cast<UMapProperty::Map*>(data);
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < count; i++)
 		{
 			MapPropertyValue key(mapProp->Key);
 			MapPropertyValue value(mapProp->Value);
@@ -446,6 +446,11 @@ TEST(SweepDestructsArrayElementsAndMapEntries)
 	map->Value = mapped;
 	const size_t size = Place({ array, map });
 	UClass* cls = fixture.NewClass("GcContainerClass", { array, map }, size, 16);
+
+	// The class's own default block holds an element and an entry too, so a collection that
+	// destructs the block of a class it keeps shows as well.
+	static_cast<ScriptArray*>(cls->PropertyData.Ptr(array))->Resize(1);
+	FillMap(map, cls->PropertyData.Ptr(map), 100, 1);
 	const size_t baseline = Tracked::live.size();
 
 	UObject* instances[3];
@@ -454,7 +459,7 @@ TEST(SweepDestructsArrayElementsAndMapEntries)
 	{
 		instance = fixture.NewInstance(cls, "Instance");
 		static_cast<ScriptArray*>(instance->PropertyData.Ptr(array))->Resize(5);
-		FillMap(map, instance->PropertyData.Ptr(map), firstKey);
+		FillMap(map, instance->PropertyData.Ptr(map), firstKey, 2);
 		firstKey += 2;
 	}
 	const size_t filled = Tracked::live.size();
@@ -462,7 +467,7 @@ TEST(SweepDestructsArrayElementsAndMapEntries)
 	GC::Collect();
 	const size_t after = Tracked::live.size();
 
-	CHECK_EQ(filled - baseline, size_t{ 3 * (5 + 2 * 2) });
+	CHECK_EQ(filled - baseline, size_t{ 3 * (5 + 3 * 2) });
 	CHECK_EQ(after, baseline);
 	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
 }
@@ -551,12 +556,16 @@ TEST(SweepReleasesTheStringsOfASweptObject)
 	UStrProperty* text = GC::Alloc<UStrProperty>("Text", nullptr, ObjectFlags::NoFlags);
 	const size_t size = Place({ text });
 	UClass* cls = fixture.NewClass("GcStringClass", { text }, size, 16);
+
+	// The class's default string is copied into every instance, and a collection that destructs
+	// the block of a class it keeps would release it.
+	*static_cast<std::string*>(cls->PropertyData.Ptr(text)) = std::string(200000, 'd');
 	const size_t before = HeapInUse();
 
 	for (int i = 0; i < 64; i++)
 	{
 		UObject* instance = fixture.NewInstance(cls, "Instance");
-		*static_cast<std::string*>(instance->PropertyData.Ptr(text)) = std::string(200000, 'x');
+		static_cast<std::string*>(instance->PropertyData.Ptr(text))->assign(200000, 'x');
 	}
 	const size_t filled = HeapInUse();
 
@@ -564,6 +573,7 @@ TEST(SweepReleasesTheStringsOfASweptObject)
 	const size_t after = HeapInUse();
 
 	CHECK_MSG(filled > before + 10 * 1024 * 1024, "the instances did not allocate their strings");
+	CHECK_MSG(after + 100000 > before, "the string of a class that was not swept was released");
 	CHECK_MSG(after < before + 2 * 1024 * 1024, "the strings of the swept instances were not released");
 #endif
 }
