@@ -315,9 +315,16 @@ uint32_t UGC::EffectiveTextPolyFlags()
 {
 	uint32_t polyflags = textPolyFlags() | PF_NoSmooth;
 	if (bTextTranslucent())
-		polyflags |= PF_Translucent;
+	{
+		if (bModulated())
+			polyflags |= PF_Modulated;
+		else
+			polyflags |= PF_Translucent;
+	}
 	else
+	{
 		polyflags |= PF_Masked;
+	}
 	return polyflags;
 }
 
@@ -403,7 +410,7 @@ void UGC::GetTextExtent(float destWidth, float& xExtent, float& yExtent, const s
 	UFont* font = normalFont();
 	if (font)
 	{
-		Sizef extents = DrawText(font, 0.0f, 0.0f, destWidth, textStr, TextColor(), 0, true);
+		Sizef extents = DrawText(font, 0.0f, 0.0f, destWidth > 0.0f ? destWidth : 1000000.0f, textStr, TextColor(), 0, true);
 		xExtent = extents.width;
 		yExtent = extents.height;
 	}
@@ -566,11 +573,11 @@ void UGC::SetStyle(EDrawStyle NewStyle)
 		bMasked() = false;
 		bTranslucent() = true;
 		bModulated() = false;
-		bTextTranslucent() = true;
+		bTextTranslucent() = false;
 		break;
 	case EDrawStyle::Modulated:
 		PolyFlags() = 0;
-		textPolyFlags() = PF_Modulated;
+		textPolyFlags() = 0;
 		bDrawEnabled() = true;
 		bMasked() = false;
 		bTranslucent() = false;
@@ -686,9 +693,7 @@ Sizef UGC::DrawText(UFont* font, float orgX, float orgY, float destWidth, const 
 	Color color = colormoo;
 	color.A = 255; // grr
 
-	if (!bWordWrap())
-		destWidth = 100000.0f;
-
+	float maxWidth = bWordWrap() ? destWidth : 100000.0f;
 
 	// Remove the | and & escapes for now
 	/*
@@ -714,6 +719,7 @@ Sizef UGC::DrawText(UFont* font, float orgX, float orgY, float destWidth, const 
 	float lineHeight = 0.0f;
 
 	float emptyLineHeight = GetTextSize(font, " ").y;
+	lineHeight = emptyLineHeight;
 
 	for (size_t pos = 0; pos < textBlocks.size(); pos++)
 	{
@@ -736,7 +742,7 @@ Sizef UGC::DrawText(UFont* font, float orgX, float orgY, float destWidth, const 
 			}
 			else
 			{
-				lineHeight = std::max(lineHeight, emptyLineHeight);
+				//lineHeight = std::max(lineHeight, emptyLineHeight);
 				curY += lineHeight;
 				totalHeight += lineHeight;
 			}
@@ -744,12 +750,12 @@ Sizef UGC::DrawText(UFont* font, float orgX, float orgY, float destWidth, const 
 			curX = 0;
 			lineBegin = pos + 1;
 			lineWidth = 0.0f;
-			lineHeight = 0.0f;
+			//lineHeight = 0.0f;
 		}
 		else
 		{
 			vec2 blockSize = GetTextSize(font, textBlocks[pos].text);
-			if (lineWidth + blockSize.x > destWidth)
+			if (lineWidth + blockSize.x > maxWidth)
 			{
 				float centerX = 0;
 				if (halign == EHAlign::Center || halign == EHAlign::Full)
@@ -770,19 +776,19 @@ Sizef UGC::DrawText(UFont* font, float orgX, float orgY, float destWidth, const 
 					// Ignore whitespace at the beginning of a word wrapped line
 					lineBegin = pos + 1;
 					lineWidth = 0.0f;
-					lineHeight = 0.0f;
+					//lineHeight = 0.0f;
 				}
 				else
 				{
 					lineBegin = pos;
 					lineWidth = blockSize.x;
-					lineHeight = blockSize.y;
+					//lineHeight = blockSize.y;
 				}
 			}
 			else
 			{
 				lineWidth += blockSize.x;
-				lineHeight = std::max(lineHeight, blockSize.y);
+				//lineHeight = std::max(lineHeight, blockSize.y);
 			}
 		}
 	}

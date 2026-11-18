@@ -17,9 +17,11 @@ public:
 	void SetButtonTextures(std::optional<UObject*> Normal, std::optional<UObject*> pressed, std::optional<UObject*> normalFocus, std::optional<UObject*> pressedFocus, std::optional<UObject*> normalInsensitive, std::optional<UObject*> pressedInsensitive);
 	void SetTextColors(std::optional<Color> Normal, std::optional<Color> pressed, std::optional<Color> normalFocus, std::optional<Color> pressedFocus, std::optional<Color> normalInsensitive, std::optional<Color> pressedInsensitive);
 
+	void InitWindow() override;
 	void MouseMoved(float newX, float newY) override;
 	bool MouseButtonPressed(float pointX, float pointY, EInputKey button, int numClicks) override;
 	bool MouseButtonReleased(float pointX, float pointY, EInputKey button, int numClicks) override;
+	void MouseEnteredWindow() override;
 
 	void DrawWindow(UGC* gc) override;
 
@@ -40,23 +42,17 @@ public:
 	float& repeatRate() { return Value<float>(PropOffsets_ButtonWindow.repeatRate); }
 	float& repeatTime() { return Value<float>(PropOffsets_ButtonWindow.repeatTime); }
 
-	struct
+	struct ButtonState
 	{
-		Color Normal = { 255, 255, 255, 255 };
-		Color Pressed = { 255, 255, 255, 255 };
-		Color NormalFocus = { 255, 255, 255, 255 };
-		Color PressedFocus = { 255, 255, 255, 255 };
-		Color NormalInsensitive = { 255, 255, 255, 255 };
-		Color PressedInsensitive = { 255, 255, 255, 255 };
-	} ButtonColors, TextColors;
+		Color ButtonColor = { 255, 255, 255, 255 };
+		Color TextColor = { 255, 255, 255, 255 };
+		UTexture* Texture = nullptr;
+	};
 
-	struct
-	{
-		UTexture* Normal = nullptr;
-		UTexture* Pressed = nullptr;
-		UTexture* NormalFocus = nullptr;
-		UTexture* PressedFocus = nullptr;
-		UTexture* NormalInsensitive = nullptr;
-		UTexture* PressedInsensitive = nullptr;
-	} ButtonTextures;
+	ButtonState NormalState;
+	ButtonState PressedState;
+	ButtonState NormalFocusState;
+	ButtonState PressedFocusState;
+	ButtonState NormalInsensitiveState;
+	ButtonState PressedInsensitiveState;
 };

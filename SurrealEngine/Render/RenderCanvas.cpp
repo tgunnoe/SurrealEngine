@@ -11,6 +11,17 @@
 #include "Packages/Engine/Resources/UFont.h"
 #include "Packages/Engine/Resources/UPalette.h"
 #include "Packages/Engine/Resources/Level/UModel.h"
+#include "Packages/Engine/Subsystems/USurrealAudioDevice.h"
+#include "Packages/Extension/UPlayerPawnExt.h"
+#include "Packages/Extension/Flags/UFlag.h"
+#include "Packages/Extension/Flags/UFlagBase.h"
+#include "Packages/Extension/Flags/UFlagBool.h"
+#include "Packages/Extension/Flags/UFlagByte.h"
+#include "Packages/Extension/Flags/UFlagFloat.h"
+#include "Packages/Extension/Flags/UFlagInt.h"
+#include "Packages/Extension/Flags/UFlagName.h"
+#include "Packages/Extension/Flags/UFlagRotator.h"
+#include "Packages/Extension/Flags/UFlagVector.h"
 #include "GameWindow.h"
 #include "VM/ScriptCall.h"
 #include "Engine.h"
@@ -547,17 +558,69 @@ void RenderSubsystem::DrawTimedemoStats()
 		Canvas.framesDrawn = 0;
 	}
 
-	if (ShowTimedemoStats || engine->LaunchInfo.IsDeusEx())
 	{
 		Array<std::string> lines;
-		lines.push_back(std::to_string(Canvas.fps) + " FPS");
-		lines.push_back(std::to_string(engine->Level->Actors.size()) + " actors");
-		lines.push_back(std::to_string(GC::GetStats().numObjects) + " GC objects");
-		lines.push_back(std::to_string(GC::GetStats().memoryUsage / (1024 * 1024)) + " mb memory used");
-		lines.push_back(std::to_string(Stats.Frames) + " visible frames");
-		lines.push_back(std::to_string(Stats.Surfaces) + " visible surfaces");
-		lines.push_back(std::to_string(Stats.Actors) + " visible actors");
-		lines.push_back(std::to_string(Stats.LightmapsUpdated) + " lightmaps updated");
+		Array<std::string> leftlines;
+
+		if (ShouldDrawTimedemoStats(ShowTimedemoStats, engine->LaunchInfo.IsDeusEx(), ShowRenderStats))
+		{
+			lines.push_back(std::to_string(Canvas.fps) + " FPS");
+			lines.push_back(std::to_string(engine->Level->Actors.size()) + " actors");
+			lines.push_back(std::to_string(GC::GetStats().numObjects) + " GC objects");
+			lines.push_back(std::to_string(GC::GetStats().memoryUsage / (1024 * 1024)) + " mb memory used");
+			lines.push_back(std::to_string(Stats.Frames) + " visible frames");
+			lines.push_back(std::to_string(Stats.Surfaces) + " visible surfaces");
+			lines.push_back(std::to_string(Stats.Actors) + " visible actors");
+			lines.push_back(std::to_string(Stats.LightmapsUpdated) + " lightmaps updated");
+		}
+
+		/*
+		if (auto pawnExt = UObject::TryCast<UPlayerPawnExt>(engine->viewport->Actor()))
+		{
+			if (auto flags = pawnExt->FlagBase())
+			{
+				lines.push_back("-- Flags --");
+				for (UFlag* flag : flags->hashTable())
+				{
+					while (flag)
+					{
+						NameString name = flag->FlagName();
+						switch ((EFlagType)flag->flagType())
+						{
+						default:
+							lines.push_back(name.ToString() + ": unknown flag type");
+							break;
+						case EFlagType::Bool:
+							lines.push_back(name.ToString() + ": " + (UObject::Cast<UFlagBool>(flag)->bValue() ? "true" : "false"));
+							break;
+						case EFlagType::Byte:
+							lines.push_back(name.ToString() + ": " + std::to_string(UObject::Cast<UFlagByte>(flag)->byteValue()));
+							break;
+						case EFlagType::Int:
+							lines.push_back(name.ToString() + ": " + std::to_string(UObject::Cast<UFlagInt>(flag)->intValue()));
+							break;
+						case EFlagType::Float:
+							lines.push_back(name.ToString() + ": " + std::to_string(UObject::Cast<UFlagFloat>(flag)->floatValue()));
+							break;
+						case EFlagType::Name:
+							lines.push_back(name.ToString() + ": " + UObject::Cast<UFlagName>(flag)->nameValue().ToString());
+							break;
+						case EFlagType::Vector:
+							lines.push_back(name.ToString() + ": vector");
+							break;
+						case EFlagType::Rotator:
+							lines.push_back(name.ToString() + ": rotator");
+							break;
+						}
+						flag = flag->nextFlag();
+					}
+				}
+			}
+		}
+		*/
+
+		if (ShowAudioStats)
+			engine->audiodev->AddStats(leftlines);
 
 		UFont* font = engine->canvas->SmallFont();
 		if (font)
@@ -572,50 +635,10 @@ void RenderSubsystem::DrawTimedemoStats()
 				curY += curYL;
 			}
 
-			/*
-			Array<std::string> leftlines;
-			engine->audiodev->AddStats(leftlines);
 			curY = 64;
 			for (const std::string& text : leftlines)
 			{
 				float curX = 16.0f;
-				float curXL = 0.0f;
-				float curYL = 0.0f;
-				DrawText(font, vec4(1.0f), 0.0f, 0.0f, curX, curY, curXL, curYL, false, text, PF_NoSmooth | PF_Masked, false);
-				curY += curYL;
-			}
-			*/
-		}
-	}
-
-	if (ShowRenderStats)
-	{
-		Array<std::string> lines;
-		lines.push_back(std::to_string(Canvas.fps) + " FPS");
-		lines.push_back(std::to_string(engine->Level->Actors.size()) + " actors");
-		lines.push_back(std::to_string(GC::GetStats().numObjects) + " GC objects");
-		lines.push_back(std::to_string(GC::GetStats().memoryUsage / (1024 * 1024)) + " mb memory used");
-
-		/*size_t numCollisionActors = 0;
-		for (auto& it : engine->Level->Hash.CollisionActors)
-			numCollisionActors += it.second.size();
-		lines.push_back(std::to_string(numCollisionActors) + " collision actors");*/
-
-		/*lines.push_back(std::to_string(Scene.OpaqueNodes.size() + Scene.TranslucentNodes.size()) + " visible surfaces");
-		lines.push_back(std::to_string(Scene.Actors.size()) + " visible actors");
-		lines.push_back(std::to_string(Scene.Coronas.size()) + " visible coronas");
-
-		lines.push_back(std::to_string(Scene.Clipper.numDrawSpans) + " spans");
-		lines.push_back(std::to_string(Scene.Clipper.numSurfs) + " checked surfaces");
-		lines.push_back(std::to_string(Scene.Clipper.numTris) + " checked triangles");*/
-
-		UFont* font = engine->canvas->MedFont();
-		if (font)
-		{
-			float curY = 180;
-			for (const std::string& text : lines)
-			{
-				float curX = engine->viewport->ViewportWidth() / (float)Canvas.uiscale - GetTextSize(font, text).x - 16;
 				float curXL = 0.0f;
 				float curYL = 0.0f;
 				DrawText(font, vec4(1.0f), 0.0f, 0.0f, curX, curY, curXL, curYL, false, text, PF_NoSmooth | PF_Masked, false);

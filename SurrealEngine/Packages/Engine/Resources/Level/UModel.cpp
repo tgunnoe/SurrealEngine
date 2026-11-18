@@ -7,6 +7,7 @@
 #include "UVerts.h"
 #include "UPolys.h"
 #include "Packages/Engine/Actors/UActor.h"
+#include "Packages/Engine/Actors/Info/UZoneInfo.h"
 #include "Packages/Engine/Resources/Textures/UTexture.h"
 #include "Utils/Logger.h"
 #include "Engine.h"
@@ -440,6 +441,18 @@ void UModel::Save(PackageStreamWriter* stream)
 
 PointRegion UModel::FindRegion(const vec3& point, UZoneInfo* levelZoneInfo)
 {
+	// The zone actor comes from this model's own zone table. An actor of the entry level keeps moving while another level
+	// plays, and the engine's current level would hand it that level's zones: the entry pawn would point into the played map.
+	auto zoneActorOf = [&](int zoneNumber) -> UZoneInfo*
+	{
+		if (zoneNumber >= 0 && zoneNumber < (int)Zones.size())
+		{
+			if (auto zone = UObject::TryCast<UZoneInfo>(Zones[zoneNumber].ZoneActor))
+				return zone;
+		}
+		return levelZoneInfo;
+	};
+
 	if (Nodes.empty()) // This happens in Harry Potter! Probably a load problem
 	{
 		static bool messageShown = false;
@@ -451,7 +464,7 @@ PointRegion UModel::FindRegion(const vec3& point, UZoneInfo* levelZoneInfo)
 		PointRegion region;
 		region.BspLeaf = 0;
 		region.ZoneNumber = 0;
-		region.Zone = engine->GetZoneActor(region.ZoneNumber);
+		region.Zone = levelZoneInfo;
 		return region;
 	}
 
@@ -484,7 +497,7 @@ PointRegion UModel::FindRegion(const vec3& point, UZoneInfo* levelZoneInfo)
 		}
 	}
 
-	region.Zone = engine->GetZoneActor(region.ZoneNumber);
+	region.Zone = zoneActorOf(region.ZoneNumber);
 	return region;
 }
 

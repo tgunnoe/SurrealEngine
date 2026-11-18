@@ -1,16 +1,30 @@
 #pragma once
 
+// One console command to run a fixed time after the first login (see --exec).
+struct ExecItem
+{
+	double seconds = 0.0;
+	std::string command;
+};
+
 struct GameLaunchInfo
 {
 	int ue1Version = 0;						// Epic UE1 engine version game was forked from. 500 means unknown version newer than UT but before UE2
 	int gameVersion = 0;					// Engine version as named by the game (e.g. 226, 227, 436...)
 	int gameSubVersion = 0;				// Engine sub version displayed as a letter (Note: Isn't always consistent)
 	bool noEntryMap = false;
+	bool autostart = false;					// Unattended run: no launcher, no ini or save written anywhere (see CanWriteUserFiles)
+	double exitAfterSeconds = -1.0;			// Seconds since process start after which the main loop ends; negative means never
 	std::string gameName = "";				// Name of the game (e.g. "Unreal Tournament")
 	std::string gameRootFolder = "";		// Path to the folder that contains all the subfolders and files
 	std::string gameExecutableName = "";	// Name of the game executable (e.g. "UnrealTournament")
 	std::string gameVersionString = "";		// Version (+ sub version) info as a string (e.g. "469d")
 	std::string url = "";					// The UnrealURL to launch upon startup
+	std::string userDir = "";				// Absolute --user-dir: replaces the per-user config and data directories; empty when not given
+	Array<ExecItem> execSchedule;			// Console commands from --exec, stably sorted by seconds since the first login
+
+	// Unattended runs write no ini files and no saves, unless they were given a directory of their own
+	bool CanWriteUserFiles() const { return !autostart || !userDir.empty(); }
 
 	bool IsUnreal1() const { return gameExecutableName == "Unreal"; }
 	bool IsUnreal1_226() const { return IsUnreal1() && gameVersion == 226; }
@@ -31,6 +45,7 @@ class GameFolderSelection
 {
 public:
 	static void UpdateList();
+	static int AutoSelect(); // Selects the first folder given on the command line without the launcher
 	static GameLaunchInfo GetLaunchInfo(int selectedGame);
 
 	static Array<GameLaunchInfo> Games;
@@ -40,3 +55,40 @@ private:
 	static Array<std::string> FindGameFolders();
 	static std::string GetExePath();
 };
+
+struct ExecScheduleResult
+{
+	Array<ExecItem> items;	// Stably sorted by seconds; empty when the text was rejected
+	std::string error;		// Names the offending item; empty when the text was accepted
+
+	bool ok() const { return error.empty(); }
+};
+
+// Parses the value of --exec: "<seconds>:<command>[;<seconds>:<command>...]".
+ExecScheduleResult ParseExecSchedule(const std::string& text);
+
+// Returns the end of the run of items, starting at cursor, that are due once secondsSinceLogin
+// have passed; a negative value means the player has not logged in yet and nothing is due.
+// The schedule must be sorted by seconds, as ParseExecSchedule returns it.
+size_t DueCommands(const Array<ExecItem>& schedule, double secondsSinceLogin, size_t cursor);
+
+// "<seconds> <command>", the text that follows EXEC in the smoke log.
+std::string FormatExecItem(const ExecItem& item);
+
+// One entry of --trace-script: a class, narrowed to one function when function is not empty.
+struct TraceScriptEntry
+{
+	std::string cls;
+	std::string function;
+};
+
+struct TraceScriptResult
+{
+	Array<TraceScriptEntry> entries;	// In the order written; empty when the text was rejected
+	std::string error;					// Names the offending value or entry; empty when the text was accepted
+
+	bool ok() const { return error.empty(); }
+};
+
+// Parses the value of --trace-script: "<Class>[.<Function>][,<Class>[.<Function>]...]".
+TraceScriptResult ParseTraceScript(const std::string& text);

@@ -167,6 +167,16 @@ void UStruct::Save(PackageStreamWriter* stream)
 	//	pos = WriteToken(stream, pos, 0);
 }
 
+GCAllocation* UStruct::Mark(GCAllocation* marklist)
+{
+	// The property list and the base are C++ members, not properties, and the native Object properties are in no package
+	marklist = UObject::Mark(marklist);
+	marklist = GC::MarkObject(marklist, BaseStruct);
+	for (UProperty* prop : Properties)
+		marklist = GC::MarkObject(marklist, prop);
+	return marklist;
+}
+
 bool UStruct::IsEqual(const void* v1, const void* v2)
 {
 	for (UProperty* prop : Properties)
@@ -236,9 +246,20 @@ FunctionDebugInfo* UStruct::GetDebugInfo()
 		// To do: validate compiled statements matches code statements
 	}
 
-	auto it = scriptText->DebugInfo->Functions.find(Name);
+	NameString fullName;
+	if (!StructParent || UObject::TryCast<UClass>(StructParent))
+	{
+		fullName = Name;
+	}
+	else
+	{
+		fullName = StructParent->Name.ToString() + "." + Name.ToString();
+	}
+
+	auto it = scriptText->DebugInfo->Functions.find(fullName);
 	if (it != scriptText->DebugInfo->Functions.end())
 		return &it->second;
+	LogMessage("Could not find debug info for function: " + fullName.ToString());
 	return nullptr;
 }
 

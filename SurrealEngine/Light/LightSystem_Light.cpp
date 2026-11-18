@@ -62,10 +62,15 @@ TextureInfo LightSystem::GetMoverLightmap(UMover* mover, const Poly& poly, UZone
 		mover->Light.Radius = radius;
 	}
 
+	// There is probably a better way to calculate this
+	vec3 worldLocation = (objectToWorld * vec4(mover->Light.Center, 1.0f)).xyz();
+	vec3 v = (objectToWorld * vec4(mover->Light.Center + vec3(mover->Light.Radius), 1.0f)).xyz() - worldLocation;
+	float worldRadius = length(v);
+
 	return GetLightmap(
 		model, poly.BrushPolyIndex, worldCoords, zoneActor,
-		(objectToWorld * vec4(mover->Light.Center, 1.0f)).xyz(),
-		mover->Light.Radius * std::max(scale.x, std::max(scale.y, scale.z)),
+		worldLocation,
+		worldRadius,
 		mover->bDynamicLightMover() ? mover : nullptr, mover->bSpecialLit());
 }
 
@@ -262,7 +267,36 @@ static float LightDistanceFalloff(float distsqr)
 	return std::min((1.0f + 2.0f * v3 - 3.0f * v2) / v, 1.0f);
 }
 
-void LightSystem::InitVertexLight(VertexLight& out, UActor* actor, UZoneInfo* zoneActor)
+static bool IsFogballBetweenCameraAndMesh(vec3 cameraPos, vec3 meshCenter, float meshRadius, vec3 fogballCenter, float fogballRadius)
+{
+	float r = fogballRadius + meshRadius;
+	vec3 l = fogballCenter - cameraPos;
+	float l2 = dot(l, l);
+	float r2 = r * r;
+	if (l2 <= r2)
+		return true; // Camera is inside the fogball
+
+	vec3 d = meshCenter - cameraPos;
+	float rayLength = std::sqrt(dot(d, d));
+	if (rayLength <= FLT_EPSILON)
+		return false;
+	d /= rayLength;
+	float s = dot(l, d);
+	if (s < 0.0f)
+		return false; // Fogball is behind
+
+	float s2 = s * s;
+	float m2 = l2 - s2;
+	if (m2 > r2)
+		return false; // Ray from camera to mesh never hits the fogball
+
+	// We have a hit. Is it between mesh and camera?
+	float q = std::sqrt(r2 - m2);
+	float t = l2 > r2 ? s - q : s + q;
+	return t >= 0.0f && t <= rayLength;
+}
+
+void LightSystem::InitVertexLight(VertexLight& out, UActor* actor, UZoneInfo* zoneActor, const vec4& boundingSphere)
 {
 	// AmbientGlow value 255 is a special pulsating effect used for powerups
 	float ambientGlow = actor->AmbientGlow() == 255 ? AmbientGlowAmount : actor->AmbientGlow() * (1.0f / 255.0f);
@@ -289,15 +323,18 @@ void LightSystem::InitVertexLight(VertexLight& out, UActor* actor, UZoneInfo* zo
 	{
 		if (light->FogInfo.brightness < 0.0f)
 		{
-			light->FogInfo.fogcolor = hsbtorgb(light->LightHue(), light->LightSaturation(), light->LightBrightness());
+			light->FogInfo.fogcolor = hsbtorgb(light->LightHue(), light->LightSaturation(), 128);
 			light->FogInfo.brightness = light->LightBrightness() * (1.0f / 255.0f) * light->VolumeBrightness() * (1.0f / 64.0f);
 			light->FogInfo.fog = light->VolumeFog() * (1.0f / 255.0f);
 			light->FogInfo.radius = light->WorldVolumetricRadius();
 			light->FogInfo.location = light->Location();
 		}
 
+		if (light->FogInfo.brightness <= 0.0f || !IsFogballBetweenCameraAndMesh(out.CameraLocation, boundingSphere.xyz(), boundingSphere.w, light->FogInfo.location, light->FogInfo.radius))
+			continue;
+
 		out.FogBalls[fogIndex].fogcolor = light->FogInfo.fogcolor;
-		out.FogBalls[fogIndex].brightness = light->FogInfo.brightness * 5.0f;
+		out.FogBalls[fogIndex].brightness = light->FogInfo.brightness;
 		out.FogBalls[fogIndex].fog = light->FogInfo.fog;
 		out.FogBalls[fogIndex].radius = light->FogInfo.radius;
 		out.FogBalls[fogIndex].lightpos = light->FogInfo.location;

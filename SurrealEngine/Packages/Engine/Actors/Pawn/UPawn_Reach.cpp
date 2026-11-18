@@ -130,7 +130,9 @@ bool UPawn::ActorReachable(UActor* anActor, bool checkNavpoint)
 	case PHYS_Walking:
 		return ReachableWalking(anActor);
 	case PHYS_Falling:
-		return false; // Should we be able to reach anything in this state?
+		// DX ScriptedPawn pawns try to walk to their chairs in this state.
+		// Is this a spawn error or an issue with ActorReachable?
+		return true;
 	case PHYS_Swimming:
 		return ReachableSwimming(anActor);
 	case PHYS_Flying:
@@ -151,6 +153,16 @@ bool UPawn::ActorReachable(UActor* anActor, bool checkNavpoint)
 
 bool UPawn::PointReachable(vec3 aPoint)
 {
+	vec3 eyePos = Location();
+	eyePos.z += BaseEyeHeight();
+	if (!FastTrace(aPoint, eyePos))
+		return false;
+
+	return PointReachableWithoutSight(aPoint);
+}
+
+bool UPawn::PointReachableWithoutSight(vec3 aPoint)
+{
 	PointRegion pointRegion = XLevel()->Model->FindRegion(aPoint, Level());
 
 	if (!Region().Zone->bWaterZone() && !bCanSwim() && pointRegion.Zone->bWaterZone())
@@ -158,10 +170,22 @@ bool UPawn::PointReachable(vec3 aPoint)
 	if (!FootRegion().Zone->bPainZone() && pointRegion.Zone->bPainZone() && pointRegion.Zone->DamageType() != ReducedDamageType())
 		return false;
 
-	vec3 eyePos = Location();
-	eyePos.z += BaseEyeHeight();
-	if (!FastTrace(aPoint, eyePos))
-		return false;
-
 	return CheckLocation(aPoint, CollisionRadius(), CollisionHeight(), bCollideWorld() || bCollideWhenPlacing()).first;
+}
+
+bool UPawn::CylinderTraceClear(const vec3& from, const vec3& to)
+{
+	// Nothing to sweep, and a zero-length trace has no direction
+	vec3 delta = to - from;
+	if (dot(delta, delta) <= 0.0f)
+		return true;
+
+	TraceFlags flags;
+	flags.world = true;
+	flags.movers = true;
+	vec3 extents(CollisionRadius(), CollisionRadius(), CollisionHeight());
+
+	// A level hit comes back with the level as its actor and a mover hit with the mover, so only an
+	// unobstructed sweep returns no actor.
+	return XLevel()->Collision.TraceFirstHit(from, to, this, extents, flags).Actor == nullptr;
 }

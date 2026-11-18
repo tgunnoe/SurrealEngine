@@ -10,7 +10,6 @@ public:
 	using UActor::UActor;
 
 	void BuildPath(vec3& start, vec3& end);
-	void CheckUPak();
 	UNavigationPoint* GetFirst();
 	UNavigationPoint* GetPrevious();
 	UNavigationPoint* GetCurrent();
@@ -18,7 +17,7 @@ public:
 	UNavigationPoint* GetLast();
 	UNavigationPoint* GetLastVisible();
 
-	TypedScriptArray<UNavigationPoint*> NodePath() { return DynamicArray<UNavigationPoint*>(PropOffsets_UPakPathNodeIterator.NodePath); }
+	FixedArrayView<UNavigationPoint*, 64> NodePath() { return FixedArray<UNavigationPoint*, 64>(PropOffsets_UPakPathNodeIterator.NodePath); }
 	int& NodeCount() { return Value<int>(PropOffsets_UPakPathNodeIterator.NodeCount); }
 	int& NodeIndex() { return Value<int>(PropOffsets_UPakPathNodeIterator.NodeIndex); }
 	int& NodeCost() { return Value<int>(PropOffsets_UPakPathNodeIterator.NodeCost); }

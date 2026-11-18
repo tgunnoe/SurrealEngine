@@ -25,6 +25,14 @@ struct UDXInitialAllianceInfoEx
 	};
 };
 
+// The rule behind ScriptedPawn.IsValidEnemy, kept free of engine types so it can be tested without a
+// loaded level. checkAlliance is true unless the script passed an explicit false; hostile is only
+// consulted when it is true.
+inline bool EnemyValidity(bool candidateExists, bool isSelf, bool alive, bool detectable, bool checkAlliance, bool hostile)
+{
+	return candidateExists && !isSelf && alive && detectable && (!checkAlliance || hostile);
+}
+
 class UScriptedPawn : public UPawn
 {
 public:
@@ -41,13 +49,4 @@ public:
 	uint8_t GetPawnAllianceType(UPawn* QueryPawn);
 	bool HaveSeenCarcass(const NameString& CarcassName);
 	bool IsValidEnemy(UPawn* TestEnemy, std::optional<bool> bCheckAlliance);
-};
-
-struct XAIParams
-{
-	UActor* BestActor;
-	float Score;
-	float Visibility;
-	float Volume;
-	float Smell;
 };

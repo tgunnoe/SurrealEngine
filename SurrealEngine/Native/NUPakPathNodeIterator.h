@@ -8,7 +8,6 @@ public:
 	static void RegisterFunctions();
 
 	static void BuildPath(UObject* Self, vec3& Start, vec3& End);
-	static void CheckUPak(UObject* Self);
 	static void GetFirst(UObject* Self, UObject*& ReturnValue);
 	static void GetPrevious(UObject* Self, UObject*& ReturnValue);
 	static void GetCurrent(UObject* Self, UObject*& ReturnValue);

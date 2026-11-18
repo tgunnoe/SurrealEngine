@@ -1,0 +1,1595 @@
+{
+  "game": "<game folder>",
+  "seconds": 60,
+  "url_options": null,
+  "exec": null,
+  "game_by_prefix": null,
+  "game_by_prefix_except": null,
+  "map_subdirs": null,
+  "maps": [
+    {
+      "map": "00_Intro",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 420.6847457627119,
+      "maps_loaded": [
+        "00_Intro"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "00_Intro.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "00_Training",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 322.2406779661017,
+      "maps_loaded": [
+        "00_Training"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "00_Training.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "00_TrainingCombat",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 616.7677966101695,
+      "maps_loaded": [
+        "00_TrainingCombat"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "00_TrainingCombat.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "00_TrainingFinal",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1038.2271186440678,
+      "maps_loaded": [
+        "00_TrainingFinal"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "00_TrainingFinal.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "01_NYC_UNATCOHQ",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 685.1254237288135,
+      "maps_loaded": [
+        "01_NYC_UNATCOHQ"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "01_NYC_UNATCOHQ.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "01_NYC_UNATCOIsland",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 80.44915254237289,
+      "maps_loaded": [
+        "01_NYC_UNATCOIsland"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "01_NYC_UNATCOIsland.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "02_NYC_Bar",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1076.4779661016948,
+      "maps_loaded": [
+        "02_NYC_Bar"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "02_NYC_Bar.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "02_NYC_BatteryPark",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 131.51864406779663,
+      "maps_loaded": [
+        "02_NYC_BatteryPark"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "02_NYC_BatteryPark.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "02_NYC_FreeClinic",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 527.0983050847458,
+      "maps_loaded": [
+        "02_NYC_FreeClinic"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "02_NYC_FreeClinic.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "02_NYC_Hotel",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 905.457627118644,
+      "maps_loaded": [
+        "02_NYC_Hotel"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "02_NYC_Hotel.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "02_NYC_Smug",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1348.3118644067795,
+      "maps_loaded": [
+        "02_NYC_Smug"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "02_NYC_Smug.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "02_NYC_Street",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 341.6474576271187,
+      "maps_loaded": [
+        "02_NYC_Street"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "02_NYC_Street.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "02_NYC_Underground",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 523.2830508474576,
+      "maps_loaded": [
+        "02_NYC_Underground"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "02_NYC_Underground.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "02_NYC_Warehouse",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 271.0101694915254,
+      "maps_loaded": [
+        "02_NYC_Warehouse"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "02_NYC_Warehouse.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "03_NYC_747",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 627.7593220338983,
+      "maps_loaded": [
+        "03_NYC_747"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "03_NYC_747.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "03_NYC_Airfield",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 102.44237288135594,
+      "maps_loaded": [
+        "03_NYC_Airfield"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "03_NYC_Airfield.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "03_NYC_AirfieldHeliBase",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 568.2118644067797,
+      "maps_loaded": [
+        "03_NYC_AirfieldHeliBase"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "03_NYC_AirfieldHeliBase.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "03_NYC_BatteryPark",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 111.66101694915254,
+      "maps_loaded": [
+        "03_NYC_BatteryPark"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "03_NYC_BatteryPark.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "03_NYC_BrooklynBridgeStation",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1028.1118644067797,
+      "maps_loaded": [
+        "03_NYC_BrooklynBridgeStation"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "03_NYC_BrooklynBridgeStation.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "03_NYC_Hangar",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 679.2372881355932,
+      "maps_loaded": [
+        "03_NYC_Hangar"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "03_NYC_Hangar.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "03_NYC_MolePeople",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 768.9796610169492,
+      "maps_loaded": [
+        "03_NYC_MolePeople"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "03_NYC_MolePeople.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "03_NYC_UNATCOHQ",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 986.1915254237289,
+      "maps_loaded": [
+        "03_NYC_UNATCOHQ"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "03_NYC_UNATCOHQ.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "03_NYC_UNATCOIsland",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 372.7440677966102,
+      "maps_loaded": [
+        "03_NYC_UNATCOIsland"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "03_NYC_UNATCOIsland.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "04_NYC_Bar",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1312.3864406779662,
+      "maps_loaded": [
+        "04_NYC_Bar"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "04_NYC_Bar.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "04_NYC_BatteryPark",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 115.50508474576272,
+      "maps_loaded": [
+        "04_NYC_BatteryPark"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "04_NYC_BatteryPark.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "04_NYC_Hotel",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 724.7661016949152,
+      "maps_loaded": [
+        "04_NYC_Hotel"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "04_NYC_Hotel.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "04_NYC_NSFHQ",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 164.75593220338985,
+      "maps_loaded": [
+        "04_NYC_NSFHQ"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "04_NYC_NSFHQ.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "04_NYC_Smug",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1336.877966101695,
+      "maps_loaded": [
+        "04_NYC_Smug"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "04_NYC_Smug.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "04_NYC_Street",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 476.9813559322034,
+      "maps_loaded": [
+        "04_NYC_Street"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "04_NYC_Street.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "04_NYC_UNATCOHQ",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 961.0406779661017,
+      "maps_loaded": [
+        "04_NYC_UNATCOHQ"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "04_NYC_UNATCOHQ.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "04_NYC_UNATCOIsland",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 404.3084745762712,
+      "maps_loaded": [
+        "04_NYC_UNATCOIsland"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "04_NYC_UNATCOIsland.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "04_NYC_Underground",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 935.1135593220339,
+      "maps_loaded": [
+        "04_NYC_Underground"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "04_NYC_Underground.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "05_NYC_UNATCOHQ",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 864.2050847457626,
+      "maps_loaded": [
+        "05_NYC_UNATCOHQ"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "05_NYC_UNATCOHQ.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "05_NYC_UNATCOIsland",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 798.4372881355932,
+      "maps_loaded": [
+        "05_NYC_UNATCOIsland"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "05_NYC_UNATCOIsland.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "05_NYC_UNATCOMJ12lab",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 446.42033898305084,
+      "maps_loaded": [
+        "05_NYC_UNATCOMJ12lab"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "05_NYC_UNATCOMJ12lab.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_Helibase",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 132.05084745762713,
+      "maps_loaded": [
+        "06_HongKong_Helibase"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_Helibase.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_MJ12lab",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 150.1864406779661,
+      "maps_loaded": [
+        "06_HongKong_MJ12lab"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_MJ12lab.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_Storage",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 747.8847457627118,
+      "maps_loaded": [
+        "06_HongKong_Storage"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_Storage.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_TongBase",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 714.9966101694915,
+      "maps_loaded": [
+        "06_HongKong_TongBase"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_TongBase.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_VersaLife",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 592.0694915254237,
+      "maps_loaded": [
+        "06_HongKong_VersaLife"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_VersaLife.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_WanChai_Canal",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 86.11186440677967,
+      "maps_loaded": [
+        "06_HongKong_WanChai_Canal"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_WanChai_Canal.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_WanChai_Garage",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 336.16610169491526,
+      "maps_loaded": [
+        "06_HongKong_WanChai_Garage"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_WanChai_Garage.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_WanChai_Market",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 231.1949152542373,
+      "maps_loaded": [
+        "06_HongKong_WanChai_Market"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_WanChai_Market.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_WanChai_Street",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 78.47966101694915,
+      "maps_loaded": [
+        "06_HongKong_WanChai_Street"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_WanChai_Street.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "06_HongKong_WanChai_Underworld",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 161.3457627118644,
+      "maps_loaded": [
+        "06_HongKong_WanChai_Underworld"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "06_HongKong_WanChai_Underworld.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "08_NYC_Bar",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1332.422033898305,
+      "maps_loaded": [
+        "08_NYC_Bar"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "08_NYC_Bar.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "08_NYC_FreeClinic",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1902.906779661017,
+      "maps_loaded": [
+        "08_NYC_FreeClinic"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "08_NYC_FreeClinic.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "08_NYC_Hotel",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1060.920338983051,
+      "maps_loaded": [
+        "08_NYC_Hotel"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "08_NYC_Hotel.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "08_NYC_Smug",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1331.849152542373,
+      "maps_loaded": [
+        "08_NYC_Smug"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "08_NYC_Smug.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "08_NYC_Street",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 384.40847457627115,
+      "maps_loaded": [
+        "08_NYC_Street"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "08_NYC_Street.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "08_NYC_Underground",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 927.7932203389831,
+      "maps_loaded": [
+        "08_NYC_Underground"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "08_NYC_Underground.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "09_NYC_Dockyard",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 252.9271186440678,
+      "maps_loaded": [
+        "09_NYC_Dockyard"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "09_NYC_Dockyard.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "09_NYC_Graveyard",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 473.22542372881355,
+      "maps_loaded": [
+        "09_NYC_Graveyard"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "09_NYC_Graveyard.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "09_NYC_Ship",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 287.3271186440678,
+      "maps_loaded": [
+        "09_NYC_Ship"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "09_NYC_Ship.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "09_NYC_ShipBelow",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 377.84237288135597,
+      "maps_loaded": [
+        "09_NYC_ShipBelow"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "09_NYC_ShipBelow.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "09_NYC_ShipFan",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 779.9847457627119,
+      "maps_loaded": [
+        "09_NYC_ShipFan"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "09_NYC_ShipFan.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "10_Paris_Catacombs",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 366.7949152542373,
+      "maps_loaded": [
+        "10_Paris_Catacombs"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "10_Paris_Catacombs.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "10_Paris_Catacombs_Tunnels",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 715.7661016949152,
+      "maps_loaded": [
+        "10_Paris_Catacombs_Tunnels"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "10_Paris_Catacombs_Tunnels.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "10_Paris_Chateau",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 550.6881355932203,
+      "maps_loaded": [
+        "10_Paris_Chateau"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "10_Paris_Chateau.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "10_Paris_Club",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1237.893220338983,
+      "maps_loaded": [
+        "10_Paris_Club"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "10_Paris_Club.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "10_Paris_Metro",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 438.7508474576271,
+      "maps_loaded": [
+        "10_Paris_Metro"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "10_Paris_Metro.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "11_Paris_Cathedral",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 573.2525423728814,
+      "maps_loaded": [
+        "11_Paris_Cathedral"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "11_Paris_Cathedral.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "11_Paris_Everett",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 720.0271186440677,
+      "maps_loaded": [
+        "11_Paris_Everett"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "11_Paris_Everett.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "11_Paris_Underground",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 820.0152542372881,
+      "maps_loaded": [
+        "11_Paris_Underground"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "11_Paris_Underground.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "12_Vandenberg_Cmd",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 279.2389830508474,
+      "maps_loaded": [
+        "12_Vandenberg_Cmd"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "12_Vandenberg_Cmd.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "12_Vandenberg_Computer",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 817.9220338983051,
+      "maps_loaded": [
+        "12_Vandenberg_Computer"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "12_Vandenberg_Computer.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "12_Vandenberg_Gas",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 204.29491525423728,
+      "maps_loaded": [
+        "12_Vandenberg_Gas"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "12_Vandenberg_Gas.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "12_Vandenberg_Tunnels",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 878.6813559322034,
+      "maps_loaded": [
+        "12_Vandenberg_Tunnels"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "12_Vandenberg_Tunnels.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "14_OceanLab_Lab",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 39.143103448275866,
+      "maps_loaded": [
+        "14_OceanLab_Lab"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "14_OceanLab_Lab.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "14_OceanLab_UC",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 875.8627118644068,
+      "maps_loaded": [
+        "14_OceanLab_UC"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "14_OceanLab_UC.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "14_Oceanlab_Silo",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 175.56949152542373,
+      "maps_loaded": [
+        "14_Oceanlab_Silo"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "14_Oceanlab_Silo.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "14_Vandenberg_Sub",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 212.13898305084746,
+      "maps_loaded": [
+        "14_Vandenberg_Sub"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "14_Vandenberg_Sub.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "15_Area51_Bunker",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 213.22203389830509,
+      "maps_loaded": [
+        "15_Area51_Bunker"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "15_Area51_Bunker.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "15_Area51_Entrance",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 531.7983050847457,
+      "maps_loaded": [
+        "15_Area51_Entrance"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "15_Area51_Entrance.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "15_Area51_Final",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 216.61186440677966,
+      "maps_loaded": [
+        "15_Area51_Final"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "15_Area51_Final.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "15_Area51_Page",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 214.58983050847456,
+      "maps_loaded": [
+        "15_Area51_Page"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "15_Area51_Page.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "99_Endgame1",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 865.9525423728813,
+      "maps_loaded": [
+        "99_Endgame1"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "99_Endgame1.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "99_Endgame2",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 4,
+      "fps_avg": 802.1915254237289,
+      "maps_loaded": [
+        "99_Endgame2"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "99_Endgame2.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "99_Endgame3",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 670.8915254237288,
+      "maps_loaded": [
+        "99_Endgame3"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "99_Endgame3.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "99_Endgame4",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 870.7440677966102,
+      "maps_loaded": [
+        "99_Endgame4"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "99_Endgame4.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "DX",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 2811.601694915254,
+      "maps_loaded": [
+        "DX"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "DX.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "DXMP_Area51Bunker",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1049.6610169491526,
+      "maps_loaded": [
+        "DXMP_Area51Bunker"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "DXMP_Area51Bunker.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "DXMP_CMD",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1016.735593220339,
+      "maps_loaded": [
+        "DXMP_CMD"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "DXMP_CMD.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "DXMP_Cathedral",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1018.1016949152543,
+      "maps_loaded": [
+        "DXMP_Cathedral"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "DXMP_Cathedral.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "DXMP_Silo",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 832.0406779661017,
+      "maps_loaded": [
+        "DXMP_Silo"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "DXMP_Silo.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "DXMP_Smuggler",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 1306.2372881355932,
+      "maps_loaded": [
+        "DXMP_Smuggler"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "DXMP_Smuggler.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "DXOnly",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 3056.2423728813555,
+      "maps_loaded": [
+        "DXOnly"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "DXOnly.log",
+      "screenshot": null,
+      "verdict": "pass"
+    },
+    {
+      "map": "Entry",
+      "exit_code": 0,
+      "script_errors": 0,
+      "stub_hits": 1,
+      "missing_natives": 0,
+      "exceptions": 0,
+      "script_warnings": 0,
+      "fps_avg": 2868.0881355932206,
+      "maps_loaded": [
+        "Entry"
+      ],
+      "login": true,
+      "match_started": false,
+      "log": "Entry.log",
+      "screenshot": null,
+      "verdict": "pass"
+    }
+  ]
+}

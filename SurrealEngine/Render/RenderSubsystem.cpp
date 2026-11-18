@@ -28,18 +28,14 @@ void RenderSubsystem::DrawGame(float levelTimeElapsed)
 	Stats.Actors = 0;
 	Stats.LightmapsUpdated = 0;
 
-	vec3 flashScale = 0.5f;
-	vec3 flashFog = vec3(0.0f, 0.0f, 0.0f);
+	FlashLockValues flash = ComputeFlashLockNoPlayer();
 
 	UPlayerPawn* player = UObject::TryCast<UPlayerPawn>(engine->CameraActor);
 	if (player)
-	{
-		flashScale = player->FlashScale();
-		flashFog = player->FlashFog();
-	}
+		flash = ComputeFlashLock(player->FlashScale(), player->FlashFog());
 
 	Device->Brightness = engine->client->Brightness;
-	Device->Lock(vec4(flashScale, 1.0f), vec4(flashFog, 1.0f), vec4(0.0f), nullptr, nullptr);
+	Device->Lock(flash.Scale, flash.Fog, vec4(0.0f), nullptr, nullptr);
 
 	ResetCanvas();
 	PreRender();
@@ -66,10 +62,9 @@ void RenderSubsystem::DrawEditorViewport()
 
 void RenderSubsystem::DrawVideoFrame(TextureInfo* frame, TextureInfo* background)
 {
-	vec3 flashScale = 0.5f;
-	vec3 flashFog = vec3(0.0f, 0.0f, 0.0f);
+	FlashLockValues flash = ComputeFlashLockNoPlayer();
 	Device->Brightness = 0.4f;// engine->client->Brightness;
-	Device->Lock(vec4(flashScale, 1.0f), vec4(flashFog, 1.0f), vec4(0.0f), nullptr, nullptr);
+	Device->Lock(flash.Scale, flash.Fog, vec4(0.0f), nullptr, nullptr);
 	ResetCanvas();
 	Device->SetSceneNode(&Canvas.Frame);
 

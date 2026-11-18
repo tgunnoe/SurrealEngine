@@ -7,6 +7,10 @@
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/Properties/UClassProperty.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
+#include "VM/Bytecode.h"
+#include "Commandlet/VM/DisassemblyCommandlet.h"
+#include "Commandlet/VM/ListSourceCommandlet.h"
+#include <regex>
 
 PrintCommandlet::PrintCommandlet()
 {
@@ -22,7 +26,110 @@ void PrintCommandlet::OnCommand(DebuggerApp* console, const std::string& args)
 		for (UObject* actor : engine->Level->Actors)
 		{
 			if (actor)
-				console->WriteOutput(ResetEscape() + actor->Name.ToString() + " - " + ColorEscape(96) + actor->Class->Name.ToString() + ResetEscape() + NewLine());
+			{
+				PrintColumn(console, actor->Name.ToString(), actor->Class->Name.ToString(), true);
+			}
+		}
+	}
+	else if (args[0] == '/')
+	{
+		std::string searchstr;
+		Array<std::string> chunks;
+		size_t pos = args.find(' ');
+		if (pos == std::string::npos)
+		{
+			searchstr = args.substr(1);
+		}
+		else
+		{
+			searchstr = args.substr(1, pos - 1);
+			chunks = SplitString(args.substr(pos + 1), '.');
+		}
+
+		try
+		{
+			std::regex reg(searchstr, std::regex::ECMAScript | std::regex::icase);
+			for (UObject* actor : engine->Level->Actors)
+			{
+				if (std::regex_search(actor->Name.ToString(), reg) || std::regex_search(actor->Class->Name.ToString(), reg))
+				{
+					if (chunks.empty())
+					{
+						PrintColumn(console, actor->Name.ToString(), actor->Class->Name.ToString(), true);
+					}
+					else
+					{
+						UObject* obj = actor;
+						for (auto chunk = chunks.begin(); chunk != chunks.end(); chunk++)
+						{
+							if ((*chunk) == "state")
+							{
+								const auto& frame = obj->StateFrame;
+								UStruct* func = frame ? frame->GetFunc() : nullptr;
+								if (frame && func)
+								{
+									std::string name = frame->GetName();
+									if (frame->GetStatementIndex() > 0) // StatementIndex points at the NEXT statement to be executed
+									{
+										Expression* statement = frame->GetFunc()->Code->Statements[frame->GetStatementIndex() - 1];
+										int line = frame->GetFunc()->GetStatementLine(statement);
+										if (line == -1)
+										{
+											line = frame->GetFunc()->Line;
+
+											console->WriteOutput(ColorEscape(96) + name + ResetEscape() + " line " + ColorEscape(96) + std::to_string(line) + ResetEscape());
+											console->WriteOutput(": ");
+											PrintPrettyExpression::Print([&](const std::string& text) { console->WriteOutput(text); }, frame->GetFunc()->Code->Statements[frame->GetStatementIndex() - 1]);
+											console->WriteOutput(NewLine());
+										}
+										else
+										{
+											console->WriteOutput(ColorEscape(96) + name + ResetEscape() + " line " + ColorEscape(96) + std::to_string(line) + ResetEscape() + NewLine());
+											console->ListSourceLineOffset = 0;
+											ListSourceCommandlet::PrintLines(console, line, frame.get());
+										}
+									}
+								}
+								break;
+							}
+							else
+							{
+								bool bFoundObj = false;
+								for (UProperty* prop : obj->PropertyData.Class->Properties)
+								{
+									if (prop->Name == (*chunk))
+									{
+										void* val = obj->PropertyData.Ptr(prop);
+
+										if (chunk + 1 == chunks.end())
+										{
+											std::string name = prop->Name.ToString();
+											std::string value = prop->PrintValue(val);
+											PrintColumn(console, actor->Name.ToString(), actor->Class->Name.ToString(), false);
+											PrintColumn(console, name, value, true);
+											bFoundObj = true;
+											break;
+										}
+										else if (UObject::TryCast<UObjectProperty>(prop) || UObject::TryCast<UClassProperty>(prop))
+										{
+											obj = *(UObject**)val;
+											bFoundObj = true;
+											break;
+										}
+									}
+								}
+
+								if (!bFoundObj)
+									break;
+							}
+						}
+					}
+				}
+			}
+		}
+		catch (const std::exception& e)
+		{
+			console->WriteOutput(e.what() + NewLine());
 		}
 	}
 	else
@@ -51,16 +158,16 @@ std::vector<std::pair<std::string, std::string>> PrintCommandlet::FindProperties
 
 	if (frame && chunks[0] == "this")
 	{
-		obj = frame->Object;
+		obj = frame->GetUObject();
 	}
 	else if (frame)
 	{
 		// Search local variables
-		for (UProperty* prop : frame->Func->Properties)
+		for (UProperty* prop : frame->GetFunc()->Properties)
 		{
 			if (prop->Name == chunks[0])
 			{
-				void* ptr = (uint8_t*)frame->Variables->Data + prop->DataOffset.DataOffset;
+				void* ptr = (uint8_t*)frame->GetVariables() + prop->DataOffset.DataOffset;
 				if (UObject::TryCast<UObjectProperty>(prop) || UObject::TryCast<UClassProperty>(prop))
 				{
 					obj = *(UObject**)ptr;
@@ -90,11 +197,11 @@ std::vector<std::pair<std::string, std::string>> PrintCommandlet::FindProperties
 
 	if (!obj && frame)
 	{
-		for (UProperty* prop : frame->Object->PropertyData.Class->Properties)
+		for (UProperty* prop : frame->GetUObject()->PropertyData.Class->Properties)
 		{
 			if (prop->Name == chunks[0])
 			{
-				void* ptr = ((uint8_t*)frame->Object->PropertyData.Data) + prop->DataOffset.DataOffset;
+				void* ptr = ((uint8_t*)frame->GetUObject()->PropertyData.Data) + prop->DataOffset.DataOffset;
 				if (UObject::TryCast<UObjectProperty>(prop) || UObject::TryCast<UClassProperty>(prop))
 				{
 					obj = *(UObject**)ptr;
@@ -162,18 +269,18 @@ std::vector<std::pair<std::string, std::string>> PrintCommandlet::FindProperties
 			{
 				void* val = obj->PropertyData.Ptr(prop);
 
-				if (UObject::TryCast<UObjectProperty>(prop) || UObject::TryCast<UClassProperty>(prop))
-				{
-					obj = *(UObject**)val;
-					bFoundObj = true;
-					break;
-				}
-				else if (chunk+1 == chunks.end())
+				if (chunk + 1 == chunks.end())
 				{
 					name = prop->Name.ToString();
 					value = prop->PrintValue(val);
 					results.push_back({ name, value });
 					return results;
+				}
+				else if (UObject::TryCast<UObjectProperty>(prop) || UObject::TryCast<UClassProperty>(prop))
+				{
+					obj = *(UObject**)val;
+					bFoundObj = true;
+					break;
 				}
 			}
 		}
@@ -192,6 +299,10 @@ std::vector<std::pair<std::string, std::string>> PrintCommandlet::FindProperties
 		return results;
 	}
 
+	name = *(chunks.end() - 1);
+	value = obj->Class->Name.ToString() + '\'' + obj->Name.ToString();
+	results.push_back({ name, value });
+/*
 	auto props = obj->PropertyData.Class->Properties;
 	std::stable_sort(props.begin(), props.end(), [](UProperty* a, UProperty* b) { return a->Name.ToString() < b->Name.ToString(); });
 	for (UProperty* prop : props)
@@ -202,6 +313,7 @@ std::vector<std::pair<std::string, std::string>> PrintCommandlet::FindProperties
 		std::string value = prop->PrintValue(ptr);
 		results.push_back({ name, value });
 	}
+*/
 	return results;
 }
 
@@ -219,4 +331,9 @@ void PrintCommandlet::PrintColumn(DebuggerApp* console, const std::string& name,
 
 void PrintCommandlet::OnPrintHelp(DebuggerApp* console)
 {
+	console->WriteOutput("Syntax: print                            - list all objects" + NewLine());
+	console->WriteOutput("        print <object name> <property>   - print object property" + NewLine());
+	console->WriteOutput("        print /<regex>                   - list objects matching regular expression" + NewLine());
+	console->WriteOutput("        print /<regex> <property>        - print property for objects matching regular expression" + NewLine());
+	console->WriteOutput("        print /<regex> state             - print state info for objects matching regular expression" + NewLine());
 }
