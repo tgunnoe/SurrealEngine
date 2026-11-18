@@ -5,6 +5,12 @@
 #include "Packages/Engine/Resources/USound.h"
 #include "Packages/Engine/Resources/Textures/UTexture.h"
 
+void UButtonWindow::InitWindow()
+{
+	bIsSelectable() = true;
+	UTextWindow::InitWindow();
+}
+
 void UButtonWindow::DrawWindow(UGC* gc)
 {
 	bool hasFocus = GetFocusWindow() == this;
@@ -28,10 +34,11 @@ void UButtonWindow::DrawWindow(UGC* gc)
 
 	if (state.Texture)
 	{
+		gc->SetStyle((EDrawStyle)backgroundStyle());
 		gc->SetTileColor(state.ButtonColor);
 		gc->DrawStretchedTexture(
 			0.0f, 0.0f, Width(), Height(),
-			0.0f, 0.0f, (float)state.Texture->USize(), (float)state.Texture->VSize(),
+			0.0f, 0.0f, Width(), Height(),
 			state.Texture);
 	}
 
@@ -47,8 +54,9 @@ void UButtonWindow::DrawWindow(UGC* gc)
 			gc->SetAlignments(HAlign(), VAlign());
 			gc->DrawText(xMargin, yMargin, w, h, Text());
 		}
-		// DrawDebugBox(gc);
 	}
+
+	// DrawDebugBox(gc);
 
 	// Note: we are intentionally not calling UTextWindow::DrawWindow
 	UWindow::DrawWindow(gc);
