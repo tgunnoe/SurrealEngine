@@ -28,6 +28,7 @@ Target versions: Unreal Gold 226b, UT 436, Deus Ex 1112fm (the originals). Out o
 ## Invariants
 - I1 Subtrees `SurrealGPU/`, `SurrealWidgets/`, `SurrealVideo/` and `Thirdparty/` are upstream-owned; the fork does not edit them (work around in engine code; file upstream-subtree bugs as issues). Signpost: a diff touching those paths.
 - I2 CMakeLists.txt and Configure.js stay in sync when files are added. Signpost: a SurrealEngine/ source path listed in one file and not the other (859 .c, .cpp and .h paths each today, zero differences).
+- I3 The collector runs when a played level unloads (`Engine::UnloadMap`), after every pointer into that level is cleared and only with no script frame live. Every object the engine holds by raw C++ pointer across an unload is reachable from a root: an export of a loaded package, a property of a marked object, an entry of `EngineRoots::Mark` (`SurrealEngine/Engine.cpp`), or a `GCRoot<T>` (`SurrealEngine/GC/GC.h`). Every path that releases a played level sends the console `NotifyLevelChange` and then calls `UnloadMap`. Signpost: a `GC_SURVIVOR` or `GC_SKIPPED` line in a smoke log (`Tools/smoke/README.md` lists the lines; `sweep.py` and `saveload.py` count both as problems), or an AddressSanitizer report whose free stack names `GC::Sweep`.
 
 ## Unknowns
 - U1 Which script-declared natives lack C++ handlers per game. Signpost: the native-coverage command's golden output per game.
