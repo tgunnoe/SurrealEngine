@@ -216,5 +216,34 @@ class VoidRunTests(unittest.TestCase):
         self.assertEqual(judged("mv-enc-ug", held, answers=two), "VOID")
 
 
+class SecondObjectTests(unittest.TestCase):
+    """A second object of the player's class must never stand in for the player."""
+
+    def swap(self, pin_id, at_t, other_at, where, extra=()):
+        """The pin's answers for P0, with the one at `at_t` resolving to B0 at `other_at`."""
+        lines = []
+        for line in scheduled_answers(pin_id, "P0", where):
+            if line.startswith(f"[{at_t:.6f}]") and "class:" in line:
+                line = answer(at_t, line.split("call: ")[1].split(" ")[0], "B0", other_at)
+            lines.append(line)
+        return judged(pin_id, extra, answers=lines)
+
+    def test_the_positional_judges_read_only_the_named_player(self):
+        placed = [place(4.0, (0.0, 0.0, 0.0))]
+        # The player stays where it was placed; one probe resolves to a second object 500 units away.
+        self.assertEqual(self.swap("mv-slide-ug", 13.0, (500.0, 0.0, 0.0), lambda t, f: (0.0, 0.0, 0.0), placed),
+                         "VOID")
+        # The player sinks and never settles at 424; a later probe resolves to an object that does.
+        stays = lambda t, f: (0.0, 0.0, 444.0)  # noqa: E731
+        self.assertEqual(self.swap("zn-ctf1", 12.0, (0.0, 0.0, 424.0), stays,
+                                   [place(8.0, (28.0, 3516.0, 444.0))]), "VOID")
+        # The first probe after the warp resolves to an object on the column; the player is far from it.
+        far = lambda t, f: (0.0, 0.0, 0.0)  # noqa: E731
+        warp = [trace(10.0, "WarpZoneInfo2", "ActorEntered", "P0", "WarpZoneInfo")] * 2 + \
+            [trace(10.0, "WarpZoneInfo2", "UnWarp", "P0", "WarpZoneInfo"),
+             trace(10.0, "WarpZoneInfo2", "Warp", "P0", "WarpZoneInfo"), place(8.0, (1186.8, -454.5, 629.9))]
+        self.assertNotEqual(self.swap("zn-w1", 10.5, (786.8, -446.5, 0.0), far, warp), "PIN-HELD")
+
+
 if __name__ == "__main__":
     unittest.main()

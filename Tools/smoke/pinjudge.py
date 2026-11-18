@@ -381,6 +381,11 @@ def judge(pin, smoke_text, engine_text):
     name = player_name(run, pin.player_class)
     if name is None:
         return VOID, [f"no unique player name from the class:{pin.player_class} probes"]
+    # A second object of the player's class answers the same probe; the positional judges must
+    # read the player alone, so its answers are dropped (a probe the player did not answer then
+    # leaves the schedule short and the slide judge VOID).
+    form = f"class:{pin.player_class}"
+    run = run._replace(answers=[a for a in run.answers if a.form != form or a.name == name])
     verdict, detail = JUDGES[pin.judge](pin, run, name)
     return verdict, [f"player {name}"] + detail
 
