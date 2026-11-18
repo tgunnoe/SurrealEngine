@@ -355,7 +355,7 @@ Environment (read from the caller, not set by the script):
 ```
 export SURREALWIDGETS_DISPLAY_BACKEND=X11
 export LD_LIBRARY_PATH="$(nix-build '<nixpkgs>' -A vulkan-loader --no-out-link)/lib:/run/opengl-driver/lib:$LD_LIBRARY_PATH"
-python3 -I Tools/smoke/sweep.py --game "<game folder>" --seconds 15 --limit 3 --out /tmp/report.json
+python3 -I Tools/smoke/sweep.py --game "<game folder>" --seconds 15 --limit 3 --config-root <dir> --out /tmp/report.json
 ```
 
 Options: `--game`, `--out` (required); `--seconds` (default 15); `--limit`
