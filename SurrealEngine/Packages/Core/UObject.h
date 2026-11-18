@@ -241,6 +241,7 @@ public:
 	~PropertyDataBlock() { Reset(); }
 
 	void Init(UClass* cls);
+	void DestructValues();
 	void Load(ObjectStream* stream);
 	void Save(PackageStreamWriter* stream, PropertyDataBlock* defaultBlock);
 
@@ -258,6 +259,9 @@ public:
 
 private:
 	void Reset();
+
+	// Set once Init has constructed every value, so a block whose Init threw is never destructed.
+	bool ValuesConstructed = false;
 
 	PropertyDataBlock(const PropertyDataBlock&) = delete;
 	PropertyDataBlock& operator=(const PropertyDataBlock&) = delete;
@@ -415,6 +419,7 @@ public:
 
 protected:
 	GCAllocation* Mark(GCAllocation* marklist) override;
+	void Finalize() noexcept override;
 };
 
 template<typename T>

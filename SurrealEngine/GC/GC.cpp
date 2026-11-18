@@ -97,6 +97,12 @@ GCAllocation* GC::Mark(GCAllocation* marklist)
 
 void GC::Sweep()
 {
+	for (GCAllocation* cur = allocations; cur; cur = cur->allocklistNext)
+	{
+		if (cur->unreferencedFlag)
+			cur->object()->Finalize();
+	}
+
 	GCAllocation* prev = nullptr;
 	GCAllocation* cur = allocations;
 	while (cur)
