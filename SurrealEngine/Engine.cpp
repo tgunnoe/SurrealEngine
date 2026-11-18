@@ -425,6 +425,8 @@ void Engine::PlayAVI(const Array<std::string>& args)
 	playingAvi = true;
 	skipAvi = false;
 
+	ReleaseAllInput();
+
 	try
 	{
 		// Load the videos
@@ -2243,7 +2245,10 @@ void Engine::OnWindowMouseDown(const Point& pos, EInputKey key)
 		return;
 
 	if (engine->dxRootWindow && engine->dxRootWindow->OnWindowMouseDown(pos, key))
+	{
+		ReleaseAllInput();
 		return;
+	}
 
 	InputEvent(key, IST_Press);
 }
@@ -2251,7 +2256,10 @@ void Engine::OnWindowMouseDown(const Point& pos, EInputKey key)
 void Engine::OnWindowMouseDoubleclick(const Point& pos, EInputKey key)
 {
 	if (engine->dxRootWindow && engine->dxRootWindow->OnWindowMouseDoubleclick(pos, key))
+	{
+		ReleaseAllInput();
 		return;
+	}
 
 	// Double click event sequence is: mouse down, up, doubleclick, up
 	// Since we don't have double click events in the UE1 event system, the second click
@@ -2265,7 +2273,10 @@ void Engine::OnWindowMouseUp(const Point& pos, EInputKey key)
 		return;
 
 	if (engine->dxRootWindow && engine->dxRootWindow->OnWindowMouseUp(pos, key))
+	{
+		ReleaseAllInput();
 		return;
+	}
 
 	InputEvent(key, IST_Release);
 }
@@ -2276,7 +2287,10 @@ void Engine::OnWindowMouseWheel(const Point& pos, EInputKey key)
 		return;
 
 	if (engine->dxRootWindow && engine->dxRootWindow->OnWindowMouseWheel(pos, key))
+	{
+		ReleaseAllInput();
 		return;
+	}
 
 	InputEvent(key, IST_Press);
 	InputEvent(key, IST_Release);
@@ -2300,7 +2314,10 @@ void Engine::OnWindowKeyChar(std::string chars)
 		return;
 
 	if (engine->dxRootWindow && engine->dxRootWindow->OnWindowKeyChar(chars))
+	{
+		ReleaseAllInput();
 		return;
+	}
 
 	Key(chars);
 }
@@ -2315,7 +2332,10 @@ void Engine::OnWindowKeyDown(EInputKey key)
 	}
 
 	if (engine->dxRootWindow && engine->dxRootWindow->OnWindowKeyDown(key))
+	{
+		ReleaseAllInput();
 		return;
+	}
 
 	InputEvent(key, IST_Press);
 }
@@ -2326,7 +2346,10 @@ void Engine::OnWindowKeyUp(EInputKey key)
 		return;
 
 	if (engine->dxRootWindow && engine->dxRootWindow->OnWindowKeyUp(key))
+	{
+		ReleaseAllInput();
 		return;
+	}
 
 	InputEvent(key, IST_Release);
 }
@@ -2347,6 +2370,7 @@ void Engine::OnWindowActivated()
 
 void Engine::OnWindowDeactivated()
 {
+	ReleaseAllInput();
 	//SetPause(true);
 }
 
@@ -2380,6 +2404,23 @@ void Engine::Key(std::string key)
 	for (char c : key)
 	{
 		CallEvent(console, EventName::KeyType, { ExpressionValue::ByteValue(c) });
+	}
+}
+
+void Engine::ReleaseAllInput()
+{
+	for (auto it = activeInputButtons.begin(); it != activeInputButtons.end();)
+	{
+		if (viewport->Actor())
+			viewport->Actor()->SetBool(it->first, false);
+		it = activeInputButtons.erase(it);
+	}
+
+	for (auto it = activeInputAxes.begin(); it != activeInputAxes.end();)
+	{
+		if (viewport->Actor())
+			viewport->Actor()->SetFloat(it->first, 0.0f);
+		it = activeInputAxes.erase(it);
 	}
 }
 
