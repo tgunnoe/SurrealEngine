@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "Engine.h"
 #include "Utils/File.h"
+#include "StartupInit.h"
 #include "Utils/UserDirs.h"
 #include "Utils/StrTools.h"
 #include "Utils/SHA1Sum.h"
@@ -888,24 +889,25 @@ void Engine::LoadMap(UnrealURL url, std::map<std::string, std::string> travelInf
 		std::string error;
 
 		LevelInfo->bStartup() = true;
+		size_t loadActorCount = Level->Actors.size();
 		CallEvent(GameInfo, EventName::InitGame, { ExpressionValue::StringValue(options), ExpressionValue::Variable(&error, stringProp) });
 		if (!error.empty())
 			Exception::Throw("InitGame failed: " + error);
 
 		// Note: the events may spawn actors. We can't use iterators here.
-		// Spawned objects must be initialized twice.
+		// Spawned objects must be initialized twice, except where the game's script marks them as already initialized (SkipBeginPlayAtLoad).
 		// DX breaks if SetInitialState isn't called a second time on the spawned inventory after DeusExCarcass.PostBeginPlay finishes.
-		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::PreBeginPlay); }
-		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::BeginPlay); }
-		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::PostBeginPlay); }
-		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], EventName::SetInitialState); }
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i] && !SkipBeginPlayAtLoad(i, loadActorCount, PropOffsets_Actor.bScriptInitialized, [&]() { return Level->Actors[i]->bScriptInitialized(); })) CallEvent(Level->Actors[i], EventName::PreBeginPlay); }
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i] && !SkipBeginPlayAtLoad(i, loadActorCount, PropOffsets_Actor.bScriptInitialized, [&]() { return Level->Actors[i]->bScriptInitialized(); })) CallEvent(Level->Actors[i], EventName::BeginPlay); }
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i] && !SkipBeginPlayAtLoad(i, loadActorCount, PropOffsets_Actor.bScriptInitialized, [&]() { return Level->Actors[i]->bScriptInitialized(); })) CallEvent(Level->Actors[i], EventName::PostBeginPlay); }
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i] && !SkipBeginPlayAtLoad(i, loadActorCount, PropOffsets_Actor.bScriptInitialized, [&]() { return Level->Actors[i]->bScriptInitialized(); })) CallEvent(Level->Actors[i], EventName::SetInitialState); }
 
 		if (engine->LaunchInfo.IsDeusEx())
 		{
 			for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) CallEvent(Level->Actors[i], "PostPostBeginPlay"); }
 		}
 
-		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i]) Level->Actors[i]->InitBase(); }
+		for (size_t i = 0; i < Level->Actors.size(); i++) { if (Level->Actors[i] && !SkipBeginPlayAtLoad(i, loadActorCount, PropOffsets_Actor.bScriptInitialized, [&]() { return Level->Actors[i]->bScriptInitialized(); })) Level->Actors[i]->InitBase(); }
 		LevelInfo->bStartup() = false;
 	}
 
