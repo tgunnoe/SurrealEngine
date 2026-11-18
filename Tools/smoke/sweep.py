@@ -7,7 +7,9 @@ Required environment (read from the caller, never set here):
   e.g. "$(nix-build '<nixpkgs>' -A vulkan-loader --no-out-link)/lib:/run/opengl-driver/lib"
 
 Each map runs in its own engine process with --autostart, --exit-after and
---smoke-log. See README.md for the log grammar and report schema.
+--smoke-log, and with XDG_CONFIG_HOME set to --config-root, so the engine's own
+log of each map lands there and is copied beside the map's smoke log. See
+README.md for the log grammar and report schema.
 """
 import argparse
 import json
@@ -22,6 +24,7 @@ from pathlib import Path
 
 # Isolated mode (python3 -I) puts no directory on sys.path.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import runpins  # noqa: E402
 from triage.matchrule import match_started  # noqa: E402
 from triage.scenario import ASCII_UPPER, game_text  # noqa: E402
 
@@ -29,6 +32,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 MAP_SUFFIXES = {".unr", ".dx"}
 KILL_GRACE_SECONDS = 45
 GRIM_TIMEOUT_SECONDS = 10
+ENGINE_LOG_NAME = "SE-Log-LastRun.txt"
 PORTABLE_GAME = "<game folder>"
 # A prefix is one word and a class is Package.Class: nothing in either can add a url option.
 PREFIX_WORD = re.compile(r"[A-Za-z0-9_]+")
@@ -173,21 +177,27 @@ def classify(info, exit_code, timed_out, requested_map):
     return "fail"
 
 
-def run_map(exe, game, map_path, seconds, logdir, url_options="", exec_text="", portable=False,
-            game_text=""):
+def run_map(exe, game, map_path, seconds, logdir, config_root, url_options="", exec_text="", portable=False,
+            game_text="", player_class=None, frame_limit=0):
     name = map_path.stem
     log = logdir / f"{name}.log"
     shot = logdir / f"{name}.png"
-    # A child that dies before opening its log must not inherit a previous sweep's files.
-    log.unlink(missing_ok=True)
-    shot.unlink(missing_ok=True)
-    cmd = [str(exe), "--autostart", f"--exit-after={seconds}",
-           f"--smoke-log={log}", f"--url={name}{game_text}{url_options}"]
+    engine_log = logdir / f"{name}.engine.txt"
+    live_engine_log = config_root / runpins.APP_DIR / ENGINE_LOG_NAME
+    # A child that dies before opening its log must not inherit a previous sweep's files, and
+    # the engine writes its own log only on exit, so a killed child would leave the previous
+    # map's file in place to be copied as this map's.
+    for stale in (log, shot, engine_log, live_engine_log):
+        stale.unlink(missing_ok=True)
+    cmd = [str(exe), "--autostart", f"--exit-after={seconds}", f"--smoke-log={log}",
+           f"--frame-limit={frame_limit}",
+           f"--url={runpins.pinned_url(name, game_text, player_class, url_options)}"]
     if exec_text:
         cmd.append(f"--exec={exec_text}")
     cmd.append(str(game))
+    env = dict(os.environ, XDG_CONFIG_HOME=str(config_root))
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                            start_new_session=True)
+                            env=env, start_new_session=True)
     start = time.monotonic()
     deadline = start + seconds + KILL_GRACE_SECONDS
     shot_at = start + seconds / 2
@@ -212,6 +222,9 @@ def run_map(exe, game, map_path, seconds, logdir, url_options="", exec_text="", 
         time.sleep(0.2)
     exit_code = proc.wait()
 
+    engine_log_kept = live_engine_log.is_file()
+    if engine_log_kept:
+        shutil.copyfile(live_engine_log, engine_log)
     info, _ = parse_log(log)
     verdict = classify(info, exit_code, timed_out, name)
     return {
@@ -227,6 +240,7 @@ def run_map(exe, game, map_path, seconds, logdir, url_options="", exec_text="", 
         "login": info["login"],
         "match_started": info["match_started"],
         "log": log.name if portable else str(log),
+        "engine_log": (engine_log.name if portable else str(engine_log)) if engine_log_kept else None,
         "screenshot": None if portable else screenshot,
         "verdict": verdict,
     }
@@ -240,7 +254,14 @@ def main():
     ap.add_argument("--out", required=True, help="report JSON path")
     ap.add_argument("--exe", default=str(REPO_ROOT / "build" / "SurrealEngine"))
     ap.add_argument("--logdir", help="directory for per-map logs and screenshots (default: <out>.d)")
-    ap.add_argument("--url-options", default="", help="text appended to every --url=<map>, e.g. ?NumBots=4")
+    ap.add_argument("--url-options", default="", help="text appended to every --url=<map>, after the game and class")
+    ap.add_argument("--config-root", required=True,
+                    help="XDG_CONFIG_HOME of every engine run: settings, pinned ini and the engine log")
+    ap.add_argument("--game-kind", choices=sorted(runpins.KINDS), help="which game the folder is; needed for --bots")
+    ap.add_argument("--bots", type=int, help="Unreal Tournament bot count, written into the config root's own ini")
+    ap.add_argument("--player-class", metavar="Package.Class",
+                    help="the player's class, put on every url as ?Class= after the game text")
+    ap.add_argument("--frame-limit", type=int, default=0, help="passed to every run as --frame-limit=<n>")
     ap.add_argument("--exec", dest="exec_text", default="", help="passed as --exec=<text> to every run")
     ap.add_argument("--portable", action="store_true", help="write a report with no host path in it")
     ap.add_argument("--map-subdir", action="append", default=[], metavar="NAME",
@@ -255,6 +276,13 @@ def main():
                          "--game-by-prefix-except for more maps")
     args = ap.parse_args()
 
+    if args.bots is not None and args.game_kind != "ut":
+        sys.exit("sweep: --bots needs --game-kind ut")
+    if args.player_class is not None:
+        try:
+            runpins.class_option(args.player_class)
+        except ValueError as e:
+            sys.exit(f"sweep: --player-class: {e}")
     out = Path(args.out)
     logdir = Path(args.logdir) if args.logdir else out.with_name(out.name + ".d")
     logdir.mkdir(parents=True, exist_ok=True)
@@ -265,6 +293,11 @@ def main():
     maps = list_maps(args.game, subdirs)
     if args.limit > 0:
         maps = maps[:args.limit]
+    config_root = Path(os.path.abspath(args.config_root))
+    try:
+        runpins.prepare(args.game, args.game_kind, config_root, args.bots)
+    except ValueError as e:
+        sys.exit(f"sweep: {e}")
 
     results = []
     report = {"game": PORTABLE_GAME if args.portable else str(args.game), "seconds": args.seconds,
@@ -272,9 +305,10 @@ def main():
               "game_by_prefix": by_prefix or None, "game_by_prefix_except": except_names or None,
               "map_subdirs": subdirs or None, "maps": results}
     for m in maps:
-        entry = run_map(args.exe, args.game, m, args.seconds, logdir,
+        entry = run_map(args.exe, args.game, m, args.seconds, logdir, config_root,
                         args.url_options, args.exec_text, args.portable,
-                        game_text=game_text(by_prefix.items(), m.stem, except_names))
+                        game_text=game_text(by_prefix.items(), m.stem, except_names),
+                        player_class=args.player_class, frame_limit=args.frame_limit)
         print(f"{entry['verdict']:8} {entry['map']}", flush=True)
         results.append(entry)
         # Rewritten after every map so an interrupted sweep keeps its rows.

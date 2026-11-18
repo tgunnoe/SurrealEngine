@@ -1,7 +1,11 @@
+import json
+import os
 import random
 import sys
+import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import saveload
@@ -44,7 +48,7 @@ UT_TRAVEL = [
     "[10.597887] PlayerPawn.ShowInventory: Inv: Save8.ImpactHammer0 state None",
     "[10.597887] PlayerPawn.ShowInventory: Inv: Save8.miniammo0 state Idle2",
     "[10.597887] PlayerPawn.ShowInventory: Inv: Save8.enforcer0 state Idle",
-    "[15.697407] <Surreal Engine>: Client travel to DM-Turbine?Name=Player?NumBots=0",
+    "[15.697407] <Surreal Engine>: Client travel to DM-Turbine?Name=Player",
     "[15.697407] GameInfo.Login: Login: Player1",
     "[15.697407] <Surreal Engine>: trace: ImpactHammer0 ImpactHammer Pickup: TravelPreAccept()",
     "[15.697407] Botpack.ImpactHammer: trace: ImpactHammer0 ImpactHammer Pickup: TravelPreAccept()",
@@ -384,8 +388,7 @@ class ChainTests(unittest.TestCase):
                 self.assertEqual(schedule(chain, index)[0][1], template.format(index))
 
     def test_a_travelling_step_travels_to_the_next_map_and_saves_the_next_slot(self):
-        expected = {"unreal": ("Nyleve", "Dig"), "ut": ("DM-Turbine?NumBots=0", "DM-Codex?NumBots=0"),
-                    "deusex": ("01_NYC_UNATCOHQ", "02_NYC_BatteryPark")}
+        expected = {"deusex": ("01_NYC_UNATCOHQ", "02_NYC_BatteryPark")}
         for name, targets in expected.items():
             chain = self.chain(name)
             for index, target in zip((1, 2), targets, strict=True):
@@ -835,6 +838,85 @@ class AssembleChecksTests(unittest.TestCase):
         dx = saveload.assemble_checks(saveload.parse_engine_log(DX_LOAD), 1, self.chain("deusex"))
         self.assertTrue(dx["travel_skipped"])
         self.assertEqual(dx["offered"], [])
+
+
+FAKE_STEP_ENGINE = """#!{python}
+import glob
+import json
+import sys
+
+args = sys.argv[1:]
+log = next(a for a in args if a.startswith("--smoke-log=")).split("=", 1)[1]
+user = next(a for a in args if a.startswith("--user-dir=")).split("=", 1)[1]
+seen = {{"args": args, "ini": {{}}}}
+for path in glob.glob(user + "/*/SE-UnrealTournament.ini"):
+    with open(path, "rb") as f:
+        seen["ini"][path] = f.read().decode("latin-1")
+with open(log + ".seen", "w") as f:
+    json.dump(seen, f)
+with open(log, "w") as f:
+    f.write("GAME x 1\\nMAP A\\nLOGIN\\nFPS 30.0\\nSUMMARY script_errors=0\\n")
+"""
+
+UT_INI = "[Botpack.DeathMatchPlus]\r\nMinPlayers=4\r\nInitialBots=10\r\n"
+
+
+class PinTests(unittest.TestCase):
+    """The per-run pins of the chains: the bot count through the folder, the class on the URL."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.game = self.root / "Install"
+        (self.game / "System").mkdir(parents=True)
+        (self.game / "System" / "UnrealTournament.ini").write_bytes(UT_INI.encode("latin-1"))
+        self.exe = self.root / "engine"
+        self.exe.write_text(FAKE_STEP_ENGINE.format(python=sys.executable))
+        self.exe.chmod(0o755)
+        self.user_dir = self.root / "user"
+        self.config_root = self.root / "xdg"
+        self.logdir = self.root / "logs"
+        self.logdir.mkdir()
+        host = self.root / "home" / ".config" / "SurrealEngine"
+        host.mkdir(parents=True)
+        (host / "Settings.json").write_text("{}\n")
+
+    def step(self, name, index):
+        environ = {"HOME": str(self.root / "home"), "XDG_CONFIG_HOME": ""}
+        with mock.patch.dict(os.environ, environ):
+            saveload.run_step(self.exe, self.game, saveload.CHAINS[name], index, 5, self.user_dir,
+                              self.config_root, self.logdir, True)
+        return json.loads((self.logdir / f"{saveload.STEP_NAMES[index]}.log.seen").read_text())
+
+    def test_ut_chain_pins_the_count_through_the_folder(self):
+        chain = saveload.CHAINS["ut"]
+        self.assertEqual(chain.options, "")
+        self.assertEqual(getattr(chain, "bots", "absent"), 0)
+        for index, target in ((1, "DM-Turbine"), (2, "DM-Codex")):
+            commands = [c for _, c in schedule(chain, index)]
+            self.assertIn(f"call ClientTravel {target} 2 1", commands)
+
+    def test_unreal_chain_carries_the_class(self):
+        chain = saveload.CHAINS["unreal"]
+        self.assertEqual(chain.options, "?Class=UPak.UPakFemaleOne")
+        for index, target in ((1, "Nyleve"), (2, "Dig")):
+            commands = [c for _, c in schedule(chain, index)]
+            self.assertIn(f"call ClientTravel {target}?Class=UPak.UPakFemaleOne 2 1", commands)
+
+    def test_saveload_writes_the_pin_before_each_step(self):
+        expected = UT_INI.replace("MinPlayers=4", "MinPlayers=0").replace("InitialBots=10", "InitialBots=0")
+        for index in (0, 1):
+            seen = self.step("ut", index)
+            with self.subTest(step=index):
+                self.assertEqual(list(seen["ini"].values()), [expected])
+                self.assertIn(str(self.user_dir / "UnrealTournament-436-Install"), next(iter(seen["ini"])))
+                self.assertNotIn("NumBots", " ".join(seen["args"]))
+                self.assertIn("--frame-limit=0", seen["args"])
+            # What the engine leaves behind must not stand in for the pin of the next step.
+            for pinned in self.user_dir.glob("*/SE-UnrealTournament.ini"):
+                pinned.write_text("changed\n")
+        self.assertIn("--url=Vortex2?Class=UPak.UPakFemaleOne", self.step("unreal", 0)["args"])
 
 
 if __name__ == "__main__":

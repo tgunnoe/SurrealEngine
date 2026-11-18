@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -146,17 +147,34 @@ class SharedMatchRuleTests(unittest.TestCase):
 
 
 FAKE_ENGINE = """#!{python}
+import glob
 import json
+import os
 import sys
 
 args = sys.argv[1:]
 log = next(a for a in args if a.startswith("--smoke-log=")).split("=", 1)[1]
 with open(log + ".argv", "w") as f:
     json.dump(args, f)
+xdg = os.environ.get("XDG_CONFIG_HOME", "")
+seen = {{"xdg": xdg, "settings": bool(xdg) and os.path.exists(xdg + "/SurrealEngine/Settings.json"), "ini": {{}}}}
+if xdg:
+    for path in glob.glob(xdg + "/SurrealEngine/*/SE-UnrealTournament.ini"):
+        with open(path, "rb") as f:
+            seen["ini"][path] = f.read().decode("latin-1")
+with open(log + ".env", "w") as f:
+    json.dump(seen, f)
+name = next(a for a in args if a.startswith("--url=")).split("=", 1)[1].split("?")[0]
+if os.environ.get("FAKE_ENGINE_WRITES_LOG") and xdg and name not in os.environ.get("FAKE_NO_ENGINE_LOG", "").split(","):
+    os.makedirs(xdg + "/SurrealEngine", exist_ok=True)
+    with open(xdg + "/SurrealEngine/SE-Log-LastRun.txt", "w") as f:
+        f.write("engine log of " + name + "\\n")
 with open(log, "w") as f:
     f.write("GAME x 1\\nMAP A\\nLOGIN\\n" + {state!r} + "EXEC 5 Fire\\nSTATE 6.0 PlayerWalking\\n"
             "FPS 30.0\\nSUMMARY script_errors=0\\n")
 """
+
+UT_INI = "[Botpack.DeathMatchPlus]\r\nMinPlayers=4\r\nInitialBots=10\r\n"
 
 
 class SweepRunTests(unittest.TestCase):
@@ -174,11 +192,18 @@ class SweepRunTests(unittest.TestCase):
         self.exe.chmod(0o755)
         self.logdir = self.root / "logs"
         self.out = self.root / "report.json"
+        # The host's Settings.json is a fixture, and the stand-in engine writes its own log.
+        host = self.root / "home" / ".config" / "SurrealEngine"
+        host.mkdir(parents=True)
+        (host / "Settings.json").write_text("{}\n")
+        self.environ = {"HOME": str(self.root / "home"), "XDG_CONFIG_HOME": "", "FAKE_ENGINE_WRITES_LOG": "1"}
 
     def sweep(self, *flags):
         argv = ["sweep.py", "--game", str(self.game), "--seconds", "2", "--out", str(self.out),
-                "--exe", str(self.exe), "--logdir", str(self.logdir), *flags]
-        with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(io.StringIO()):
+                "--exe", str(self.exe), "--logdir", str(self.logdir),
+                "--config-root", str(self.root / "xdg"), *flags]
+        with mock.patch.object(sys, "argv", argv), mock.patch.dict(os.environ, self.environ), \
+                contextlib.redirect_stdout(io.StringIO()):
             sweep.main()
         report = json.loads(self.out.read_text())
         argv_seen = json.loads((self.logdir / "A.log.argv").read_text())
@@ -372,6 +397,95 @@ class SweepRunTests(unittest.TestCase):
         for name in ["", ".", "..", "CTF\\Tutorial", "CTF Tutorial", "CTF\tTutorial", "CTF-Tutorial\n"]:
             with self.subTest(name=name):
                 self.assertIn(bad % name, self.refusal("--game-by-prefix-except", name))
+
+    # The per-run pins: a config root, the engine log of each map, the bot count and the class.
+
+    def argv(self, *flags, config_root=True):
+        argv = ["sweep.py", "--game", str(self.game), "--seconds", "2", "--out", str(self.out),
+                "--exe", str(self.exe), "--logdir", str(self.logdir)]
+        if config_root:
+            argv += ["--config-root", str(self.root / "xdg")]
+        return argv + list(flags)
+
+    def pinned(self, *flags, **env):
+        """A sweep with a config root; the report."""
+        with mock.patch.object(sys, "argv", self.argv(*flags)), mock.patch.dict(os.environ, {**self.environ, **env}), \
+                contextlib.redirect_stdout(io.StringIO()):
+            try:
+                sweep.main()
+            except SystemExit as exit_:
+                self.fail(f"the sweep refused its flags: {exit_.code}")
+        return json.loads(self.out.read_text())
+
+    def seen(self, name):
+        return json.loads((self.logdir / f"{name}.log.env").read_text())
+
+    def test_sweep_is_refused_without_a_config_root(self):
+        err = io.StringIO()
+        with mock.patch.object(sys, "argv", self.argv(config_root=False)), contextlib.redirect_stderr(err), \
+                self.assertRaises(SystemExit):
+            sweep.main()
+        self.assertIn("--config-root", err.getvalue())
+        self.assertEqual(list(self.logdir.glob("*.argv")), [])
+
+    def test_sweep_runs_each_map_in_the_config_root(self):
+        self.add_maps(".", "B")
+        self.pinned()
+        for name in ("A", "B"):
+            seen = self.seen(name)
+            self.assertEqual(seen["xdg"], str(self.root / "xdg"))
+            self.assertTrue(seen["settings"])
+
+    def test_sweep_copies_the_engine_log_beside_each_smoke_log(self):
+        self.add_maps(".", "B", "C")
+        report = self.pinned(FAKE_NO_ENGINE_LOG="B")
+        for name in ("A", "C"):
+            self.assertEqual((self.logdir / f"{name}.engine.txt").read_text(), f"engine log of {name}\n")
+        # B's engine wrote none, and the file of the map before it must not stand in for it.
+        self.assertFalse((self.logdir / "B.engine.txt").exists())
+        rows = {row["map"]: row["engine_log"] for row in report["maps"]}
+        self.assertEqual(rows, {"A": str(self.logdir / "A.engine.txt"), "B": None,
+                                "C": str(self.logdir / "C.engine.txt")})
+
+    def test_sweep_pins_the_bot_count_before_the_engine_starts(self):
+        (self.game / "System").mkdir()
+        (self.game / "System" / "UnrealTournament.ini").write_bytes(UT_INI.encode("latin-1"))
+        self.pinned("--game-kind", "ut", "--bots", "0")
+        inis = self.seen("A")["ini"]
+        self.assertEqual(list(inis.values()), [UT_INI.replace("MinPlayers=4", "MinPlayers=0")
+                                               .replace("InitialBots=10", "InitialBots=0")])
+        self.assertTrue(next(iter(inis)).endswith("/SurrealEngine/UnrealTournament-436-Game/SE-UnrealTournament.ini"))
+        self.assertNotIn("NumBots", " ".join(self.argv_of("A")))
+
+    def test_sweep_passes_the_frame_limit(self):
+        self.pinned()
+        self.assertIn("--frame-limit=0", self.argv_of("A"))
+        self.pinned("--frame-limit", "30")
+        args = self.argv_of("A")
+        self.assertIn("--frame-limit=30", args)
+        self.assertNotIn("--frame-limit=0", args)
+
+    def test_sweep_appends_the_player_class(self):
+        self.pinned("--player-class", "UPak.UPakFemaleOne")
+        self.assertIn("--url=A?Class=UPak.UPakFemaleOne", self.argv_of("A"))
+        (self.game / "Maps" / "AS-One.unr").write_bytes(b"")
+        self.pinned("--player-class", "UPak.UPakFemaleOne", "--game-by-prefix", "AS=Botpack.Assault",
+                    "--url-options", "?x=1")
+        self.assertIn("--url=AS-One?game=Botpack.Assault?Class=UPak.UPakFemaleOne?x=1", self.argv_of("AS-One"))
+        with mock.patch.object(sys, "argv", self.argv("--player-class", "UPak.X?y=1")), \
+                contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as cm:
+            sweep.main()
+        self.assertIn("--player-class", str(cm.exception.code))
+
+    def test_sweep_refuses_bots_without_an_unreal_tournament_kind(self):
+        for flags in (["--bots", "0"], ["--bots", "0", "--game-kind", "unreal"],
+                      ["--bots", "0", "--game-kind", "deusex"]):
+            with self.subTest(flags=flags):
+                with mock.patch.object(sys, "argv", self.argv(*flags)), contextlib.redirect_stderr(io.StringIO()), \
+                        self.assertRaises(SystemExit) as cm:
+                    sweep.main()
+                self.assertIn("--bots needs --game-kind ut", str(cm.exception.code))
+                self.assertEqual(list(self.logdir.glob("*.argv")), [])
 
 
 if __name__ == "__main__":
