@@ -63,6 +63,10 @@ ScriptCallSkip SkipReasonFor(UObject* context, const NameString& name);
 ExpressionValue CallEvent(UObject* Context, EventName name, Array<ExpressionValue> args = {}, bool allowDeleted = false);
 ExpressionValue CallEvent(UObject* Context, const NameString& name, Array<ExpressionValue> args = {});
 
+// The event of an actor being torn down: sent even to an actor already marked deleted, and a script
+// exception is logged instead of escaping, so the teardown that follows always runs.
+ExpressionValue CallTeardownEvent(UObject* Context, EventName name);
+
 UFunction* FindEventFunction(UObject* Context, const NameString& name);
 
 NameString ToNameString(EventName name);

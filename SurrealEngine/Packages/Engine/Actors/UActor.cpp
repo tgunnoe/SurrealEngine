@@ -131,28 +131,16 @@ bool UActor::Destroy()
 
 	// Run the current state's EndState so that whatever the state started (a screen tint, a display
 	// change) is undone. The state itself is kept: script such as Razor2 calls a state function after
-	// destroying its actor. CallEvent passes only Destroyed to an actor already marked deleted unless
-	// it is told to allow it, which is what the call below does. Where it runs matters. It follows bDeleteMe = true, so an EndState that destroys the actor again
-	// (UDamage's does) returns at once at the check above instead of destroying twice. It precedes
+	// destroying its actor. CallTeardownEvent sends it to an actor already marked deleted, and a script
+	// exception from it is logged, so the teardown below always runs. Where it runs matters. It follows
+	// bDeleteMe = true, so an EndState that destroys the actor again (UDamage's does) returns at once
+	// at the check above instead of destroying twice. It precedes
 	// SetBase and the rest of the teardown, so the owner is still set (Destroyed clears it through the
 	// inventory, and an EndState such as Invisibility's needs it), and so whatever the EndState
 	// registers again, such as a collision entry through SetCollision or a sound, is removed by the
 	// steps that follow instead of outliving the actor.
 	if (!GetStateName().IsNone())
-	{
-		try
-		{
-			CallEvent(this, EventName::EndState, {}, true);
-		}
-		catch (const std::exception& e)
-		{
-			LogMessage("Script error: EndState of " + Name.ToString() + " threw while it was destroyed: " + e.what());
-		}
-		catch (...)
-		{
-			LogMessage("Script error: EndState of " + Name.ToString() + " threw an unknown error while it was destroyed");
-		}
-	}
+		CallTeardownEvent(this, EventName::EndState);
 
 	SetBase(nullptr, true);
 
@@ -163,7 +151,7 @@ bool UActor::Destroy()
 	RemoveFromBspNode();
 	level->Collision.RemoveFromCollision(this);
 
-	CallEvent(this, EventName::Destroyed);
+	CallTeardownEvent(this, EventName::Destroyed);
 
 	// Deus Ex: whatever this actor was telling AI listeners, or listening to, ends with it.
 	if (Level() && Level()->EventManager)

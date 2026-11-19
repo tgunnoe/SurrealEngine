@@ -437,3 +437,52 @@ TEST(CallEventWithAllowDeletedReachesAStateFunction)
 
 	CHECK_EQ(f.Count, 1);
 }
+
+// The event call UActor::Destroy makes for EndState and Destroyed: a throw from the script is
+// logged with its text first and the caller goes on to the rest of the teardown. The hook that
+// throws makes the exception text a single known line.
+TEST(AnEventThatThrowsIsLoggedAndTheCallerGoesOn)
+{
+	StatementFixture f;
+	UFunction* destroyed = f.MakeFunction("Destroyed");
+	StatementFixture::AppendReturn(destroyed);
+	f.Class->Functions[destroyed->Name] = destroyed;
+	f.Class->ProbeMask |= 1ULL << static_cast<int>(EventName::Destroyed);
+	Frame::AddTrace(destroyed->Name, [](UFunction*, UObject*, const ArrayView<ExpressionValue>&)
+	{
+		throw std::runtime_error("the event exploded");
+	});
+
+	const std::list<LogMessageLine>& log = Logger::Get()->GetLog();
+	const size_t mark = log.size();
+	std::string escaped;
+	try
+	{
+		CallTeardownEvent(f.Instance, EventName::Destroyed);
+	}
+	catch (const std::exception& e)
+	{
+		escaped = e.what();
+	}
+	Array<LogMessageLine> added;
+	auto it = log.begin();
+	std::advance(it, mark);
+	for (; it != log.end(); ++it)
+		added.push_back(*it);
+
+	CHECK_MSG(escaped.empty(), "the exception escaped the teardown event: " + escaped);
+	CHECK_EQ(added.size(), static_cast<size_t>(1));
+	CHECK_EQ(added[0].Text, "Script error: the event exploded (Destroyed of StatementInstance)");
+
+	// The teardown goes on: a later event still runs
+	Frame::Traces.clear();
+	UFunction* endState = f.MakeFunction("EndState");
+	StatementFixture::Append(endState, f.Counting());
+	StatementFixture::AppendReturn(endState);
+	f.Class->Functions[endState->Name] = endState;
+	f.Class->ProbeMask |= 1ULL << static_cast<int>(EventName::EndState);
+
+	CallTeardownEvent(f.Instance, EventName::EndState);
+
+	CHECK_EQ(f.Count, 1);
+}

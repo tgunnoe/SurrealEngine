@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "ScriptCall.h"
 #include "Frame.h"
+#include "Utils/Logger.h"
 #include "Packages/Engine/Actors/UActor.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
@@ -105,6 +106,26 @@ ExpressionValue CallEvent(UObject* Context, EventName eventname, Array<Expressio
 		return Frame::Call(func, Context, { args.data(), args.size() });
 	else
 		return ExpressionValue::NothingValue();
+}
+
+ExpressionValue CallTeardownEvent(UObject* Context, EventName name)
+{
+	// The teardown must reach its end whatever a script event does, so a throw is logged and the
+	// caller goes on. The exception text comes first so that a missing native keeps the form the
+	// smoke log recognizes.
+	try
+	{
+		return CallEvent(Context, name, {}, true);
+	}
+	catch (const std::exception& e)
+	{
+		LogMessage("Script error: " + std::string(e.what()) + " (" + ToNameString(name).ToString() + " of " + Context->Name.ToString() + ")");
+	}
+	catch (...)
+	{
+		LogMessage("Script error: Unknown error (" + ToNameString(name).ToString() + " of " + Context->Name.ToString() + ")");
+	}
+	return ExpressionValue::NothingValue();
 }
 
 ExpressionValue CallEvent(UObject* Context, const NameString& name, Array<ExpressionValue> args)
