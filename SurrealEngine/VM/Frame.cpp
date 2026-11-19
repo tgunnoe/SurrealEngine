@@ -1482,7 +1482,15 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 				else
 				{
 					ExpressionValue val = std::move(PopValue());
-					PushValue(val.Member(static_cast<StructMemberExpression*>(expr)->Field));
+					ExpressionValue member = val.Member(static_cast<StructMemberExpression*>(expr)->Field);
+					// A struct that is the result of an expression owns its data, and the member points
+					// into it, but val ends with this case. Copy the member out, so the pushed value does
+					// not read memory that is gone. A struct that lives in a variable keeps pointing at
+					// the variable, which a statement may assign to. A member that is itself an array
+					// stays a reference: a copy would no longer index.
+					if (!val.IsVariable() && static_cast<StructMemberExpression*>(expr)->Field->ArrayDimension == 1)
+						member.Load();
+					PushValue(std::move(member));
 					PopExpr();
 				}
 				break;

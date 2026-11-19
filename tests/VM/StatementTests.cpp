@@ -505,3 +505,60 @@ TEST(AnObjectCreatedWithTheSingularFlagDoesNotKeepIt)
 	CHECK(!AnyFlags(loaded->Flags, ObjectFlags::InSingularFunc));
 	CHECK_EQ(f.Count, 1);
 }
+
+// A rotator that is the result of an expression is owned by its value, and a member read from it
+// pointed into that value after the case that popped it had ended. A release build usually still
+// reads the right number from the dead slot; the sanitizer build reports the read.
+TEST(AMemberOfATemporaryStructIsReadFromACopy)
+{
+	StatementFixture f;
+
+	UIntProperty* local = GC::Alloc<UIntProperty>("Slot", nullptr, ObjectFlags::NoFlags);
+	local->DataOffset = { 0, 1 };
+	UIntProperty* yaw = GC::Alloc<UIntProperty>("Yaw", nullptr, ObjectFlags::NoFlags);
+	yaw->DataOffset = { sizeof(int32_t), 1 };
+	yaw->ValueType = ExpressionValueType::ValueInt;
+
+	UIntProperty* parm = GC::Alloc<UIntProperty>("Seen", nullptr, ObjectFlags::NoFlags);
+	parm->DataOffset = { 0, 1 };
+	parm->PropFlags = PropertyFlags::Parm;
+	int seen = -1;
+	UFunction* observe = MakeNativeFunction("StatementObserveYaw", f.Class, { parm });
+	NativeFunctions::NativeByName[{ observe->Name, f.Class->Name }] = [&seen](UObject*, ExpressionValue* args) { seen = args[0].ToInt(); };
+
+	UFunction* func = f.MakeFunction("TemporaryStructBody");
+	func->Properties.push_back(local);
+	func->StructSize = sizeof(int32_t);
+	func->StructAlignment = alignof(int32_t);
+
+	auto localRef = [&]()
+	{
+		LocalVariableExpression* expr = NewExpr<LocalVariableExpression>();
+		expr->Variable = local;
+		return expr;
+	};
+
+	// Slot = Rotator(10, 20, 30).Yaw; Observe(Slot);
+	RotationConstExpression* rotation = NewExpr<RotationConstExpression>();
+	rotation->Pitch = 10;
+	rotation->Yaw = 20;
+	rotation->Roll = 30;
+	StructMemberExpression* member = NewExpr<StructMemberExpression>();
+	member->Field = yaw;
+	member->Value = rotation;
+	LetExpression* assign = NewExpr<LetExpression>();
+	assign->LeftSide = localRef();
+	assign->RightSide = member;
+	FinalFunctionExpression* observeCall = f.CallOf(observe);
+	observeCall->Args.push_back(localRef());
+
+	StatementFixture::Append(func, assign);
+	StatementFixture::Append(func, observeCall);
+	StatementFixture::AppendReturn(func);
+
+	RunOutcome outcome = f.Run(func);
+	NativeFunctions::NativeByName.erase({ observe->Name, f.Class->Name });
+
+	CHECK_MSG(outcome.Thrown.empty(), "the statement threw: " + outcome.Thrown);
+	CHECK_EQ(seen, 20);
+}
