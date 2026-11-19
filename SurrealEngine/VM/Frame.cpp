@@ -425,9 +425,10 @@ ExpressionValue Frame::CallNative(UFunction* func, UObject* instance, const Arra
 	{
 		// An out parameter that received Nothing has no storage to write to: a None context
 		// or a nested call that yielded nothing, already reported by the statement that made
-		// the call. Like the original engine, skip the native. In parameters are not skipped:
-		// many conversions accept Nothing as a default, and skipping a latent native such as
-		// MoveTo leaves the state code running without ever yielding.
+		// the call. The native is not run: its only effect on such a parameter is the write, and there is
+		// nothing to write to. In parameters are not skipped: many conversions accept Nothing as a
+		// default, and skipping a latent native such as MoveTo leaves the state code running without
+		// ever yielding.
 		if (argindex < args.size() && args[argindex].GetType() == ExpressionValueType::Nothing &&
 			AllFlags(prop->PropFlags, PropertyFlags::Parm | PropertyFlags::OutParm) &&
 			!AllFlags(prop->PropFlags, PropertyFlags::OptionalParm))
