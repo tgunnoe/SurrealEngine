@@ -606,6 +606,10 @@ void PropertyDataBlock::DestructValues()
 
 void UObject::Finalize() noexcept
 {
+	// The state frame destructs its variables through the properties of the state it runs, which
+	// this sweep may free before it gets to the frame
+	if (StateFrame)
+		StateFrame->ReleaseVariables();
 	PropertyData.DestructValues();
 }
 
