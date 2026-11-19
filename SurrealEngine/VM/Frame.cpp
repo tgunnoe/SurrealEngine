@@ -2032,7 +2032,9 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 
 					if (!found)
 					{
-						Frame::ThrowException("Script virtual function " + funcExpr->Name.ToString() + " not found!");
+						// Logged as a script error and the statement goes on with Nothing, so one missing
+						// function does not stop the script that called it
+						LogMessage("Script error: script function " + funcExpr->Name.ToString() + " not found in " + context->Class->Name.ToString());
 						for (size_t i = 0, count = funcExpr->Args.size(); i < count; i++)
 							PopValue();
 						PushValue(ExpressionValue::NothingValue());
@@ -2103,9 +2105,10 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 
 					if (!found)
 					{
-						Frame::ThrowException("Script global function " + static_cast<GlobalFunctionExpression*>(expr)->Name.ToString() + " not found!");
+						LogMessage("Script error: script function " + funcExpr->Name.ToString() + " not found in " + context->Class->Name.ToString());
 						PopValues(funcExpr->Args.size());
 						PushValue(ExpressionValue::NothingValue());
+						PopExpr();
 					}
 				}
 				break;
