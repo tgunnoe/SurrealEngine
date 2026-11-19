@@ -521,6 +521,13 @@ void UObject::GotoState(NameString stateName, const NameString& labelName)
 				break;
 			}
 		}
+
+		// The object leaves its states, as it always has; a state name that is not there is
+		// worth a line because it is usually a typo. A request for Auto that finds no auto state
+		// is not one, and neither is no name at all. The line is not a script error: stock scripts
+		// do name states their class never declares.
+		if (!newState && stateName != "Auto")
+			LogMessage("GotoState: no state named " + stateName.ToString() + " in " + Class->Name.ToString());
 	}
 
 	if (!StateFrame)
