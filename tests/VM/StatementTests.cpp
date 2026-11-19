@@ -486,3 +486,22 @@ TEST(AnEventThatThrowsIsLoggedAndTheCallerGoesOn)
 
 	CHECK_EQ(f.Count, 1);
 }
+
+// A package written while a call was running holds the flag in its export flags. An object read
+// back with it set would refuse its singular functions for good, so it is never taken from a file.
+TEST(AnObjectCreatedWithTheSingularFlagDoesNotKeepIt)
+{
+	StatementFixture f;
+	UObject* loaded = GC::Alloc<UObject>("StatementLoaded", f.Class, ObjectFlags::InSingularFunc | ObjectFlags::Public);
+	UFunction* func = f.MakeFunction("SingularLoadedBody", FunctionFlags::Singular);
+	StatementFixture::Append(func, f.Counting());
+	StatementFixture::AppendReturn(func);
+
+	CHECK(!AnyFlags(loaded->Flags, ObjectFlags::InSingularFunc));
+
+	f.Run(func, loaded);
+
+	CHECK(AnyFlags(loaded->Flags, ObjectFlags::Public));
+	CHECK(!AnyFlags(loaded->Flags, ObjectFlags::InSingularFunc));
+	CHECK_EQ(f.Count, 1);
+}

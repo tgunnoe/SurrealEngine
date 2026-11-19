@@ -17,6 +17,10 @@
 
 UObject::UObject(NameString name, UClass* cls, ObjectFlags flags) : Name(name), Class(cls), Flags(flags)
 {
+	// InSingularFunc says a call is running on the object now. A package written during a call would
+	// carry it in its export flags, and an object loaded with it set would refuse its singular
+	// functions for good.
+	Flags = static_cast<ObjectFlags>(static_cast<uint32_t>(Flags) & ~static_cast<uint32_t>(ObjectFlags::InSingularFunc));
 }
 
 UObject::~UObject()

@@ -9,6 +9,7 @@
 #include "Packages/Engine/Subsystems/USurrealAudioDevice.h"
 #include "Engine.h"
 #include "Package/PackageManager.h"
+#include <optional>
 #include "Utils/AlignedAlloc.h"
 #include "Commandlet/VM/DisassemblyCommandlet.h"
 #include <cassert>
@@ -308,6 +309,21 @@ std::string Frame::GetCallstack()
 	return result;
 }
 
+// Marks an object as inside one of its singular functions for the length of the call, on every way
+// out: an exception that leaves the function must not leave the object blocked from it for good.
+namespace
+{
+	struct SingularGuard
+	{
+		explicit SingularGuard(UObject* object) : Object(object) { Object->Flags |= ObjectFlags::InSingularFunc; }
+		~SingularGuard() { Object->Flags = static_cast<ObjectFlags>(static_cast<uint32_t>(Object->Flags) & ~static_cast<uint32_t>(ObjectFlags::InSingularFunc)); }
+		SingularGuard(const SingularGuard&) = delete;
+		SingularGuard& operator=(const SingularGuard&) = delete;
+
+		UObject* Object;
+	};
+}
+
 ExpressionValue Frame::Call(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args)
 {
 	if (!instance)
@@ -322,6 +338,16 @@ ExpressionValue Frame::Call(UFunction* func, UObject* instance, const ArrayView<
 	if (!instance->IsEventEnabled(func->Name))
 	{
 		return ExpressionValue::NothingValue();
+	}
+
+	// A singular function entered again on an object that is already inside it does nothing. This
+	// follows the trace, so the second call is still seen.
+	std::optional<SingularGuard> singularGuard;
+	if (AllFlags(func->FuncFlags, FunctionFlags::Singular))
+	{
+		if (AllFlags(instance->Flags, ObjectFlags::InSingularFunc))
+			return ExpressionValue::NothingValue();
+		singularGuard.emplace(instance);
 	}
 
 	if (AllFlags(func->FuncFlags, FunctionFlags::Native))
