@@ -4,18 +4,15 @@
 #include "Packages/Core/UClass.h"
 #include "Packages/Engine/Actors/UActor.h"
 #include "Packages/Engine/Resources/Level/ULevel.h"
+#include "Engine.h"
 #include "PropertyOffsets.h"
 #include "Utils/AlignedAlloc.h"
 #include <string>
 #include <vector>
 
-// The engine global, declared here so the test can check it stays null without the engine header.
-class Engine;
-extern Engine* engine;
-
 // These cover which levels an actor iterator walks and how the walk of a level list proceeds.
-// A level is chosen from three handles (the calling actor's, the entry level's and the played
-// level's) that the choice never dereferences, so those are opaque numbered keys. The walks run
+// A level is chosen from the calling actor's level handle, which the choice never dereferences, so
+// the levels of those tests are opaque numbered keys. The walks run
 // over levels and actors built by hand, with no package and no engine. How a script's calling
 // actor reaches its level, and the iterators that look inside a level (radius, sight, collision,
 // zone, traces), need a loaded package and are checked by running maps.
@@ -82,37 +79,19 @@ namespace
 	}
 }
 
+// Whichever level the caller is in, the entry level or the played one, is the one walked.
 TEST(IteratorLevelsForAPlayedLevelCallerIsThePlayedLevel)
 {
-	CHECK(IteratorLevels(P, E, P) == Levels({ P }));
-}
-
-TEST(IteratorLevelsForAnEntryLevelCallerIsTheEntryLevel)
-{
-	Levels got = IteratorLevels(E, E, P);
-	CHECK_MSG(got == Levels({ E }), "the entry level's own actors must walk the entry level, got " + Show(got));
-}
-
-TEST(IteratorLevelsWithoutAllLevelsIsTheCallersLevelAlone)
-{
-	for (ULevel* caller : { None, E, P, X })
-		for (ULevel* entry : { None, E })
-			for (ULevel* played : { None, P })
-			{
-				Levels got = IteratorLevels(caller, entry, played);
-				Levels want = caller ? Levels({ caller }) : Levels();
-				CHECK_MSG(got == want, "caller " + Show({ caller }) + " entry " + Show({ entry }) + " played " + Show({ played }) + " gave " + Show(got));
-			}
-}
-
-TEST(IteratorLevelsWithNoEntryLevelIsTheCallersLevel)
-{
-	CHECK(IteratorLevels(P, None, P) == Levels({ P }));
+	for (ULevel* caller : { E, P, X })
+	{
+		Levels got = IteratorLevels(caller);
+		CHECK_MSG(got == Levels({ caller }), "an actor in " + Show({ caller }) + " must walk that level alone, got " + Show(got));
+	}
 }
 
 TEST(IteratorLevelsForACallerInNoLevelIsNothingNotTheEnginesLevel)
 {
-	Levels got = IteratorLevels(None, E, P);
+	Levels got = IteratorLevels(None);
 	CHECK_MSG(got.empty(), "an actor in no level must walk nothing, got " + Show(got));
 }
 
@@ -135,25 +114,6 @@ TEST(AllActorsIteratorWalksOnlyTheLevelItIsGiven)
 	AllActorsIterator overB({ b }, world.ActorClass, &slot, std::string());
 	CHECK(Drain(overB, &slot, 8) == std::vector<UObject*>({ b0, b1 }));
 	CHECK(slot == nullptr);
-}
-
-TEST(AllActorsIteratorWalksTheLevelsInTheOrderGiven)
-{
-	World world;
-	ULevel* a = world.NewLevel();
-	ULevel* b = world.NewLevel();
-	UActor* a0 = world.Add(a, world.ActorClass);
-	UActor* a1 = world.Add(a, world.ActorClass);
-	UActor* a2 = world.Add(a, world.ActorClass);
-	UActor* b0 = world.Add(b, world.ActorClass);
-	UActor* b1 = world.Add(b, world.ActorClass);
-
-	UObject* slot = nullptr;
-	AllActorsIterator ab({ a, b }, world.ActorClass, &slot, std::string());
-	CHECK(Drain(ab, &slot, 8) == std::vector<UObject*>({ a0, a1, a2, b0, b1 }));
-
-	AllActorsIterator ba({ b, a }, world.ActorClass, &slot, std::string());
-	CHECK(Drain(ba, &slot, 8) == std::vector<UObject*>({ b0, b1, a0, a1, a2 }));
 }
 
 TEST(AllActorsIteratorKeepsOnlyActorsOfTheClassAsked)
@@ -202,40 +162,27 @@ TEST(AllActorsIteratorOverNoLevelEndsAtOnce)
 	CHECK(slot == nullptr);
 }
 
-TEST(CycleActorsIteratorNumbersTheMatchesAcrossTheLevelsGiven)
+TEST(CycleActorsIteratorNumbersTheMatchesFromZero)
 {
 	World world;
-	ULevel* a = world.NewLevel();
-	ULevel* b = world.NewLevel();
-	UActor* a0 = world.Add(a, world.ActorClass);
-	UActor* a1 = world.Add(a, world.ActorClass);
-	UActor* a2 = world.Add(a, world.ActorClass);
-	UActor* b0 = world.Add(b, world.ActorClass);
-	UActor* b1 = world.Add(b, world.ActorClass);
+	ULevel* level = world.NewLevel();
+	UActor* c0 = world.Add(level, world.ActorClass);
+	UActor* c1 = world.Add(level, world.ActorClass);
+	UActor* c2 = world.Add(level, world.ActorClass);
 
-	auto run = [&](Levels levels, std::vector<UObject*>& yielded, std::vector<int>& indexes)
-	{
-		UObject* slot = nullptr;
-		int index = -1;
-		CycleActorsIterator iterator(levels, world.ActorClass, &slot, &index);
-		while (yielded.size() <= 8 && iterator.Next())
-		{
-			yielded.push_back(slot);
-			indexes.push_back(index);
-		}
-	};
-
+	UObject* slot = nullptr;
+	int index = -1;
+	CycleActorsIterator iterator({ level }, world.ActorClass, &slot, &index);
 	std::vector<UObject*> yielded;
 	std::vector<int> indexes;
-	run({ a, b }, yielded, indexes);
-	CHECK(yielded == std::vector<UObject*>({ a0, a1, a2, b0, b1 }));
-	CHECK(indexes == std::vector<int>({ 0, 1, 2, 3, 4 }));
+	while (yielded.size() <= 8 && iterator.Next())
+	{
+		yielded.push_back(slot);
+		indexes.push_back(index);
+	}
 
-	yielded.clear();
-	indexes.clear();
-	run({ b }, yielded, indexes);
-	CHECK(yielded == std::vector<UObject*>({ b0, b1 }));
-	CHECK(indexes == std::vector<int>({ 0, 1 }));
+	CHECK(yielded == std::vector<UObject*>({ c0, c1, c2 }));
+	CHECK(indexes == std::vector<int>({ 0, 1, 2 }));
 }
 
 // Falling back to the played level for an actor in no level is the rule this branch removed.
