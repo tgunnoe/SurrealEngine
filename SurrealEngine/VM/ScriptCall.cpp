@@ -93,11 +93,11 @@ ScriptCallSkip SkipReasonFor(UObject* context, const NameString& name)
 	return SkipReasonFor(context, context->IsEventEnabled(name), false);
 }
 
-ExpressionValue CallEvent(UObject* Context, EventName eventname, Array<ExpressionValue> args)
+ExpressionValue CallEvent(UObject* Context, EventName eventname, Array<ExpressionValue> args, bool allowDeleted)
 {
-	// UActor::Destroy marks an actor deleted before it sends Destroyed, so that is the one event an
-	// actor being deleted still gets
-	if (SkipReasonFor(Context, Context->IsEventEnabled(eventname), eventname == EventName::Destroyed) != ScriptCallSkip::None)
+	// UActor::Destroy marks an actor deleted before it sends Destroyed, so Destroyed always reaches an
+	// actor being deleted; any other event does only for a caller that asks, as the teardown does
+	if (SkipReasonFor(Context, Context->IsEventEnabled(eventname), allowDeleted || eventname == EventName::Destroyed) != ScriptCallSkip::None)
 		return ExpressionValue::NothingValue();
 
 	UFunction* func = FindEventFunction(Context, ToNameString(eventname));

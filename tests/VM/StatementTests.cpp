@@ -8,6 +8,8 @@
 #include "VM/NativeFunctionFixture.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UFunction.h"
+#include "Packages/Core/UState.h"
+#include "VM/ScriptCall.h"
 #include "Packages/Core/Properties/UIntProperty.h"
 
 // Statements whose meaning the VM decides: a call to a function no class has, a state name no class
@@ -407,5 +409,31 @@ TEST(ANoneContextStillYieldsZeroAndTheStatementGoesOn)
 
 	CHECK_MSG(outcome.Thrown.empty(), "the statement threw: " + outcome.Thrown);
 	CHECK_EQ(seen, 0);
+	CHECK_EQ(f.Count, 1);
+}
+
+// An object in a state that declares EndState receives the event through the call that tears an
+// actor down, which asks CallEvent to let it through. The skip decision itself for a deleted actor
+// is pinned by the decision's own tests: an actor needs a level, which a unit test cannot give, so
+// this fixture is a plain object and shows the allowance changes nothing for one.
+TEST(CallEventWithAllowDeletedReachesAStateFunction)
+{
+	StatementFixture f;
+
+	UState* state = GC::Alloc<UState>("StatementState", f.Class, ObjectFlags::NoFlags);
+	state->Code = std::make_shared<Bytecode>(Array<uint8_t>(), nullptr);
+	state->ProbeMask = 1ULL << static_cast<int>(EventName::EndState);
+	state->IgnoreMask = ~0ULL;
+	UFunction* endState = f.MakeFunction("EndState");
+	StatementFixture::Append(endState, f.Counting());
+	StatementFixture::AppendReturn(endState);
+	state->Functions[endState->Name] = endState;
+	f.Class->States[state->Name] = state;
+
+	f.Instance->GotoState(state->Name, NameString());
+	CHECK_MSG(f.Instance->GetStateName() == state->Name, "the object did not enter the state");
+
+	CallEvent(f.Instance, EventName::EndState, {}, true);
+
 	CHECK_EQ(f.Count, 1);
 }
