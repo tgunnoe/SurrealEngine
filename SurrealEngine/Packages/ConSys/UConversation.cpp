@@ -231,6 +231,14 @@ void UConversation::ClearBindEvents()
 	}
 }
 
+void UConversation::ClearBindEventsInto(Package* released)
+{
+}
+
+void UConversation::ClearMissionBindsInto(UConversationMissionList* missions, Package* released)
+{
+}
+
 UObject* UConversation::CreateConCamera()
 {
 	UClass* cls = engine->packages->FindClass("ConSys.ConCamera");

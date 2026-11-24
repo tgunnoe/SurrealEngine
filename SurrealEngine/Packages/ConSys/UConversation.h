@@ -4,6 +4,7 @@
 
 class UConEvent;
 class UConFlagRef;
+class UConversationMissionList;
 
 class UConversation : public UConObject
 {
@@ -13,6 +14,8 @@ public:
 	void BindActorEvents(UObject* actorToBind);
 	void BindEvents(UObject** conBoundActors, UObject* invokeActor);
 	void ClearBindEvents();
+	void ClearBindEventsInto(Package* released);
+	static void ClearMissionBindsInto(UConversationMissionList* missions, Package* released);
 	UObject* CreateConCamera();
 	UObject* CreateFlagRef(const NameString& FlagName, bool flagValue);
 	UObject* GetSpeechAudio(int soundID);
