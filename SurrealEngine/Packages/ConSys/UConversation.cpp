@@ -7,6 +7,9 @@
 #include "Packages/Engine/Resources/Level/ULevel.h"
 #include "Packages/ConSys/UConAudioList.h"
 #include "Packages/ConSys/UConFlagRef.h"
+#include "Packages/ConSys/UConItem.h"
+#include "Packages/ConSys/UConversationList.h"
+#include "Packages/ConSys/UConversationMissionList.h"
 #include "Packages/ConSys/Events/UConEvent.h"
 #include "Packages/ConSys/Events/UConEventSpeech.h"
 #include "Packages/ConSys/Events/UConEventTransferObject.h"
@@ -167,76 +170,78 @@ void UConversation::BindEvents(UObject** conBoundActors, UObject* invokeActor)
 	}
 }
 
-void UConversation::ClearBindEvents()
+// The one list of the event types that hold an actor and of the slots they hold it in, so that the
+// script's unbind and the unload's cannot disagree about what a conversation binds.
+void UConversation::VisitBoundActors(const std::function<void(UActor*&)>& visit)
 {
 	for (UConEvent* e = eventList(); e; e = e->nextEvent())
 	{
 		switch ((EEventType)e->eventType())
 		{
-		default:
-		case EEventType::Choice:
-		case EEventType::SetFlag:
-		case EEventType::CheckFlag:
-		case EEventType::CheckObject:
-		case EEventType::Random:
-		case EEventType::Trigger:
-		case EEventType::AddGoal:
-		case EEventType::AddNote:
-		case EEventType::AddSkillPoints:
-		case EEventType::AddCredits:
-		case EEventType::CheckPersona:
-		case EEventType::Comment:
-		case EEventType::End:
-			break;
 		case EEventType::Speech:
-			if (auto speech = UObject::Cast<UConEventSpeech>(e))
+			if (auto speech = UObject::TryCast<UConEventSpeech>(e))
 			{
-				speech->speaker() = nullptr;
-				speech->speakingTo() = nullptr;
+				visit(speech->speaker());
+				visit(speech->speakingTo());
 			}
 			break;
-			break;
 		case EEventType::TransferObject:
-			if (auto transfer = UObject::Cast<UConEventTransferObject>(e))
+			if (auto transfer = UObject::TryCast<UConEventTransferObject>(e))
 			{
-				transfer->fromActor() = nullptr;
-				transfer->toActor() = nullptr;
+				visit(transfer->fromActor());
+				visit(transfer->toActor());
 			}
 			break;
 		case EEventType::MoveCamera:
-			if (auto moveCamera = UObject::Cast<UConEventMoveCamera>(e))
-			{
-				moveCamera->cameraActor() = nullptr;
-			}
+			if (auto moveCamera = UObject::TryCast<UConEventMoveCamera>(e))
+				visit(moveCamera->cameraActor());
 			break;
 		case EEventType::Animation:
-			if (auto animation = UObject::Cast<UConEventAnimation>(e))
-			{
-				animation->eventOwner() = nullptr;
-			}
+			if (auto animation = UObject::TryCast<UConEventAnimation>(e))
+				visit(animation->eventOwner());
 			break;
 		case EEventType::Trade:
-			if (auto trade = UObject::Cast<UConEventTrade>(e))
-			{
-				trade->eventOwner() = nullptr;
-			}
+			if (auto trade = UObject::TryCast<UConEventTrade>(e))
+				visit(trade->eventOwner());
 			break;
-		case EEventType::Jump:
-			if (auto jump = UObject::Cast<UConEventJump>(e))
-			{
-				// jump->jumpCon() = nullptr;
-			}
+		default:
+			// The jump event binds no actor.
 			break;
 		}
 	}
 }
 
+void UConversation::ClearBindEvents()
+{
+	VisitBoundActors([](UActor*& actor) { actor = nullptr; });
+}
+
 void UConversation::ClearBindEventsInto(Package* released)
 {
+	VisitBoundActors([released](UActor*& actor)
+	{
+		if (actor && actor->package == released)
+			actor = nullptr;
+	});
 }
 
 void UConversation::ClearMissionBindsInto(UConversationMissionList* missions, Package* released)
 {
+	if (!missions)
+		return;
+
+	for (UConItem* missionItem = missions->missions(); missionItem; missionItem = missionItem->Next())
+	{
+		auto mission = UObject::TryCast<UConversationList>(missionItem->ConObject());
+		if (!mission)
+			continue;
+
+		for (UConItem* item = mission->conversations(); item; item = item->Next())
+		{
+			if (auto conversation = UObject::TryCast<UConversation>(item->ConObject()))
+				conversation->ClearBindEventsInto(released);
+		}
+	}
 }
 
 UObject* UConversation::CreateConCamera()

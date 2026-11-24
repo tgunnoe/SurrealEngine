@@ -1,10 +1,12 @@
 #pragma once
 
 #include "UConObject.h"
+#include <functional>
 
 class UConEvent;
 class UConFlagRef;
 class UConversationMissionList;
+class UActor;
 
 class UConversation : public UConObject
 {
@@ -44,4 +46,7 @@ public:
 	float& lastPlayedTime() { return Value<float>(PropOffsets_Conversation.lastPlayedTime); }
 	int& ownerRefCount() { return Value<int>(PropOffsets_Conversation.ownerRefCount); }
 	int& radiusDistance() { return Value<int>(PropOffsets_Conversation.radiusDistance); }
+
+private:
+	void VisitBoundActors(const std::function<void(UActor*&)>& visit);
 };
