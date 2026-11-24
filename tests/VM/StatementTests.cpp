@@ -10,6 +10,11 @@
 #include "Packages/Core/UFunction.h"
 #include "Packages/Core/UState.h"
 #include "VM/ScriptCall.h"
+#include "Packages/Engine/Actors/UActor.h"
+#include "Packages/Engine/Actors/Info/ULevelInfo.h"
+#include "PropertyOffsets.h"
+#include "Utils/AlignedAlloc.h"
+#include <cstring>
 #include "Packages/Core/Properties/UIntProperty.h"
 
 // Statements whose meaning the VM decides: a call to a function no class has, a state name no class
@@ -412,32 +417,6 @@ TEST(ANoneContextStillYieldsZeroAndTheStatementGoesOn)
 	CHECK_EQ(f.Count, 1);
 }
 
-// An object in a state that declares EndState receives the event through the call that tears an
-// actor down, which asks CallEvent to let it through. The skip decision itself for a deleted actor
-// is pinned by the decision's own tests: an actor needs a level, which a unit test cannot give, so
-// this fixture is a plain object and shows the allowance changes nothing for one.
-TEST(CallEventWithAllowDeletedReachesAStateFunction)
-{
-	StatementFixture f;
-
-	UState* state = GC::Alloc<UState>("StatementState", f.Class, ObjectFlags::NoFlags);
-	state->Code = std::make_shared<Bytecode>(Array<uint8_t>(), nullptr);
-	state->ProbeMask = 1ULL << static_cast<int>(EventName::EndState);
-	state->IgnoreMask = ~0ULL;
-	UFunction* endState = f.MakeFunction("EndState");
-	StatementFixture::Append(endState, f.Counting());
-	StatementFixture::AppendReturn(endState);
-	state->Functions[endState->Name] = endState;
-	f.Class->States[state->Name] = state;
-
-	f.Instance->GotoState(state->Name, NameString());
-	CHECK_MSG(f.Instance->GetStateName() == state->Name, "the object did not enter the state");
-
-	CallEvent(f.Instance, EventName::EndState, {}, true);
-
-	CHECK_EQ(f.Count, 1);
-}
-
 // The event call UActor::Destroy makes for EndState and Destroyed: a throw from the script is
 // logged with its text first and the caller goes on to the rest of the teardown. The hook that
 // throws makes the exception text a single known line.
@@ -561,4 +540,134 @@ TEST(AMemberOfATemporaryStructIsReadFromACopy)
 
 	CHECK_MSG(outcome.Thrown.empty(), "the statement threw: " + outcome.Thrown);
 	CHECK_EQ(seen, 20);
+}
+
+
+// A deleted fixture actor: its property block carries only Level and bDeleteMe, its level info only
+// bBegunPlay, the offsets set by hand as ActorLevelsForAnActorInNoLevelIsNothingAndNeedsNoEngine does.
+TEST(CallEventWithAllowDeletedReachesAStateFunction)
+{
+	StatementFixture f;
+	PropOffsets_Actor.Level.DataOffset = 0;
+	PropOffsets_Actor.bDeleteMe.DataOffset = sizeof(void*);
+	PropOffsets_Actor.bDeleteMe.BitfieldMask = 1;
+	PropOffsets_LevelInfo.bBegunPlay.DataOffset = 0;
+	PropOffsets_LevelInfo.bBegunPlay.BitfieldMask = 1;
+
+	ULevelInfo* info = GC::Alloc<ULevelInfo>("PinLevelInfo", f.Class, ObjectFlags::NoFlags);
+	info->PropertyData.Data = AlignedAlloc(16, 16);
+	info->PropertyData.Size = 16;
+	std::memset(info->PropertyData.Data, 0, 16);
+	info->bBegunPlay() = true;
+
+	UActor* actor = GC::Alloc<UActor>("PinActor", f.Class, ObjectFlags::NoFlags);
+	actor->PropertyData.Data = AlignedAlloc(16, 16);
+	actor->PropertyData.Size = 16;
+	std::memset(actor->PropertyData.Data, 0, 16);
+	actor->Level() = info;
+
+	UState* state = GC::Alloc<UState>("PinState", f.Class, ObjectFlags::NoFlags);
+	state->Code = std::make_shared<Bytecode>(Array<uint8_t>(), nullptr);
+	state->ProbeMask = 1ULL << static_cast<int>(EventName::EndState);
+	state->IgnoreMask = ~0ULL;
+	UFunction* endState = f.MakeFunction("EndState");
+	StatementFixture::Append(endState, f.Counting());
+	StatementFixture::AppendReturn(endState);
+	state->Functions[endState->Name] = endState;
+	f.Class->States[state->Name] = state;
+
+	actor->GotoState(state->Name, NameString());
+	CHECK_MSG(actor->GetStateName() == state->Name, "the actor did not enter the state");
+	actor->bDeleteMe() = true;
+
+	CallEvent(actor, EventName::EndState, {}, false);
+	CHECK_EQ(f.Count, 0);
+	CallEvent(actor, EventName::EndState, {}, true);
+	CHECK_EQ(f.Count, 1);
+}
+
+// Rot.Yaw = 12345; Observe(Rot.Yaw); with Rot a local of a struct type: the member of a variable
+// is the variable's own storage, so the write lands in it.
+TEST(AssigningAMemberOfAStructVariableWritesTheVariable)
+{
+	StatementFixture f;
+	UIntProperty* rot = GC::Alloc<UIntProperty>("Rot", nullptr, ObjectFlags::NoFlags);
+	rot->DataOffset = { 0, 1 };
+	rot->ValueType = ExpressionValueType::ValueRotator;
+	UIntProperty* yaw = GC::Alloc<UIntProperty>("Yaw", nullptr, ObjectFlags::NoFlags);
+	yaw->DataOffset = { sizeof(int32_t), 1 };
+	yaw->ValueType = ExpressionValueType::ValueInt;
+
+	UIntProperty* parm = GC::Alloc<UIntProperty>("Seen", nullptr, ObjectFlags::NoFlags);
+	parm->DataOffset = { 0, 1 };
+	parm->PropFlags = PropertyFlags::Parm;
+	int seen = -1;
+	UFunction* observe = MakeNativeFunction("PinObserveYaw", f.Class, { parm });
+	NativeFunctions::NativeByName[{ observe->Name, f.Class->Name }] = [&seen](UObject*, ExpressionValue* args) { seen = args[0].ToInt(); };
+
+	UFunction* func = f.MakeFunction("PinVariableStructBody");
+	func->Properties.push_back(rot);
+	func->StructSize = 3 * sizeof(int32_t);
+	func->StructAlignment = alignof(int32_t);
+
+	auto yawOfRot = [&]()
+	{
+		LocalVariableExpression* local = NewExpr<LocalVariableExpression>();
+		local->Variable = rot;
+		StructMemberExpression* member = NewExpr<StructMemberExpression>();
+		member->Field = yaw;
+		member->Value = local;
+		return member;
+	};
+
+	IntConstExpression* value = NewExpr<IntConstExpression>();
+	value->Value = 12345;
+	LetExpression* assign = NewExpr<LetExpression>();
+	assign->LeftSide = yawOfRot();
+	assign->RightSide = value;
+	FinalFunctionExpression* observeCall = f.CallOf(observe);
+	observeCall->Args.push_back(yawOfRot());
+
+	StatementFixture::Append(func, assign);
+	StatementFixture::Append(func, observeCall);
+	StatementFixture::AppendReturn(func);
+
+	RunOutcome outcome = f.Run(func);
+	NativeFunctions::NativeByName.erase({ observe->Name, f.Class->Name });
+
+	CHECK_MSG(outcome.Thrown.empty(), "the statement threw: " + outcome.Thrown);
+	CHECK_EQ(seen, 12345);
+}
+
+// A singular function that calls a different singular function on the same object: the object is
+// already inside a singular function, so the second one does not run.
+TEST(ASecondSingularFunctionOnTheSameObjectDoesNotRun)
+{
+	StatementFixture f;
+	UFunction* inner = f.MakeFunction("PinSingularInner", FunctionFlags::Singular);
+	StatementFixture::Append(inner, f.Counting());
+	StatementFixture::AppendReturn(inner);
+	UFunction* outer = f.MakeFunction("PinSingularOuter", FunctionFlags::Singular);
+	StatementFixture::Append(outer, f.Counting());
+	StatementFixture::Append(outer, f.CallOf(inner));
+	StatementFixture::AppendReturn(outer);
+
+	f.Run(outer);
+
+	CHECK_EQ(f.Count, 1);
+}
+
+// An object in a declared state that is sent to a name no class declares leaves its state.
+TEST(GotoStateUnknownNameLeavesTheCurrentState)
+{
+	StatementFixture f;
+	UState* state = GC::Alloc<UState>("PinKnownState", f.Class, ObjectFlags::NoFlags);
+	state->Code = std::make_shared<Bytecode>(Array<uint8_t>(), nullptr);
+	f.Class->States[state->Name] = state;
+	f.Instance->GotoState(state->Name, NameString());
+	CHECK_MSG(f.Instance->GetStateName() == state->Name, "the object did not enter the state");
+
+	f.Instance->GotoState("NoSuchState", NameString());
+
+	CHECK(f.Instance->GetStateName().IsNone());
 }
