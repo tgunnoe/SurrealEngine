@@ -48,8 +48,8 @@ enum class ScriptCallSkip
 };
 
 // The decision itself. The actor flags count only for an actor. allowDeleted lets a call through to
-// an actor being deleted, which UActor::Destroy needs for the Destroyed event it sends after it has
-// marked the actor.
+// an actor being deleted, for a caller that tears the actor down and still has events to send it
+// after it has marked the actor (UActor::Destroy sends EndState and Destroyed that way).
 ScriptCallSkip ScriptCallSkipReason(bool eventEnabled, bool isActor, bool begunPlay, bool deleted, bool allowDeleted);
 
 // The decision for a context, with its event state already looked up: reads the actor flags.
@@ -58,8 +58,14 @@ ScriptCallSkip SkipReasonFor(UObject* context, bool eventEnabled, bool allowDele
 // The same for an event named by a script function, with no allowance for an actor being deleted.
 ScriptCallSkip SkipReasonFor(UObject* context, const NameString& name);
 
-ExpressionValue CallEvent(UObject* Context, EventName name, Array<ExpressionValue> args = {});
+// Destroyed is the one event an actor being deleted always gets: UActor::Destroy marks the actor
+// before it sends it. A caller that tears an actor down sends others with allowDeleted.
+ExpressionValue CallEvent(UObject* Context, EventName name, Array<ExpressionValue> args = {}, bool allowDeleted = false);
 ExpressionValue CallEvent(UObject* Context, const NameString& name, Array<ExpressionValue> args = {});
+
+// The event of an actor being torn down: sent even to an actor already marked deleted, and a script
+// exception is logged instead of escaping, so the teardown that follows always runs.
+ExpressionValue CallTeardownEvent(UObject* Context, EventName name);
 
 UFunction* FindEventFunction(UObject* Context, const NameString& name);
 

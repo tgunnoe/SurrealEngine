@@ -13,13 +13,13 @@
 
 #include <algorithm>
 
-std::vector<ULevel*> IteratorLevels(ULevel* callerLevel, ULevel* entryLevel, ULevel* playedLevel)
+std::vector<ULevel*> IteratorLevels(ULevel* level)
 {
 	// An actor in no level walks nothing. Falling back to the level being played would hand it
 	// another level's actors.
-	if (!callerLevel)
+	if (!level)
 		return {};
-	return { callerLevel };
+	return { level };
 }
 
 std::vector<ULevel*> ActorLevels(UObject* self, const char* iterator)
@@ -33,7 +33,7 @@ std::vector<ULevel*> ActorLevels(UObject* self, const char* iterator)
 		LogMessage("Script error: " + std::string(iterator) + " on " + actor->Name.ToString() + ": the actor is in no level");
 		return {};
 	}
-	return IteratorLevels(level, engine->EntryLevel, engine->Level);
+	return IteratorLevels(level);
 }
 
 AllObjectsIterator::AllObjectsIterator(UObject* BaseClass, UObject** ReturnValue, UObject* InOuter)

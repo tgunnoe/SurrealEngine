@@ -17,6 +17,10 @@
 
 UObject::UObject(NameString name, UClass* cls, ObjectFlags flags) : Name(name), Class(cls), Flags(flags)
 {
+	// InSingularFunc says a call is running on the object now. A package written during a call would
+	// carry it in its export flags, and an object loaded with it set would refuse its singular
+	// functions for good.
+	Flags = static_cast<ObjectFlags>(static_cast<uint32_t>(Flags) & ~static_cast<uint32_t>(ObjectFlags::InSingularFunc));
 }
 
 UObject::~UObject()
@@ -517,6 +521,13 @@ void UObject::GotoState(NameString stateName, const NameString& labelName)
 				break;
 			}
 		}
+
+		// The object leaves its states, as it always has; a state name that is not there is
+		// worth a line because it is usually a typo. A request for Auto that finds no auto state
+		// is not one, and neither is no name at all. The line is not a script error: stock scripts
+		// do name states their class never declares.
+		if (!newState && stateName != "Auto")
+			LogMessage("GotoState: no state named " + stateName.ToString() + " in " + Class->Name.ToString());
 	}
 
 	if (!StateFrame)
@@ -595,6 +606,10 @@ void PropertyDataBlock::DestructValues()
 
 void UObject::Finalize() noexcept
 {
+	// The state frame destructs its variables through the properties of the state it runs, which
+	// this sweep may free before it gets to the frame
+	if (StateFrame)
+		StateFrame->ReleaseVariables();
 	PropertyData.DestructValues();
 }
 

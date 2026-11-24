@@ -100,6 +100,11 @@ public:
 	~Frame();
 
 	void SetState(UStruct* func);
+
+	// Destructs and frees the local variables now, leaving none. The destructor and SetState find
+	// nothing left to do. A collection calls this before it frees anything, because the variables are
+	// destructed through the properties of a function or state that the same collection may free.
+	void ReleaseVariables() { DeinitVariables(); }
 	void SetLatentState(LatentRunState state) { LatentState = state; }
 	void GotoLabel(const NameString& label);
 	void Tick();

@@ -9,6 +9,7 @@
 #include "Packages/Engine/Subsystems/USurrealAudioDevice.h"
 #include "Engine.h"
 #include "Package/PackageManager.h"
+#include <optional>
 #include "Utils/AlignedAlloc.h"
 #include "Commandlet/VM/DisassemblyCommandlet.h"
 #include <cassert>
@@ -308,6 +309,21 @@ std::string Frame::GetCallstack()
 	return result;
 }
 
+// Marks an object as inside one of its singular functions for the length of the call, on every way
+// out: an exception that leaves the function must not leave the object blocked from it for good.
+namespace
+{
+	struct SingularGuard
+	{
+		explicit SingularGuard(UObject* object) : Object(object) { Object->Flags |= ObjectFlags::InSingularFunc; }
+		~SingularGuard() { Object->Flags = static_cast<ObjectFlags>(static_cast<uint32_t>(Object->Flags) & ~static_cast<uint32_t>(ObjectFlags::InSingularFunc)); }
+		SingularGuard(const SingularGuard&) = delete;
+		SingularGuard& operator=(const SingularGuard&) = delete;
+
+		UObject* Object;
+	};
+}
+
 ExpressionValue Frame::Call(UFunction* func, UObject* instance, const ArrayView<ExpressionValue>& args)
 {
 	if (!instance)
@@ -322,6 +338,17 @@ ExpressionValue Frame::Call(UFunction* func, UObject* instance, const ArrayView<
 	if (!instance->IsEventEnabled(func->Name))
 	{
 		return ExpressionValue::NothingValue();
+	}
+
+	// While any singular function runs on an object, every singular function entered on that object
+	// returns at once and does nothing, the same function again or another one. The mark is the
+	// object's, not the function's. This follows the trace, so the entered call is still seen.
+	std::optional<SingularGuard> singularGuard;
+	if (AllFlags(func->FuncFlags, FunctionFlags::Singular))
+	{
+		if (AllFlags(instance->Flags, ObjectFlags::InSingularFunc))
+			return ExpressionValue::NothingValue();
+		singularGuard.emplace(instance);
 	}
 
 	if (AllFlags(func->FuncFlags, FunctionFlags::Native))
@@ -399,9 +426,10 @@ ExpressionValue Frame::CallNative(UFunction* func, UObject* instance, const Arra
 	{
 		// An out parameter that received Nothing has no storage to write to: a None context
 		// or a nested call that yielded nothing, already reported by the statement that made
-		// the call. Like the original engine, skip the native. In parameters are not skipped:
-		// many conversions accept Nothing as a default, and skipping a latent native such as
-		// MoveTo leaves the state code running without ever yielding.
+		// the call. The native is not run: its only effect on such a parameter is the write, and there is
+		// nothing to write to. In parameters are not skipped: many conversions accept Nothing as a
+		// default, and skipping a latent native such as MoveTo leaves the state code running without
+		// ever yielding.
 		if (argindex < args.size() && args[argindex].GetType() == ExpressionValueType::Nothing &&
 			AllFlags(prop->PropFlags, PropertyFlags::Parm | PropertyFlags::OutParm) &&
 			!AllFlags(prop->PropFlags, PropertyFlags::OptionalParm))
@@ -1455,7 +1483,16 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 				else
 				{
 					ExpressionValue val = std::move(PopValue());
-					PushValue(val.Member(static_cast<StructMemberExpression*>(expr)->Field));
+					ExpressionValue member = val.Member(static_cast<StructMemberExpression*>(expr)->Field);
+					// A struct that is the result of an expression owns its data, and the member points
+					// into it, but val ends with this case. Copy the member out, so the pushed value does
+					// not read memory that is gone. A struct that lives in a variable keeps pointing at
+					// the variable, which a statement may assign to. A member that is itself a static array
+					// of a temporary stays a reference, because a copy would no longer index, so it
+					// still points into storage that ends with this case. That read is unfixed.
+					if (!val.IsVariable() && static_cast<StructMemberExpression*>(expr)->Field->ArrayDimension == 1)
+						member.Load();
+					PushValue(std::move(member));
 					PopExpr();
 				}
 				break;
@@ -2006,7 +2043,9 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 
 					if (!found)
 					{
-						Frame::ThrowException("Script virtual function " + funcExpr->Name.ToString() + " not found!");
+						// Logged as a script error and the statement goes on with Nothing, so one missing
+						// function does not stop the script that called it
+						LogMessage("Script error: script function " + funcExpr->Name.ToString() + " not found in " + context->Class->Name.ToString());
 						for (size_t i = 0, count = funcExpr->Args.size(); i < count; i++)
 							PopValue();
 						PushValue(ExpressionValue::NothingValue());
@@ -2077,9 +2116,10 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 
 					if (!found)
 					{
-						Frame::ThrowException("Script global function " + static_cast<GlobalFunctionExpression*>(expr)->Name.ToString() + " not found!");
+						LogMessage("Script error: script function " + funcExpr->Name.ToString() + " not found in " + context->Class->Name.ToString());
 						PopValues(funcExpr->Args.size());
 						PushValue(ExpressionValue::NothingValue());
+						PopExpr();
 					}
 				}
 				break;

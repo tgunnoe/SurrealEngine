@@ -3,6 +3,8 @@
 #include "Packages/Core/UClass.h"
 #include "Packages/Core/UStruct.h"
 #include "Packages/Core/UObject.h"
+#include "Packages/Core/UState.h"
+#include "VM/Frame.h"
 #include "Packages/Core/Properties/UObjectProperty.h"
 #include "Packages/Core/Properties/UStructProperty.h"
 #include "Packages/Core/Properties/UArrayProperty.h"
@@ -636,5 +638,30 @@ TEST(SweepSkipsABlockWhoseInitThrew)
 
 	CHECK_MSG(threw, "the instance's block was built without the copy throwing");
 	CHECK_MSG(!instanceLive, "the half-built instance survived the collection");
+	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
+}
+
+// The object is allocated before its state frame's state and the property the state lays its
+// variables out by, and the sweep visits the newest allocation first, so destructing the frame's
+// variables when the object is freed reads a state and a property that are already freed. The
+// freed read is invisible to a release build and shows under the sanitizer.
+TEST(AStateFrameReleasesItsVariablesBeforeItsStateIsFreed)
+{
+	UObject* object = GC::Alloc<UObject>("Early", nullptr, ObjectFlags::NoFlags);
+	TrackedProperty* variable = GC::Alloc<TrackedProperty>("Variable", nullptr, ObjectFlags::NoFlags);
+	UState* state = GC::Alloc<UState>("LateState", nullptr, ObjectFlags::NoFlags);
+	state->Properties.push_back(variable);
+	state->StructSize = Place({ variable });
+	state->StructAlignment = 16;
+	object->StateFrame = std::make_shared<Frame>(object, state, 0, true);
+	const size_t before = Tracked::live.size();
+
+	GC::Collect();
+	const size_t after = Tracked::live.size();
+	const bool objectLive = IsLive(object);
+
+	CHECK_EQ(before, size_t{ 1 });
+	CHECK_MSG(!objectLive, "the unreferenced object survived the collection");
+	CHECK_EQ(after, size_t{ 0 });
 	CHECK_EQ(Tracked::badDestructs, size_t{ 0 });
 }
