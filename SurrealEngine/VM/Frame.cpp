@@ -340,8 +340,9 @@ ExpressionValue Frame::Call(UFunction* func, UObject* instance, const ArrayView<
 		return ExpressionValue::NothingValue();
 	}
 
-	// A singular function entered again on an object that is already inside it does nothing. This
-	// follows the trace, so the second call is still seen.
+	// While any singular function runs on an object, every singular function entered on that object
+	// returns at once and does nothing, the same function again or another one. The mark is the
+	// object's, not the function's. This follows the trace, so the entered call is still seen.
 	std::optional<SingularGuard> singularGuard;
 	if (AllFlags(func->FuncFlags, FunctionFlags::Singular))
 	{
@@ -1486,8 +1487,9 @@ ExpressionEvalResult Frame::RunExpr(Expression* statementExpr, UObject* self, UO
 					// A struct that is the result of an expression owns its data, and the member points
 					// into it, but val ends with this case. Copy the member out, so the pushed value does
 					// not read memory that is gone. A struct that lives in a variable keeps pointing at
-					// the variable, which a statement may assign to. A member that is itself an array
-					// stays a reference: a copy would no longer index.
+					// the variable, which a statement may assign to. A member that is itself a static array
+					// of a temporary stays a reference, because a copy would no longer index, so it
+					// still points into storage that ends with this case. That read is unfixed.
 					if (!val.IsVariable() && static_cast<StructMemberExpression*>(expr)->Field->ArrayDimension == 1)
 						member.Load();
 					PushValue(std::move(member));
