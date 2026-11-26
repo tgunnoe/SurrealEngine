@@ -170,8 +170,10 @@ void UConversation::BindEvents(UObject** conBoundActors, UObject* invokeActor)
 	}
 }
 
-// The one list of the event types that hold an actor and of the slots they hold it in, so that the
-// script's unbind and the unload's cannot disagree about what a conversation binds.
+// The list of the event types that hold an actor and of the slots they hold it in, shared by the
+// script's unbind and the unload's, so those two cannot disagree about what a conversation binds.
+// BindActorEvents and BindEvents keep their own switches over the same slots: an event type or slot
+// that gains an actor has to be added to all three.
 void UConversation::VisitBoundActors(const std::function<void(UActor*&)>& visit)
 {
 	for (UConEvent* e = eventList(); e; e = e->nextEvent())
@@ -205,7 +207,7 @@ void UConversation::VisitBoundActors(const std::function<void(UActor*&)>& visit)
 				visit(trade->eventOwner());
 			break;
 		default:
-			// The jump event binds no actor.
+			// The other event types hold no actor slot (a jump holds a conversation, not an actor).
 			break;
 		}
 	}
