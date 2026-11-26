@@ -27,6 +27,8 @@ VideoSettingsPage::VideoSettingsPage(Widget* parent)
 
 	AdvancedLabel = new TextLabel(this);
 	UseVSync = new CheckboxLabel(this);
+	FrameRateLimitLabel = new TextLabel(this);
+	FrameRateLimit = new LineEdit(this);
 	AntialiasModesLabel = new TextLabel(this);
 	AntialiasModes = new Dropdown(this);
 	LightModesLabel = new TextLabel(this);
@@ -54,6 +56,7 @@ VideoSettingsPage::VideoSettingsPage(Widget* parent)
 #endif
 	AdvancedLabel->SetText("Render settings:");
 	UseVSync->SetText("Use vertical sync");
+	FrameRateLimitLabel->SetText("Frame rate limit in frames per second (0 means off)");
 	AntialiasModesLabel->SetText("Anti aliasing");
 	LightModesLabel->SetText("Light mode");
 	GammaModesLabel->SetText("Gamma mode");
@@ -65,6 +68,7 @@ VideoSettingsPage::VideoSettingsPage(Widget* parent)
 	UseDebugLayer->SetText("Enable debug layer (slow)");
 	ResetButton->SetText("Reset to defaults");
 
+	FrameRateLimit->SetIntrinsicSize(4);
 	HdrScale->SetIntrinsicSize(3);
 	BloomAmount->SetIntrinsicSize(3);
 
@@ -89,6 +93,7 @@ VideoSettingsPage::VideoSettingsPage(Widget* parent)
 	OpenGL->SetChecked(settings.RenderDevice.Type == RenderDeviceType::OpenGL);
 #endif
 	UseVSync->SetChecked(settings.RenderDevice.UseVSync);
+	FrameRateLimit->SetTextInt(settings.RenderDevice.FrameRateLimit);
 	AntialiasModes->SetSelectedItem((int)settings.RenderDevice.Antialias);
 	LightModes->SetSelectedItem((int)settings.RenderDevice.Light);
 	GammaModes->SetSelectedItem((int)settings.RenderDevice.Gamma);
@@ -128,6 +133,11 @@ VideoSettingsPage::VideoSettingsPage(Widget* parent)
 	gammaModesLayout->AddWidget(GammaModes);
 	gammaModesLayout->AddStretch();
 
+	auto frameRateLimitLayout = new HBoxLayout();
+	frameRateLimitLayout->AddWidget(FrameRateLimitLabel);
+	frameRateLimitLayout->AddWidget(FrameRateLimit);
+	frameRateLimitLayout->AddStretch();
+
 	auto hdrScaleLayout = new HBoxLayout();
 	hdrScaleLayout->AddWidget(HdrScaleLabel);
 	hdrScaleLayout->AddWidget(HdrScale);
@@ -149,6 +159,7 @@ VideoSettingsPage::VideoSettingsPage(Widget* parent)
 
 	mainLayout->AddWidget(AdvancedLabel);
 	mainLayout->AddWidget(UseVSync);
+	mainLayout->AddLayout(frameRateLimitLayout);
 
 	mainLayout->AddLayout(antialiasModesLayout);
 
@@ -192,6 +203,7 @@ void VideoSettingsPage::Save()
 
 
 	settings.RenderDevice.UseVSync = UseVSync->GetChecked();
+	settings.RenderDevice.FrameRateLimit = FrameLimitFromFieldText(FrameRateLimit->GetText(), settings.RenderDevice.FrameRateLimit);
 
 	if (AntialiasModes->GetSelectedItem() == 0)
 		settings.RenderDevice.Antialias = AntialiasMode::Off;
@@ -231,6 +243,7 @@ void VideoSettingsPage::OnResetButtonClicked()
 	OpenGL->SetChecked(false);
 #endif
 	UseVSync->SetChecked(true);
+	FrameRateLimit->SetTextInt(FramePacer::DefaultLimit);
 	AntialiasModes->SetSelectedItem(0);
 	LightModes->SetSelectedItem(0);
 	GammaModes->SetSelectedItem(0);

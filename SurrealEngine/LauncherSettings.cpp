@@ -7,16 +7,22 @@
 
 int ReadFrameRateLimit(const JsonValue& renderDevice)
 {
-	return 0;
+	// A settings file written before the key existed must get the default, and a missing number reads as 0, which is off
+	const JsonValue& value = renderDevice["FrameRateLimit"];
+	return value.is_number() ? value.to_int() : FramePacer::DefaultLimit;
 }
 
 void WriteFrameRateLimit(JsonValue& renderDevice, int limit)
 {
+	renderDevice["FrameRateLimit"] = JsonValue::number(limit);
 }
 
 int FrameLimitFromFieldText(const std::string& text, int previous)
 {
-	return -1;
+	// Zero means off, so a typo must not be read as a number. The previous value is clamped too, so that a hand-edited
+	// file that holds a value out of range is never written back as it is
+	std::optional<int> value = FramePacer::ParseDigits(text);
+	return FramePacer::ClampLimit(value ? *value : previous);
 }
 
 LauncherSettings& LauncherSettings::Get()
@@ -70,6 +76,7 @@ LauncherSettings::LauncherSettings()
 
 		RenderDevice.GammaCorrectScreenshots = settings["RenderDevice"]["GammaCorrectScreenshots"].to_boolean();
 		RenderDevice.UseVSync = settings["RenderDevice"]["UseVSync"].to_boolean();
+		RenderDevice.FrameRateLimit = ReadFrameRateLimit(settings["RenderDevice"]);
 		RenderDevice.Hdr = settings["RenderDevice"]["Hdr"].to_boolean();
 		RenderDevice.HdrScale = settings["RenderDevice"]["HdrScale"].to_int();
 		RenderDevice.Bloom = settings["RenderDevice"]["Bloom"].to_boolean();
@@ -125,6 +132,7 @@ void LauncherSettings::Save()
 
 	rendev["GammaCorrectScreenshots"] = JsonValue::boolean(RenderDevice.GammaCorrectScreenshots);
 	rendev["UseVSync"] = JsonValue::boolean(RenderDevice.UseVSync);
+	WriteFrameRateLimit(rendev, RenderDevice.FrameRateLimit);
 	rendev["Hdr"] = JsonValue::boolean(RenderDevice.Hdr);
 	rendev["HdrScale"] = JsonValue::number(RenderDevice.HdrScale);
 	rendev["Bloom"] = JsonValue::boolean(RenderDevice.Bloom);
