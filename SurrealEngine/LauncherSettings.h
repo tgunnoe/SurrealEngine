@@ -52,7 +52,7 @@ public:
 	{
 		RenderDeviceType Type = RenderDeviceType::Vulkan;
 		bool UseVSync = true;
-		int FrameRateLimit = 60; // Frames per second; 0 means off, otherwise 20 to 1000 once clamped. 60 is FramePacer::DefaultLimit
+		int FrameRateLimit = FramePacer::DefaultLimit; // Frames per second; 0 means off, otherwise 20 to 1000 once clamped
 		AntialiasMode Antialias = AntialiasMode::MSAA4x;
 		LightMode Light = LightMode::Normal;
 		GammaMode Gamma = GammaMode::D3D9;

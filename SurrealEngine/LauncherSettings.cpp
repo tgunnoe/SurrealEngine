@@ -5,10 +5,6 @@
 #include "Utils/File.h"
 #include "Utils/UserDirs.h"
 
-// The member's default is written out as a number so that the settings struct reads on its own; this keeps it equal to
-// the default a settings file without the key gets
-static_assert(FramePacer::DefaultLimit == 60, "LauncherSettings::RenderDevice::FrameRateLimit must default to FramePacer::DefaultLimit");
-
 int ReadFrameRateLimit(const JsonValue& renderDevice)
 {
 	// A settings file written before the key existed must get the default, and a missing number reads as 0, which is off
