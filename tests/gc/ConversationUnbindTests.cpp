@@ -206,6 +206,27 @@ TEST(UnbindKeepsBoundActorsOfAnotherPackage)
 	CheckChainIntact(c);
 }
 
+TEST(UnbindLeavesUnboundSlotsNull)
+{
+	// Most events of a conversation that is not playing hold no actor, so the clear reads null slots
+	// all the time and must not look through them.
+	Layout layout;
+	Conversation c = Build(layout, PackageA, PackageA, PackageB);
+	UActor* keptListener = c.mixed->speakingTo();
+	c.speech->speaker() = nullptr;
+	c.transfer->toActor() = nullptr;
+	c.trade->eventOwner() = nullptr;
+	c.mixed->speaker() = nullptr;
+
+	c.con->ClearBindEventsInto(PackageA);
+
+	for (UActor* actor : BoundActors(c))
+		CHECK(actor == nullptr);
+	CHECK(c.mixed->speaker() == nullptr);
+	CHECK(c.mixed->speakingTo() == keptListener);
+	CheckChainIntact(c);
+}
+
 TEST(UnbindWalksEveryConversationOfEveryMission)
 {
 	Layout layout;
