@@ -57,6 +57,32 @@ The three calibration runs, one per game on the previous binary, gave 1280x720 p
 | flash-invis | flash-invis-base | flash-invis-node | 0.0, 0.0 | 498.1, 485.7 | 1, 1 |
 | ovl-training | ovl-training-base | ovl-training-node | -, - | 308.3, 283.7 | 1, 1 |
 
+## Flash runs at the frame limit
+
+The two flash situations again, with the recipes of the flash runs above, the previous binary (no frame limit: it runs at hundreds of `FPS`) against the fixed binary at its default limit of 60 (no `--frame-limit` flag, and a settings file without the key, so the default applies). The limit makes the step between frames about 16.7 ms, which is what lets the stock scripts' eases cross their snap thresholds without `slomo`. Every run is in the headless cage, so the rates are the cage's: the fixed binary is bounded by its timed wait, and the previous binary's rate is the loop's own speed with nothing to present to.
+
+| Pair | Previous binary: lowest and highest FPS | Fixed binary: lowest and highest FPS | Trace lines (previous, fixed) |
+| :--- | :--- | :--- | :--- |
+| flash-nyleve | 1256.8, 2264.4 | 59.9, 60.1 (60.0, 60.1 on the repeat) | `HeadZoneChange` 470, 336 |
+| flash-invis | 540.8, 570.5 | 59.0, 60.1 | `ClientAdjustGlow(-0.15` 1, 1 |
+
+Each pair is measured on the whole 1280x720 capture by the shift of the mean of each colour channel (0 to 1, candidate minus reference). The noise `e` is the largest channel shift between the previous binary's own two captures after the move, 3 s apart, and the threshold is `T = max(0.01, 3 * e)`, fixed from the previous binary before any fixed-binary capture was read.
+
+| Pair | Reference and candidate | Largest channel shift | Threshold | Verdict |
+| :--- | :--- | :--- | :--- | :--- |
+| flash-nyleve | previous `a` against previous `b` (the noise) | 0.0807 | 0.2421 | |
+| flash-nyleve | previous `a` against fixed `a` | 0.1989 (r +0.1293, g +0.1989, b +0.1803) | 0.2421 | below |
+| flash-nyleve | previous `b` against fixed `b` | 0.1973 | 0.2421 | below |
+| flash-nyleve | previous `a` against fixed `a`, repeat | 0.2002 | 0.2421 | below |
+| flash-nyleve | previous `b` against fixed `b`, repeat | 0.1981 | 0.2421 | below |
+| flash-invis | previous `a` against previous `b` (the noise) | 0.0009 | 0.0100 | |
+| flash-invis | previous `start` against previous `a` | 0.0011 | 0.0100 | no change |
+| flash-invis | previous `start` against previous `b` | 0.0019 | 0.0100 | no change |
+| flash-invis | fixed `start` against fixed `a` | 0.3355 (r +0.1411, g +0.1418, b +0.3355) | 0.0100 | change |
+| flash-invis | fixed `start` against fixed `b` | 0.3355 | 0.0100 | change |
+
+The Invisibility pair shows what was expected: a flat picture on the previous binary and a shift of about a third on the blue channel on the fixed one. The `start` capture is taken at 5 s after login, before the `ActivateItem` line of the recipe, so it shows the scene without the item active. The water pair shifts by 0.20 on every capture and repeats to within 0.002, but the previous binary's own two captures already differ by 0.08 (the scene under the water changes between those captures), which raises the threshold above the shift; by the rule fixed in advance the water pair is below it, and it is left to be judged by eye. A heavy hit flash was not observed: no documented command produced one (summoning pawns and projectiles did not hurt the player, and a `place` high above the start point was refused by the engine).
+
 ## Nested mirrors
 
 Each pair is a run on the binary before the change (previous) and one after it (fixed), 60 s, from the same `place` point; the three captures of a run are `pre`, `a` (3 s after the move) and `b` (6 s after it). The seven mirror pairs above are run again with this change, and Toxic is the one stock oblique pair visible from a single standing point, `place -479 -1376 -384 180`, loaded by its bare name with the Unreal Gold class pin.
@@ -124,6 +150,6 @@ The pictures are judged outside this file. The fixed binary has not been compare
 
 The CTF-Niven ASMD pair was not observed: with the game type `Botpack.CTFGame` the level has no actor named `ASMD0` or `ASMD1`, so the pickups were not there to look at, and the player died in both runs of the pair. The Unreal Tournament pair of DOM-Cinder needed a third attempt of the fixed-binary run because the player died in the first two.
 
-The flash runs cannot show the flash change. At the frame rates of these runs (485 to 1185 `FPS`) the stock view-flash script sends the device no flash: one easing step from rest is snapped back to rest on every frame, and a step escapes the snap only below about 41 `FPS` for the tint of water, 79 for Invisibility and 205 for a heavy hit flash.
+The flash runs of the table above ran without a frame limit and so do not show the flash change. At their frame rates (485 to 1185 `FPS`) the stock view-flash script sends the device no flash: one easing step from rest is snapped back to rest on every frame, and a step escapes the snap only below about 41 `FPS` for the tint of water, 79 for Invisibility and 205 for a heavy hit flash. The section "Flash runs at the frame limit" runs the same two situations at the engine's default limit of 60 `FPS`, where the step between frames is longer.
 
 No capture of these pairs frames a mirror seen inside another mirror, the Toxic pair included, where the two oblique mirrors could not be identified in the frames. The terralift and Toxic pairs also differ between the previous and fixed runs by actors that moved, so they do not show the change. The covisibility search over Deus Ex `10_Paris_Club` counted standing points that see two of its mirror planes without naming which two, so it does not show that the oblique pair there is out of view from every standing point; that pair is covered by the census of mirror surfaces and the unit test of oblique planes only.

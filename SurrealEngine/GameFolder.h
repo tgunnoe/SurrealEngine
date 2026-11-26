@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 // One console command to run a fixed time after the first login (see --exec).
 struct ExecItem
 {
@@ -22,6 +24,7 @@ struct GameLaunchInfo
 	std::string url = "";					// The UnrealURL to launch upon startup
 	std::string userDir = "";				// Absolute --user-dir: replaces the per-user config and data directories; empty when not given
 	Array<ExecItem> execSchedule;			// Console commands from --exec, stably sorted by seconds since the first login
+	std::optional<int> frameLimit;			// --frame-limit, already validated (0 means off); when set it beats the setting
 
 	// Unattended runs write no ini files and no saves, unless they were given a directory of their own
 	bool CanWriteUserFiles() const { return !autostart || !userDir.empty(); }
@@ -92,3 +95,14 @@ struct TraceScriptResult
 
 // Parses the value of --trace-script: "<Class>[.<Function>][,<Class>[.<Function>]...]".
 TraceScriptResult ParseTraceScript(const std::string& text);
+
+struct FrameLimitResult
+{
+	int limit = 0;			// The accepted frame rate limit; 0 (off) when the text was rejected
+	std::string error;		// Names the offending text; empty when the text was accepted
+
+	bool ok() const { return error.empty(); }
+};
+
+// Parses the value of --frame-limit: 0, or 20 to 1000, in decimal digits only.
+FrameLimitResult ParseFrameLimit(const std::string& text);

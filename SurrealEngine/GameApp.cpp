@@ -95,6 +95,8 @@ int GameApp::main(Array<std::string> args)
 				"  --trace-script=<Class>[.<Function>][,...]\n"
 				"                       Log each script call made on objects of these classes or their\n"
 				"                       subclasses, or only the named function of such objects\n"
+				"  --frame-limit=<fps>  Limit the main loop to this many frames per second for this run: 0 for\n"
+				"                       no limit, otherwise 20 to 1000; overrides the video setting\n"
 				"  --smoke-log=<path>   Write a structured, flushed event log for unattended runs\n";
 			return 0;
 		}
@@ -121,6 +123,19 @@ int GameApp::main(Array<std::string> args)
 				std::cerr << "SurrealEngine: invalid --trace-script: " << traceScript.error << "\n";
 				return 2;
 			}
+		}
+
+		// Likewise a malformed --frame-limit
+		std::optional<int> frameLimit;
+		if (commandline->HasArg("", "--frame-limit"))
+		{
+			FrameLimitResult parsed = ParseFrameLimit(commandline->GetArg("", "--frame-limit"));
+			if (!parsed.ok())
+			{
+				std::cerr << "SurrealEngine: invalid --frame-limit: " << parsed.error << "\n";
+				return 2;
+			}
+			frameLimit = parsed.limit;
 		}
 
 		// Like --exec, a --user-dir that names nothing or lies inside a game folder named on the command line stops
@@ -151,6 +166,7 @@ int GameApp::main(Array<std::string> args)
 		{
 			GameLaunchInfo info = GameFolderSelection::GetLaunchInfo(selectedGameIndex);
 			info.execSchedule = std::move(execSchedule.items);
+			info.frameLimit = frameLimit;
 
 			// A game picked in the launcher was not known when the command line was checked, so look at the output once more.
 			// A smoke log was opened by then and stays; the run still ends here, before any package loads.
