@@ -64,9 +64,12 @@
 #include "VM/ScriptCall.h"
 #include "Video/VideoPlayer.h"
 #include "Utils/Convert.h"
+#include "Utils/FramePacer.h"
+#include "LauncherSettings.h"
 #include <cctype>
 #include <cerrno>
 #include <chrono>
+#include <thread>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -161,6 +164,25 @@ Engine::~Engine()
 	engine = nullptr;
 }
 
+static int64_t SteadyNowNs()
+{
+	using namespace std::chrono;
+	return duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+// Waits until deadlineNs on the steady clock. The thread sleeps to a short margin before it, since a sleep can end
+// late, and spins for the rest of the way, so the deadline is met to well under a millisecond without a core spinning
+// for the whole wait.
+static void WaitUntilNs(int64_t deadlineNs)
+{
+	constexpr int64_t spinNs = 2'000'000;
+	if (deadlineNs - SteadyNowNs() > spinNs)
+		std::this_thread::sleep_until(std::chrono::steady_clock::time_point(std::chrono::nanoseconds(deadlineNs - spinNs)));
+	while (SteadyNowNs() < deadlineNs)
+	{
+	}
+}
+
 void Engine::Run()
 {
 	SmokeLog::Get()->Event("GAME", LaunchInfo.gameName + " " + LaunchInfo.gameVersionString);
@@ -169,6 +191,12 @@ void Engine::Run()
 	LogMessage("User directories: config=" + packages->GetConfigFolderPath().string() + " data=" + packages->GetDataFolderPath().string());
 	LoadEngineSettings();
 	LogMessage("Loaded Engine settings");
+
+	const int frameLimitSetting = LauncherSettings::Get().RenderDevice.FrameRateLimit;
+	const int frameLimit = FramePacer::EffectiveLimit(frameLimitSetting, LaunchInfo.frameLimit);
+	if (!LaunchInfo.frameLimit && frameLimit != frameLimitSetting)
+		LogMessage("Frame rate limit setting " + std::to_string(frameLimitSetting) + " is outside 0 and 20 to 1000, using " + std::to_string(frameLimit));
+	LogMessage("Frame rate limit: " + std::to_string(frameLimit) + (LaunchInfo.frameLimit ? " (command line)" : " (setting)"));
 	LoadKeybindings();
 	LogMessage("Loaded key bindings");
 	LogGamePackageSHA1Sums();
@@ -201,6 +229,8 @@ void Engine::Run()
 	bool firstCall = true;
 
 	float currentZoneTimeDilation = 1.0f; // Unreal 227 allows zones to specify their own time dilations
+
+	int64_t frameDeadlineNs = FramePacer::FirstDeadlineNs(frameLimit, SteadyNowNs());
 
 	while (!quit)
 	{
@@ -376,6 +406,16 @@ void Engine::Run()
 				GameInfo = EntryGameInfo;
 				LoginPlayer();
 			}
+		}
+
+		// Pace the loop. This is the last thing in an iteration, so the wait is part of the next frame's elapsed time
+		// and the scripts take the longer step. A frame that ran a load or an unload is late and does not wait.
+		if (frameLimit > 0 && !quit)
+		{
+			const FramePacer::Step step = FramePacer::Pace(frameLimit, frameDeadlineNs, SteadyNowNs());
+			if (step.waitNs > 0)
+				WaitUntilNs(frameDeadlineNs);
+			frameDeadlineNs = step.nextDeadlineNs;
 		}
 	}
 
