@@ -1,2 +1,0 @@
-# Tests that fail by a check until the frame rate limit is implemented.
-FrameLimitArgumentParsing

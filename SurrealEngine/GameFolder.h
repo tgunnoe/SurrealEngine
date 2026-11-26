@@ -1,5 +1,7 @@
 #pragma once
 
+#include <optional>
+
 // One console command to run a fixed time after the first login (see --exec).
 struct ExecItem
 {
@@ -22,6 +24,7 @@ struct GameLaunchInfo
 	std::string url = "";					// The UnrealURL to launch upon startup
 	std::string userDir = "";				// Absolute --user-dir: replaces the per-user config and data directories; empty when not given
 	Array<ExecItem> execSchedule;			// Console commands from --exec, stably sorted by seconds since the first login
+	std::optional<int> frameLimit;			// --frame-limit, already validated (0 means off); when set it beats the setting
 
 	// Unattended runs write no ini files and no saves, unless they were given a directory of their own
 	bool CanWriteUserFiles() const { return !autostart || !userDir.empty(); }

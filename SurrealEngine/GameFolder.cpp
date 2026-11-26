@@ -7,6 +7,7 @@
 #include "LauncherSettings.h"
 #include "Utils/CommandLine.h"
 #include "Utils/UserDirs.h"
+#include "Utils/FramePacer.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -646,5 +647,14 @@ TraceScriptResult ParseTraceScript(const std::string& text)
 
 FrameLimitResult ParseFrameLimit(const std::string& text)
 {
-	return { 1, "unimplemented" };
+	if (text.empty())
+		return { 0, "empty value" };
+
+	// An override outside the range is refused and not clamped: a run that names 10 must not quietly run at 20
+	std::optional<int> value = FramePacer::ParseDigits(text);
+	if (!value)
+		return { 0, "'" + text + "' is not a whole number written in decimal digits" };
+	if (*value != 0 && (*value < FramePacer::MinLimit || *value > FramePacer::MaxLimit))
+		return { 0, "'" + text + "' is not 0 or from " + std::to_string(FramePacer::MinLimit) + " to " + std::to_string(FramePacer::MaxLimit) };
+	return { *value, {} };
 }
