@@ -643,3 +643,8 @@ TraceScriptResult ParseTraceScript(const std::string& text)
 	}
 	return result;
 }
+
+FrameLimitResult ParseFrameLimit(const std::string& text)
+{
+	return { 1, "unimplemented" };
+}

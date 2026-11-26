@@ -92,3 +92,14 @@ struct TraceScriptResult
 
 // Parses the value of --trace-script: "<Class>[.<Function>][,<Class>[.<Function>]...]".
 TraceScriptResult ParseTraceScript(const std::string& text);
+
+struct FrameLimitResult
+{
+	int limit = 0;			// The accepted frame rate limit; 0 (off) when the text was rejected
+	std::string error;		// Names the offending text; empty when the text was accepted
+
+	bool ok() const { return error.empty(); }
+};
+
+// Parses the value of --frame-limit: 0, or 20 to 1000, in decimal digits only.
+FrameLimitResult ParseFrameLimit(const std::string& text);

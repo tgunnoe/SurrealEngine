@@ -1,5 +1,9 @@
 #pragma once
 
+#include <string>
+
+class JsonValue;
+
 enum class RenderDeviceType
 {
 	Vulkan,
@@ -27,6 +31,15 @@ enum class GammaMode
 	D3D9,
 	XOpenGL
 };
+
+// The frame rate limit as the settings file holds it: the RenderDevice object in, the limit out. A key that is
+// missing or not a number gives the default, never 0 (which means off).
+int ReadFrameRateLimit(const JsonValue& renderDevice);
+void WriteFrameRateLimit(JsonValue& renderDevice, int limit);
+
+// What the launcher's frame rate field saves: the clamped number in the text, or the previous value when the
+// text is not a plain whole number, so a typo never turns the limit off.
+int FrameLimitFromFieldText(const std::string& text, int previous);
 
 class LauncherSettings
 {

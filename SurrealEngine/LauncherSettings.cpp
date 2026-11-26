@@ -5,6 +5,20 @@
 #include "Utils/File.h"
 #include "Utils/UserDirs.h"
 
+int ReadFrameRateLimit(const JsonValue& renderDevice)
+{
+	return 0;
+}
+
+void WriteFrameRateLimit(JsonValue& renderDevice, int limit)
+{
+}
+
+int FrameLimitFromFieldText(const std::string& text, int previous)
+{
+	return -1;
+}
+
 LauncherSettings& LauncherSettings::Get()
 {
 	static LauncherSettings settings;
