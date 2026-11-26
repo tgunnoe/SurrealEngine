@@ -807,7 +807,15 @@ void Engine::UnloadMap()
 	viewport->Actor() = nullptr;
 
 	if (released)
+	{
+		// The conversation events live in a package that outlives every level, and a conversation that was
+		// still bound when the level went away holds its actors. An actor marks its package, so one left
+		// behind would keep the whole level alive past its collection.
+		if (dxConMissionList)
+			UConversation::ClearMissionBindsInto(dxConMissionList, released);
+
 		CollectReleasedLevel(released, releasedName);
+	}
 }
 
 void Engine::LoadMap(UnrealURL url, std::map<std::string, std::string> travelInfo)

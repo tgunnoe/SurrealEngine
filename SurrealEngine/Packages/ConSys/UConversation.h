@@ -1,9 +1,12 @@
 #pragma once
 
 #include "UConObject.h"
+#include <functional>
 
 class UConEvent;
 class UConFlagRef;
+class UConversationMissionList;
+class UActor;
 
 class UConversation : public UConObject
 {
@@ -13,6 +16,8 @@ public:
 	void BindActorEvents(UObject* actorToBind);
 	void BindEvents(UObject** conBoundActors, UObject* invokeActor);
 	void ClearBindEvents();
+	void ClearBindEventsInto(Package* released);
+	static void ClearMissionBindsInto(UConversationMissionList* missions, Package* released);
 	UObject* CreateConCamera();
 	UObject* CreateFlagRef(const NameString& FlagName, bool flagValue);
 	UObject* GetSpeechAudio(int soundID);
@@ -41,4 +46,7 @@ public:
 	float& lastPlayedTime() { return Value<float>(PropOffsets_Conversation.lastPlayedTime); }
 	int& ownerRefCount() { return Value<int>(PropOffsets_Conversation.ownerRefCount); }
 	int& radiusDistance() { return Value<int>(PropOffsets_Conversation.radiusDistance); }
+
+private:
+	void VisitBoundActors(const std::function<void(UActor*&)>& visit);
 };
