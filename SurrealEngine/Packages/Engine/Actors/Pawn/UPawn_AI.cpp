@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "UPawn.h"
 #include "UPlayerPawn.h"
+#include "UPawn_AIMath.h"
 #include "Packages/Core/UClass.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Actors/Info/UGameInfo.h"
@@ -183,8 +184,142 @@ float UPawn::AICanHear(UActor* other, std::optional<float> volume, std::optional
 
 float UPawn::AICanSee(UActor* other, std::optional<float> visibility, std::optional<bool> bCheckVisibility, std::optional<bool> bCheckDir, std::optional<bool> bCheckCylinder, std::optional<bool> bCheckLOS)
 {
-	LogUnimplemented("Pawn.AICanSee() [Deus Ex]");
-	return 0.0f;
+	if (!other)
+		return 0.0f;
+
+	// The viewer is this pawn and callers use the result as a magnitude, so it is the strength of the
+	// sighting (0 for unseen) and not a yes/no.
+	const float viewVisibility = visibility.value_or(1.0f);
+	const float range = SightRadius() * viewVisibility;
+
+	vec3 eye = Location();
+	eye.z += BaseEyeHeight();
+
+	// With bCheckCylinder the target is seen if its centre, top or bottom is, instead of the centre only.
+	const vec3 centre = other->Location();
+	const vec3 halfHeight(0.0f, 0.0f, other->CollisionHeight());
+	const vec3 points[] = { centre, centre + halfHeight, centre - halfHeight };
+	const size_t pointCount = bCheckCylinder.value_or(false) ? 3 : 1;
+
+	// AI pawns do not keep ViewRotation in step with where they face (scripts assign it when they need
+	// it), so the facing is Rotation, as in CanSee. AIAddViewRotation turns the view off that facing.
+	// AIHorizontalFov is deliberately not used: the cone is the PeripheralVision cosine alone.
+	const Rotator facing = Rotation();
+	const Rotator added = AIAddViewRotation();
+	const bool checkDir = bCheckDir.value_or(false);
+
+	float nearest = FLT_MAX;
+	for (size_t i = 0; i < pointCount; i++)
+	{
+		float distance = length(points[i] - eye);
+		if (!(distance < range))
+			continue;
+		if (checkDir && !AIMath::InViewCone(eye, facing.Pitch, facing.Yaw, added.Pitch, added.Yaw, points[i], PeripheralVision()))
+			continue;
+		nearest = std::min(nearest, distance);
+	}
+	if (nearest == FLT_MAX)
+		return 0.0f;
+
+	// Pawn.Visibility is a byte on Pawn only, so any other kind of target is fully visible.
+	if (bCheckVisibility.value_or(false))
+	{
+		UPawn* otherPawn = UObject::TryCast<UPawn>(other);
+		float targetVisibility = otherPawn ? otherPawn->Visibility() / 255.0f : 1.0f;
+		if (!(viewVisibility * targetVisibility > VisibilityThreshold()))
+			return 0.0f;
+	}
+
+	// The distance was judged against the visibility-scaled range above, so skip LineOfSightTo's own
+	// check against the plain SightRadius.
+	if (bCheckLOS.value_or(false) && !LineOfSightTo(other, true))
+		return 0.0f;
+
+	return AIMath::SightMagnitude(nearest, SightRadius(), viewVisibility);
+}
+
+bool UPawn::AIDirectionReachable(const vec3& focus, int yaw, int pitch, float minDist, float maxDist, vec3& bestDest)
+{
+	// Walk out from focus along the direction in fixed steps. The first step that cannot be reached
+	// ends the walk, so the answer is the farthest point connected to focus by clear steps.
+	const float step = 64.0f;
+	vec3 previous = focus;
+	vec3 farthest;
+	bool found = false;
+	for (float distance : AIMath::RayDistances(minDist, maxDist, step))
+	{
+		vec3 sample = AIMath::PointAlong(focus, pitch, yaw, distance);
+
+		// The focus may be somewhere the pawn cannot see (a spot it is seeking), so the clearance
+		// comes from the sweep between samples and not from a line of sight to each one.
+		if (!CylinderTraceClear(previous, sample))
+			break;
+		if (!PointReachableWithoutSight(sample))
+			break;
+
+		farthest = sample;
+		found = true;
+		previous = sample;
+	}
+
+	if (found)
+		bestDest = farthest;
+	return found;
+}
+
+bool UPawn::AIPickRandomDestination(float minDist, float maxDist, int centralYaw, float yawDistribution, int centralPitch, float pitchDistribution, int tries, float multiplier, vec3& dest)
+{
+	auto random01 = []() { return std::rand() / (float)RAND_MAX; };
+
+	const int yawHalfWidth = AIMath::YawHalfWidth(yawDistribution);
+	const int pitchHalfWidth = AIMath::PitchHalfWidth(pitchDistribution);
+
+	// A pawn that walks needs somewhere to stand, so a sample in open air is dropped onto the floor
+	// beneath it, and a sample with no floor within the drop is no destination at all. Fliers and
+	// swimmers keep the sampled point.
+	const bool needsFloor = Physics() != PHYS_Flying && Physics() != PHYS_Swimming;
+	auto groundedZ = [&](const vec3& sample) -> std::optional<float>
+	{
+		if (!(maxDist > 0.0f))
+			return std::nullopt;
+
+		TraceFlags flags;
+		flags.world = true;
+		flags.movers = true;
+		vec3 extents(CollisionRadius(), CollisionRadius(), CollisionHeight());
+		CollisionHit hit = XLevel()->Collision.TraceFirstHit(sample, sample - vec3(0.0f, 0.0f, maxDist), this, extents, flags);
+		// As in CylinderTraceClear, only a hit comes back with an actor. The swept cylinder stops one
+		// half height above the surface it struck, and GroundedZ puts it back that far above the floor.
+		float floorZ = sample.z - maxDist * hit.Fraction - CollisionHeight();
+		return AIMath::GroundedZ(floorZ, hit.Actor != nullptr, CollisionHeight());
+	};
+
+	float farthest = maxDist;
+	for (int attempt = 0; attempt < tries; attempt++)
+	{
+		int yaw = AIMath::SampleAngularWindow(centralYaw, yawHalfWidth, random01());
+		int pitch = AIMath::SampleAngularWindow(centralPitch, pitchHalfWidth, random01());
+		float distance = minDist + (std::max(minDist, farthest) - minDist) * random01();
+		vec3 candidate = AIMath::PointAlong(Location(), pitch, yaw, distance);
+		bool standable = true;
+		if (needsFloor)
+		{
+			std::optional<float> z = groundedZ(candidate);
+			standable = z.has_value();
+			if (standable)
+				candidate.z = *z;
+		}
+
+		if (standable && CylinderTraceClear(Location(), candidate) && PointReachable(candidate))
+		{
+			dest = candidate;
+			return true;
+		}
+
+		// Each miss pulls the far limit in (or out) so later tries look nearer (or farther).
+		farthest *= multiplier;
+	}
+	return false;
 }
 
 float UPawn::AICanSmell(UActor* other, std::optional<float> smell)

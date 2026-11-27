@@ -28,6 +28,11 @@ struct ExpressionEvalResult
 	NameString Label;
 	ExpressionValue Value;
 	std::unique_ptr<Iterator> Iter;
+
+	// Set when a context in the statement evaluated to None. Result holds only the last
+	// outcome, and a jump, return, switch or iterator replaces AccessedNone, so the
+	// statement loop logs from this flag instead.
+	bool ContextWasNone = false;
 };
 
 class ExpressionEvaluator : ExpressionVisitor

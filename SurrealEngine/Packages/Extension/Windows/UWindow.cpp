@@ -80,14 +80,14 @@ void UWindow::UpdateLayout()
 		if (halign == EHAlign::Left || halign == EHAlign::Full)
 			x = X() + leftMargin;
 		else if (halign == EHAlign::Center)
-			x = (pWidth - width) * 0.5f;
+			x = X() + (pWidth - width) * 0.5f;
 		else if (halign == EHAlign::Right)
 			x = pWidth - rightMargin - width - X();
 
 		if (valign == EVAlign::Top || valign == EVAlign::Full)
 			y = Y() + topMargin;
 		else if (valign == EVAlign::Center)
-			y = (pHeight - height) * 0.5f;
+			y = Y() + (pHeight - height) * 0.5f;
 		else if (valign == EVAlign::Bottom)
 			y = pHeight - bottomMargin - height - Y();
 
@@ -333,6 +333,45 @@ bool UWindow::ConvertVectorToCoordinates(const vec3& Location, float& relativeX,
 
 void UWindow::Destroy()
 {
+	if (auto root = GetRootWindow())
+	{
+		// Reset pointers that reference the subtree
+		UWindow** pointers[] =
+		{
+			&root->FocusWindow(),
+			&root->grabbedWindow(),
+			&root->lastButtonWindow(),
+			&root->lastMouseWindow()
+		};
+		for (UWindow** w : pointers)
+		{
+			for (auto c = *w; c; c = c->parentOwner())
+			{
+				if (c == this)
+				{
+					*w = nullptr;
+					break;
+				}
+			}
+		}
+	}
+
+	// Also check preferredFocus on UModalWindow
+	for (auto cur = this; cur; cur = cur->parentOwner())
+	{
+		if (auto modal = UObject::TryCast<UModalWindow>(cur))
+		{
+			for (auto c = modal->preferredFocus(); c; c = c->parentOwner())
+			{
+				if (c == this)
+				{
+					modal->preferredFocus() = nullptr;
+					break;
+				}
+			}
+		}
+	}
+
 	UWindow* parent = parentOwner();
 	DetachFromParent();
 	if (parent)
@@ -458,7 +497,7 @@ void UWindow::GetCursorPos(float& MouseX, float& MouseY)
 	}
 }
 
-UObject* UWindow::GetFocusWindow()
+UWindow* UWindow::GetFocusWindow()
 {
 	if (URootWindow* root = GetRootWindow())
 	{
@@ -470,7 +509,7 @@ UObject* UWindow::GetFocusWindow()
 	}
 }
 
-UObject* UWindow::GetGC()
+UGC* UWindow::GetGC()
 {
 	return engine->dxgc;
 }
@@ -531,10 +570,15 @@ URootWindow* UWindow::GetRootWindow()
 	return UObject::TryCast<URootWindow>(cur);
 }
 
-UObject* UWindow::GetTabGroupWindow()
+UTabGroupWindow* UWindow::GetTabGroupWindow()
 {
-	// Not called directly by script
-	LogUnimplemented("Window.GetTabGroupWindow");
+	UWindow* cur = this;
+	while (cur)
+	{
+		if (auto tabgroup = UObject::TryCast<UTabGroupWindow>(cur))
+			return tabgroup;
+		cur = cur->parentOwner();
+	}
 	return nullptr;
 }
 
@@ -560,15 +604,6 @@ void UWindow::GrabMouse()
 {
 	if (URootWindow* root = GetRootWindow())
 		root->grabbedWindow() = this;
-}
-
-void UWindow::Hide()
-{
-	if (bIsVisible())
-	{
-		bIsVisible() = false;
-		VisibilityChanged(false);
-	}
 }
 
 bool UWindow::IsActorValid(UObject* refActor)
@@ -656,68 +691,99 @@ void UWindow::Lower()
 	}
 }
 
-/*
-UObject* UWindow::MoveFocus(EMove direction)
+bool UWindow::FocusFirstSelectable()
 {
-	auto root = GetRootWindow();
-	if(root)
+	if (bIsSelectable() && bIsSensitive())
 	{
-		int hmref = root->handleMouseRef();
-		if (!hmref)
-			MoveTabGroup(dir);
-		else {
-			UTabGroupWindow* tabWindow = UObject::Cast<UTabGroupWindow*>(GetTabGroupWindow());
-			if (tabWindow)
-			{
-				bool wrapFocus = bWrapFocus();
-			}
-		}
+		SetFocusWindow(this);
+		return true;
 	}
-}
-*/
-
-UObject* UWindow::MoveFocusDown()
-{
-	//MoveFocus(EMove::Down);
-	return nullptr;
-}
-
-UObject* UWindow::MoveFocusLeft()
-{
-	//MoveFocus(EMove::Left);
-	return nullptr;
+	for (auto cur = firstChild(); cur; cur = cur->nextSibling())
+	{
+		if (cur->FocusFirstSelectable())
+			return true;
+	}
+	return false;
 }
 
-UObject* UWindow::MoveFocusRight()
+UWindow* UWindow::MoveFocus(EMove direction)
 {
-	//MoveFocus(EMove::Right);
-	return nullptr;
+	//GetTabGroupWindow();
+	UWindow* focus = GetFocusWindow();
+	if (!focus)
+	{
+		GetRootWindow()->UpdateFocus();
+	}
+	else if (direction == EMove::Left)
+	{
+	}
+	else if (direction == EMove::Right)
+	{
+	}
+	else if (direction == EMove::Up)
+	{
+		focus = focus->prevSibling();
+		while (focus)
+		{
+			if (focus->bIsSelectable() && focus->bIsSensitive())
+				break;
+			focus = focus->prevSibling();
+		}
+		if (focus)
+			SetFocusWindow(focus);
+	}
+	else if (direction == EMove::Down)
+	{
+		focus = focus->nextSibling();
+		while (focus)
+		{
+			if (focus->bIsSelectable() && focus->bIsSensitive())
+				break;
+			focus = focus->nextSibling();
+		}
+		if (focus)
+			SetFocusWindow(focus);
+	}
+	else if (direction == EMove::TabNext)
+	{
+	}
+	else if (direction == EMove::TabPrev)
+	{
+	}
+	return GetFocusWindow();
 }
 
-UObject* UWindow::MoveFocusUp()
+UWindow* UWindow::MoveFocusDown()
 {
-	//MoveFocus(EMove::Up);
-	return nullptr;
+	return MoveFocus(EMove::Down);
 }
 
-/*UObject* UWindow::MoveTabGroup(EMove dir)
+UWindow* UWindow::MoveFocusLeft()
 {
-	// tbd
-}*/
-
-UObject* UWindow::MoveTabGroupNext()
-{
-	LogUnimplemented("Window.MoveTabGroupNext");
-	return nullptr;
+	return MoveFocus(EMove::Left);
 }
 
-UObject* UWindow::MoveTabGroupPrev()
+UWindow* UWindow::MoveFocusRight()
 {
-	LogUnimplemented("Window.MoveTabGroupPrev");
-	return nullptr;
+	return MoveFocus(EMove::Right);
 }
 
-UObject* UWindow::NewChild(UObject* NewClass, std::optional<bool> bShow)
+UWindow* UWindow::MoveFocusUp()
+{
+	return MoveFocus(EMove::Up);
+}
+
+UWindow* UWindow::MoveTabGroupNext()
+{
+	return MoveFocus(EMove::TabNext);
+}
+
+UWindow* UWindow::MoveTabGroupPrev()
+{
+	return MoveFocus(EMove::TabPrev);
+}
+
+UWindow* UWindow::NewChild(UObject* NewClass, std::optional<bool> bShow)
 {
 	bool show = !bShow || *bShow;
 	//LogMessage(GetUClassFullName(this).ToString() + ": NewChild(" + NewClass->Name.ToString() + ", " + (show ? "true" : "false") + ")");
@@ -747,14 +813,13 @@ void UWindow::PlaySound(UObject* newsound, std::optional<float> Volume, std::opt
 	UPlayerPawnExt* player = UObject::Cast<UPlayerPawnExt>(GetPlayerPawn());
 	if (s && player)
 	{
-		int slot = SLOT_Misc;
-		int id = ((((int)(ptrdiff_t)this) & 0xffffff) << 4) + (slot << 1);
+		int id = engine->audiodev->CreateSoundId(player, SLOT_Misc, false);
 		vec3 location = player->Location();
 		if (posX)
 			location.x = *posX;
 		if (posY)
 			location.y = *posY;
-		engine->audiodev->PlaySound(player, id, s, location, Volume ? *Volume : 1.0f, player->WorldSoundRadius(), Pitch ? *Pitch : 1.0f, false);
+		engine->audiodev->PlaySound(player, id, s, location, Volume ? *Volume : 1.0f, player->WorldSoundRadius(), Pitch ? *Pitch : 1.0f);
 	}
 }
 
@@ -979,9 +1044,26 @@ void UWindow::Show(std::optional<bool> bShow)
 	bool show = !bShow || *bShow;
 	if (bIsVisible() != show)
 	{
+		if (!show)
+		{
+			if (UModalWindow* modal = UObject::TryCast<UModalWindow>(this))
+			{
+				modal->preferredFocus() = GetFocusWindow();
+				SetFocusWindow(nullptr);
+			}
+			else if (GetFocusWindow() == this)
+			{
+				SetFocusWindow(nullptr);
+			}
+		}
 		bIsVisible() = show;
 		VisibilityChanged(show);
 	}
+}
+
+void UWindow::Hide()
+{
+	Show(false);
 }
 
 void UWindow::UngrabMouse()
@@ -1154,6 +1236,12 @@ void UWindow::ConfigureChild(float newX, float newY, float newWidth, float newHe
 			newY = 0.0f;
 			newHeight = std::max(owner->Height() - topMargin - bottomMargin, 0.0f);
 		}
+
+		// Computer screens seem to be set to center align but then gets configured as if its top left
+		if ((EHAlign)winHAlign() == EHAlign::Center)
+			winHAlign() = (uint8_t)EHAlign::Left;
+		if ((EVAlign)winVAlign() == EVAlign::Center)
+			winVAlign() = (uint8_t)EVAlign::Top;
 	}
 
 	X() = newX;
@@ -1197,6 +1285,7 @@ void UWindow::InitWindow()
 	tileColor() = { 255, 255, 255, 255 };
 	//tilePlane() = vec4(1.0f);
 	backgroundStyle() = (uint8_t)EDrawStyle::Translucent;
+	defaultCursorColor() = { 255, 255, 255, 255 };
 
 	CallEvent(this, "InitWindow");
 }

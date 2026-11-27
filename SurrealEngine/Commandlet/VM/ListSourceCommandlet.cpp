@@ -14,7 +14,7 @@ ListSourceCommandlet::ListSourceCommandlet()
 	SetShortDescription("Show source code");
 }
 
-void ListSourceCommandlet::PrintLines(DebuggerApp* console, int statementLine)
+void ListSourceCommandlet::PrintLines(DebuggerApp* console, int statementLine, Frame* frame)
 {
 	// lines in array starts from zero, lines start from 1
 	statementLine = std::max(statementLine - 1, 0);
@@ -22,11 +22,13 @@ void ListSourceCommandlet::PrintLines(DebuggerApp* console, int statementLine)
 	const int tabsize = 4;
 	const int linesToDisplay = 6;
 
-	Frame* frame = console->GetCurrentFrame();
+	if (!frame)
+		frame = console->GetCurrentFrame();
+
 	if (frame)
 	{
 		UTextBuffer* scriptText = nullptr;
-		UStruct* func = frame->Func;
+		UStruct* func = frame->GetFunc();
 		while (func && !scriptText)
 		{
 			scriptText = func->ScriptText;
@@ -83,10 +85,10 @@ void ListSourceCommandlet::OnCommand(DebuggerApp* console, const std::string& ar
 	if (frame)
 	{
 		int statementLine = -1;
-		if (frame->StatementIndex > 0)
-			statementLine = frame->Func->GetStatementLine(frame->Func->Code->Statements[frame->StatementIndex - 1]);
+		if (frame->GetStatementIndex() > 0)
+			statementLine = frame->GetFunc()->GetStatementLine(frame->GetFunc()->Code->Statements[frame->GetStatementIndex() - 1]);
 		if (statementLine == -1)
-			statementLine = (int)frame->Func->Line;
+			statementLine = (int)frame->GetFunc()->Line;
 
 		PrintLines(console, statementLine);
 	}

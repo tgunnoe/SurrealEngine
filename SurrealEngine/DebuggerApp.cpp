@@ -10,6 +10,7 @@
 #include "Commandlet/RunCommandlet.h"
 #include "Commandlet/CompilerCommandlet.h"
 #include "Commandlet/Debug/CollisionCommandlet.h"
+#include "Commandlet/VM/TraceCommandlet.h"
 #include "Commandlet/VM/BreakpointCommandlet.h"
 #include "Commandlet/VM/CallstackCommandlet.h"
 #include "Commandlet/VM/DisassemblyCommandlet.h"
@@ -33,6 +34,36 @@
 
 int DebuggerApp::Main(Array<std::string> args)
 {
+	// "--command <cmd>" and "--out <file>" take a space-separated value, which
+	// CommandLine does not understand, so both forms are consumed here first.
+	Array<std::string> remaining;
+	for (size_t i = 0; i < args.size(); i++)
+	{
+		std::string* target = args[i] == "--command" ? &BatchCommand : args[i] == "--out" ? &OutFile : nullptr;
+		if (args[i].rfind("--command=", 0) == 0)
+		{
+			BatchCommand = args[i].substr(10);
+		}
+		else if (args[i].rfind("--out=", 0) == 0)
+		{
+			OutFile = args[i].substr(6);
+		}
+		else if (!target)
+		{
+			remaining.push_back(args[i]);
+		}
+		else if (i + 1 < args.size())
+		{
+			*target = args[++i];
+		}
+		else
+		{
+			std::cerr << "Missing value for " << args[i] << std::endl;
+			return 1;
+		}
+	}
+	args = std::move(remaining);
+
 	InitWidgetResources("dark");
 
 	Logger::Get()->SetCallback([&](const LogMessageLine& line) { PrintLog(line); });
@@ -44,6 +75,13 @@ int DebuggerApp::Main(Array<std::string> args)
 
 	CommandLine cmd(args);
 	commandline = &cmd;
+
+	if (!BatchCommand.empty())
+	{
+		int code = RunBatch(cmd);
+		DeinitWidgetResources();
+		return code;
+	}
 
 	WriteOutput("Please select a game:" + NewLine() + NewLine());
 	GameFolderSelection::UpdateList();
@@ -91,6 +129,41 @@ int DebuggerApp::Main(Array<std::string> args)
 	return 0;
 }
 
+int DebuggerApp::RunBatch(const CommandLine& cmd)
+{
+	// The folder must be named explicitly: falling back to the current directory
+	// or the launcher's saved list would run the command against the wrong game.
+	GameFolderSelection::UpdateList();
+	const Array<std::string>& folders = cmd.GetItems();
+	int selected = -1;
+	if (folders.size() == 1)
+	{
+		for (size_t i = 0; i < GameFolderSelection::Games.size(); i++)
+		{
+			if (GameFolderSelection::Games[i].gameRootFolder == folders[0])
+				selected = (int)i;
+		}
+	}
+	if (selected < 0)
+	{
+		std::string given;
+		for (const std::string& folder : folders)
+			given += " " + folder;
+		std::cerr << "Batch mode needs exactly one game folder that holds a known game; got:" << (given.empty() ? " (none)" : given) << std::endl;
+		return 1;
+	}
+
+	launchinfo = GameFolderSelection::GetLaunchInfo(selected);
+	Frame::RunDebugger = [this]() { FrameDebugBreak(); };
+
+	Engine engine(launchinfo);
+	engine.tickDebugger = [&]() { Tick(); };
+
+	cmdline = BatchCommand;
+	OnCommandEntered();
+	return CommandFailed ? 1 : 0;
+}
+
 void DebuggerApp::CreateCommandlets()
 {
 	Commandlets.push_back(std::make_unique<RunCommandlet>());
@@ -104,6 +177,11 @@ void DebuggerApp::CreateCommandlets()
 	Commandlets.push_back(std::make_unique<ClearBreakpointsCommandlet>());
 	Commandlets.push_back(std::make_unique<EnableBreakpointCommandlet>());
 	Commandlets.push_back(std::make_unique<DisableBreakpointCommandlet>());
+	Commandlets.push_back(std::make_unique<ListTracesCommandlet>());
+	Commandlets.push_back(std::make_unique<TraceCommandlet>());
+	Commandlets.push_back(std::make_unique<DeleteTraceCommandlet>());
+	Commandlets.push_back(std::make_unique<EnableTraceCommandlet>());
+	Commandlets.push_back(std::make_unique<DisableTraceCommandlet>());
 	Commandlets.push_back(std::make_unique<CallstackCommandlet>());
 	Commandlets.push_back(std::make_unique<SelectFrameCommandlet>());
 	Commandlets.push_back(std::make_unique<UpFrameCommandlet>());
@@ -271,11 +349,15 @@ void DebuggerApp::OnCommandEntered()
 			}
 
 			if (!found)
+			{
+				CommandFailed = true;
 				WriteOutput("Unknown command" + NewLine());
+			}
 		}
 	}
 	catch (const std::exception& e)
 	{
+		CommandFailed = true;
 		InCommandlet = false;
 		EndPrompt();
 		if (!ExitRequested)
@@ -341,17 +423,17 @@ void DebuggerApp::PrintCurrentFrame()
 	if (auto frame = GetCurrentFrame())
 	{
 		std::string name = frame->GetName();
-		if (frame->StatementIndex > 0) // StatementIndex points at the NEXT statement to be executed
+		if (frame->GetStatementIndex() > 0) // StatementIndex points at the NEXT statement to be executed
 		{
-			Expression* statement = frame->Func->Code->Statements[frame->StatementIndex - 1];
-			int line = frame->Func->GetStatementLine(statement);
+			Expression* statement = frame->GetFunc()->Code->Statements[frame->GetStatementIndex() - 1];
+			int line = frame->GetFunc()->GetStatementLine(statement);
 			if (line == -1)
 			{
-				line = frame->Func->Line;
+				line = frame->GetFunc()->Line;
 
 				WriteOutput("#" + std::to_string(CallstackIndex) + ": " + ColorEscape(96) + name + ResetEscape() + " line " + ColorEscape(96) + std::to_string(line) + ResetEscape());
 				WriteOutput(": ");
-				PrintPrettyExpression::Print([&](const std::string& text) { WriteOutput(text); }, frame->Func->Code->Statements[frame->StatementIndex - 1]);
+				PrintPrettyExpression::Print([&](const std::string& text) { WriteOutput(text); }, frame->GetFunc()->Code->Statements[frame->GetStatementIndex() - 1]);
 				WriteOutput(NewLine());
 			}
 			else

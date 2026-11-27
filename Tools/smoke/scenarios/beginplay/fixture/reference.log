@@ -1,0 +1,8 @@
+[0.000000] Engine: some other line
+[0.050000] Engine.Actor: trace: Mutator0 Mutator None: PreBeginPlay()
+[0.100000] Actor.PreBeginPlay: trace: gameinfo DeathMatchPlus None: FRand()
+[0.100000] Actor.PreBeginPlay: trace: gameinfo DeathMatchPlus None: FRand()
+[0.200000] DeathMatchPlus.InitGame: trace: <unnamed Foo> Foo None: FRand()
+[0.300000] Botpack.DeathMatchPlus: trace: gameinfo DeathMatchPlus None: Login("a", "", "")
+[0.400000] Actor.PostBeginPlay: trace: gameinfo DeathMatchPlus None: FRand()
+[0.500000] Botpack.DeathMatchPlus: trace: gameinfo DeathMatchPlus None: PostLogin(Player0)

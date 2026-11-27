@@ -2,6 +2,7 @@
 #include "Precomp.h"
 #include "UObject.h"
 #include "UClass.h"
+#include "Packages/Engine/Actors/UActor.h"
 #include "Properties/UProperty.h"
 #include "Properties/UBoolProperty.h"
 #include "Package/Package.h"
@@ -16,6 +17,10 @@
 
 UObject::UObject(NameString name, UClass* cls, ObjectFlags flags) : Name(name), Class(cls), Flags(flags)
 {
+	// InSingularFunc says a call is running on the object now. A package written during a call would
+	// carry it in its export flags, and an object loaded with it set would refuse its singular
+	// functions for good.
+	Flags = static_cast<ObjectFlags>(static_cast<uint32_t>(Flags) & ~static_cast<uint32_t>(ObjectFlags::InSingularFunc));
 }
 
 UObject::~UObject()
@@ -79,17 +84,15 @@ void UObject::Load(ObjectStream* stream)
 				int index = func->Code->FindStatementIndex(offset);
 				if (index != -1)
 				{
-					StateFrame = std::make_shared<Frame>(this, nullptr);
-					StateFrame->SetState(func);
-					StateFrame->StatementIndex = index;
+					StateFrame = std::make_shared<Frame>(this, func, index, true);
 					if (latentAction >= 0 && (size_t)latentAction < NativeFunctions::LatentActionByIndex.size())
 					{
-						StateFrame->LatentState = NativeFunctions::LatentActionByIndex[latentAction];
+						StateFrame->SetLatentState(NativeFunctions::LatentActionByIndex[latentAction]);
 					}
 					else
 					{
 						LogMessage("UObject::Load encountered out of bounds latent action index");
-						StateFrame->LatentState = LatentRunState::Continue;
+						StateFrame->SetLatentState(LatentRunState::Continue);
 					}
 				}
 				else
@@ -100,9 +103,8 @@ void UObject::Load(ObjectStream* stream)
 			else
 			{
 				state->LoadNow();
-				StateFrame = std::make_shared<Frame>(this, nullptr);
-				StateFrame->SetState(state);
-				StateFrame->LatentState = LatentRunState::Stop;
+				StateFrame = std::make_shared<Frame>(this, state, 0, true);
+				StateFrame->SetLatentState(LatentRunState::Stop);
 			}
 		}
 		else if (state)
@@ -139,8 +141,8 @@ void UObject::Save(PackageStreamWriter* stream)
 		// func and state: in this engine's VM, a StateFrame can only ever be suspended in
 		// state code, so func (raw StateFrame->Func) and state (StateFrame->Func cast to
 		// UState) always point at the same object here.
-		UStruct* func = StateFrame ? StateFrame->Func : nullptr;
-		UState* state = StateFrame ? UObject::TryCast<UState>(StateFrame->Func) : nullptr;
+		UStruct* func = StateFrame ? StateFrame->GetFunc() : nullptr;
+		UState* state = StateFrame ? UObject::TryCast<UState>(StateFrame->GetFunc()) : nullptr;
 		int32_t latentAction = 0;
 		int offset = -1;
 
@@ -158,12 +160,12 @@ void UObject::Save(PackageStreamWriter* stream)
 		// whatever it was - and defaults to Continue, never Stop. Func must be checked, or this
 		// dereferences null; Func->Code can likewise be null for a state with no bytecode. Both
 		// cases write a null func below, which is what Load needs to restore the actor dormant.
-		if (StateFrame && StateFrame->Func && StateFrame->LatentState != LatentRunState::Stop)
+		if (StateFrame && StateFrame->GetFunc() && StateFrame->GetLatentState() != LatentRunState::Stop)
 		{
-			auto it = NativeFunctions::IndexForLatentAction.find(StateFrame->LatentState);
+			auto it = NativeFunctions::IndexForLatentAction.find(StateFrame->GetLatentState());
 			latentAction = (it != NativeFunctions::IndexForLatentAction.end()) ? it->second : 0;
-			if (StateFrame->Func->Code)
-				offset = StateFrame->Func->Code->FindOffset((int)StateFrame->StatementIndex);
+			if (StateFrame->GetFunc()->Code)
+				offset = StateFrame->GetFunc()->Code->FindOffset((int)StateFrame->GetStatementIndex());
 		}
 
 		stream->WriteObject(func);
@@ -388,9 +390,9 @@ bool UObject::IsEventEnabled(EventName name) const
 	if (nameIndex < 64) // Probe event
 	{
 		bool foundProbe = false;
-		if (StateFrame && StateFrame->Func)
+		if (StateFrame && StateFrame->GetFunc())
 		{
-			UState* state = static_cast<UState*>(StateFrame->Func);
+			UState* state = static_cast<UState*>(StateFrame->GetFunc());
 
 			// Probe is in the ignore list ('ignores' keyword in unrealscript)
 			if ((state->IgnoreMask & (1ULL << nameIndex)) == 0)
@@ -483,7 +485,7 @@ Array<UProperty*> UObject::GetAllTravelProperties()
 
 NameString UObject::GetStateName() const
 {
-	return StateFrame && StateFrame->Func ? StateFrame->Func->Name : NameString();
+	return StateFrame && StateFrame->GetFunc() ? StateFrame->GetFunc()->Name : NameString();
 }
 
 void UObject::GotoState(NameString stateName, const NameString& labelName)
@@ -519,12 +521,19 @@ void UObject::GotoState(NameString stateName, const NameString& labelName)
 				break;
 			}
 		}
+
+		// The object leaves its states, as it always has; a state name that is not there is
+		// worth a line because it is usually a typo. A request for Auto that finds no auto state
+		// is not one, and neither is no name at all. The line is not a script error: stock scripts
+		// do name states their class never declares.
+		if (!newState && stateName != "Auto")
+			LogMessage("GotoState: no state named " + stateName.ToString() + " in " + Class->Name.ToString());
 	}
 
 	if (!StateFrame)
-		StateFrame = std::make_shared<Frame>(this, nullptr);
+		StateFrame = std::make_shared<Frame>(this, nullptr, 0, true);
 
-	UState* oldState = (UState*)StateFrame->Func;
+	UState* oldState = (UState*)StateFrame->GetFunc();
 
 	if (oldState && oldState != newState)
 		CallEvent(this, EventName::EndState);
@@ -533,6 +542,12 @@ void UObject::GotoState(NameString stateName, const NameString& labelName)
 		StateFrame->SetState(newState);
 
 	DisabledEvents.clear();
+
+	if (auto actor = UObject::TryCast<UActor>(this))
+	{
+		// AugLight doesn't seem to call AIStopEvent when switching from active to inactive state
+		actor->AI.Events.clear();
+	}
 
 	if (newState)
 	{
@@ -550,6 +565,8 @@ void UObject::GotoState(NameString stateName, const NameString& labelName)
 
 GCAllocation* UObject::Mark(GCAllocation* marklist)
 {
+	// An object that survives a collection keeps its package, so it never points at a freed one
+	marklist = GC::MarkObject(marklist, package);
 	if (Class)
 	{
 		marklist = GC::MarkObject(marklist, Class);
@@ -559,22 +576,41 @@ GCAllocation* UObject::Mark(GCAllocation* marklist)
 	return marklist;
 }
 
+void UObject::CriticalDelete()
+{
+	// We don't have to do anything here. In DX it most likely deleted the GC allocated object right away, but we don't have that strict memory requirements.
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 void PropertyDataBlock::Reset()
 {
-	// To do: this crashes as the class might have been destroyed first
-	/*if (Data && Class)
-	{
-		for (auto& it : Class->Properties)
-		{
-			UProperty* prop = it.second;
-			prop->Destruct(Ptr(prop));
-		}
-	}*/
 	AlignedFree(Data);
 	Data = nullptr;
 	Class = nullptr;
+	ValuesConstructed = false;
+}
+
+// Destructing a value can read the property objects of the class (an array's element type, a
+// struct's members), and the collector may free those before this block dies. Reset therefore only
+// frees, and the collector calls this first, while everything it sweeps is still allocated.
+void PropertyDataBlock::DestructValues()
+{
+	if (!ValuesConstructed || !Data || !Class)
+		return;
+
+	ValuesConstructed = false;
+	for (UProperty* prop : Class->Properties)
+		prop->DestructArray(Ptr(prop));
+}
+
+void UObject::Finalize() noexcept
+{
+	// The state frame destructs its variables through the properties of the state it runs, which
+	// this sweep may free before it gets to the frame
+	if (StateFrame)
+		StateFrame->ReleaseVariables();
+	PropertyData.DestructValues();
 }
 
 void PropertyDataBlock::Init(UClass* cls)
@@ -611,6 +647,8 @@ void PropertyDataBlock::Init(UClass* cls)
 				prop->ConstructArray(Ptr(prop));
 		}
 	}
+
+	ValuesConstructed = true;
 }
 
 void PropertyDataBlock::Load(ObjectStream* stream)
@@ -860,6 +898,9 @@ void ScriptArray::SetValue(size_t index, const void* src)
 
 void ScriptArray::Insert(size_t insertPos, size_t insertCount)
 {
+	if (insertPos > Size)
+		Exception::Throw("ScriptArray::Insert: position past the end");
+
 	if (insertPos == Size)
 	{
 		Resize(Size + insertCount);
@@ -901,6 +942,9 @@ void ScriptArray::Insert(size_t insertPos, size_t insertCount)
 
 void ScriptArray::Remove(size_t removePos, size_t removeCount)
 {
+	if (removePos > Size || removeCount > Size - removePos)
+		Exception::Throw("ScriptArray::Remove: range past the end");
+
 	auto pitch = Type->ElementPitch();
 	for (size_t i = removePos, end = Size - removeCount; i < end; i++)
 	{

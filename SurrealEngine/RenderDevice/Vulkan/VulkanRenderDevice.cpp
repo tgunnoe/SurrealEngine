@@ -923,7 +923,7 @@ void VulkanRenderDevice::ReadPixels(TextureColor* Pixels)
 
 void VulkanRenderDevice::EndFlash()
 {
-	if (FlashScale != vec4(0.5f, 0.5f, 0.5f, 0.0f) || FlashFog != vec4(0.0f, 0.0f, 0.0f, 0.0f))
+	if (!FlashIsNeutral(FlashScale, FlashFog))
 	{
 		vec4 color(FlashFog.x, FlashFog.y, FlashFog.z, 1.0f - std::min(FlashScale.x * 2.0f, 1.0f));
 		vec2 zero2(0.0f);

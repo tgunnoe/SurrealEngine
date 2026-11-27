@@ -1,6 +1,7 @@
 
 #include "Precomp.h"
 #include "UPawn.h"
+#include "UPawn_AIMath.h"
 #include "Packages/Engine/Actors/Info/ULevelInfo.h"
 #include "Packages/Engine/Actors/NavigationPoint/UNavigationPoint.h"
 #include "Packages/Engine/Actors/NavigationPoint/UInventorySpot.h"
@@ -334,6 +335,101 @@ UNavigationPoint* UPawn::FindClosestNavPoint(vec3 location)
 			return p.first;
 	}
 	return nullptr;
+}
+
+UNavigationPoint* UPawn::FindNearestReachableNavPoint()
+{
+	// ActorReachable refuses anything farther than this that is not a pawn
+	const float maxDist = 1000.0f;
+	// upper bound for how expensive this can get
+	const size_t maxReachableCalls = 8;
+
+	std::vector<std::pair<UNavigationPoint*, float>> candidates;
+	for (UNavigationPoint* navPoint = Level()->NavigationPointList(); navPoint; navPoint = navPoint->nextNavigationPoint())
+	{
+		if (navPoint->bPlayerOnly() && !bIsPlayer())
+			continue; // Skip nav nodes only for the player if we aren't one
+
+		vec3 d = navPoint->Location() - Location();
+		float distsqr = dot(d, d);
+		if (distsqr > maxDist * maxDist)
+			continue;
+
+		candidates.push_back({ navPoint, distsqr });
+	}
+
+	std::sort(candidates.begin(), candidates.end(), [](const auto& a, const auto& b) { return a.second < b.second; });
+
+	for (size_t i = 0; i < candidates.size() && i < maxReachableCalls; i++)
+	{
+		if (ActorReachable(candidates[i].first, true))
+			return candidates[i].first;
+	}
+	return nullptr;
+}
+
+std::vector<std::pair<UNavigationPoint*, int>> UPawn::ReachablePathnodes(UActor* fromPoint, bool usePrunedPaths)
+{
+	UNavigationPoint* start = UObject::TryCast<UNavigationPoint>(fromPoint);
+	if (!start)
+		start = fromPoint ? FindClosestNavPoint(fromPoint->Location()) : FindNearestReachableNavPoint();
+	if (!start)
+		return {};
+
+	// Number the navigation points so the search can run over a plain graph
+	std::vector<UNavigationPoint*> navPoints;
+	std::unordered_map<UNavigationPoint*, int> nodeOf;
+	for (UNavigationPoint* navPoint = Level()->NavigationPointList(); navPoint; navPoint = navPoint->nextNavigationPoint())
+	{
+		nodeOf[navPoint] = (int)navPoints.size();
+		navPoints.push_back(navPoint);
+	}
+	auto startNode = nodeOf.find(start);
+	if (startNode == nodeOf.end())
+		return {};
+
+	const Array<LevelReachSpec>& reachSpecs = XLevel()->ReachSpecs;
+	const int radius = (int)CollisionRadius();
+	const int height = (int)CollisionHeight();
+
+	AIMath::Graph graph(navPoints.size());
+	auto addEdges = [&](int from, auto specIndexes, bool listedAsPruned)
+	{
+		for (int specIndex : specIndexes)
+		{
+			if (specIndex < 0 || (size_t)specIndex >= reachSpecs.size())
+				break; // -1 ends the list
+
+			const LevelReachSpec& reachSpec = reachSpecs[specIndex];
+			if (reachSpec.collisionRadius < radius || reachSpec.collisionHeight < height)
+				continue; // Skip nav node links that we can't pass through
+
+			auto to = nodeOf.find(reachSpec.endActor);
+			if (to == nodeOf.end())
+				continue; // Not a node of this level
+
+			if (reachSpec.endActor->bPlayerOnly() && !bIsPlayer())
+				continue; // Skip nav nodes only for the player if we aren't one
+
+			graph[from].push_back({ to->second, reachSpec.distance, listedAsPruned || reachSpec.bPruned != 0 });
+		}
+	};
+	for (size_t node = 0; node < navPoints.size(); node++)
+	{
+		addEdges((int)node, navPoints[node]->Paths(), false);
+		addEdges((int)node, navPoints[node]->PrunedPaths(), true);
+	}
+
+	std::vector<int> distances = AIMath::ShortestDistances(graph, startNode->second, usePrunedPaths);
+
+	std::vector<std::pair<UNavigationPoint*, int>> reached;
+	for (size_t node = 0; node < navPoints.size(); node++)
+	{
+		if (distances[node] != AIMath::Unreachable)
+			reached.push_back({ navPoints[node], distances[node] });
+	}
+	std::stable_sort(reached.begin(), reached.end(), [](const auto& a, const auto& b) { return a.second < b.second; });
+	return reached;
 }
 
 UObject* UPawn::FindBestInventoryPath(bool predictRespawns, float& outBestWeight)

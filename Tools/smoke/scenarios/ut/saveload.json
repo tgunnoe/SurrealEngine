@@ -1,0 +1,377 @@
+{
+  "game": "<game folder>",
+  "chain": "ut",
+  "seconds": 60,
+  "steps": [
+    {
+      "step": "save1",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "DM-Deck16]["
+      ],
+      "loaded_slot": null,
+      "loaded_map": null,
+      "saved_to": "UnrealTournament-436-Unreal_Tournament_GOTY/Save/Save1.usa",
+      "checks": [
+        {
+          "where": "after-state",
+          "map": "DM-Deck16][",
+          "items": [
+            {
+              "package": "DM-Deck16][",
+              "instance": "ShockCore0",
+              "class": "ShockCore"
+            },
+            {
+              "package": "DM-Deck16][",
+              "instance": "ShockRifle1",
+              "class": "ShockRifle"
+            },
+            {
+              "package": "DM-Deck16][",
+              "instance": "ImpactHammer0",
+              "class": "ImpactHammer"
+            },
+            {
+              "package": "DM-Deck16][",
+              "instance": "Miniammo0",
+              "class": "Miniammo"
+            },
+            {
+              "package": "DM-Deck16][",
+              "instance": "enforcer0",
+              "class": "enforcer"
+            }
+          ],
+          "calls": [],
+          "weapon": "Botpack.ShockRifle"
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [
+        "Botpack.ShockRifle"
+      ],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:Fire;7:IAmTheOne;8:summon Botpack.ShockRifle;10:hold axis aForward 300 1.5;15:ShowInventory;25:savegame 1",
+      "trace": null,
+      "log": "save1.log",
+      "stdout": "save1.stdout",
+      "engine_log": "save1.engine.txt",
+      "problem": null
+    },
+    {
+      "step": "load1-travel",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "DM-Deck16][",
+        "DM-Deck16][",
+        "DM-Turbine"
+      ],
+      "loaded_slot": 1,
+      "loaded_map": "DM-Deck16][",
+      "saved_to": "UnrealTournament-436-Unreal_Tournament_GOTY/Save/Save2.usa",
+      "checks": [
+        {
+          "where": "after-load",
+          "map": "DM-Deck16][",
+          "items": [
+            {
+              "package": "Save1",
+              "instance": "ShockCore0",
+              "class": "ShockCore"
+            },
+            {
+              "package": "Save1",
+              "instance": "ShockRifle1",
+              "class": "ShockRifle"
+            },
+            {
+              "package": "Save1",
+              "instance": "ImpactHammer0",
+              "class": "ImpactHammer"
+            },
+            {
+              "package": "Save1",
+              "instance": "miniammo0",
+              "class": "miniammo"
+            },
+            {
+              "package": "Save1",
+              "instance": "enforcer0",
+              "class": "enforcer"
+            }
+          ],
+          "calls": [],
+          "weapon": "Botpack.ShockRifle"
+        },
+        {
+          "where": "after-travel",
+          "map": "DM-Turbine",
+          "items": [
+            {
+              "package": "DM-Turbine",
+              "instance": "ImpactHammer1",
+              "class": "ImpactHammer"
+            },
+            {
+              "package": "DM-Turbine",
+              "instance": "Miniammo1",
+              "class": "Miniammo"
+            },
+            {
+              "package": "DM-Turbine",
+              "instance": "enforcer1",
+              "class": "enforcer"
+            }
+          ],
+          "calls": [],
+          "weapon": "Botpack.enforcer"
+        }
+      ],
+      "offered": [
+        "ShockCore0",
+        "ShockRifle0",
+        "ImpactHammer0",
+        "Miniammo0",
+        "enforcer0"
+      ],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:call ClientTravel ?load=1 0 0;10:ShowInventory;15:call ClientTravel DM-Turbine?NumBots=0 2 1;20:Fire;25:ShowInventory;35:savegame 2",
+      "trace": "Inventory.TravelPreAccept",
+      "log": "load1-travel.log",
+      "stdout": "load1-travel.stdout",
+      "engine_log": "load1-travel.engine.txt",
+      "problem": null
+    },
+    {
+      "step": "load2-travel",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "DM-Deck16][",
+        "DM-Turbine",
+        "DM-Codex"
+      ],
+      "loaded_slot": 2,
+      "loaded_map": "DM-Turbine",
+      "saved_to": "UnrealTournament-436-Unreal_Tournament_GOTY/Save/Save3.usa",
+      "checks": [
+        {
+          "where": "after-load",
+          "map": "DM-Turbine",
+          "items": [
+            {
+              "package": "Save2",
+              "instance": "ImpactHammer1",
+              "class": "ImpactHammer"
+            },
+            {
+              "package": "Save2",
+              "instance": "Miniammo1",
+              "class": "Miniammo"
+            },
+            {
+              "package": "Save2",
+              "instance": "enforcer1",
+              "class": "enforcer"
+            }
+          ],
+          "calls": [],
+          "weapon": "Botpack.enforcer"
+        },
+        {
+          "where": "after-travel",
+          "map": "DM-Codex",
+          "items": [
+            {
+              "package": "DM-Codex",
+              "instance": "ImpactHammer1",
+              "class": "ImpactHammer"
+            },
+            {
+              "package": "DM-Codex",
+              "instance": "Miniammo1",
+              "class": "Miniammo"
+            },
+            {
+              "package": "DM-Codex",
+              "instance": "enforcer1",
+              "class": "enforcer"
+            }
+          ],
+          "calls": [],
+          "weapon": "Botpack.enforcer"
+        }
+      ],
+      "offered": [
+        "ImpactHammer0",
+        "enforcer0",
+        "Miniammo0"
+      ],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:call ClientTravel ?load=2 0 0;10:ShowInventory;15:call ClientTravel DM-Codex?NumBots=0 2 1;20:Fire;25:ShowInventory;35:savegame 3",
+      "trace": "Inventory.TravelPreAccept",
+      "log": "load2-travel.log",
+      "stdout": "load2-travel.stdout",
+      "engine_log": "load2-travel.engine.txt",
+      "problem": null
+    },
+    {
+      "step": "load3",
+      "exit_code": 0,
+      "verdict": "pass",
+      "maps_loaded": [
+        "DM-Deck16][",
+        "DM-Codex"
+      ],
+      "loaded_slot": 3,
+      "loaded_map": "DM-Codex",
+      "saved_to": null,
+      "checks": [
+        {
+          "where": "after-load",
+          "map": "DM-Codex",
+          "items": [
+            {
+              "package": "Save3",
+              "instance": "ImpactHammer1",
+              "class": "ImpactHammer"
+            },
+            {
+              "package": "Save3",
+              "instance": "Miniammo1",
+              "class": "Miniammo"
+            },
+            {
+              "package": "Save3",
+              "instance": "enforcer1",
+              "class": "enforcer"
+            }
+          ],
+          "calls": [],
+          "weapon": "Botpack.enforcer"
+        }
+      ],
+      "offered": [],
+      "travel_skipped": false,
+      "skip_lines": [],
+      "summoned": [],
+      "exec_failed": [],
+      "exec_skipped": [],
+      "engine_log_missing": false,
+      "exec": "5:call ClientTravel ?load=3 0 0;10:ShowInventory",
+      "trace": null,
+      "log": "load3.log",
+      "stdout": "load3.stdout",
+      "engine_log": "load3.engine.txt",
+      "problem": null
+    }
+  ],
+  "hops": [
+    {
+      "from": "save1/after-state",
+      "to": "load1-travel/after-load",
+      "map_from": "DM-Deck16][",
+      "map_to": "DM-Deck16][",
+      "by": "load",
+      "kept": [
+        "ShockCore",
+        "ShockRifle",
+        "ImpactHammer",
+        "Miniammo",
+        "enforcer"
+      ],
+      "lost": [],
+      "gained": []
+    },
+    {
+      "from": "load1-travel/after-load",
+      "to": "load1-travel/after-travel",
+      "map_from": "DM-Deck16][",
+      "map_to": "DM-Turbine",
+      "by": "travel",
+      "kept": [
+        "ImpactHammer",
+        "miniammo",
+        "enforcer"
+      ],
+      "lost": [
+        "ShockCore",
+        "ShockRifle"
+      ],
+      "gained": [],
+      "offered": [
+        "ShockCore0",
+        "ShockRifle0",
+        "ImpactHammer0",
+        "Miniammo0",
+        "enforcer0"
+      ],
+      "travel_skipped": false
+    },
+    {
+      "from": "load1-travel/after-travel",
+      "to": "load2-travel/after-load",
+      "map_from": "DM-Turbine",
+      "map_to": "DM-Turbine",
+      "by": "load",
+      "kept": [
+        "ImpactHammer",
+        "Miniammo",
+        "enforcer"
+      ],
+      "lost": [],
+      "gained": []
+    },
+    {
+      "from": "load2-travel/after-load",
+      "to": "load2-travel/after-travel",
+      "map_from": "DM-Turbine",
+      "map_to": "DM-Codex",
+      "by": "travel",
+      "kept": [
+        "ImpactHammer",
+        "Miniammo",
+        "enforcer"
+      ],
+      "lost": [],
+      "gained": [],
+      "offered": [
+        "ImpactHammer0",
+        "enforcer0",
+        "Miniammo0"
+      ],
+      "travel_skipped": false
+    },
+    {
+      "from": "load2-travel/after-travel",
+      "to": "load3/after-load",
+      "map_from": "DM-Codex",
+      "map_to": "DM-Codex",
+      "by": "load",
+      "kept": [
+        "ImpactHammer",
+        "Miniammo",
+        "enforcer"
+      ],
+      "lost": [],
+      "gained": []
+    }
+  ]
+}

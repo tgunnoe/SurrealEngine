@@ -6,6 +6,7 @@
 #include "VM/Frame.h"
 #include "Packages/Engine/Resources/Mesh/USkeletalMesh.h"
 #include "Engine.h"
+#include "Render/VisibleMesh.h"
 
 bool UActor::HasAnim(const NameString& sequence)
 {
@@ -32,7 +33,7 @@ void UActor::FinishAnim()
 	}
 
 	if (StateFrame)
-		StateFrame->LatentState = LatentRunState::FinishAnim;
+		StateFrame->SetLatentState(LatentRunState::FinishAnim);
 }
 
 void UActor::FinishAnim_HP(std::optional<NameString> RootBone)
@@ -109,7 +110,6 @@ void UActor::PlayAnim(const NameString& sequence, float rate, float tweenTime)
 
 void UActor::PlayBlendAnim(const NameString& sequenceName, float rate, float tweenTime, int blendSlot)
 {
-	LogUnimplemented("Actor.PlayBlendAnim");
 	if (blendSlot < 0 || blendSlot > 3)
 	{
 		LogMessage("Invalid channel for PlayBlendAnim!");
@@ -222,7 +222,7 @@ void UActor::TweenBlendAnim(const NameString& sequenceName, float time, int blen
 		return;
 	}
 	int numFrames = sequence->NumFrames;
-	LogMessage("TweenBlendAnim: seq='" + sequenceName.ToString() + "' slot=" + std::to_string(blendSlot) + " time=" + std::to_string(time) + " numFrames=" + std::to_string(numFrames) + " StartFrame=" + std::to_string(sequence->StartFrame));
+	//LogMessage("TweenBlendAnim: seq='" + sequenceName.ToString() + "' slot=" + std::to_string(blendSlot) + " time=" + std::to_string(time) + " numFrames=" + std::to_string(numFrames) + " StartFrame=" + std::to_string(sequence->StartFrame));
 
 	BlendAnimSequence()[blendSlot] = sequenceName;
 	BlendAnimLast()[blendSlot] = 0.0;
@@ -329,10 +329,10 @@ void UActor::LoopAnim_HP(const NameString& Sequence, std::optional<float> Rate, 
 
 void UActor::TickAnimation(float elapsed)
 {
-	if (StateFrame && StateFrame->LatentState == LatentRunState::FinishAnim)
+	if (StateFrame && StateFrame->GetLatentState() == LatentRunState::FinishAnim)
 	{
 		if (!IsAnimating() || AnimFrame() >= AnimLast())
-			StateFrame->LatentState = LatentRunState::Continue;
+			StateFrame->SetLatentState(LatentRunState::Continue);
 	}
 
 	for (int i = 0; elapsed > 0.0f && i < 10; i++)
@@ -383,8 +383,8 @@ void UActor::TickAnimation(float elapsed)
 				elapsed -= (toAnimTime - fromAnimTime) / animRate;
 				AnimFrame() = toAnimTime;
 
-				if (StateFrame && StateFrame->LatentState == LatentRunState::FinishAnim)
-					StateFrame->LatentState = LatentRunState::Continue;
+				if (StateFrame && StateFrame->GetLatentState() == LatentRunState::FinishAnim)
+					StateFrame->SetLatentState(LatentRunState::Continue);
 
 				CallEvent(this, EventName::AnimEnd);
 				continue;
@@ -425,8 +425,8 @@ void UActor::TickAnimation(float elapsed)
 
 			if (!bAnimLoop() && fromAnimTime < animEndTime && toAnimTime >= animEndTime)
 			{
-				if (StateFrame && StateFrame->LatentState == LatentRunState::FinishAnim)
-					StateFrame->LatentState = LatentRunState::Continue;
+				if (StateFrame && StateFrame->GetLatentState() == LatentRunState::FinishAnim)
+					StateFrame->SetLatentState(LatentRunState::Continue);
 
 				CallEvent(this, EventName::AnimEnd);
 			}
@@ -454,8 +454,8 @@ void UActor::TickAnimation(float elapsed)
 
 			if (toAnimTime == animEndTime && AnimRate() == 0.0f)
 			{
-				if (StateFrame && StateFrame->LatentState == LatentRunState::FinishAnim)
-					StateFrame->LatentState = LatentRunState::Continue;
+				if (StateFrame && StateFrame->GetLatentState() == LatentRunState::FinishAnim)
+					StateFrame->SetLatentState(LatentRunState::Continue);
 
 				bAnimFinished() = true;
 				//engine->LogMessage("CallEvent(AnimEnd) for " + Class->FriendlyName.ToString() + "");
@@ -538,13 +538,10 @@ void UActor::SetTweenFromAnimFrame()
 		if (seq)
 		{
 			float animFrame = std::max(AnimFrame(), 0.0f) * seq->NumFrames;
-			int frame0 = (int)animFrame;
-			int frame1 = frame0 + 1;
-			frame0 = frame0 % seq->NumFrames;
-			frame1 = frame1 % seq->NumFrames;
-			TweenFromAnimFrame.V0 = (seq->StartFrame + frame0) * Mesh()->FrameVerts;
-			TweenFromAnimFrame.V1 = (seq->StartFrame + frame1) * Mesh()->FrameVerts;
-			TweenFromAnimFrame.T = animFrame - (float)frame0;
+			MeshFrameOffsets frames = ComputeMeshFrameOffsets(animFrame, seq->StartFrame, seq->NumFrames, Mesh()->FrameVerts, Mesh()->AnimFrames);
+			TweenFromAnimFrame.V0 = frames.V0;
+			TweenFromAnimFrame.V1 = frames.V1;
+			TweenFromAnimFrame.T = frames.T0;
 		}
 		else // For safety. Should never happen.
 		{
@@ -575,13 +572,10 @@ void UActor::SetTweenFromBlendAnimFrame(int slot)
 	if (seq)
 	{
 		float frame = std::max(BlendAnimFrame()[slot], 0.0f) * seq->NumFrames;
-		int frame0 = (int)frame;
-		int frame1 = frame0 + 1;
-		frame0 = frame0 % seq->NumFrames;
-		frame1 = frame1 % seq->NumFrames;
-		TweenFromBlendAnimFrame[slot].V0 = (seq->StartFrame + frame0) * Mesh()->FrameVerts;
-		TweenFromBlendAnimFrame[slot].V1 = (seq->StartFrame + frame1) * Mesh()->FrameVerts;
-		TweenFromBlendAnimFrame[slot].T = frame - (float)frame0;
+		MeshFrameOffsets frames = ComputeMeshFrameOffsets(frame, seq->StartFrame, seq->NumFrames, Mesh()->FrameVerts, Mesh()->AnimFrames);
+		TweenFromBlendAnimFrame[slot].V0 = frames.V0;
+		TweenFromBlendAnimFrame[slot].V1 = frames.V1;
+		TweenFromBlendAnimFrame[slot].T = frames.T0;
 	}
 	else
 	{

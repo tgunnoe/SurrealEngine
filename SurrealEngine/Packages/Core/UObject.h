@@ -241,6 +241,7 @@ public:
 	~PropertyDataBlock() { Reset(); }
 
 	void Init(UClass* cls);
+	void DestructValues();
 	void Load(ObjectStream* stream);
 	void Save(PackageStreamWriter* stream, PropertyDataBlock* defaultBlock);
 
@@ -258,6 +259,9 @@ public:
 
 private:
 	void Reset();
+
+	// Set once Init has constructed every value, so a block whose Init threw is never destructed.
+	bool ValuesConstructed = false;
 
 	PropertyDataBlock(const PropertyDataBlock&) = delete;
 	PropertyDataBlock& operator=(const PropertyDataBlock&) = delete;
@@ -327,6 +331,8 @@ public:
 
 	NameString GetStateName() const;
 	void GotoState(NameString stateName, const NameString& labelName);
+
+	void CriticalDelete();
 
 	std::string PrintProperties();
 	Array<UProperty*> GetAllProperties();
@@ -411,8 +417,9 @@ public:
 	int& ObjectIndex() { return Value<int>(PropOffsets_Object.ObjectIndex); }
 	UObject*& ObjectArchetype() { return Value<UObject*>(PropOffsets_Object.ObjectArchetype); }
 
-private:
+protected:
 	GCAllocation* Mark(GCAllocation* marklist) override;
+	void Finalize() noexcept override;
 };
 
 template<typename T>

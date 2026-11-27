@@ -13,6 +13,11 @@ protected:
 	virtual ~GCObject() = default;
 	virtual GCAllocation* Mark(GCAllocation* marklist) = 0;
 
+	// Called on every object a collection is about to free, before any of them is destructed or
+	// freed. What an object owns may read other objects that die in the same sweep, so it must
+	// be released here, while all of them are still allocated.
+	virtual void Finalize() noexcept {}
+
 	GCAllocation* Allocation();
 	friend class GC;
 };

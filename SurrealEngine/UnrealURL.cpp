@@ -4,6 +4,7 @@
 #include "Engine.h"
 #include "Package/PackageManager.h"
 #include "Utils/StrTools.h"
+#include <charconv>
 
 UnrealURL::UnrealURL(const UnrealURL& baseURL, const UnrealURL& nextURL)
 {
@@ -39,34 +40,22 @@ UnrealURL::UnrealURL(std::string urlString)
 	urlString.erase(urlString.find_last_not_of(' ') + 1);
 	urlString.erase(0, urlString.find_first_not_of(' '));
 
-	size_t mapNamePos = StrTools::find_first_of_any(urlString, "?/#");
+	size_t separatorPos = StrTools::find_first_of_any(urlString, "?/#");
 
-	Map = urlString.substr(0, mapNamePos);
+	Map = urlString.substr(0, separatorPos);
 
-	if (mapNamePos != std::string::npos)
+	// Every separator opens a part that runs up to the next one, the last part to the end of the string
+	while (separatorPos != std::string::npos)
 	{
-		// We need to parse all options individually
-		char paramType = urlString[mapNamePos]; // Can be '/', '#' or '?'
-		std::string allParams = urlString.substr(mapNamePos + 1);
+		const char separator = urlString[separatorPos]; // Can be '/', '#' or '?'
+		urlString.erase(0, separatorPos + 1);
+		separatorPos = StrTools::find_first_of_any(urlString, "?/#");
+		const std::string part = urlString.substr(0, separatorPos);
 
-		auto nextParamPos = StrTools::find_first_of_any(allParams, "?/#");
-
-		do
-		{
-			if (paramType == '#' || paramType == '/')
-				Portal = allParams.substr(0, nextParamPos);
-			else if (paramType == '?')
-			{
-				auto optionStr = allParams.substr(0, nextParamPos);
-				AddOrReplaceOption(optionStr);
-			}
-
-			if (nextParamPos != std::string::npos)
-				paramType = allParams[nextParamPos];
-
-			allParams = allParams.substr(nextParamPos + 1);
-			nextParamPos = StrTools::find_first_of_any(allParams, "?/#");
-		} while (nextParamPos != std::string::npos);
+		if (separator == '?')
+			AddOrReplaceOption(part);
+		else
+			Portal = part;
 	}
 }
 
@@ -113,8 +102,10 @@ void UnrealURL::AddOrReplaceOption(const std::string& newvalue)
 	}
 }
 
-bool UnrealURL::HasOption(const std::string& name) const
+bool UnrealURL::HasOption(std::string name) const
 {
+	for (char& c : name) c = std::tolower(c);
+
 	for (const std::string& option : Options)
 	{
 		if ((option.size() >= name.size() + 1 && option[name.size()] == '=') || option.size() == name.size())
@@ -205,3 +196,32 @@ void UnrealURL::Clear()
 	Options.clear();
 }
 
+std::optional<int> ParseSaveSlot(const std::string& text)
+{
+	// from_chars takes an optional '-' and digits, no '+' and no whitespace, and stops at the first
+	// other character, so the text is a whole number exactly when it consumes all of it
+	const char* end = text.data() + text.size();
+	int slot = 0;
+	const auto [stop, error] = std::from_chars(text.data(), end, slot);
+	if (error != std::errc() || stop != end)
+		return std::nullopt;
+	return slot;
+}
+
+std::optional<std::string> LoadOptionText(const UnrealURL& url)
+{
+	for (const char* name : { "load", "loadgame" })
+	{
+		if (url.HasOption(name))
+			return url.GetOption(name);
+	}
+	return std::nullopt;
+}
+
+std::string MapNameOf(const UnrealURL& url, const std::string& mapExtension)
+{
+	const std::string suffix = "." + mapExtension;
+	if (url.Map.size() >= suffix.size() && StrTools::equals_ignore_case(url.Map.substr(url.Map.size() - suffix.size()), suffix))
+		return url.Map.substr(0, url.Map.size() - suffix.size());
+	return url.Map;
+}

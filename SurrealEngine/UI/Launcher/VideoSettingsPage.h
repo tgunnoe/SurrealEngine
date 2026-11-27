@@ -39,6 +39,8 @@ private:
 	TextLabel* AdvancedLabel = nullptr;
 
 	CheckboxLabel* UseVSync = nullptr;
+	TextLabel* FrameRateLimitLabel = nullptr;
+	LineEdit* FrameRateLimit = nullptr;
 
 	TextLabel* AntialiasModesLabel = nullptr;
 	Dropdown* AntialiasModes = nullptr;

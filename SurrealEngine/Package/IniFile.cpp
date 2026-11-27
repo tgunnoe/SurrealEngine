@@ -165,11 +165,6 @@ void IniFile::SetValues(const NameString& sectionName, const NameString& keyName
 		
 }
 
-void IniFile::SaveTo()
-{
-	SaveTo(ini_file_path);
-}
-
 void IniFile::SaveTo(const std::string& filename)
 {
 	if (filename == ini_file_path && !isModified)
@@ -209,11 +204,6 @@ void IniFile::SaveTo(const std::string& filename)
 		ini_file_path = filename;
 
 	isModified = false;
-}
-
-void IniFile::UpdateFile()
-{
-	UpdateFile(ini_file_path);
 }
 
 void IniFile::UpdateFile(const std::string& filename)

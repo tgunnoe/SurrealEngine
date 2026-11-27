@@ -6,7 +6,13 @@
 #include "UE1GameDatabase.h"
 #include "LauncherSettings.h"
 #include "Utils/CommandLine.h"
+#include "Utils/UserDirs.h"
+#include "Utils/FramePacer.h"
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
 #include <filesystem>
+#include <stdexcept>
 
 Array<GameLaunchInfo> GameFolderSelection::Games;
 
@@ -44,6 +50,22 @@ void GameFolderSelection::UpdateList()
 	}
 }
 
+int GameFolderSelection::AutoSelect()
+{
+	// Unattended runs must run exactly the folder they were given, never a saved or guessed one.
+	const Array<std::string>& items = commandline->GetItems();
+	if (items.empty())
+		throw std::runtime_error("--autostart needs the path to a UE1 game folder as an argument");
+
+	GameLaunchInfo game = ExamineFolder(items.front());
+	if (game.gameName.empty())
+		throw std::runtime_error("--autostart: no UE1 game found in '" + items.front() + "'");
+
+	Games.clear();
+	Games.push_back(game);
+	return 0;
+}
+
 GameLaunchInfo GameFolderSelection::GetLaunchInfo(int selectedGame)
 {
 	if (selectedGame < 0 || (size_t)selectedGame >= Games.size())
@@ -54,6 +76,11 @@ GameLaunchInfo GameFolderSelection::GetLaunchInfo(int selectedGame)
 	info.gameName = commandline->GetArg("-g", "--game", info.gameName);
 	info.noEntryMap = commandline->HasArg("-n", "--noentrymap") || info.noEntryMap;
 	info.url = commandline->GetArg("-u", "--url", info.url);
+	info.autostart = commandline->HasArg("", "--autostart");
+	if (commandline->HasArg("", "--exit-after"))
+		info.exitAfterSeconds = commandline->GetArgDouble("", "--exit-after");
+	if (commandline->HasArg("", "--user-dir"))
+		info.userDir = UserDirs::resolveUserDirArg(commandline->GetArg("", "--user-dir")).string();
 	return info;
 }
 
@@ -474,3 +501,160 @@ Array<std::string> GameFolderSelection::FindGameFolders()
 }
 
 #endif
+
+namespace
+{
+	std::string Trim(const std::string& text)
+	{
+		const char* whitespace = " \t\r\n";
+		size_t first = text.find_first_not_of(whitespace);
+		if (first == std::string::npos)
+			return {};
+		size_t last = text.find_last_not_of(whitespace);
+		return text.substr(first, last - first + 1);
+	}
+
+	// A plain non-negative decimal. The character check comes first because strtod also
+	// accepts signs, exponents, hexadecimal, "inf" and "nan", none of which belong in a time.
+	bool ParseSeconds(const std::string& text, double& seconds)
+	{
+		bool hasDigit = false;
+		bool hasPoint = false;
+		for (char c : text)
+		{
+			if (c >= '0' && c <= '9')
+				hasDigit = true;
+			else if (c == '.' && !hasPoint)
+				hasPoint = true;
+			else
+				return false;
+		}
+		if (!hasDigit)
+			return false;
+
+		char* end = nullptr;
+		seconds = std::strtod(text.c_str(), &end);
+		return end == text.c_str() + text.size();
+	}
+
+	std::string QuoteItem(const std::string& item)
+	{
+		return "\"" + item + "\"";
+	}
+
+	// Returns an empty string on success, otherwise why the item was rejected.
+	std::string ParseExecItem(const std::string& item, ExecItem& out)
+	{
+		size_t colon = item.find(':');
+		if (colon == std::string::npos)
+			return QuoteItem(item) + ": expected <seconds>:<command>";
+
+		const std::string time = Trim(item.substr(0, colon));
+		if (!ParseSeconds(time, out.seconds))
+			return QuoteItem(item) + ": the time " + QuoteItem(time) + " is not a non-negative number of seconds";
+
+		out.command = Trim(item.substr(colon + 1));
+		if (out.command.empty())
+			return QuoteItem(item) + ": the command is empty";
+
+		return {};
+	}
+}
+
+ExecScheduleResult ParseExecSchedule(const std::string& text)
+{
+	ExecScheduleResult result;
+	size_t begin = 0;
+	while (true)
+	{
+		size_t semicolon = text.find(';', begin);
+		const std::string item = text.substr(begin, semicolon == std::string::npos ? std::string::npos : semicolon - begin);
+
+		ExecItem parsed;
+		std::string error = ParseExecItem(item, parsed);
+		if (!error.empty())
+			return { {}, error };
+		result.items.push_back(std::move(parsed));
+
+		if (semicolon == std::string::npos)
+			break;
+		begin = semicolon + 1;
+	}
+
+	std::stable_sort(result.items.begin(), result.items.end(), [](const ExecItem& a, const ExecItem& b) { return a.seconds < b.seconds; });
+	return result;
+}
+
+size_t DueCommands(const Array<ExecItem>& schedule, double secondsSinceLogin, size_t cursor)
+{
+	if (secondsSinceLogin < 0.0)
+		return cursor;
+
+	size_t end = cursor;
+	while (end < schedule.size() && schedule[end].seconds <= secondsSinceLogin)
+		end++;
+	return end;
+}
+
+std::string FormatExecItem(const ExecItem& item)
+{
+	char seconds[32];
+	std::snprintf(seconds, sizeof(seconds), "%.15g", item.seconds);
+	return std::string(seconds) + " " + item.command;
+}
+
+TraceScriptResult ParseTraceScript(const std::string& text)
+{
+	if (Trim(text).empty())
+		return { {}, "empty value" };
+
+	TraceScriptResult result;
+	size_t begin = 0;
+	while (true)
+	{
+		size_t comma = text.find(',', begin);
+		const std::string entry = Trim(text.substr(begin, comma == std::string::npos ? std::string::npos : comma - begin));
+		if (entry.empty())
+			return { {}, "empty entry in '" + text + "'" };
+
+		TraceScriptEntry parsed;
+		size_t dot = entry.find('.');
+		if (dot == std::string::npos)
+		{
+			parsed.cls = entry;
+		}
+		else
+		{
+			const std::string badEntry = "bad entry '" + entry + "': ";
+			if (entry.find('.', dot + 1) != std::string::npos)
+				return { {}, badEntry + "more than one dot" };
+
+			parsed.cls = Trim(entry.substr(0, dot));
+			parsed.function = Trim(entry.substr(dot + 1));
+			if (parsed.cls.empty())
+				return { {}, badEntry + "empty class" };
+			if (parsed.function.empty())
+				return { {}, badEntry + "empty function" };
+		}
+		result.entries.push_back(std::move(parsed));
+
+		if (comma == std::string::npos)
+			break;
+		begin = comma + 1;
+	}
+	return result;
+}
+
+FrameLimitResult ParseFrameLimit(const std::string& text)
+{
+	if (text.empty())
+		return { 0, "empty value" };
+
+	// An override outside the range is refused and not clamped: a run that names 10 must not quietly run at 20
+	std::optional<int> value = FramePacer::ParseDigits(text);
+	if (!value)
+		return { 0, "'" + text + "' is not a whole number written in decimal digits" };
+	if (*value != 0 && (*value < FramePacer::MinLimit || *value > FramePacer::MaxLimit))
+		return { 0, "'" + text + "' is not 0 or from " + std::to_string(FramePacer::MinLimit) + " to " + std::to_string(FramePacer::MaxLimit) };
+	return { *value, {} };
+}

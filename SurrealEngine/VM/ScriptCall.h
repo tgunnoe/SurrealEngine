@@ -37,8 +37,35 @@ enum class EventName
 	MaxEventNameValue // Why isn't this part of C++ after 40+ years of people doing this in both C and C++?
 };
 
-ExpressionValue CallEvent(UObject* Context, EventName name, Array<ExpressionValue> args = {});
+// Why a script call is not made, when it is not. CallEvent and the call command ask for this one
+// answer, so what the VM skips and what the command reports as skipped cannot drift apart.
+enum class ScriptCallSkip
+{
+	None,          // The call is made
+	EventDisabled, // The object's state ignores the event
+	LevelNotBegun, // An actor whose level has not begun play
+	Deleting       // An actor being deleted
+};
+
+// The decision itself. The actor flags count only for an actor. allowDeleted lets a call through to
+// an actor being deleted, for a caller that tears the actor down and still has events to send it
+// after it has marked the actor (UActor::Destroy sends EndState and Destroyed that way).
+ScriptCallSkip ScriptCallSkipReason(bool eventEnabled, bool isActor, bool begunPlay, bool deleted, bool allowDeleted);
+
+// The decision for a context, with its event state already looked up: reads the actor flags.
+ScriptCallSkip SkipReasonFor(UObject* context, bool eventEnabled, bool allowDeleted);
+
+// The same for an event named by a script function, with no allowance for an actor being deleted.
+ScriptCallSkip SkipReasonFor(UObject* context, const NameString& name);
+
+// Destroyed is the one event an actor being deleted always gets: UActor::Destroy marks the actor
+// before it sends it. A caller that tears an actor down sends others with allowDeleted.
+ExpressionValue CallEvent(UObject* Context, EventName name, Array<ExpressionValue> args = {}, bool allowDeleted = false);
 ExpressionValue CallEvent(UObject* Context, const NameString& name, Array<ExpressionValue> args = {});
+
+// The event of an actor being torn down: sent even to an actor already marked deleted, and a script
+// exception is logged instead of escaping, so the teardown that follows always runs.
+ExpressionValue CallTeardownEvent(UObject* Context, EventName name);
 
 UFunction* FindEventFunction(UObject* Context, const NameString& name);
 
