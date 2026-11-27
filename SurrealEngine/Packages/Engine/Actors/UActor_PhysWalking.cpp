@@ -239,6 +239,20 @@ void UActor::TickWalking(float elapsed)
 					if (dot(moveDelta, alignedDelta) >= 0.0f) // Don't end up going backwards
 					{
 						hit = TryMove(alignedDelta);
+
+						// A move along the plane we touch cannot be stopped by it, yet the trace of such a move of a tenth of a
+						// unit comes back blocked at fraction 0 for some lengths of the same delta and free for others: it runs on
+						// float positions, where Location() + delta is rounded to a grid coarser than the gap to the plane. The
+						// slide is then lost in whole, RecomputeVelocityFromDisplacement turns that into a velocity near zero, and
+						// the much shorter steps that follow are lost the same way, which holds the walker against the face at
+						// high frame rates. One retry pushed off the plane by a few steps of the grid is clear of the rounding; a
+						// second wall stops the retry as well, so a corner holds as before.
+						if (hit.Fraction <= 0.0f && hit.Actor && dot(hit.Normal, hit.Normal) > 0.0f)
+						{
+							float gridStep = std::max({ std::abs(Location().x), std::abs(Location().y), std::abs(Location().z) }) * 4.8e-7f;
+							hit = TryMove(alignedDelta + hit.Normal * gridStep);
+						}
+
 						timeLeft -= timeLeft * hit.Fraction;
 						if (hit.Fraction < 1.0f)
 						{
