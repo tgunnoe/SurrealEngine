@@ -165,6 +165,29 @@ class SlideContactTests(unittest.TestCase):
         without_t1 = [line for line in every if not (line.startswith("[14.250000]") and "Player0" in line)]
         self.assertEqual(judged("mv-slide-ug", [self.bump(11.2)], answers=without_t1), "VOID")
 
+    def test_the_first_of_two_bumps_of_the_player_is_the_contact(self):
+        # Two contacts: the window of the first (11.25 s to 14.25 s) reads a slide, that of the last
+        # (11.75 s to 14.75 s) reads none, and the other way round for the second fixture.
+        slid_early = at_times({11.25: (0.0, 0.0), 14.25: (200.0, 0.0), 11.75: (200.0, 0.0), 14.75: (200.0, 0.0)})
+        slid_late = at_times({11.25: (0.0, 0.0), 14.25: (0.0, 0.0), 11.75: (0.0, 0.0), 14.75: (200.0, 0.0)})
+        bumps = [self.bump(11.1), self.bump(11.6)]
+        self.assertEqual(judged("mv-slide-ug", bumps, where=slid_early), "PIN-HELD")
+        self.assertEqual(judged("mv-slide-ug", bumps, where=slid_late), "PIN-BROKEN")
+
+    def test_only_a_bump_by_the_pins_mover_is_the_contact(self):
+        # Reading the Bump of another mover at 11.0 s as the contact would pair 11.0 s with 14.0 s.
+        where = at_times({11.75: (0.0, 0.0), 14.0: (0.0, 0.0), 12.0: (200.0, 0.0), 14.75: (200.0, 0.0)})
+        other = trace(11.0, "Mover7", "Bump", "Player0")
+        self.assertEqual(judged("mv-slide-ug", [other, self.bump(11.6)], where=where), "PIN-HELD")
+
+    def test_a_probe_printed_a_millisecond_early_still_closes_the_window(self):
+        # The engine prints a probe's time to six places after scheduling it to three, so the probe
+        # for 14.25 s can be logged at 14.249 s and must still be the one 3.0 s after the one at 11.25 s.
+        where = at_times({11.25: (0.0, 0.0), 14.25: (200.0, 0.0), 14.5: (0.0, 0.0)})
+        lines = [line.replace("[14.250000]", "[14.249000]") if "Player0" in line else line
+                 for line in scheduled_answers("mv-slide-ug", "Player0", where)]
+        self.assertEqual(judged("mv-slide-ug", [self.bump(11.2)], answers=lines), "PIN-HELD")
+
 
 class MoverJudgeTests(unittest.TestCase):
     def test_mover_judges_apply_the_recorded_thresholds(self):
