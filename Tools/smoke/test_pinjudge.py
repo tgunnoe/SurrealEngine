@@ -128,7 +128,6 @@ class SlideContactTests(unittest.TestCase):
     def bump(self, t, who="Player0"):
         return trace(t, "Mover44", "Bump", who)
 
-    @unittest.expectedFailure
     def test_the_slide_is_read_from_the_first_bump_of_the_player(self):
         for moved, expected in [(99.9, "PIN-BROKEN"), (100.0, "PIN-HELD")]:
             # The old probes (11.5 s and 13.0 s) and the 1.5 s probe (13.25 s) read the opposite verdict.
@@ -138,22 +137,20 @@ class SlideContactTests(unittest.TestCase):
             with self.subTest(moved=moved):
                 self.assertEqual(judged("mv-slide-ug", [self.bump(11.6)], where=where), expected)
 
-    @unittest.expectedFailure
     def test_the_slide_window_moves_with_the_contact(self):
         where = at_times({11.25: (0.0, 0.0), 14.25: (200.0, 0.0), 11.75: (200.0, 0.0), 14.75: (200.0, 0.0)})
         self.assertEqual(judged("mv-slide-ug", [self.bump(11.1)], where=where), "PIN-HELD")
         self.assertEqual(judged("mv-slide-ug", [self.bump(11.6)], where=where), "PIN-BROKEN")
 
-    @unittest.expectedFailure
     def test_only_a_bump_of_the_player_after_the_hold_starts_is_the_contact(self):
-        where = at_times({13.0: (500.0, 0.0), 14.25: (150.0, 0.0)})
+        # Once the player has moved off, it stays 150 units away, so a window of any length reads a slide.
+        where = lambda t, form: (150.0 if t >= 11.5 else 0.0, 0.0, 0.0)  # noqa: E731
         elsewhere = [self.bump(10.1, "Other0"), self.bump(11.0, "Other0"), self.bump(9.5)]
         verdict, detail = judged_detail("mv-slide-ug", elsewhere, where=where)
         self.assertEqual(verdict, "PIN-BROKEN")
         self.assertTrue(any("no contact" in line for line in detail), detail)
         self.assertEqual(judged("mv-slide-ug", elsewhere + [self.bump(11.2)], where=where), "PIN-HELD")
 
-    @unittest.expectedFailure
     def test_a_slide_without_a_contact_is_broken_not_void(self):
         where = at_times({13.0: (500.0, 0.0)})
         verdict, detail = judged_detail("mv-slide-ug", where=where)
@@ -182,9 +179,15 @@ class MoverJudgeTests(unittest.TestCase):
 
         def slide(pin_id, moved):
             pin = pinjudge.PINS[pin_id]
-            t0, t1 = pin.params["t0"], pin.params["t1"]
-            where = lambda t, form: (moved, 0.0, 0.0) if t == t1 else (0.0, 0.0, 0.0)  # noqa: E731
-            return judged(pin_id, where=where)
+            if "mover" in pin.params:
+                # A contact at 11.2 s reads from 11.25 s to 14.25 s; the probe 1.5 s after the first stays
+                # at the first's position, so a window of 1.5 s would read no travel.
+                contact = [trace(11.2, pin.params["mover"], "Bump", "Player0")]
+                where = at_times({14.25: (moved, 0.0)})
+            else:
+                contact = []
+                where = lambda t, form: (moved, 0.0, 0.0) if t == pin.params["t1"] else (0.0, 0.0, 0.0)  # noqa: E731
+            return judged(pin_id, contact, where=where)
         for pin_id, moved, expected in [("mv-slide-ug", 99.9, "PIN-BROKEN"), ("mv-slide-ug", 100.0, "PIN-HELD"),
                                         ("mv-slide-dx", 14.9, "PIN-BROKEN"), ("mv-slide-dx", 15.0, "PIN-HELD")]:
             with self.subTest(pin=pin_id, moved=moved):

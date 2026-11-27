@@ -37,6 +37,8 @@ FRAME_LIMIT_ARG = "--frame-limit=0"
 PLAYER_CLASS = "UPak.UPakFemaleOne"
 # How far a probe may be from the placed point in x and y and still be the placed player.
 PLACE_AGREES_WITHIN = 64.0
+# A probe time is printed to six places and scheduled to three, so a window is read with this slack.
+PROBE_TIME_SLACK = 0.01
 HELD, BROKEN, VOID = "PIN-HELD", "PIN-BROKEN", "VOID"
 
 
@@ -147,7 +149,8 @@ PIN_LIST = [
                  "5:hold axis aForward 289 2.7;5:hold axis aStrafe -80 2.7;9:CauseEvent litefall3;"
                  "10.4:hold axis aForward -298 2.5;10.4:hold axis aStrafe -35 2.5",
                  probes([UG, "name:Mover44"], 5, 16, 0.25)),
-        SLIDE_TRACE, 17, "UPakFemaleOne", "slide", {"form": UG, "t0": 11.5, "t1": 13.0, "min": 100.0}),
+        SLIDE_TRACE, 17, "UPakFemaleOne", "slide",
+        {"form": UG, "mover": "Mover44", "after": 10.4, "window": 3.0, "min": 100.0}),
     Pin("mv-slide-dx", "deusex", "00_Training",
         schedule(START_AT + START_DX,
                  "5:hold axis aForward -212 3;5:hold axis aStrafe 212 3",
@@ -291,11 +294,39 @@ def judge_projectile(pin, run, name):
 
 def judge_slide(pin, run, name):
     p = pin.params
+    if "mover" in p:
+        return judge_slide_from_contact(pin, run, name)
     first, last = (probe_at(pin, run, p["form"], p["t0"]), probe_at(pin, run, p["form"], p["t1"]))
     if first is None or last is None:
         return VOID, [f"the probes at {p['t0']} s and {p['t1']} s are not in the log"]
     moved = math.hypot(last.at[0] - first.at[0], last.at[1] - first.at[1])
     return (HELD if moved >= p["min"] else BROKEN), [f"moved {moved:.1f} (at least {p['min']:g})"]
+
+
+def judge_slide_from_contact(pin, run, name):
+    """The player's travel from its first contact with the mover to `window` seconds later.
+
+    The contact is the first `Bump` of the mover that names the player at or after `after`, the
+    start of the walk back into the face. A fixed pair of probe times would start the reading at
+    a different point of the slide whenever the player reaches the face earlier or later; the
+    window starts at the first probe after the contact and reaches past the end of the walk.
+    """
+    p = pin.params
+    scheduled = [at for at, command in exec_items(pin.exec) if command == f"call LineOfSightTo {p['form']}"]
+    got = [a for a in run.answers if a.form == p["form"]]
+    if len(got) != len(scheduled):
+        return VOID, [f"{len(got)} probe answers for the {len(scheduled)} scheduled"]
+    contact = next((e.t for e in run.traces
+                    if e.func == "Bump" and e.obj == p["mover"] and e.args == name and e.t >= p["after"]), None)
+    if contact is None:
+        return BROKEN, [f"no contact: {p['mover']} never bumps {name} at or after {p['after']:g} s"]
+    first = next((a for a in got if a.t >= contact), None)
+    last = None if first is None else next((a for a in got if a.t >= first.t + p["window"] - PROBE_TIME_SLACK), None)
+    if last is None:
+        return BROKEN, [f"the contact at {contact:.2f} s came too late for a probe {p['window']:g} s after it"]
+    moved = math.hypot(last.at[0] - first.at[0], last.at[1] - first.at[1])
+    return (HELD if moved >= p["min"] else BROKEN), [
+        f"contact {contact:.2f} s, moved {moved:.1f} from {first.t:.2f} s to {last.t:.2f} s (at least {p['min']:g})"]
 
 
 def judge_crush(pin, run, name):
