@@ -41,6 +41,20 @@ void WriteFrameRateLimit(JsonValue& renderDevice, int limit);
 // What the launcher's frame rate field saves: the clamped number in the text, or the previous value when the
 // text is not a plain whole number, so a typo never turns the limit off.
 int FrameLimitFromFieldText(const std::string& text, int previous);
+enum class AudioDeviceType
+{
+	NullAudio,
+	OpenAL,
+	AudioPlayer,
+};
+
+enum class AudioOutputRate
+{
+	OR_11025Hz,
+	OR_22050Hz,
+	OR_44100Hz,
+	OR_48000Hz
+};
 
 class LauncherSettings
 {
@@ -63,6 +77,19 @@ public:
 		int BloomAmount = 128;
 		bool UseDebugLayer = false;
 	} RenderDevice;
+
+	struct
+	{
+		AudioDeviceType Type = AudioDeviceType::OpenAL;
+		AudioOutputRate OutputRate = AudioOutputRate::OR_44100Hz;
+		bool UseFilter = true;
+		bool UseSurround = true;
+		bool UseStereo = true;
+		bool UseSpatial = true;
+		bool UseReverb = true;
+		bool Use3DHardware = true;
+		bool ReverseStereo = false;
+	} AudioDevice;
 
 	struct
 	{
